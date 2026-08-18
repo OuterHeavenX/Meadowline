@@ -5,7 +5,8 @@ watch trains find their own way around the loop and citizens stroll between the 
 The valley turns through spring, summer, autumn and winter while you build.
 No timers, no fail state, nothing to lose.
 
-**Play:** open `index.html`. That's the whole game — one file, no build step, no dependencies.
+**Play:** serve the repository as static files and open `index.html`. There is no build step
+or runtime dependency; the browser loads the native ES modules directly.
 
 ## How it plays
 
@@ -48,7 +49,7 @@ another. Nothing expires and nothing is lost by ignoring them.
 
 ## Under the hood
 
-Single-file vanilla JS on a 2D canvas, isometric 44×44 grid, painter's-algorithm depth sort.
+Vanilla ES modules on a 2D canvas, isometric 44×44 grid, painter's-algorithm depth sort.
 Trains and citizens walk the tile graph with a no-backtracking step rule, so a rail loop just
 works and a dead end reverses. Bridges are drawn in the depth-sorted pass rather than with
 the flat ground, so a raised deck layers correctly against what's behind it.
@@ -67,7 +68,7 @@ fireflies entirely.
 
 ```bash
 git init
-git add index.html README.md
+git add index.html src css assets README.md
 git commit -m "Meadowline: a calm little city builder"
 gh repo create meadowline --public --source=. --push
 ```

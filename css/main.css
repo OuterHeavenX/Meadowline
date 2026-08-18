@@ -1,0 +1,27 @@
+:root{
+    --ink:#1d2b26;
+    --ink-soft:#2b3d36;
+    --cream:#f4f0e2;
+    --cream-dim:#c9c6b4;
+    --mustard:#e0ae4e;
+    --meadow:#8fbe74;
+    --rose:#d3897c;
+    --sky:#8fc4d6;
+    --shadow:0 10px 30px rgba(12,22,18,.35);
+    --r:16px;
+    font-family:"Nunito","Quicksand",ui-rounded,"SF Pro Rounded","Trebuchet MS",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;overscroll-behavior:none}
+  body{
+    background:#6fa86a;color:var(--cream);
+    -webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;user-select:none;
+    touch-action:none;
+  }
+  canvas{display:block;width:100%;height:100%;position:fixed;inset:0}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+  }
+  :focus-visible{outline:3px solid var(--mustard);outline-offset:2px}
