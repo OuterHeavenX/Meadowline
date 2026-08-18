@@ -1,0 +1,186 @@
+:r.x,ny:r.y,p:1,
+    sp:0.42+Math.random()*0.3,
+    col:SHIRTS[(Math.random()*SHIRTS.length)|0],
+    bob:Math.random()*TAU, happy:h.mood
+  });
+}
+function updateCitizens(dt){
+  const want=clamp(S.pop,0,150);
+  if(S.citizens.length<want&&Math.random()<dt*3) spawnCitizen();
+  while(S.citizens.length>want+4) S.citizens.pop();
+  for(let i=S.citizens.length-1;i>=0;i--){
+    const c=S.citizens[i];
+    c.p+=dt*c.sp;
+    while(c.p>=1){
+      c.p-=1;
+      c.px=c.x; c.py=c.y; c.x=c.nx; c.y=c.ny;
+      if(!isType(c.x,c.y,"road")){ S.citizens.splice(i,1); break; }
+      const n=stepFrom(c.x,c.y,c.px,c.py,"road");
+      if(!n){ S.citizens.splice(i,1); break; }
+      c.nx=n[0]; c.ny=n[1];
+      if(Math.random()<0.25) c.sp=0.36+Math.random()*0.34;
+    }
+  }
+}
+
+/* ---------- trains ---------- */
+function railTiles(){
+  const out=[];
+  for(let i=0;i<S.grid.length;i++){const b=S.grid[i]; if(b&&b.type==="rail") out.push(b);}
+  return out;
+}
+function updateTrains(dt){
+  const rails=railTiles();
+  const want=rails.length>=6?clamp(Math.floor(rails.length/13),1,5):0;
+  if(S.trains.length<want&&Math.random()<dt*1.2){
+    for(let k=0;k<10;k++){
+      const r=rails[(Math.random()*rails.length)|0];
+      const n=stepFrom(r.x,r.y,-9,-9,"rail");
+      if(n){
+        S.trains.push({x:r.x,y:r.y,px:r.x,py:r.y,nx:n[0],ny:n[1],p:0,
+          sp:0.9+Math.random()*0.35,hist:[],hue:(Math.random()*3)|0,whistle:2+Math.random()*20});
+        break;
+      }
+    }
+  }
+  while(S.trains.length>want) S.trains.pop();
+  for(let i=S.trains.length-1;i>=0;i--){
+    const t=S.trains[i];
+    let derailed=false;
+    t.p+=dt*t.sp;
+    while(t.p>=1){
+      t.p-=1;
+      t.px=t.x; t.py=t.y; t.x=t.nx; t.y=t.ny;
+      if(!isType(t.x,t.y,"rail")){ derailed=true; break; }
+      const n=stepFrom(t.x,t.y,t.px,t.py,"rail");
+      if(!n){ derailed=true; break; }
+      t.nx=n[0]; t.ny=n[1];
+    }
+    if(derailed){ S.trains.splice(i,1); continue; }
+    const fx=lerp(t.x,t.nx,t.p), fy=lerp(t.y,t.ny,t.p);
+    t.fx=fx; t.fy=fy;
+    // trail is sampled by distance travelled, not by frame, so carriages
+    // keep their spacing at any speed or frame rate
+    const head=t.hist[0];
+    if(!head||Math.hypot(head.x-fx,head.y-fy)>0.05){
+      t.hist.unshift({x:fx,y:fy});
+      if(t.hist.length>60) t.hist.length=60;
+    }
+    t.whistle-=dt;
+    if(t.whistle<=0){ t.whistle=16+Math.random()*26; blip(300,0.16,"sine"); }
+  }
+}
+
+/* ---------- little particles ---------- */
+function puff(x,y){ for(let i=0;i<7;i++) S.puffs.push({x,y,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5,z:Math.random()*6,life:1,kind:0}); }
+function hearts(x,y){ for(let i=0;i<3;i++) S.puffs.push({x,y,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,z:8+i*4,life:1,kind:1}); }
+function updatePuffs(dt){
+  for(let i=S.puffs.length-1;i>=0;i--){
+    const p=S.puffs[i];
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.z+=dt*(p.kind?14:9); p.life-=dt*(p.kind?0.7:1.5);
+    if(p.life<=0) S.puffs.splice(i,1);
+  }
+}
+
+/* ---------- economy & clock ---------- */
+function payday(){
+  const tax=Math.round(S.pop*2.6*(0.55+S.mood/140));
+  const trade=(S._cafes||0)*9;
+  const grant=18;
+  const total=tax+trade+grant;
+  S.coins+=total;
+  toast("Day "+S.day+" · +"+total+" coins","gold");
+  blip(660,0.2,"triangle");
+}
+const MILES=[10,25,50,100,175];
+let mileHit=0;
+function checkMiles(){
+  while(mileHit<MILES.length&&S.pop>=MILES[mileHit]){
+    toast(MILES[mileHit]+" citizens call this home");
+    mileHit++;
+  }
+}
+function timeName(){
+  const t=S.dayT;
+  if(t<0.22) return "Dawn";
+  if(t<0.42) return "Morning";
+  if(t<0.60) return "Afternoon";
+  if(t<0.74) return "Dusk";
+  return "Night";
+}
+function moodName(){
+  if(!S.homes) return "—";
+  const m=S.mood;
+  if(m>=82) return "Blissful";
+  if(m>=68) return "Content";
+  if(m>=50) return "Settled";
+  if(m>=32) return "Restless";
+  return "Glum";
+}
+
+/* ---------- night curve ---------- */
+function darkness(){
+  const t=S.dayT;
+  // 0 at midday, ~0.62 deep night
+  const d=Math.cos((t-0.48)*TAU)*0.5+0.5; // 1 at night
+  return Math.pow(clamp(d,0,1),1.6)*0.62;
+}
+
+/* ---------- audio (tiny, optional) ---------- */
+let AC=null;
+function blip(freq,vol,type){
+  if(S.muted) return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended") AC.resume();
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type=type||"sine"; o.frequency.value=freq;
+    g.gain.value=0; o.connect(g); g.connect(AC.destination);
+    const n=AC.currentTime;
+    g.gain.linearRampToValueAtTime(vol||0.09,n+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,n+0.30);
+    o.start(n); o.stop(n+0.32);
+  }catch(e){}
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+const cv=document.getElementById("c"),g=cv.getContext("2d",{alpha:false});
+let DPR=1;
+function resize(){
+  DPR=Math.min(devicePixelRatio||1,2);
+  cv.width=Math.floor(innerWidth*DPR);
+  cv.height=Math.floor(innerHeight*DPR);
+  g.setTransform(DPR,0,0,DPR,0,0);
+}
+addEventListener("resize",()=>{resize();});
+
+function diamond(sx,sy,f){
+  const hw=TW/2*f*S.cam.z, hh=TH/2*f*S.cam.z;
+  g.beginPath();
+  g.moveTo(sx,sy-hh); g.lineTo(sx+hw,sy); g.lineTo(sx,sy+hh); g.lineTo(sx-hw,sy);
+  g.closePath();
+}
+
+// draws an iso box; returns the screen y of the top face centre
+function box(sx,sy,f,hgt,top,left,right){
+  const z=S.cam.z, hw=TW/2*f*z, hh=TH/2*f*z, h=hgt*z;
+  g.fillStyle=left;
+  g.beginPath();
+  g.moveTo(sx-hw,sy); g.lineTo(sx,sy+hh); g.lineTo(sx,sy+hh-h); g.lineTo(sx-hw,sy-h);
+  g.closePath(); g.fill();
+  g.fillStyle=right;
+  g.beginPath();
+  g.moveTo(sx+hw,sy); g.lineTo(sx,sy+hh); g.lineTo(sx,sy+hh-h); g.lineTo(sx+hw,sy-h);
+  g.closePath(); g.fill();
+  g.fillStyle=top;
+  g.beginPath();
+  g.moveTo(sx,sy-hh-h); g.lineTo(sx+hw,sy-h); g.lineTo(sx,sy+hh-h); g.lineTo(sx-hw,sy-h);
+  g.closePath(); g.fill();
+  return sy-h;
+}
+
+function shade(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  let r=(n>>16)&255,gg=(n>>8)&255,b=n&255
