@@ -21,7 +21,8 @@ import { paintTools } from '../ui/toolbar.js';
 import { paintWishes } from '../ui/wishes.js';
 import { genWorld } from '../world/map.js';
 import { refreshPalette } from '../world/seasons.js';
-import { seedBirds, seedClouds, updateBirds, updateClouds, updateDrops, updateWeather } from '../world/weather.js';
+import { activeFestival } from '../world/festivals.js';
+import { seedBirds, seedClouds, updateBirds, updateClouds, updateDrops, updateMotes, updateWeather } from '../world/weather.js';
 
 /* ============================================================
    MAIN LOOP
@@ -38,7 +39,11 @@ export function frame(now){
   refreshPalette();
   if(sdt>0){
     S.dayT+=sdt/DAY;
-    if(S.dayT>=1){ S.dayT-=1; S.day++; payday(); }
+    if(S.dayT>=1){
+      S.dayT-=1; S.day++; payday();
+      const fest=activeFestival();
+      if(fest) toast(fest.name+" \u00b7 the valley is dressed for it","gold");
+    }
     simClock+=sdt;
     if(simClock>0.9){ simClock=0; recompute(); checkMiles(); checkWishes(); }
     growth(sdt);
@@ -49,6 +54,7 @@ export function frame(now){
   }
   // these drift on real time, so the valley still breathes while paused
   updateDrops(dt);
+  updateMotes(dt);
   updateBirds(dt);
   updatePuffs(dt);
   ambientTick(dt);

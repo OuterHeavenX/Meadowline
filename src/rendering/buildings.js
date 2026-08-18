@@ -2,9 +2,18 @@ import { P, TAU, TH, TW, clamp, hash2, shade } from '../core/constants.js';
 import { S, reduceMotion } from '../core/state.js';
 import { box, diamond, drawTree, g, lights, snowCap } from './terrain.js';
 import { PAL } from '../world/seasons.js';
+import { activeFestival, festivalGlow } from '../world/festivals.js';
+
+
+// a soft contact shadow so a building sits on the ground instead of floating
+export function groundShadow(sx,sy,rx,ry,alpha){
+  g.fillStyle="rgba(30,50,40,"+(alpha||0.16)+")";
+  g.beginPath(); g.ellipse(sx,sy+1*S.cam.z,rx,ry,0,0,TAU); g.fill();
+}
 
 export function drawHouse(b,p,dark){
   const z=S.cam.z, r=hash2(b.seed,1,3);
+  groundShadow(p.x,p.y,17*z,8*z);
   const storeys=b.pop>=3?2:1;
   const hgt=(11+storeys*5+r*3);
   const wall=P.wall[(hash2(b.seed,2,4)*3)|0];
@@ -40,6 +49,40 @@ export function drawHouse(b,p,dark){
     lights.push({x:p.x-hw*0.62,y:wy,w:3.4*z,h:4.2*z});
     lights.push({x:p.x+hw*0.30,y:wy,w:3.4*z,h:4.2*z});
   }
+  // chimney smoke on cold or dark evenings, once someone is home to light a fire
+  if(lit){
+    const cold=Math.max(PAL.snow||0, dark>0.35?1:0);
+    if(cold>0.05){
+      const cx=p.x+hw*0.42, cy=topY-peak*0.45;
+      g.fillStyle=shade(roof,-30);
+      g.fillRect(cx-1.5*z,cy-5*z,3*z,5.5*z);
+      for(let i=0;i<3;i++){
+        const t=((S.t*0.5+i*0.33+(b.seed%10)/10)%1);
+        const a=(1-t)*0.30*cold;
+        if(a<=0.01) continue;
+        g.fillStyle="rgba(226,228,224,"+a.toFixed(3)+")";
+        g.beginPath();
+        g.arc(cx+Math.sin(t*3+b.seed)*3*z, cy-5*z-t*16*z, (1.6+t*3.4)*z, 0, TAU);
+        g.fill();
+      }
+    }
+  }
+
+  // a pennant on the ridge for the day of the festival
+  const fest=activeFestival();
+  if(fest){
+    const gl=festivalGlow();
+    const fy=topY-peak-2*z, fx=p.x;
+    g.strokeStyle="rgba(70,60,50,.8)"; g.lineWidth=0.9*z;
+    g.beginPath(); g.moveTo(fx,fy); g.lineTo(fx,fy-9*z); g.stroke();
+    g.fillStyle=fest.flag; g.globalAlpha=Math.max(0.35,gl);
+    const wave=Math.sin(S.t*3+b.seed)*1.6*z;
+    g.beginPath();
+    g.moveTo(fx,fy-9*z); g.lineTo(fx+7*z,fy-6.5*z+wave); g.lineTo(fx,fy-4.5*z);
+    g.closePath(); g.fill();
+    g.globalAlpha=1;
+  }
+
   // unconnected marker
   if(!b.linked){
     const yy=p.y-(hgt+peak/z+13)*z+Math.sin(S.t*2.4+b.seed%7)*2*z;
@@ -53,6 +96,7 @@ export function drawHouse(b,p,dark){
 
 export function drawCafe(b,p,dark){
   const z=S.cam.z;
+  groundShadow(p.x,p.y,18*z,8*z);
   const topY=box(p.x,p.y,0.66,13,"#f0e7d4","#c9b294","#ddcbaa");
   snowCap(p.x,topY,0.66);
   const hw=TW/2*0.66*z;
@@ -112,6 +156,7 @@ export function drawLamp(b,p,dark){
 
 export function drawWindmill(b,p,dark){
   const z=S.cam.z;
+  groundShadow(p.x,p.y,13*z,6*z);
   const topY=box(p.x,p.y,0.46,27,"#efe6d3","#bcac8b","#dbcdac");
   snowCap(p.x,topY,0.46);
   const hw=TW/2*0.46*z;
@@ -139,6 +184,7 @@ export function drawWindmill(b,p,dark){
 
 export function drawStation(b,p,dark){
   const z=S.cam.z;
+  groundShadow(p.x,p.y,21*z,9*z);
   const topY=box(p.x,p.y,0.78,10,"#e9dfc9","#a89577","#c6b493");
   const hw=TW/2*0.78*z, hh=TH/2*0.78*z;
   // overhanging roof

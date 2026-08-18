@@ -3,6 +3,7 @@ import { MILL_BASE } from '../buildings/windmills.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { PAL } from '../world/seasons.js';
+import { activeFestival } from '../world/festivals.js';
 
 /* ---------- economy & clock ---------- */
 export function payday(){
@@ -12,9 +13,12 @@ export function payday(){
   const mills=S.ctx.mills.length;
   const milled=Math.round(mills*(MILL_BASE+(PAL.yield||0)));
   const grant=18;
-  const total=tax+trade+milled+grant;
+  // a festival puts a little extra through every till
+  const fest=activeFestival();
+  const feast=fest?Math.round((tax+trade+milled)*fest.purse):0;
+  const total=tax+trade+milled+grant+feast;
   S.coins+=total;
-  S.lastPay={tax,trade,milled,grant,total};
+  S.lastPay={tax,trade,milled,grant,feast,total};
   services.toast("Day "+S.day+" \u00b7 +"+total+" coins","gold");
   services.blip(660,0.2,"triangle");
   if(mills&&(PAL.yield||0)>=MILL_BASE) services.toast("A good harvest at the mill");

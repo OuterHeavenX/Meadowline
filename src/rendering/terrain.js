@@ -3,7 +3,7 @@ import { S } from '../core/state.js';
 import { isBridge } from '../transport/bridges.js';
 import { proj, screen2world } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
-import { idx, isType } from '../world/tiles.js';
+import { idx, inBounds, isType } from '../world/tiles.js';
 
 /* ============================================================
    RENDERING
@@ -72,6 +72,17 @@ export function drawGround(){
           g.beginPath();
           g.moveTo(p.x-10*z,p.y+2*z); g.lineTo(p.x-2*z,p.y-1*z); g.lineTo(p.x+7*z,p.y+2*z);
           g.stroke(); g.restore();
+        }
+        // pale foam where the water meets the bank, on the edges that face land
+        const EDGES=[[[1,0],[1,0,0,1]],[[-1,0],[-1,0,0,-1]],[[0,1],[0,1,-1,0]],[[0,-1],[0,-1,1,0]]];
+        g.strokeStyle=PAL.waterEdge; g.lineWidth=1.5*z; g.lineCap="round";
+        for(const[[dx,dy]] of EDGES){
+          const nx=x+dx, ny=y+dy;
+          if(inBounds(nx,ny)&&S.terr[idx(nx,ny)]===1) continue;   // still water
+          const hw=TW/2*z, hh=TH/2*z;
+          const cs={ '1,0':[[p.x+hw,p.y],[p.x,p.y+hh]], '-1,0':[[p.x-hw,p.y],[p.x,p.y-hh]],
+                     '0,1':[[p.x,p.y+hh],[p.x-hw,p.y]], '0,-1':[[p.x,p.y-hh],[p.x+hw,p.y]] }[dx+','+dy];
+          g.beginPath(); g.moveTo(cs[0][0],cs[0][1]); g.lineTo(cs[1][0],cs[1][1]); g.stroke();
         }
         continue;                       // any span over it is drawn in the sorted pass
       }

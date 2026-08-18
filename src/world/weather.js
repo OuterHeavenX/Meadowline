@@ -2,6 +2,7 @@ import { H, TAU, W, clamp } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S, reduceMotion } from '../core/state.js';
 import { PAL } from './seasons.js';
+import { festivalGlow } from './festivals.js';
 
 /* ---------- weather ---------- */
 export function startWeather(kind,strength){
@@ -86,5 +87,33 @@ export function updateBirds(dt){
   for(const b of birds){
     b.x+=b.sp*dt; b.ph+=dt*6;
     if(b.x>1.1){ b.x=-0.1; b.y=0.10+Math.random()*0.28; }
+  }
+}
+
+/* ---------- seasonal motes: blossom, falling leaves, festival confetti ----------
+   Screen-space like the rain, because they read as atmosphere in front of the
+   valley rather than as objects standing in it. */
+export const motes=[];
+export function seedMotes(){ motes.length=0; }
+export function moteLoad(){
+  if(reduceMotion) return 0;
+  const fest=festivalGlow();
+  return Math.round(46*(PAL.fall||0) + 34*Math.max((PAL.bloom||0)-0.5,0)*2 + 40*fest);
+}
+export function updateMotes(dt){
+  const want=moteLoad();
+  while(motes.length<want) motes.push({
+    x:Math.random()*innerWidth, y:Math.random()*innerHeight,
+    sp:16+Math.random()*30, sway:0.6+Math.random()*1.5, ph:Math.random()*TAU,
+    r:Math.random(), spin:(Math.random()-0.5)*3
+  });
+  while(motes.length>want) motes.pop();
+  for(const m of motes){
+    m.ph+=dt*m.sway;
+    m.y+=dt*m.sp;
+    m.x+=Math.sin(m.ph)*22*dt+dt*8;
+    m.spin+=dt*1.4;
+    if(m.y>innerHeight+16){ m.y=-16; m.x=Math.random()*innerWidth; }
+    if(m.x>innerWidth+16) m.x=-16;
   }
 }

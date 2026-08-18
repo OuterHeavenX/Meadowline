@@ -13,6 +13,12 @@ const fail = (msg) => { console.log('  FAIL  ' + msg); failures++; };
 const pass = (msg) => console.log('  PASS  ' + msg);
 
 const read = (f) => readFileSync(path.join(ROOT, f), 'utf8');
+// comments and string bodies must not be scanned for code patterns: a comment
+// rule like `---------` reads as a decrement otherwise
+const stripComments = (t) => t
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .replace(/\/\/[^\n]*/g, ' ')
+  .replace(/(['"`])(?:\\.|(?!\1)[^\\])*\1/g, '""');
 const importsOf = (t) => [...t.matchAll(/import\s*(?:\{([^}]*)\}\s*from\s*)?'([^']+)'/g)]
   .map((m) => ({ names: (m[1] || '').split(',').map((s) => s.trim().split(' as ').pop().trim()).filter(Boolean), from: m[2] }));
 
@@ -21,7 +27,7 @@ let assignBad = 0;
 for (const f of files) {
   const t = read(f);
   const names = new Set(importsOf(t).flatMap((i) => i.names));
-  const body = t.replace(/^import\s.*?;\s*$/gm, '');
+  const body = stripComments(t.replace(/^import\s.*?;\s*$/gm, ''));
   for (const n of names) {
     const re = new RegExp('(?<![.\\w])' + n.replace(/[$]/g, '\\$') + '\\s*(?:=[^=]|\\+\\+|--|[-+*/]=)');
     if (re.test(body)) { fail(`${f} assigns to imported binding "${n}"`); assignBad++; }

@@ -77,19 +77,19 @@ export const SEASON_DAYS=5;
 export const SEASONS=[
   {name:"Spring",
    grass:["#8fc077","#96c67e","#89ba6d","#9dcb83"], dark:"#6f9d5c",
-   leaf:"#63a052", leafHi:"#86bf6d", bloom:1, snow:0, mood:3, yield:2,
+   fall:0, leaf:"#63a052", leafHi:"#86bf6d", bloom:1, snow:0, mood:3, yield:2,
    skyTop:"#b6dde5", skyBot:"#86ba7f", nightTop:"#3b566f", nightBot:"#2e4441"},
   {name:"Summer",
    grass:["#82b968","#8bbf70","#79b060","#92c578"], dark:"#639250",
-   leaf:"#4f9146", leafHi:"#71b05e", bloom:.55, snow:0, mood:2, yield:5,
+   fall:0, leaf:"#4f9146", leafHi:"#71b05e", bloom:.55, snow:0, mood:2, yield:5,
    skyTop:"#a6d8e8", skyBot:"#7fb476", nightTop:"#37506c", nightBot:"#2a4038"},
   {name:"Autumn",
    grass:["#b5ad6a","#bfb474","#aaa161","#c6bb7e"], dark:"#8d8650",
-   leaf:"#cf8a3c", leafHi:"#e3ad50", bloom:.2, snow:0, mood:0, yield:12,
+   fall:1, leaf:"#cf8a3c", leafHi:"#e3ad50", bloom:.2, snow:0, mood:0, yield:12,
    skyTop:"#cbd2c8","skyBot":"#a89f68", nightTop:"#3d4a5e", nightBot:"#3a3d36"},
   {name:"Winter",
    grass:["#dee4dc","#e7ebe3","#d5dbd3","#edf0e9"], dark:"#c2cabf",
-   leaf:"#8ea892", leafHi:"#b8cab7", bloom:0, snow:1, mood:-4, yield:0,
+   fall:0, leaf:"#8ea892", leafHi:"#b8cab7", bloom:0, snow:1, mood:-4, yield:0,
    skyTop:"#d3dee4", skyBot:"#c3ccc6", nightTop:"#3a4763", nightBot:"#414c50"}
 ];
 

@@ -28,6 +28,7 @@ export function refreshPalette(){
   PAL.nightTop=m("nightTop"); PAL.nightBot=m("nightBot");
   PAL.snow=lerp(q.a.snow,q.b.snow,q.t);
   PAL.bloom=lerp(q.a.bloom,q.b.bloom,q.t);
+  PAL.fall=lerp(q.a.fall,q.b.fall,q.t);
   PAL.moodShift=lerp(q.a.mood,q.b.mood,q.t);
   PAL.yield=lerp(q.a.yield,q.b.yield,q.t);
   PAL.water=mix(P.water,"#c3dae0",PAL.snow*0.72);

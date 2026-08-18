@@ -2,7 +2,7 @@ import { canPlace } from '../buildings/buildings.js';
 import { H, W, clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { drawCafe, drawHouse, drawLamp, drawPark, drawStation, drawWindmill } from './buildings.js';
-import { drawBirds, drawCloudShadows, drawFireflies, drawPuff, drawWeather } from './effects.js';
+import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
 import { drawCitizen, drawTrain } from './entities.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
 import { SPANS } from '../transport/bridges.js';
@@ -128,5 +128,7 @@ export function render(){
   }
 
   drawFireflies(dark);
+  drawLanterns(dark);
+  drawMotes();
   drawWeather();
 }

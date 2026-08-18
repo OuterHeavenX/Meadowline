@@ -3,7 +3,8 @@ import { S, reduceMotion } from '../core/state.js';
 import { g } from './terrain.js';
 import { proj } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
-import { birds, clouds, drops } from '../world/weather.js';
+import { birds, clouds, drops, motes } from '../world/weather.js';
+import { activeFestival, festivalGlow } from '../world/festivals.js';
 
 export function drawPuff(p){
   const z=S.cam.z, s=proj(p.x,p.y);
@@ -85,6 +86,52 @@ export function drawFireflies(dark){
       g.arc(p.x+Math.cos(a)*(9+k*3.4)*z, p.y-(7+Math.sin(a*1.7)*6)*z, 1.5*z, 0, TAU);
       g.fill();
     }
+  }
+  g.globalCompositeOperation="source-over";
+}
+
+/* ---------- seasonal motes ---------- */
+export function drawMotes(){
+  if(!motes.length) return;
+  const fest=activeFestival(), glow=festivalGlow();
+  const fall=PAL.fall||0, bloom=Math.max((PAL.bloom||0)-0.5,0)*2;
+  for(const m of motes){
+    // one pool, three costumes: confetti during a festival, then leaves, then petals
+    const confetti = fest && m.r < glow*0.55;
+    const leafy    = !confetti && m.r < fall;
+    const w=(confetti?2.6:leafy?3.4:2.4), h=(confetti?1.4:leafy?2.2:2.4);
+    g.save();
+    g.translate(m.x,m.y);
+    g.rotate(m.spin);
+    if(confetti)      g.fillStyle=m.r<glow*0.28 ? fest.flag : fest.lantern;
+    else if(leafy)    g.fillStyle=m.r<fall*0.5 ? PAL.leaf : PAL.leafHi;
+    else              g.fillStyle="rgba(240,190,206,.85)";
+    g.globalAlpha=leafy||confetti?0.9:0.75*Math.max(bloom,glow);
+    g.beginPath(); g.ellipse(0,0,w,h,0,0,TAU); g.fill();
+    g.restore();
+  }
+  g.globalAlpha=1;
+}
+
+/* ---------- festival lanterns, once the light goes ---------- */
+export function drawLanterns(dark){
+  const fest=activeFestival();
+  if(!fest||dark<0.2||reduceMotion) return;
+  const glow=clamp((dark-0.2)/0.3,0,1);
+  g.globalCompositeOperation="lighter";
+  for(let i=0;i<14;i++){
+    const t=S.t*0.11+i*0.7;
+    const x=((i*137.5+S.t*7)%(innerWidth+120))-60;
+    const y=innerHeight*(0.82-((t%1)*0.72));
+    const a=glow*(0.35+0.25*Math.sin(S.t*1.6+i));
+    const r=(5+2.5*Math.sin(S.t+i))*1.4;
+    const rg=g.createRadialGradient(x,y,0,x,y,r*3.2);
+    rg.addColorStop(0,"rgba(255,214,150,"+(a*0.9).toFixed(3)+")");
+    rg.addColorStop(1,"rgba(255,190,120,0)");
+    g.fillStyle=rg; g.beginPath(); g.arc(x,y,r*3.2,0,TAU); g.fill();
+    g.fillStyle=fest.lantern; g.globalAlpha=a;
+    g.beginPath(); g.ellipse(x,y,r*0.5,r*0.62,0,0,TAU); g.fill();
+    g.globalAlpha=1;
   }
   g.globalCompositeOperation="source-over";
 }

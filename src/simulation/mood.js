@@ -9,6 +9,7 @@ import { DIRS, clamp } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { PAL, seasonName } from '../world/seasons.js';
+import { activeFestival } from '../world/festivals.js';
 import { idx, inBounds, isType } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 
@@ -58,6 +59,9 @@ export function evalHouse(h,out){
   let crowd=0;
   for(let dy=-CROWD.r;dy<=CROWD.r;dy++)for(let dx=-CROWD.r;dx<=CROWD.r;dx++) if(isType(h.x+dx,h.y+dy,"house")) crowd++;
   if(crowd>CROWD.limit){ const pen=(crowd-CROWD.limit)*CROWD.per; m-=pen; if(out) out.push(["Rather crowded round here",-pen]); }
+
+  const fest=activeFestival();
+  if(fest){ m+=fest.mood; if(out) out.push([fest.name,fest.mood]); }
 
   const sm=Math.round(PAL.moodShift||0);
   if(sm){ m+=sm; if(out) out.push([seasonName()+" air",sm]); }
