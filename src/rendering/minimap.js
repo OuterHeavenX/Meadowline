@@ -10,6 +10,7 @@ export const elMini=document.getElementById("mini"), mm=document.getElementById(
 const bMap=document.getElementById("b-map");
 export const MS=mm.width/W;
 export const MINI_COL={road:"#cfc3a6",rail:"#8a7c63",house:"#d9897a",cafe:"#e0b45a",
+                market:"#e5645c",bakery:"#d9a463",school:"#8a6f96",dock:"#a98d68",
                 park:"#7bb268",tree:"#5f9350",lamp:"#efd79a",mill:"#efe6d3",station:"#6f8fae"};
 export function drawMini(){
   if(elMini.classList.contains("hide")) return;

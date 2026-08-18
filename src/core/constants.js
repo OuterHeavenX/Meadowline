@@ -49,6 +49,10 @@ export const TOOLS=[
   {id:"lamp",  name:"Lamp",   cost:9,   key:"8", desc:"A small lift that doubles after dark. Line them along a street."},
   {id:"mill",  name:"Windmill",cost:95, key:"9", desc:"Grinds coin every day \u2014 most of all at harvest. Wants open ground."},
   {id:"station",name:"Station",cost:110,key:"0", desc:"Must touch a rail tile. Lifts homes for six tiles."},
+  {id:"market",name:"Market", cost:130,key:"r", desc:"A hub for trade \u2014 lifts what every caf\u00e9 and bakery nearby takes."},
+  {id:"bakery",name:"Bakery", cost:80, key:"k", desc:"Bakes what the windmills grind. Wants a mill within four tiles."},
+  {id:"school",name:"School", cost:145,key:"c", desc:"Room for two more in every home it reaches, and a fine mood lift."},
+  {id:"dock",  name:"Dock",   cost:70, key:"d", desc:"Must touch water. Boats put out from here and sail the lake."},
   {id:"look",  name:"Look",   cost:0,   key:"i", desc:"Tap anything to ask how it's doing, and why."},
   {id:"erase", name:"Remove", cost:0,   key:"e", desc:"Clears a tile and refunds half the cost."}
 ];
@@ -65,6 +69,10 @@ export const ICONS={
   lamp:'<path d="M12 3.5a3.6 3.6 0 0 1 3.6 3.6c0 1.7-1.2 2.6-1.6 3.9h-4c-.4-1.3-1.6-2.2-1.6-3.9A3.6 3.6 0 0 1 12 3.5ZM10 11h4M11 13.5h2M12 13.5V21M9 21h6"/>',
   mill:'<path d="M10 21h4l-1-9h-2l-1 9ZM12 12 5.5 8.5M12 12l3.5-6.5M12 12l6.5 3.5M12 12l-3.5 6.5"/>',
   station:'<path d="M3 7.5 12 3.5l9 4M6 8.5V17h12V8.5M9.5 12.5h5M8.5 21h7M10.5 17v4M13.5 17v4"/>',
+  market:'<path d="M4 9.5h16l-1.2-4H5.2L4 9.5ZM5.5 9.5V20h13V9.5M3 20h18M9.5 20v-5h5v5"/>',
+  bakery:'<path d="M4.5 14.5c0-3.3 3.4-6 7.5-6s7.5 2.7 7.5 6M4.5 14.5h15v3.2a1.8 1.8 0 0 1-1.8 1.8H6.3a1.8 1.8 0 0 1-1.8-1.8v-3.2ZM9 8.8V6M12 8.5V5.5M15 8.8V6"/>',
+  school:'<path d="M12 3.5 21.5 8 12 12.5 2.5 8 12 3.5ZM6 10v5.5c0 1.9 2.7 3.4 6 3.4s6-1.5 6-3.4V10M21.5 8v5"/>',
+  dock:'<path d="M12 4v13M12 17c-3.2 0-5.8-2-6.6-4.6h13.2C17.8 15 15.2 17 12 17ZM8.5 8.5h7M3 20.5c1.6 0 1.6 1 3.2 1s1.6-1 3.2-1 1.6 1 3.2 1 1.6-1 3.2-1 1.6 1 3.2 1"/>',
   look:'<path d="M12 5c5 0 8.5 4.2 9.5 7-1 2.8-4.5 7-9.5 7s-8.5-4.2-9.5-7C3.5 9.2 7 5 12 5Z"/><circle cx="12" cy="12" r="2.9"/>',
   erase:'<path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l1 13.2h9L17.5 7M10.5 10.8v6M13.5 10.8v6"/>'
 };

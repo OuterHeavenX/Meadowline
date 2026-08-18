@@ -94,6 +94,26 @@ export function describe(x,y){
       '<p>Grinds coin every day, and best of all at harvest.</p>'+
       '<dl><dt>Today\u2019s yield</dt><dd>'+Math.round(9+(PAL.yield||0))+'</dd>'+
       '<dt>Charm within 3</dt><dd class="up">+4</dd></dl>');
+    case "market": return card("The Market","Market",
+      '<p>Lifts what every caf\u00e9 and bakery takes, and cheers the streets within <b>5 tiles</b>.</p>'+
+      '<dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,5)+'</dd>'+
+      '<dt>Trades lifted</dt><dd>'+(S.ctx.cafes.length+S.ctx.bakeries.length)+'</dd></dl>');
+    case "bakery": {
+      const supplied=S.ctx.mills.some(w=>Math.abs(w.x-x)<=4&&Math.abs(w.y-y)<=4);
+      return card("The Bakery","Bakery",
+        '<p>Bakes what the windmills grind. '+(supplied
+          ? 'A mill is in reach, so it runs at <b>full tilt</b>.'
+          : 'No mill within <b>4 tiles</b>, so it runs at <b>half</b>.')+'</p>'+
+        '<dl><dt>Flour supply</dt><dd class="'+(supplied?'up':'dn')+'">'+(supplied?'Good':'Short')+'</dd>'+
+        '<dt>Homes in reach</dt><dd>'+countNear("houses",x,y,4)+'</dd></dl>');
+    }
+    case "school": return card("The Schoolhouse","School",
+      '<p>Every home within <b>5 tiles</b> has room for <b>two more</b> under its roof, and is the happier for it.</p>'+
+      '<dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,5)+'</dd></dl>');
+    case "dock": return card("The Dock","Dock",
+      '<p>Boats put out from here and sail the open water. Homes with a view of it are cheered for <b>4 tiles</b>.</p>'+
+      '<dl><dt>Boats afloat</dt><dd>'+S.boats.length+'</dd>'+
+      '<dt>Homes in reach</dt><dd>'+countNear("houses",x,y,4)+'</dd></dl>');
     case "tree": return card("Planted Trees","Trees",
       '<p>A small lift to any home with a view of them, out to <b>3 tiles</b>.</p>');
     case "road": return card(isWater(x,y)?"Road Bridge":"Road",isWater(x,y)?"Span":"Road",

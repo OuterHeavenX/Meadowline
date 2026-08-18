@@ -39,6 +39,18 @@ export const WISH_TYPES={
   tree:  {at:()=>countType("tree"),   ok:()=>true,
           make(){ const n=ladder(countType("tree"),[8,20,40,70]);
                   return {t:"Plant <b>"+n+"</b> trees",g:n,r:25+n*3}; }},
+  market:{at:()=>countType("market"), ok:()=>S.pop>=20,
+          make(){ const n=ladder(countType("market"),[1,2,4]);
+                  return {t:"Open <b>"+n+"</b> market"+(n>1?"s":""),g:n,r:90+n*50}; }},
+  bakery:{at:()=>countType("bakery"), ok:()=>countType("mill")>=1,
+          make(){ const n=ladder(countType("bakery"),[1,3,6]);
+                  return {t:"Set <b>"+n+"</b> "+(n>1?"bakeries":"bakery")+" going",g:n,r:60+n*30}; }},
+  school:{at:()=>countType("school"), ok:()=>S.pop>=30,
+          make(){ const n=ladder(countType("school"),[1,2,4]);
+                  return {t:"Build <b>"+n+"</b> school"+(n>1?"s":""),g:n,r:110+n*60}; }},
+  boats: {at:()=>S.boats.length,      ok:()=>hasWater(),
+          make(){ const n=ladder(S.boats.length,[1,2,4,6]);
+                  return {t:"Put <b>"+n+"</b> boat"+(n>1?"s":"")+" on the water",g:n,r:70+n*40}; }},
   purse: {at:()=>Math.floor(S.coins), ok:()=>S.day>=2,
           make(){ const n=ladder(Math.floor(S.coins),[250,600,1200,2400]);
                   return {t:"Put by <b>"+n+"</b> coins",g:n,r:Math.round(n*0.18)}; }}

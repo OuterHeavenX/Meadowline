@@ -1,9 +1,9 @@
 import { canPlace } from '../buildings/buildings.js';
 import { H, W, clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
-import { drawCafe, drawHouse, drawLamp, drawPark, drawStation, drawWindmill } from './buildings.js';
+import { drawBakery, drawCafe, drawDock, drawHouse, drawLamp, drawMarket, drawPark, drawSchool, drawStation, drawWindmill } from './buildings.js';
 import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
-import { drawCitizen, drawTrain } from './entities.js';
+import { drawBoat, drawCitizen, drawTrain } from './entities.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
 import { SPANS } from '../transport/bridges.js';
 import { proj } from '../world/map.js';
@@ -25,7 +25,8 @@ export function drawGhost(){
   g.strokeStyle=ok?"rgba(244,240,226,.85)":"rgba(214,96,80,.9)";
   g.lineWidth=1.6*S.cam.z; g.stroke();
   // radius preview for mood buildings
-  const rad=S.tool==="park"?4:S.tool==="cafe"?5:S.tool==="station"?6:S.tool==="lamp"?2:S.tool==="mill"?3:0;
+  const RADII={park:4,cafe:5,station:6,lamp:2,mill:3,market:5,bakery:4,school:5,dock:4};
+  const rad=RADII[S.tool]||0;
   if(rad){
     g.strokeStyle="rgba(244,240,226,.26)"; g.lineWidth=1.4*S.cam.z;
     const c=[[-rad,-rad],[rad+1,-rad],[rad+1,rad+1],[-rad,rad+1]].map(o=>proj(x+o[0]-0.5,y+o[1]-0.5));
@@ -72,6 +73,7 @@ export function render(){
   for(let y=0;y<H;y++)for(let x=0;x<W;x++) if(S.natTree[idx(x,y)]) items.push({d:x+y,k:1,x,y});
   for(const c of S.citizens) items.push({d:lerp(c.x,c.nx,c.p)+lerp(c.y,c.ny,c.p)+0.05,k:2,c});
   for(const t of S.trains) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.1,k:3,t});
+  for(const t of S.boats) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.08,k:6,t});
   for(const p of S.puffs) items.push({d:p.x+p.y+0.2,k:4,p});
   items.sort((a,b)=>a.d-b.d);
 
@@ -86,6 +88,10 @@ export function render(){
       else if(t==="station") drawStation(it.b,p,dark);
       else if(t==="lamp") drawLamp(it.b,p,dark);
       else if(t==="mill") drawWindmill(it.b,p,dark);
+      else if(t==="market") drawMarket(it.b,p,dark);
+      else if(t==="bakery") drawBakery(it.b,p,dark);
+      else if(t==="school") drawSchool(it.b,p,dark);
+      else if(t==="dock") drawDock(it.b,p,dark);
       else if(t==="tree") drawTree(p.x,p.y,it.b.seed,1);
     } else if(it.k===1){
       const p=proj(it.x,it.y);
@@ -93,6 +99,7 @@ export function render(){
       drawTree(p.x,p.y,idx(it.x,it.y),0.9);
     } else if(it.k===2) drawCitizen(it.c);
     else if(it.k===3) drawTrain(it.t);
+    else if(it.k===6) drawBoat(it.t);
     else if(it.k===5){
       const p=proj(it.b.x,it.b.y);
       if(p.x<-120||p.x>innerWidth+120||p.y<-160||p.y>innerHeight+120) continue;

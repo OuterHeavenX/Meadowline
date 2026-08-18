@@ -207,3 +207,131 @@ export function drawStation(b,p,dark){
   g.fillRect(p.x-hw*0.55,p.y-7*z,4*z,5*z);
   if(dark>0.1) lights.push({x:p.x-hw*0.55,y:p.y-7*z,w:4*z,h:5*z,big:true});
 }
+
+/* ---------- market: an open awning over trestle tables ---------- */
+export function drawMarket(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,20*z,9*z);
+  const hw=TW/2*0.82*z, hh=TH/2*0.82*z;
+  // four posts
+  g.fillStyle="#8d7a5f";
+  for(const[ox,oy] of [[-1,0],[1,0],[0,-1],[0,1]])
+    g.fillRect(p.x+ox*hw*0.8-0.9*z, p.y+oy*hh*0.8-11*z, 1.8*z, 11*z);
+  // trestle tables with produce
+  g.fillStyle="#b79a72";
+  g.fillRect(p.x-hw*0.7,p.y-5*z,hw*1.4,2.4*z);
+  for(let i=0;i<5;i++){
+    g.fillStyle=["#d3897c","#e0b45a","#7fa887","#c273a8","#8fc4d6"][i%5];
+    g.beginPath(); g.arc(p.x-hw*0.55+i*(hw*0.28), p.y-6.4*z, 1.5*z, 0, TAU); g.fill();
+  }
+  // striped canopy
+  const ry=p.y-12*z;
+  for(let i=0;i<6;i++){
+    g.fillStyle=i%2?"#e5645c":"#f4ece0";
+    g.beginPath();
+    g.moveTo(p.x-hw+i*(hw*2/6), ry);
+    g.lineTo(p.x-hw+(i+1)*(hw*2/6), ry);
+    g.lineTo(p.x-hw+(i+1)*(hw*2/6), ry-3.4*z);
+    g.lineTo(p.x-hw+i*(hw*2/6), ry-3.4*z);
+    g.closePath(); g.fill();
+  }
+  g.fillStyle="#c9524b";
+  g.beginPath();
+  g.moveTo(p.x,ry-3.4*z-hh*0.5); g.lineTo(p.x+hw,ry-3.4*z); g.lineTo(p.x,ry-3.4*z+hh*0.5); g.lineTo(p.x-hw,ry-3.4*z);
+  g.closePath(); g.fill();
+  snowCap(p.x,ry-3.4*z,0.82);
+  if(dark>0.12) lights.push({x:p.x-3*z,y:p.y-8*z,w:6*z,h:3*z,big:true});
+}
+
+/* ---------- bakery: a squat oven house with a hot mouth ---------- */
+export function drawBakery(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,17*z,8*z);
+  const topY=box(p.x,p.y,0.6,12,"#f0e5cf","#c2a883","#dcc9a4");
+  snowCap(p.x,topY,0.6);
+  const hw=TW/2*0.6*z;
+  // chimney, always going
+  g.fillStyle="#b08a63";
+  g.fillRect(p.x+hw*0.45,topY-7*z,3*z,7*z);
+  for(let i=0;i<3;i++){
+    const t=((S.t*0.42+i*0.34+(b.seed%9)/9)%1);
+    g.fillStyle="rgba(232,228,220,"+((1-t)*0.34).toFixed(3)+")";
+    g.beginPath();
+    g.arc(p.x+hw*0.45+1.5*z+Math.sin(t*3+b.seed)*3*z, topY-7*z-t*15*z, (1.5+t*3.2)*z, 0, TAU);
+    g.fill();
+  }
+  // oven mouth glowing
+  g.fillStyle="#5a3b2a";
+  g.beginPath(); g.arc(p.x,p.y-5*z,3.4*z,Math.PI,0); g.fill();
+  g.fillStyle="#ffb15e";
+  g.beginPath(); g.arc(p.x,p.y-5*z,2.2*z,Math.PI,0); g.fill();
+  lights.push({x:p.x-2.2*z,y:p.y-7*z,w:4.4*z,h:2.2*z});
+  // awning of loaves on a shelf
+  g.fillStyle="#c9a074";
+  g.fillRect(p.x-hw*0.8,p.y-11*z,hw*1.6,1.6*z);
+  for(let i=0;i<3;i++){
+    g.fillStyle="#d9a463";
+    g.beginPath(); g.ellipse(p.x-hw*0.5+i*hw*0.5,p.y-12.2*z,2.1*z,1.3*z,0,0,TAU); g.fill();
+  }
+}
+
+/* ---------- school: a hall with a little bell tower ---------- */
+export function drawSchool(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,21*z,9*z);
+  const topY=box(p.x,p.y,0.8,15,"#f2ecdc","#b9ac8c","#d8ccae");
+  const hw=TW/2*0.8*z, hh=TH/2*0.8*z;
+  // pitched roof
+  g.fillStyle="#8a6f96";
+  g.beginPath();
+  g.moveTo(p.x,topY-hh); g.lineTo(p.x+hw,topY); g.lineTo(p.x,topY+hh); g.lineTo(p.x-hw,topY);
+  g.closePath(); g.fill();
+  snowCap(p.x,topY,0.8);
+  // bell tower
+  g.fillStyle="#e7dcc4";
+  g.fillRect(p.x-2.6*z,topY-13*z,5.2*z,10*z);
+  g.fillStyle="#7c6288";
+  g.beginPath();
+  g.moveTo(p.x-3.6*z,topY-13*z); g.lineTo(p.x+3.6*z,topY-13*z); g.lineTo(p.x,topY-19*z);
+  g.closePath(); g.fill();
+  g.fillStyle="#e0ae4e";
+  g.beginPath(); g.arc(p.x,topY-10*z,1.5*z,0,TAU); g.fill();
+  // windows in a row
+  for(let i=0;i<3;i++){
+    const wx=p.x-hw*0.55+i*hw*0.55;
+    g.fillStyle="rgba(120,145,158,.6)";
+    g.fillRect(wx-1.6*z,p.y-11*z,3.2*z,4.4*z);
+    if(dark>0.12) lights.push({x:wx-1.6*z,y:p.y-11*z,w:3.2*z,h:4.4*z});
+  }
+}
+
+/* ---------- dock: planks out over the water with a lamp on the post ------- */
+export function drawDock(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,16*z,7*z);
+  const hw=TW/2*z, hh=TH/2*z;
+  // decking
+  g.fillStyle="#a98d68";
+  diamond(p.x,p.y-2*z,0.94); g.fill();
+  g.strokeStyle="#8d7350"; g.lineWidth=0.9*z;
+  for(let i=-2;i<=2;i++){
+    g.beginPath();
+    g.moveTo(p.x-hw*0.9+i*hw*0.3, p.y-2*z+hh*0.5);
+    g.lineTo(p.x+i*hw*0.3, p.y-2*z-hh*0.45);
+    g.stroke();
+  }
+  // mooring posts
+  g.fillStyle="#7a6446";
+  g.fillRect(p.x-hw*0.62,p.y-9*z,2.2*z,8*z);
+  g.fillRect(p.x+hw*0.42,p.y-7*z,2.2*z,6*z);
+  // a coil of rope and a crate
+  g.strokeStyle="#c8b088"; g.lineWidth=1.1*z;
+  g.beginPath(); g.arc(p.x+hw*0.1,p.y-2*z,2.4*z,0,TAU); g.stroke();
+  g.fillStyle="#b08f63";
+  g.fillRect(p.x-hw*0.15,p.y-7.5*z,5*z,4.6*z);
+  // lamp on the tall post
+  const lit=clamp(dark/0.24,0,1);
+  g.fillStyle=lit>0.05?"#ffdd9f":"rgba(206,216,208,.8)";
+  g.fillRect(p.x-hw*0.62-0.8*z,p.y-12*z,3.8*z,3*z);
+  if(lit>0.05) lights.push({x:p.x-hw*0.62-0.8*z,y:p.y-12*z,w:3.8*z,h:3*z,big:true});
+}

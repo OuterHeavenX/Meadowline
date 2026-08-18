@@ -12,6 +12,7 @@ import { payday } from '../simulation/economy.js';
 import { recompute } from '../simulation/mood.js';
 import { hearts, puff, updatePuffs } from '../simulation/particles.js';
 import { updateTrains } from '../simulation/trains.js';
+import { updateBoats } from '../simulation/boats.js';
 import { checkMiles, checkWishes, rollWishes } from '../simulation/wishes.js';
 import { paintHud } from '../ui/hud.js';
 import { hint, tickHint, toast } from '../ui/notify.js';
@@ -49,6 +50,7 @@ export function frame(now){
     growth(sdt);
     updateCitizens(sdt);
     updateTrains(sdt);
+    updateBoats(sdt);
     updateWeather(sdt);
     updateClouds(sdt);
   }

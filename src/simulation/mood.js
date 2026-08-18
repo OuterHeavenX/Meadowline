@@ -5,6 +5,10 @@ import { PARK_MOOD } from '../buildings/parks.js';
 import { STATION_MOOD } from '../buildings/stations.js';
 import { GREEN } from '../buildings/trees.js';
 import { MILL_MOOD } from '../buildings/windmills.js';
+import { MARKET_MOOD } from '../buildings/markets.js';
+import { BAKERY_MOOD } from '../buildings/bakeries.js';
+import { SCHOOL_MOOD } from '../buildings/schools.js';
+import { DOCK_MOOD } from '../buildings/docks.js';
 import { DIRS, clamp } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
@@ -39,6 +43,10 @@ export function evalHouse(h,out){
   const cafe=near(c.cafes,CAFE_MOOD.r,CAFE_MOOD.per,CAFE_MOOD.cap);    if(cafe.v){ m+=cafe.v; if(out) out.push([cafe.n+" caf\u00e9"+(cafe.n>1?"s":"")+" on the street",cafe.v]); }
   const stn =near(c.stations,STATION_MOOD.r,STATION_MOOD.per,STATION_MOOD.cap); if(stn.v){  m+=stn.v;  if(out) out.push(["A station within reach",stn.v]); }
   const mill=near(c.mills,MILL_MOOD.r,MILL_MOOD.per,MILL_MOOD.cap);      if(mill.v){ m+=mill.v; if(out) out.push(["A windmill on the skyline",mill.v]); }
+  const mkt =near(c.markets,MARKET_MOOD.r,MARKET_MOOD.per,MARKET_MOOD.cap); if(mkt.v){ m+=mkt.v; if(out) out.push([mkt.n>1?mkt.n+" markets nearby":"A market nearby",mkt.v]); }
+  const bake=near(c.bakeries,BAKERY_MOOD.r,BAKERY_MOOD.per,BAKERY_MOOD.cap); if(bake.v){ m+=bake.v; if(out) out.push(["The smell of baking",bake.v]); }
+  const sch =near(c.schools,SCHOOL_MOOD.r,SCHOOL_MOOD.per,SCHOOL_MOOD.cap); if(sch.v){ m+=sch.v; if(out) out.push(["A school within reach",sch.v]); }
+  const dock=near(c.docks,DOCK_MOOD.r,DOCK_MOOD.per,DOCK_MOOD.cap);         if(dock.v){ m+=dock.v; if(out) out.push(["Boats at the dock",dock.v]); }
 
   // lamps are worth twice as much once the light goes
   const lampMul=1+clamp(darkness()/0.62,0,1);
@@ -70,7 +78,7 @@ export function evalHouse(h,out){
 }
 
 export function recompute(){
-  const parks=[],cafes=[],stations=[],houses=[],lamps=[],mills=[];
+  const parks=[],cafes=[],stations=[],houses=[],lamps=[],mills=[],markets=[],bakeries=[],schools=[],docks=[];
   for(let i=0;i<S.grid.length;i++){
     const b=S.grid[i]; if(!b) continue;
     if(b.type==="park") parks.push(b);
@@ -79,8 +87,12 @@ export function recompute(){
     else if(b.type==="house") houses.push(b);
     else if(b.type==="lamp") lamps.push(b);
     else if(b.type==="mill") mills.push(b);
+    else if(b.type==="market") markets.push(b);
+    else if(b.type==="bakery") bakeries.push(b);
+    else if(b.type==="school") schools.push(b);
+    else if(b.type==="dock") docks.push(b);
   }
-  S.ctx={parks,cafes,stations,houses,lamps,mills};
+  S.ctx={parks,cafes,stations,houses,lamps,mills,markets,bakeries,schools,docks};
   let pop=0,moodSum=0;
   for(const h of houses){
     h.mood=evalHouse(h,null);

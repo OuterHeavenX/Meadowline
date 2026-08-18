@@ -1,9 +1,12 @@
+import { SCHOOL_MOOD, SCHOOL_ROOM } from './schools.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 
 export function growth(dt){
   for(const h of S.ctx.houses){
-    const cap=4;
+    // a school in reach makes room for two more under the same roof
+    const schooled=S.ctx.schools.some(k=>Math.abs(k.x-h.x)<=SCHOOL_MOOD.r&&Math.abs(k.y-h.y)<=SCHOOL_MOOD.r);
+    const cap=4+(schooled?SCHOOL_ROOM:0);
     if(!h.linked){ h.grow=0; if(h.pop>0&&Math.random()<dt*0.05) h.pop--; continue; }
     if(h.pop<cap&&h.mood>=62){
       h.grow+=dt*(h.mood-55)/60;

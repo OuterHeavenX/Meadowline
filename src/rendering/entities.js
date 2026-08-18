@@ -1,5 +1,6 @@
 import { TAU, lerp, shade } from '../core/constants.js';
 import { S } from '../core/state.js';
+import { HULLS } from '../simulation/boats.js';
 import { box, g } from './terrain.js';
 import { proj } from '../world/map.js';
 
@@ -50,3 +51,46 @@ export function drawCitizen(c){
 }
 
 // fireflies drift over the parks on summer nights
+
+/* ---------- boats ---------- */
+export function drawBoat(t){
+  const z=S.cam.z;
+  const p=proj(t.fx!==undefined?t.fx:t.x, t.fy!==undefined?t.fy:t.y);
+  const c=HULLS[t.hue];
+  const bob=Math.sin(S.t*1.8+t.bob)*1.3*z;
+
+  // wake, oldest first so it fades away behind the hull
+  for(let i=t.wake.length-1;i>=1;i--){
+    const w=proj(t.wake[i].x,t.wake[i].y);
+    const a=(1-i/t.wake.length)*0.30;
+    g.fillStyle="rgba(255,255,255,"+a.toFixed(3)+")";
+    g.beginPath(); g.ellipse(w.x,w.y+2*z,(6-i*0.3)*z,(2.4-i*0.12)*z,0,0,TAU); g.fill();
+  }
+
+  g.fillStyle="rgba(24,54,64,.22)";
+  g.beginPath(); g.ellipse(p.x,p.y+3*z,9*z,4*z,0,0,TAU); g.fill();
+
+  // hull
+  const y=p.y+bob;
+  g.fillStyle=c[1];
+  g.beginPath();
+  g.moveTo(p.x-9*z,y-1*z); g.lineTo(p.x+9*z,y-1*z);
+  g.lineTo(p.x+6*z,y+3.4*z); g.lineTo(p.x-6*z,y+3.4*z);
+  g.closePath(); g.fill();
+  g.fillStyle=c[0];
+  g.fillRect(p.x-9*z,y-3*z,18*z,2.2*z);
+
+  // mast and sail
+  g.strokeStyle="#7a5c43"; g.lineWidth=1.2*z;
+  g.beginPath(); g.moveTo(p.x,y-3*z); g.lineTo(p.x,y-17*z); g.stroke();
+  g.fillStyle="rgba(248,244,232,.95)";
+  g.beginPath();
+  g.moveTo(p.x+0.8*z,y-16.5*z);
+  g.quadraticCurveTo(p.x+9*z,y-11*z,p.x+1*z,y-4.5*z);
+  g.closePath(); g.fill();
+  g.fillStyle="rgba(214,205,186,.9)";
+  g.beginPath();
+  g.moveTo(p.x-0.8*z,y-16.5*z);
+  g.quadraticCurveTo(p.x-6*z,y-11.5*z,p.x-1*z,y-6*z);
+  g.closePath(); g.fill();
+}
