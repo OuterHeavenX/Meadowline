@@ -19,3 +19,28 @@ export function stepWhere(x,y,px,py,passable){
 export function stepFrom(x,y,px,py,type){
   return stepWhere(x,y,px,py,(nx,ny)=>isType(nx,ny,type));
 }
+
+/* Shortest walk between two tiles over whatever counts as passable. Breadth
+   first: the grid is 44x44, so a full sweep is a couple of thousand steps and
+   a citizen only re-plans when they arrive somewhere. */
+export function findPath(sx,sy,tx,ty,passable,limit=4000){
+  if(sx===tx&&sy===ty) return [];
+  const seen=new Map(), q=[[sx,sy]];
+  seen.set(sx+','+sy,null);
+  for(let head=0; head<q.length && head<limit; head++){
+    const[x,y]=q[head];
+    for(const[dx,dy] of DIRS){
+      const nx=x+dx, ny=y+dy, k=nx+','+ny;
+      if(seen.has(k)||!passable(nx,ny)) continue;
+      seen.set(k,[x,y]);
+      if(nx===tx&&ny===ty){
+        const out=[]; let cur=[nx,ny];
+        while(cur){ out.push(cur); cur=seen.get(cur[0]+','+cur[1]); }
+        out.pop();                       // drop the tile they are standing on
+        return out.reverse();
+      }
+      q.push([nx,ny]);
+    }
+  }
+  return null;
+}

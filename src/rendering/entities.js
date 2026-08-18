@@ -48,6 +48,13 @@ export function drawCitizen(c){
   g.fillRect(p.x+off-1.5*z,p.y-5.4*z-bob,3*z,4*z);
   g.fillStyle="#f0d9bd";
   g.beginPath(); g.arc(p.x+off,p.y-6.8*z-bob,1.7*z,0,TAU); g.fill();
+  // a basket, if they are on their way back from the market or the bakery
+  if(c.carry){
+    g.fillStyle="#b98d5c";
+    g.fillRect(p.x+off+1.6*z,p.y-3.4*z-bob,2.4*z,2*z);
+    g.strokeStyle="#8d6a42"; g.lineWidth=0.6*z;
+    g.beginPath(); g.arc(p.x+off+2.8*z,p.y-3.4*z-bob,1.2*z,Math.PI,0); g.stroke();
+  }
 }
 
 // fireflies drift over the parks on summer nights

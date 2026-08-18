@@ -1,3 +1,6 @@
+import { FIRSTS, HOUSE_NAMES, residents } from '../buildings/houses.js';
+import { capFor } from '../buildings/houses.js';
+import { outFrom } from '../simulation/citizens.js';
 import { hash2 } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
@@ -7,25 +10,13 @@ import { idx, inBounds, isWater } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 
 /* ---------- the Look card ---------- */
-export const FIRSTS=["Ada","Rowan","Juno","Maple","Bo","Wren","Otto","Sage","Iris","Fen",
-              "Clover","Bram","Nell","Pip","Hazel","Tam","Marlow","Ivy","Cass","Linnet"];
-export const HOUSE_NAMES=["Bramble Cottage","Willow End","The Old Bakehouse","Hollyhock","Number Four",
-                   "Thistledown","Sparrow House","The Green Gate","Cobb Cottage","Fern Row",
-                   "Larkspur","The Quiet Corner","Pennywort","Damson House","Yarrow Lodge"];
+
+
 export const elLook=document.getElementById("look"), elLookBody=document.getElementById("look-body");
 export function closeLook(){ elLook.classList.remove("show"); S.pick=null; }
 document.getElementById("look-x").addEventListener("click",closeLook);
 
-export function residents(h){
-  const out=[];
-  for(let i=0;i<h.pop;i++){
-    let n="",k=0;
-    do{ n=FIRSTS[(hash2(h.seed,i*11+k,313)*FIRSTS.length)|0]; k++; }
-    while(out.indexOf(n)>=0&&k<14);
-    out.push(n);
-  }
-  return out;
-}
+
 export function listOut(a){
   if(a.length<=1) return a[0]||"";
   return a.slice(0,-1).join(", ")+" and "+a[a.length-1];
@@ -66,14 +57,18 @@ export function describe(x,y){
           '<dd>'+(mood-raw>0?"+":"")+(mood-raw)+'</dd>';
     }
     dl+='</dl>';
+    const out_=outFrom(x,y);
+    const doing=out_
+      ? '<p><b>'+out_+'</b> of them '+(out_===1?'is':'are')+' out on the streets just now.</p>'
+      : '';
     const line=b.pop
       ? '<p><b>'+listOut(who)+'</b> live'+(who.length===1?"s":"")+' here.</p>'
       : (b.linked
           ? '<p>Empty for now. Lift the mood past <b>62</b> and someone will move in.</p>'
           : '<p>Empty, and no road reaches the door.</p>');
     return card(HOUSE_NAMES[(hash2(b.seed,1,777)*HOUSE_NAMES.length)|0],
-                "Home \u00b7 "+b.pop+" of 4",
-                line+dl+moodRow(mood));
+                "Home \u00b7 "+b.pop+" of "+capFor(b),
+                line+doing+dl+moodRow(mood));
   }
   if(b) switch(b.type){
     case "cafe": return card("The Corner Caf\u00e9","Caf\u00e9",
