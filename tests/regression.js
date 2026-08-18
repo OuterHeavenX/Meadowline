@@ -1,14 +1,16 @@
-import { S, idx } from '../src/core/state.js';
-import { W, H, COST } from '../src/core/constants.js';
+import { canPlace, erase, place } from '../src/buildings/buildings.js';
+import { COST, H, W } from '../src/core/constants.js';
+import { KEY, KEY_OLD, load, save, store } from '../src/core/save.js';
+import { S } from '../src/core/state.js';
+import { spawnCitizen } from '../src/simulation/citizens.js';
+import { evalHouse, recompute } from '../src/simulation/mood.js';
+import { updateTrains } from '../src/simulation/trains.js';
+import { rollWishes } from '../src/simulation/wishes.js';
 import { genWorld } from '../src/world/map.js';
 import { refreshPalette, seasonName } from '../src/world/seasons.js';
+import { idx } from '../src/world/tiles.js';
+import { darkness } from '../src/world/time.js';
 import { startWeather, updateWeather, weatherName } from '../src/world/weather.js';
-import { canPlace, costOf, erase, place } from '../src/buildings/buildings.js';
-import { evalHouse, recompute } from '../src/simulation/mood.js';
-import { darkness, rollWishes } from '../src/simulation/economy.js';
-import { spawnCitizen } from '../src/simulation/citizens.js';
-import { updateTrains } from '../src/simulation/trains.js';
-import { KEY, KEY_OLD, load, save, store } from '../src/core/save.js';
 
 const checks=[];
 function check(name,condition,detail=''){ checks.push({name,pass:Boolean(condition),detail}); }

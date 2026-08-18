@@ -1,7 +1,7 @@
 import { clamp } from '../core/constants.js';
 import { S } from '../core/state.js';
-import { darkness } from '../simulation/economy.js';
 import { PAL } from '../world/seasons.js';
+import { darkness } from '../world/time.js';
 
 /* ---------- audio (tiny, optional) ---------- */
 export let AC=null;

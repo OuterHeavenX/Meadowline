@@ -1,22 +1,9 @@
-import { DIRS, TAU, clamp } from '../core/constants.js';
-import { S, isType } from '../core/state.js';
+import { TAU, clamp } from '../core/constants.js';
+import { S } from '../core/state.js';
+import { stepFrom } from '../transport/pathfinding.js';
+import { roadNear } from '../transport/roads.js';
+import { isType } from '../world/tiles.js';
 
-/* ---------- citizens ---------- */
-export function roadNear(x,y){
-  for(const[dx,dy]of DIRS) if(isType(x+dx,y+dy,"road")) return {x:x+dx,y:y+dy};
-  return null;
-}
-export function stepFrom(x,y,px,py,type){
-  const opts=[],back=[];
-  for(const[dx,dy]of DIRS){
-    const nx=x+dx,ny=y+dy;
-    if(!isType(nx,ny,type)) continue;
-    if(nx===px&&ny===py) back.push([nx,ny]); else opts.push([nx,ny]);
-  }
-  const pool=opts.length?opts:back;
-  if(!pool.length) return null;
-  return pool[(Math.random()*pool.length)|0];
-}
 export const SHIRTS=["#e8735f","#5d8fc4","#e0b451","#6fae7c","#c273a8","#e9e2cf","#7a6fb5"];
 
 export function spawnCitizen(){

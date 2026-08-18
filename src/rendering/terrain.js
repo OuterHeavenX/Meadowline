@@ -1,8 +1,9 @@
-import { isBridge } from '../buildings/buildings.js';
-import { DIRS, H, P, TAU, TH, TW, W, clamp, hash2, lerp, mix, shade } from '../core/constants.js';
-import { S, idx, isType } from '../core/state.js';
+import { DIRS, H, P, TAU, TH, TW, W, hash2 } from '../core/constants.js';
+import { S } from '../core/state.js';
+import { isBridge } from '../transport/bridges.js';
 import { proj, screen2world } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
+import { idx, isType } from '../world/tiles.js';
 
 /* ============================================================
    RENDERING

@@ -1,10 +1,10 @@
-import { isWater } from '../buildings/buildings.js';
 import { hash2 } from '../core/constants.js';
 import { services } from '../core/services.js';
-import { S, idx, inBounds } from '../core/state.js';
-import { darkness } from '../simulation/economy.js';
+import { S } from '../core/state.js';
 import { evalHouse } from '../simulation/mood.js';
 import { PAL } from '../world/seasons.js';
+import { idx, inBounds, isWater } from '../world/tiles.js';
+import { darkness } from '../world/time.js';
 
 /* ---------- the Look card ---------- */
 export const FIRSTS=["Ada","Rowan","Juno","Maple","Bo","Wren","Otto","Sage","Iris","Fen",

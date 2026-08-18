@@ -1,5 +1,3 @@
-import { H, W } from './constants.js';
-
 /* ---------- state ---------- */
 export const S={
   seed:(Math.random()*1e9)|0,
@@ -18,8 +16,3 @@ export const S={
 export const reduceMotion=(function(){
   try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; }
 })();
-
-export function idx(x,y){return y*W+x;}
-export function inBounds(x,y){return x>=0&&y>=0&&x<W&&y<H;}
-export function at(x,y){return inBounds(x,y)?S.grid[idx(x,y)]:null;}
-export function isType(x,y,t){const b=at(x,y);return !!b&&b.type===t;}

@@ -1,8 +1,17 @@
-import { clamp } from '../core/constants.js';
+import { ambientStart, ambientStop, blip } from '../audio/audio.js';
+import { save } from '../core/save.js';
 import { S } from '../core/state.js';
-import { WISH_TYPES, moodName, shortTime, timeName } from '../simulation/economy.js';
-import { seasonName } from '../world/seasons.js';
+import { toggleMap } from '../rendering/minimap.js';
+import { moodName, recompute } from '../simulation/mood.js';
+import { rollWishes, setMileHit } from '../simulation/wishes.js';
+import { genWorld } from '../world/map.js';
+import { refreshPalette, seasonName } from '../world/seasons.js';
+import { shortTime, timeName } from '../world/time.js';
 import { weatherName } from '../world/weather.js';
+import { toast } from './notify.js';
+import { closeLook } from './panels.js';
+import { postcard } from './postcard.js';
+import { pickTool } from './toolbar.js';
 
 export const S_day=document.getElementById("s-day"), S_time=document.getElementById("s-time"),
       S_coins=document.getElementById("s-coins"), S_pop=document.getElementById("s-pop"),
@@ -18,28 +27,28 @@ export function paintHud(){
   S_mood.textContent=moodName();
 }
 
-/* ---------- wishes panel ---------- */
-export const elWishes=document.getElementById("wishes");
-export let wishSig="";
-export function paintWishes(){
-  const sig=S.wishes.map(w=>w.k+":"+w.g).join("|");
-  if(sig!==wishSig){
-    wishSig=sig;
-    if(!S.wishes.length){
-      elWishes.innerHTML='<div class="wish" style="opacity:.72">Nothing left to wish for \u2014 the valley is content.</div>';
-    } else {
-      let h="";
-      for(const w of S.wishes){
-        h+='<div class="wish"><div class="row"><span>'+w.t+'</span><u>+'+w.r+'</u></div>'+
-           '<div class="bar"><i></i></div></div>';
-      }
-      elWishes.innerHTML=h;
-    }
-  }
-  const bars=elWishes.querySelectorAll(".bar i");
-  S.wishes.forEach((w,i)=>{
-    if(!bars[i]) return;
-    const type=WISH_TYPES[w.k];
-    bars[i].style.width=Math.round(clamp((type?type.at():0)/w.g,0,1)*100)+"%";
-  });
+/* ---------- corner chips ---------- */
+export const bSpeed=document.getElementById("b-speed"), bSound=document.getElementById("b-sound"),
+      bMap=document.getElementById("b-map"), bShot=document.getElementById("b-shot"),
+      bNew=document.getElementById("b-new");
+bMap.addEventListener("click",toggleMap);
+bShot.addEventListener("click",postcard);
+export function toggleSpeed(){ S.speed=S.speed===1?2:S.speed===2?4:1; bSpeed.textContent=S.speed+"\u00d7"; }
+export function toggleSound(){
+  S.muted=!S.muted;
+  bSound.classList.toggle("off",S.muted);
+  if(S.muted) ambientStop();
+  else { blip(520,0.08); ambientStart(); }
 }
+bSpeed.addEventListener("click",toggleSpeed);
+bSound.addEventListener("click",toggleSound);
+bSound.classList.add("off");
+bNew.addEventListener("click",()=>{
+  if(confirm("Start a brand new valley? This clears the town you've built.")){
+    genWorld((Math.random()*1e9)|0); setMileHit(0); S.granted=0; refreshPalette(); recompute(); rollWishes(); closeLook(); save(); toast("A fresh valley");
+  }
+});
+document.getElementById("b-start").addEventListener("click",()=>{
+  document.getElementById("veil").classList.add("hide");
+  pickTool("road");
+});

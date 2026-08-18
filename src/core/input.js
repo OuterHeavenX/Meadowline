@@ -4,11 +4,13 @@ import { S } from './state.js';
 import { toggleMap } from '../rendering/minimap.js';
 import { hover } from '../rendering/renderer.js';
 import { cv } from '../rendering/terrain.js';
-import { checkWishes } from '../simulation/economy.js';
 import { recompute } from '../simulation/mood.js';
+import { checkWishes } from '../simulation/wishes.js';
+import { hint } from '../ui/notify.js';
 import { closeLook, inspect } from '../ui/panels.js';
-import { postcard, toggleSound, toggleSpeed } from '../ui/postcard.js';
-import { hint, pickTool } from '../ui/toolbar.js';
+import { toggleSound, toggleSpeed } from '../ui/hud.js';
+import { postcard } from '../ui/postcard.js';
+import { pickTool } from '../ui/toolbar.js';
 import { screen2world, world2screen } from '../world/map.js';
 
 /* ============================================================

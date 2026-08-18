@@ -1,5 +1,6 @@
 import { H, TH, TW, W, fbm, hash2 } from '../core/constants.js';
-import { S, idx } from '../core/state.js';
+import { S } from '../core/state.js';
+import { idx } from './tiles.js';
 import { drops, seedBirds, seedClouds } from './weather.js';
 
 /* ---------- world generation ---------- */

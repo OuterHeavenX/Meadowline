@@ -1,13 +1,12 @@
 import { COST, DIRS } from '../core/constants.js';
 import { services } from '../core/services.js';
-import { S, at, idx, inBounds, isType } from '../core/state.js';
+import { S } from '../core/state.js';
+import { SPANS } from '../transport/bridges.js';
+import { idx, inBounds, isType, isWater } from '../world/tiles.js';
 
 /* ---------- building placement ---------- */
 export const BUILDABLE={road:1,rail:1,house:1,cafe:1,park:1,tree:1,lamp:1,mill:1,station:1};
-export const SPANS={road:1,rail:1};        // only these two can reach across water
 
-export function isWater(x,y){ return inBounds(x,y)&&S.terr[idx(x,y)]===1; }
-export function isBridge(x,y){ const b=at(x,y); return !!b&&SPANS[b.type]&&isWater(x,y); }
 // A span over water costs three times what it does on dry ground.
 export function costOf(kind,x,y){ return COST[kind]*(SPANS[kind]&&isWater(x,y)?3:1); }
 

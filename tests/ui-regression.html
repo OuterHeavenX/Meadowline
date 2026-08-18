@@ -8,7 +8,9 @@ game.addEventListener('load',()=>setTimeout(async()=>{
   const sound=d.getElementById('b-sound'); sound.click(); const soundOn=!sound.classList.contains('off');
   const mini=d.getElementById('mini'),map=d.getElementById('b-map'); const mapBefore=!mini.classList.contains('hide'); map.click(); const mapAfter=!mini.classList.contains('hide');
   d.getElementById('b-shot').click();
-  await new Promise(resolve=>setTimeout(resolve,300));
+  // toBlob is async and slow under software rendering, so wait for the
+  // anchor rather than a fixed delay
+  for(let i=0;i<60&&!postcard;i++) await new Promise(r=>setTimeout(r,50));
   w.dispatchEvent(new w.KeyboardEvent('keydown',{key:'s',bubbles:true})); const speed=d.getElementById('b-speed').textContent;
   w.dispatchEvent(new w.KeyboardEvent('keydown',{key:'m',bubbles:true}));
   w.HTMLAnchorElement.prototype.click=original;

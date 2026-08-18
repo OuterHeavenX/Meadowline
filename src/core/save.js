@@ -1,10 +1,11 @@
 import { BUILDABLE } from '../buildings/buildings.js';
-import { S, idx, inBounds } from './state.js';
-import { WISH_TYPES, mileHit, rollWishes, setMileHit } from '../simulation/economy.js';
+import { S } from './state.js';
 import { recompute } from '../simulation/mood.js';
-import { toast } from '../ui/toolbar.js';
+import { WISH_TYPES, mileHit, rollWishes, setMileHit } from '../simulation/wishes.js';
+import { toast } from '../ui/notify.js';
 import { genWorld } from '../world/map.js';
 import { refreshPalette } from '../world/seasons.js';
+import { idx, inBounds } from '../world/tiles.js';
 
 /* ============================================================
    SAVE / LOAD  (guarded — falls back to a session-only game)

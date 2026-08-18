@@ -1,8 +1,9 @@
-import { SPANS } from '../buildings/buildings.js';
 import { H, W, clamp, hash2 } from '../core/constants.js';
-import { S, idx } from '../core/state.js';
+import { S } from '../core/state.js';
+import { SPANS } from '../transport/bridges.js';
 import { screen2world, world2screen } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
+import { idx } from '../world/tiles.js';
 
 /* ---------- minimap ---------- */
 export const elMini=document.getElementById("mini"), mm=document.getElementById("mm"), mg=mm.getContext("2d");

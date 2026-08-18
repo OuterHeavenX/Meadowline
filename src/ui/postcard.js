@@ -1,16 +1,9 @@
-import { ambientStart, ambientStop, blip } from '../audio/audio.js';
-import { save } from '../core/save.js';
 import { S } from '../core/state.js';
-import { toggleMap } from '../rendering/minimap.js';
 import { hover, render } from '../rendering/renderer.js';
 import { DPR, cv } from '../rendering/terrain.js';
-import { moodName, rollWishes, setMileHit } from '../simulation/economy.js';
-import { recompute } from '../simulation/mood.js';
-import { closeLook } from './panels.js';
-import { pickTool, toast } from './toolbar.js';
-import { genWorld } from '../world/map.js';
+import { moodName } from '../simulation/mood.js';
 import { seasonName } from '../world/seasons.js';
-import { refreshPalette } from '../world/seasons.js';
+import { toast } from './notify.js';
 
 /* ---------- postcard ---------- */
 export function postcard(){
@@ -42,28 +35,3 @@ export function postcard(){
   if(o.toBlob) o.toBlob(bl=>{ if(bl) done(URL.createObjectURL(bl),true); });
   else done(o.toDataURL("image/png"),false);
 }
-
-export const bSpeed=document.getElementById("b-speed"), bSound=document.getElementById("b-sound"),
-      bMap=document.getElementById("b-map"), bShot=document.getElementById("b-shot"),
-      bNew=document.getElementById("b-new");
-bMap.addEventListener("click",toggleMap);
-bShot.addEventListener("click",postcard);
-export function toggleSpeed(){ S.speed=S.speed===1?2:S.speed===2?4:1; bSpeed.textContent=S.speed+"\u00d7"; }
-export function toggleSound(){
-  S.muted=!S.muted;
-  bSound.classList.toggle("off",S.muted);
-  if(S.muted) ambientStop();
-  else { blip(520,0.08); ambientStart(); }
-}
-bSpeed.addEventListener("click",toggleSpeed);
-bSound.addEventListener("click",toggleSound);
-bSound.classList.add("off");
-bNew.addEventListener("click",()=>{
-  if(confirm("Start a brand new valley? This clears the town you've built.")){
-    genWorld((Math.random()*1e9)|0); setMileHit(0); S.granted=0; refreshPalette(); recompute(); rollWishes(); closeLook(); save(); toast("A fresh valley");
-  }
-});
-document.getElementById("b-start").addEventListener("click",()=>{
-  document.getElementById("veil").classList.add("hide");
-  pickTool("road");
-});
