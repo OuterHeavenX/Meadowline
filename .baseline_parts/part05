@@ -1,0 +1,168 @@
+);
+  g.closePath(); g.fill();
+  g.fillStyle="rgba(120,140,150,.5)";
+  g.fillRect(p.x-hw*0.5,topY+6*z,5*z,5*z);
+  if(dark>0.12) lights.push({x:p.x-hw*0.5,y:topY+6*z,w:5*z,h:5*z});
+}
+
+function drawPark(b,p){
+  const z=S.cam.z;
+  diamond(p.x,p.y,0.98); g.fillStyle=P.parkGrass; g.fill();
+  g.strokeStyle=P.path; g.lineWidth=3*z;
+  g.beginPath(); g.moveTo(p.x-14*z,p.y+1*z); g.lineTo(p.x+14*z,p.y-1*z); g.stroke();
+  // bench
+  g.fillStyle="#9a7d59";
+  g.fillRect(p.x-3*z,p.y+4*z,6*z,1.6*z);
+  g.fillRect(p.x-3*z,p.y+2.4*z,6*z,1.2*z);
+  const r=hash2(b.seed,4,8);
+  drawTree(p.x-9*z,p.y-3*z,b.seed+1,0.82);
+  drawTree(p.x+8*z,p.y+3*z,b.seed+2,r>0.5?0.95:0.7);
+  // flowers
+  for(let i=0;i<5;i++){
+    const a=hash2(b.seed,i,12)*TAU;
+    g.fillStyle=["#e56f8a","#efc75e","#e9e5d6"][i%3];
+    g.beginPath(); g.arc(p.x+Math.cos(a)*11*z,p.y+Math.sin(a)*5*z+3*z,1.3*z,0,TAU); g.fill();
+  }
+}
+
+function drawStation(b,p,dark){
+  const z=S.cam.z;
+  const topY=box(p.x,p.y,0.78,10,"#e9dfc9","#a89577","#c6b493");
+  const hw=TW/2*0.78*z, hh=TH/2*0.78*z;
+  // overhanging roof
+  g.fillStyle="#6f8fae";
+  g.beginPath();
+  g.moveTo(p.x,topY-hh-4*z); g.lineTo(p.x+hw+3*z,topY-4*z); g.lineTo(p.x,topY+hh-4*z); g.lineTo(p.x-hw-3*z,topY-4*z);
+  g.closePath(); g.fill();
+  g.fillStyle="#5d7b98";
+  g.fillRect(p.x-hw-3*z,topY-4*z,(hw+3*z)*2,2*z);
+  // platform clock, hung on the front wall
+  const cy=p.y-6*z;
+  g.fillStyle="#f4f0e2";
+  g.beginPath(); g.arc(p.x,cy,3.4*z,0,TAU); g.fill();
+  g.strokeStyle="#2b3d36"; g.lineWidth=1*z;
+  g.beginPath(); g.moveTo(p.x,cy); g.lineTo(p.x,cy-2.4*z); g.stroke();
+  g.beginPath(); g.moveTo(p.x,cy); g.lineTo(p.x+2*z,cy+0.4*z); g.stroke();
+  // warm platform lamp
+  g.fillStyle="rgba(150,160,150,.55)";
+  g.fillRect(p.x-hw*0.55,p.y-7*z,4*z,5*z);
+  if(dark>0.1) lights.push({x:p.x-hw*0.55,y:p.y-7*z,w:4*z,h:5*z,big:true});
+}
+
+function drawTrain(t){
+  const z=S.cam.z;
+  const cols=[["#c96a5c","#a8503f"],["#5d8fa8","#4a7389"],["#d0a94e","#ac8836"]];
+  const c=cols[t.hue];
+  const carAt=(k)=>{
+    if(k===0) return {x:t.fx,y:t.fy};
+    const i=Math.min(t.hist.length-1,k*9);
+    return t.hist[i];
+  };
+  for(let k=2;k>=0;k--){
+    const h=carAt(k);
+    if(!h) continue;
+    const p=proj(h.x,h.y);
+    g.fillStyle="rgba(30,44,38,.20)";
+    g.beginPath(); g.ellipse(p.x,p.y+2*z,11*z,5*z,0,0,TAU); g.fill();
+    const body=k===0?c[0]:"#e6dcc6";
+    const topY=box(p.x,p.y-3*z,0.5,k===0?11:9,shade(body,10),shade(body,-38),shade(body,-16));
+    // windows
+    g.fillStyle="rgba(120,150,165,.75)";
+    g.fillRect(p.x-5*z,p.y-11*z,3.2*z,3*z);
+    g.fillRect(p.x+1.6*z,p.y-11*z,3.2*z,3*z);
+    if(k===0){
+      // chimney puff
+      g.fillStyle=c[1];
+      g.fillRect(p.x-1.2*z,topY-3*z,2.4*z,3*z);
+      const ph=(S.t*1.5)%1;
+      g.fillStyle="rgba(244,240,226,"+(0.35*(1-ph))+")";
+      g.beginPath(); g.arc(p.x,topY-6*z-ph*12*z,(2+ph*4)*z,0,TAU); g.fill();
+    }
+  }
+}
+
+function drawCitizen(c){
+  const z=S.cam.z;
+  const fx=lerp(c.x,c.nx,c.p), fy=lerp(c.y,c.ny,c.p);
+  const p=proj(fx,fy);
+  const off=((c.bob*7)%1-0.5)*10*z;   // spread walkers across the road width
+  const bob=Math.abs(Math.sin(S.t*6+c.bob))*1.6*z;
+  g.fillStyle="rgba(30,44,38,.18)";
+  g.beginPath(); g.ellipse(p.x+off,p.y+2*z,2.6*z,1.3*z,0,0,TAU); g.fill();
+  g.fillStyle=c.col;
+  g.fillRect(p.x+off-1.5*z,p.y-5.4*z-bob,3*z,4*z);
+  g.fillStyle="#f0d9bd";
+  g.beginPath(); g.arc(p.x+off,p.y-6.8*z-bob,1.7*z,0,TAU); g.fill();
+}
+
+function drawPuff(p){
+  const z=S.cam.z, s=proj(p.x,p.y);
+  if(p.kind===1){
+    g.fillStyle="rgba(232,118,138,"+p.life+")";
+    const r=2.4*z, y=s.y-p.z*z;
+    g.beginPath();
+    g.moveTo(s.x,y+r);
+    g.bezierCurveTo(s.x-r*1.6,y-r*0.4,s.x-r*0.5,y-r*1.5,s.x,y-r*0.5);
+    g.bezierCurveTo(s.x+r*0.5,y-r*1.5,s.x+r*1.6,y-r*0.4,s.x,y+r);
+    g.fill();
+  } else {
+    g.fillStyle="rgba(244,240,226,"+(p.life*0.55)+")";
+    g.beginPath(); g.arc(s.x,s.y-p.z*z,(1.5+ (1-p.life)*3)*z,0,TAU); g.fill();
+  }
+}
+
+/* ---------- hover ghost ---------- */
+let hover={x:-1,y:-1,on:false};
+function drawGhost(){
+  if(!hover.on||S.tool==="move") return;
+  const{x,y}=hover;
+  if(!inBounds(x,y)) return;
+  const p=proj(x,y);
+  const ok=S.tool==="erase"?(!!S.grid[idx(x,y)]||!!S.natTree[idx(x,y)]):canPlace(S.tool,x,y).ok;
+  diamond(p.x,p.y,1.02);
+  g.fillStyle=ok?"rgba(244,240,226,.34)":"rgba(214,96,80,.34)";
+  g.fill();
+  g.strokeStyle=ok?"rgba(244,240,226,.85)":"rgba(214,96,80,.9)";
+  g.lineWidth=1.6*S.cam.z; g.stroke();
+  // radius preview for mood buildings
+  const rad=S.tool==="park"?4:S.tool==="cafe"?5:S.tool==="station"?6:0;
+  if(rad){
+    g.strokeStyle="rgba(244,240,226,.26)"; g.lineWidth=1.4*S.cam.z;
+    const c=[[-rad,-rad],[rad+1,-rad],[rad+1,rad+1],[-rad,rad+1]].map(o=>proj(x+o[0]-0.5,y+o[1]-0.5));
+    g.beginPath(); g.moveTo(c[0].x,c[0].y);
+    for(let i=1;i<4;i++) g.lineTo(c[i].x,c[i].y);
+    g.closePath(); g.stroke();
+  }
+}
+
+/* ---------- frame ---------- */
+function render(){
+  const dark=darkness();
+  // sky-ish backdrop, warmer by day
+  const sky=g.createLinearGradient(0,0,0,innerHeight);
+  const k=clamp(dark/0.62,0,1);
+  const topC=mix("#a9d4de","#38506b",k);
+  const botC=mix("#7fb277","#2b4038",k);
+  sky.addColorStop(0,topC); sky.addColorStop(1,botC);
+  g.fillStyle=sky; g.fillRect(0,0,innerWidth,innerHeight);
+
+  lights.length=0;
+  drawGround();
+  drawGhost();
+
+  // depth-sorted pass for everything with height
+  const items=[];
+  for(let i=0;i<S.grid.length;i++){
+    const b=S.grid[i];
+    if(b&&b.type!=="road"&&b.type!=="rail") items.push({d:b.x+b.y,k:0,b});
+  }
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++) if(S.natTree[idx(x,y)]) items.push({d:x+y,k:1,x,y});
+  for(const c of S.citizens) items.push({d:lerp(c.x,c.nx,c.p)+lerp(c.y,c.ny,c.p)+0.05,k:2,c});
+  for(const t of S.trains) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.1,k:3,t});
+  for(const p of S.puffs) items.push({d:p.x+p.y+0.2,k:4,p});
+  items.sort((a,b)=>a.d-b.d);
+
+  for(const it of items){
+    if(it.k===0){
+      const p=proj(it.b.x,it.b.y);
+      if(p.x<-120||p.x>innerWidth+120||p.y<-160||p.y>innerHe
