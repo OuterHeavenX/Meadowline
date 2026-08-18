@@ -1092,7 +1092,7 @@ TOOLS.forEach(t=>{
   const b=document.createElement("button");
   b.className="tool"+(t.id===S.tool?" on":"");
   b.dataset.id=t.id;
-  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[t.id]+'</svg>'+ 
+  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[t.id]+'</svg>'+
               '<i>'+t.name+'</i><u>'+(t.cost?t.cost:"&nbsp;")+'</u>';
   b.addEventListener("click",()=>pickTool(t.id));
   elTools.appendChild(b);
