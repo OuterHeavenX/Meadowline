@@ -11,6 +11,7 @@ import { weatherName } from '../world/weather.js';
 import { toast } from './notify.js';
 import { closeLook } from './panels.js';
 import { postcard } from './postcard.js';
+import { toggleLedger } from './ledger.js';
 import { pickTool } from './toolbar.js';
 
 export const S_day=document.getElementById("s-day"), S_time=document.getElementById("s-time"),
@@ -30,9 +31,11 @@ export function paintHud(){
 /* ---------- corner chips ---------- */
 export const bSpeed=document.getElementById("b-speed"), bSound=document.getElementById("b-sound"),
       bMap=document.getElementById("b-map"), bShot=document.getElementById("b-shot"),
-      bNew=document.getElementById("b-new");
+      bLedger=document.getElementById("b-ledger"), bNew=document.getElementById("b-new");
 bMap.addEventListener("click",toggleMap);
 bShot.addEventListener("click",postcard);
+bLedger.addEventListener("click",()=>toggleLedgerChip());
+export function toggleLedgerChip(){ bLedger.classList.toggle("off",!toggleLedger()); }
 export function toggleSpeed(){ S.speed=S.speed===1?2:S.speed===2?4:1; bSpeed.textContent=S.speed+"\u00d7"; }
 export function toggleSound(){
   S.muted=!S.muted;
@@ -43,6 +46,7 @@ export function toggleSound(){
 bSpeed.addEventListener("click",toggleSpeed);
 bSound.addEventListener("click",toggleSound);
 bSound.classList.add("off");
+bLedger.classList.add("off");
 bNew.addEventListener("click",()=>{
   if(confirm("Start a brand new valley? This clears the town you've built.")){
     genWorld((Math.random()*1e9)|0); setMileHit(0); S.granted=0; refreshPalette(); recompute(); rollWishes(); closeLook(); save(); toast("A fresh valley");

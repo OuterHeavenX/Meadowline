@@ -39,24 +39,32 @@ export const DAY=100;                // seconds per in-game day
 export const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
 export const TOOLS=[
-  {id:"move",  name:"Move",   cost:0,   key:"1", desc:"Drag to pan the valley. Scroll or pinch to zoom."},
-  {id:"road",  name:"Road",   cost:3,   key:"2", desc:"Homes need a road alongside them. Drag to draw \u2014 water becomes a bridge."},
-  {id:"rail",  name:"Rail",   cost:8,   key:"3", desc:"Draw a loop and trains will run it on their own. Crosses water too."},
-  {id:"house", name:"House",  cost:24,  key:"4", desc:"Four neighbours move in once they're happy."},
-  {id:"cafe",  name:"Caf\u00e9",   cost:55,  key:"5", desc:"Earns coins every day and cheers up the street."},
-  {id:"park",  name:"Park",   cost:40,  key:"6", desc:"The strongest mood lift, out to four tiles."},
-  {id:"tree",  name:"Trees",  cost:2,   key:"7", desc:"A small, cheap lift. Nice along a road."},
-  {id:"lamp",  name:"Lamp",   cost:9,   key:"8", desc:"A small lift that doubles after dark. Line them along a street."},
-  {id:"mill",  name:"Windmill",cost:95, key:"9", desc:"Grinds coin every day \u2014 most of all at harvest. Wants open ground."},
-  {id:"station",name:"Station",cost:110,key:"0", desc:"Must touch a rail tile. Lifts homes for six tiles."},
-  {id:"market",name:"Market", cost:130,key:"r", desc:"A hub for trade \u2014 lifts what every caf\u00e9 and bakery nearby takes."},
-  {id:"bakery",name:"Bakery", cost:80, key:"k", desc:"Bakes what the windmills grind. Wants a mill within four tiles."},
-  {id:"school",name:"School", cost:145,key:"c", desc:"Room for two more in every home it reaches, and a fine mood lift."},
-  {id:"dock",  name:"Dock",   cost:70, key:"d", desc:"Must touch water. Boats put out from here and sail the lake."},
-  {id:"look",  name:"Look",   cost:0,   key:"i", desc:"Tap anything to ask how it's doing, and why."},
-  {id:"erase", name:"Remove", cost:0,   key:"e", desc:"Clears a tile and refunds half the cost."}
+  {id:"road",  name:"Road",   cost:3,   key:"2", desc:"Homes need a road alongside them. Drag to draw \u2014 water becomes a bridge.", cat:"ways"},
+  {id:"rail",  name:"Rail",   cost:8,   key:"3", desc:"Draw a loop and trains will run it on their own. Crosses water too.", cat:"ways"},
+  {id:"station",name:"Station",cost:110,key:"0", desc:"Must touch a rail tile. Lifts homes for six tiles.", cat:"ways"},
+  {id:"dock",  name:"Dock",   cost:70, key:"d", desc:"Must touch water. Boats put out from here and sail the lake.", cat:"ways"},
+  {id:"house", name:"House",  cost:24,  key:"4", desc:"Four neighbours move in once they're happy.", cat:"homes"},
+  {id:"school",name:"School", cost:145,key:"c", desc:"Room for two more in every home it reaches, and a fine mood lift.", cat:"homes"},
+  {id:"cafe",  name:"Caf\u00e9",   cost:55,  key:"5", desc:"Earns coins every day and cheers up the street.", cat:"trade"},
+  {id:"market",name:"Market", cost:130,key:"r", desc:"A hub for trade \u2014 lifts what every caf\u00e9 and bakery nearby takes.", cat:"trade"},
+  {id:"bakery",name:"Bakery", cost:80, key:"k", desc:"Bakes what the windmills grind. Wants a mill within four tiles.", cat:"trade"},
+  {id:"mill",  name:"Windmill",cost:95, key:"9", desc:"Grinds coin every day \u2014 most of all at harvest. Wants open ground.", cat:"trade"},
+  {id:"park",  name:"Park",   cost:40,  key:"6", desc:"The strongest mood lift, out to four tiles.", cat:"green"},
+  {id:"tree",  name:"Trees",  cost:2,   key:"7", desc:"A small, cheap lift. Nice along a road.", cat:"green"},
+  {id:"lamp",  name:"Lamp",   cost:9,   key:"8", desc:"A small lift that doubles after dark. Line them along a street.", cat:"green"},
+  {id:"move",  name:"Move",   cost:0,   key:"1", desc:"Drag to pan the valley. Scroll or pinch to zoom.", cat:"mode"},
+  {id:"look",  name:"Look",   cost:0,   key:"i", desc:"Tap anything to ask how it's doing, and why.", cat:"mode"},
+  {id:"erase", name:"Remove", cost:0,   key:"e", desc:"Clears a tile and refunds half the cost.", cat:"mode"}
 ];
 export const COST={}; for(const t of TOOLS) COST[t.id]=t.cost;
+
+// The dock groups tools so sixteen of them still fit a phone.
+export const CATEGORIES=[
+  {id:"ways",  name:"Ways"},
+  {id:"homes", name:"Homes"},
+  {id:"trade", name:"Trade"},
+  {id:"green", name:"Green"}
+];
 
 export const ICONS={
   move:'<path d="M12 3v18M3 12h18M12 3l-2.4 2.4M12 3l2.4 2.4M12 21l-2.4-2.4M12 21l2.4-2.4M3 12l2.4-2.4M3 12l2.4 2.4M21 12l-2.4-2.4M21 12l2.4 2.4"/>',

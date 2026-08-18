@@ -9,7 +9,7 @@ export const S={
   pop:0, mood:0, homes:0,
   ctx:{parks:[],cafes:[],stations:[],houses:[],lamps:[],mills:[]},
   wx:{k:"clear",amt:0,target:0,next:70},
-  wishes:[],
+  wishes:[], log:[], history:[],
   cam:{x:0,y:0,z:1}
 };
 

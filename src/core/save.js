@@ -26,7 +26,8 @@ export function save(){
   store.set(KEY,JSON.stringify({
     v:2,seed:S.seed,coins:Math.floor(S.coins),day:S.day,dayT:S.dayT,b,woods,
     mile:mileHit,granted:S.granted||0,
-    wishes:S.wishes.map(w=>({k:w.k,t:w.t,g:w.g,r:w.r}))
+    wishes:S.wishes.map(w=>({k:w.k,t:w.t,g:w.g,r:w.r})),
+    log:S.log.slice(0,40), history:S.history.slice(-40)
   }));
 }
 export function applySave(d){
@@ -34,6 +35,8 @@ export function applySave(d){
   S.coins=d.coins; S.day=d.day; S.dayT=d.dayT;
   setMileHit(d.mile||0);
   S.granted=d.granted||0;
+  S.log=Array.isArray(d.log)?d.log.filter(e=>e&&typeof e.text==="string").slice(0,60):[];
+  S.history=Array.isArray(d.history)?d.history.filter(h=>h&&typeof h.day==="number").slice(-40):[];
   if(typeof d.woods==="string"&&d.woods.length===S.natTree.length){
     for(let i=0;i<d.woods.length;i++) S.natTree[i]=d.woods[i]==="1"?1:0;
   }

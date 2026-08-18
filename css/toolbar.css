@@ -8,6 +8,27 @@
   }
   .tools{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:1px}
   .tools::-webkit-scrollbar{display:none}
+
+  /* category tabs, so sixteen tools still fit a phone */
+  .cats{display:flex;gap:3px;padding:0 2px 6px;justify-content:center}
+  .cat{
+    border:0;border-radius:999px;padding:4px 11px;cursor:pointer;font:inherit;
+    font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    background:transparent;color:var(--cream-dim);
+    transition:background .12s ease,color .12s ease;
+  }
+  .cat:hover{background:rgba(244,240,226,.08);color:var(--cream)}
+  .cat.on{background:rgba(244,240,226,.16);color:var(--cream)}
+
+  .dockrow{display:flex;align-items:stretch;gap:6px}
+  .modes{
+    display:flex;gap:2px;flex:0 0 auto;padding-left:6px;
+    box-shadow:inset 1px 0 0 rgba(244,240,226,.13);
+  }
+  .modes .tool{width:42px}
+  .modes .tool i{display:none}
+  .modes .tool u{display:none}
+  .modes .tool svg{width:22px;height:22px}
   .dock::after{
     content:"";position:absolute;top:0;bottom:0;right:0;width:30px;pointer-events:none;
     background:linear-gradient(to right,rgba(29,43,38,0),rgba(29,43,38,.95));

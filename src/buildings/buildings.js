@@ -1,3 +1,4 @@
+import { note } from '../simulation/chronicle.js';
 import { COST, DIRS } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
@@ -39,6 +40,14 @@ export function canPlace(kind,x,y){
   return {ok:true};
 }
 
+// the first of each kind is worth writing down
+const NOTED={};
+const NOTE_NAMES={cafe:"The first caf\u00e9 opened",park:"The first park was laid out",
+  station:"The first station opened",mill:"The first windmill turned",
+  market:"The first market day",bakery:"The first bakery lit its oven",
+  school:"The first school took pupils",dock:"The first dock was built",
+  rail:"The first rail was laid",house:"The first house went up"};
+
 export function place(kind,x,y){
   const r=canPlace(kind,x,y);
   if(!r.ok){ if(r.why) services.hint(r.why,true); return false; }
@@ -46,6 +55,7 @@ export function place(kind,x,y){
   S.coins-=costOf(kind,x,y);
   S.natTree[i]=0;
   S.grid[i]={type:kind,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:0,grow:0,mood:50,linked:false};
+  if(NOTE_NAMES[kind]&&!NOTED[kind]){ NOTED[kind]=1; note(NOTE_NAMES[kind]); }
   services.puff(x,y);
   services.blip(kind==="house"?520:kind==="park"?400:kind==="mill"?300:340);
   return true;

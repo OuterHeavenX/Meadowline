@@ -1,3 +1,4 @@
+import { note } from './chronicle.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { countBridges } from '../transport/bridges.js';
@@ -79,6 +80,7 @@ export function checkWishes(){
       S.coins+=w.r;
       S.granted=(S.granted||0)+1;
       services.toast("Wish granted \u00b7 +"+w.r+" coins","gold");
+      note("Wish granted: "+w.t.replace(/<[^>]+>/g,""));
       services.blip(784,0.16,"triangle");
       granted=true;
     }
@@ -96,6 +98,7 @@ export function setMileHit(value){ mileHit=value; }
 export function checkMiles(){
   while(mileHit<MILES.length&&S.pop>=MILES[mileHit]){
     services.toast(MILES[mileHit]+" citizens call this home");
+    note(MILES[mileHit]+" citizens call this home");
     mileHit++;
   }
 }

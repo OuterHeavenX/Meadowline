@@ -23,6 +23,8 @@ import { paintWishes } from '../ui/wishes.js';
 import { genWorld } from '../world/map.js';
 import { refreshPalette } from '../world/seasons.js';
 import { activeFestival } from '../world/festivals.js';
+import { note, recordDay } from '../simulation/chronicle.js';
+import { paintLedger } from '../ui/ledger.js';
 import { seedBirds, seedClouds, updateBirds, updateClouds, updateDrops, updateMotes, updateWeather } from '../world/weather.js';
 
 /* ============================================================
@@ -30,7 +32,7 @@ import { seedBirds, seedClouds, updateBirds, updateClouds, updateDrops, updateMo
    ============================================================ */
 export let last=performance.now();
 configureServices({blip,puff,hearts,hint,toast,paintTools,paintWishes,closeLook});
-let simClock=0, uiClock=0, lookClock=0, miniClock=0, saveClock=0;
+let simClock=0, uiClock=0, lookClock=0, miniClock=0, saveClock=0, ledgerClock=0;
 export function frame(now){
   let dt=(now-last)/1000; last=now;
   dt=Math.min(dt,0.05);
@@ -42,8 +44,9 @@ export function frame(now){
     S.dayT+=sdt/DAY;
     if(S.dayT>=1){
       S.dayT-=1; S.day++; payday();
+      recordDay();
       const fest=activeFestival();
-      if(fest) toast(fest.name+" \u00b7 the valley is dressed for it","gold");
+      if(fest){ toast(fest.name+" \u00b7 the valley is dressed for it","gold"); note(fest.name); }
     }
     simClock+=sdt;
     if(simClock>0.9){ simClock=0; recompute(); checkMiles(); checkWishes(); }
@@ -64,6 +67,7 @@ export function frame(now){
   uiClock+=dt; if(uiClock>0.2){ uiClock=0; paintHud(); paintTools(); paintWishes(); }
   lookClock+=dt; if(lookClock>0.7){ lookClock=0; refreshLook(); }
   miniClock+=dt; if(miniClock>0.45){ miniClock=0; drawMini(); }
+  ledgerClock+=dt; if(ledgerClock>1.1){ ledgerClock=0; paintLedger(); }
   tickHint(dt);
   saveClock+=dt; if(saveClock>6){ saveClock=0; save(); }
 

@@ -23,7 +23,7 @@ export function genWorld(seed){
   S.citizens.length=0; S.trains.length=0; S.boats.length=0; S.puffs.length=0;
   S.coins=340; S.day=1; S.dayT=0.24; S.t=0;
   S.wx={k:"clear",amt:0,target:0,next:70}; drops.length=0;
-  S.wishes.length=0;
+  S.wishes.length=0; S.log.length=0; S.history.length=0;
   seedClouds(); seedBirds();
   centreCamera();
 }

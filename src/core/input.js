@@ -8,7 +8,7 @@ import { recompute } from '../simulation/mood.js';
 import { checkWishes } from '../simulation/wishes.js';
 import { hint } from '../ui/notify.js';
 import { closeLook, inspect } from '../ui/panels.js';
-import { toggleSound, toggleSpeed } from '../ui/hud.js';
+import { toggleLedgerChip, toggleSound, toggleSpeed } from '../ui/hud.js';
 import { postcard } from '../ui/postcard.js';
 import { pickTool } from '../ui/toolbar.js';
 import { screen2world, world2screen } from '../world/map.js';
@@ -96,6 +96,7 @@ addEventListener("keydown",e=>{
   if(k==="s") toggleSpeed();
   if(k==="b") toggleMap();
   if(k==="p") postcard();
+  if(k==="l") toggleLedgerChip();
   if(k==="escape") closeLook();
   if(k===" "){ e.preventDefault(); S.running=!S.running; hint(S.running?"Resumed":"Paused",true); }
   const pan=60;
