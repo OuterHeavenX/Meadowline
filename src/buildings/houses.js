@@ -1,15 +1,13 @@
 import { hash2 } from '../core/constants.js';
-import { SCHOOL_MOOD, SCHOOL_ROOM } from './schools.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { invalidateServices } from '../simulation/civic-services.js';
+import { housingCapacity } from '../simulation/housing.js';
 
-// How many can live under one roof: four, or six where a school reaches.
-// This legacy capacity perk is preserved while Education becomes the first real service.
-export function capFor(h){
-  const schooled=S.ctx.schools.some(k=>Math.abs(k.x-h.x)<=SCHOOL_MOOD.r&&Math.abs(k.y-h.y)<=SCHOOL_MOOD.r);
-  return 4+(schooled?SCHOOL_ROOM:0);
-}
+// Housing 2.0 makes the residential tier authoritative. Existing households
+// above the new tier cap are grandfathered by housingCapacity, so nobody is
+// evicted during migration and growth simply waits for the home to improve.
+export function capFor(h){ return housingCapacity(h); }
 
 export function growth(dt){
   for(const h of S.ctx.houses){
