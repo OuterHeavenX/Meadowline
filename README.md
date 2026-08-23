@@ -6,136 +6,187 @@ The project runs as native ES modules on a 2D canvas. There is no React app, no 
 
 ## Current development state
 
-Active milestone branch: `feature/living-city-foundation`
+Active milestone branch: `feature/housing-2`
 
-Validated foundation branch: `agent/architecture-refactor`
+Validated parent branch: `feature/living-city-foundation`
 
-Current milestone: **Living City Foundation / School 2.0**
+Architectural foundation: `agent/architecture-refactor`
 
-This branch now contains the first real civic-service system in Meadowline:
+Current milestone: **Housing 2.0 / Neighborhood Desirability / Residential Evolution**
+
+PR #1 for the Living City Foundation remains draft and unmerged. Housing 2.0 is intentionally being developed on top of that validated branch without modifying `main`.
+
+### Living City Foundation already established
 
 - centralized building registry
 - reusable civic-service framework
 - persistent household Education
-- School coverage, demand, finite capacity and overload
-- 7-tile Education-service radius
+- finite School demand/capacity/assignment
+- 7-tile School Education-service radius
 - 28-student School capacity
-- deterministic household-to-School assignment
 - gradual Education progression
-- household and School inspection diagnostics
-- green/yellow School placement feedback
+- household and School inspection
+- green/amber School benefit feedback
 - citywide Education metrics
 - Save Schema V3 with v1/v2 migration
 - mobile build/pinch arbitration repair
-- developer-only diagnostics
-- pedestrian household-count stabilization
-- Housing 2.0 readiness hooks
+- developer diagnostics
+- representative citizens with per-household visible-count protection
 
-The owner has physically tested the School system on iPhone and confirmed that School capacity, overload, household Education status, the 7-tile service radius, and pinch-to-zoom without accidental School placement are working on-device.
+Core School 2.0 behavior has been physically demonstrated on the owner's iPhone, including real overload, `Waiting for school space`, Education growth, 7-tile reach and pinch-to-zoom without accidental School placement.
 
-## Living City direction
+## Housing 2.0
 
-Meadowline is moving away from simple `Building → bonus` relationships.
+Housing is now the second Living City system.
 
-The target simulation pattern is:
+The intended feedback loop is:
 
-Building
-→ Service
-→ Coverage
-→ Capacity
-→ Household Need
-→ Behavior / Outcome
-→ Neighborhood Consequence
-→ City Growth
+Road Access + Mood + Education + Neighborhood Desirability
+→ Upgrade Readiness
+→ Residential Evolution
+→ Higher Capacity
+→ Higher Residential Tax Value
+→ More Residents
+→ More School Demand
+→ Greater Civic Pressure
 
-School 2.0 is the first proof of this architecture.
+### Residential tiers
 
-### School 2.0
+The first three tiers are:
 
-Current Education-service defaults:
+- **Cottage** — 4-resident base capacity, normal tax value
+- **Town Home** — 6-resident base capacity, 1.25× residential tax value
+- **Established Home** — 8-resident base capacity, 1.55× residential tax value
 
-- School cost: 145 coins
-- Education-service radius: 7 tiles
-- Student capacity: 28
-- Household demand: roughly half household population, rounded up
-- Education scale: 0–100
-- Progression: gradual while served
-- Lost coverage does not erase Education already earned
-- Overloaded Schools stop at real capacity rather than serving unlimited demand
+The player still places a single **House** tool. Residential tiers evolve automatically; they are not separate toolbar items.
 
-The older School mood and +2 resident-capacity proximity perk remain local at 5 tiles for compatibility. The new 7-tile Education service is intentionally separate so civic reach can grow without making every legacy School bonus too strong.
+Upgrade requirements currently use only real systems:
 
-Future civic buildings will each have independently configurable reach. Police, Fire and Healthcare are expected to use larger practical service areas than small local amenities so the map does not become crowded with duplicate civic buildings.
+**Cottage → Town Home**
+- road access
+- Mood 65+
+- Education 15+
+- Desirability 45+
+- roughly 50 seconds of sustained qualifying simulation time, with a small deterministic per-house variation
 
-## Existing game systems
+**Town Home → Established Home**
+- road access
+- Mood 78+
+- Education 35+
+- Desirability 62+
+- roughly 85 seconds of sustained qualifying simulation time, with a small deterministic per-house variation
 
-The current game still includes:
+Progress pauses when conditions are lost rather than being erased. Existing higher-tier homes do not downgrade.
 
-- 44×44 seeded isometric world
-- ponds and natural trees
-- roads and rails
-- automatic water bridges
-- homes
-- cafés
+### Legacy School capacity decision
+
+The old School behavior gave nearby homes +2 resident capacity.
+
+Housing 2.0 retires that rule as a source of **new** population capacity because Education is now the School's real civic role and residential tier should own residential density.
+
+Migration is intentionally gentle: an existing household that already contains more residents than its new tier base is grandfathered. Nobody is evicted simply because the capacity model changed; further growth waits until the home reaches an appropriate tier.
+
+The older 5-tile School mood effect remains intact.
+
+## Neighborhood Desirability
+
+Desirability is separate from Mood.
+
+Mood describes how residents feel now. Desirability describes how attractive the location is for long-term residential development.
+
+The current 0–100 model uses only systems that really exist, including:
+
+- road access
+- current Mood
+- Education access
+- household Education
 - parks
-- planted trees
-- lamps
-- windmills
-- stations
-- docks
-- markets
-- bakeries
-- schools
-- citizens and routing
-- trains
-- boats
-- mood
-- economy
-- day/night
-- seasons
-- weather
-- festivals
-- wishes
-- ledger and chronicle
-- minimap
-- Look inspection
-- placement/removal/refunds
-- local persistence
-- mobile pan and pinch zoom
+- cafés
+- station access
+- street lighting
+- trees and water
+- local crowding pressure
 
-## Citizen representation
+Player-facing labels are:
 
-Visible pedestrians represent the city population without turning every resident into a heavyweight saved agent.
+- Quiet Start
+- Developing
+- Pleasant
+- Desirable
+- Highly Desirable
 
-Citizens still route between homes, work and leisure destinations. A restrained portion of morning activity can route toward an assigned School.
+Future Safety, Healthcare, Employment and Prosperity can contribute later, but they are not shown or simulated yet.
 
-A stabilization fix now ensures a household can never report more visible residents out on the streets than actually live there.
+## House inspection 3.0
+
+The Look panel now explains:
+
+- household residents/capacity
+- Mood and existing Mood reasons
+- Education
+- serving School and capacity state
+- Neighborhood Desirability
+- current residential tier
+- next residential tier
+- upgrade progress
+- each real upgrade requirement
+- whether the home is waiting or actively growing
+
+The panel remains scrollable on mobile rather than shrinking text to fit.
+
+## Civic coverage visualization
+
+Civic service placement now has a reusable visualization layer.
+
+When placing a School:
+
+- a **green service boundary** shows the actual geographic Education-service field
+- a very light green fill keeps the service area readable without hiding the city
+- green home markers show strong useful service
+- amber/yellow home markers show expected capacity pressure
+- invalid placement still uses the existing red treatment
+
+The visual boundary reads the provider radius from the building registry. It is not hard-coded to School and is designed to be reused by future Police, Fire and Healthcare providers.
+
+For the current Chebyshev School radius of 7, the full service field contains all tiles whose centers are within 7 tiles of the School; the preview therefore matches the simulation exactly rather than drawing a misleading decorative circle.
+
+## Housing visuals
+
+Residential tiers are designed to remain visible on a phone through silhouette rather than microscopic detail:
+
+- Cottage: smallest body/roof profile
+- Town Home: wider/taller form, extra upper window and visible dormer
+- Established Home: largest silhouette, additional upper windows and small landscaping/fence treatment
+
+Seeded wall/roof variation remains, so higher tiers do not all become identical.
+
+Homes with active upgrade progress receive a restrained growth chevron rather than permanent map clutter.
 
 ## Save system
 
 Current key: `meadowline.v3`
 
-Save V3 stores extensible building objects and building-specific state, including household Education and School level state.
+Housing 2.0 intentionally remains inside V3. House state can now persist:
 
-V1 and V2 saves remain supported and migrate with safe defaults. Malformed optional state or unknown building entries are skipped defensively instead of crashing or wiping the city.
+- `education`
+- `housingTier`
+- `upgradeProgress`
+- `desirability`
+- bounded future optional metadata
 
-## Mobile controls
+Existing V1, V2 and earlier V3 worlds receive safe Tier 1 defaults. Invalid housing tier/progress/desirability values are clamped defensively rather than crashing a save.
 
-A normal building tap is committed only after a valid single-pointer tap completes. If a second finger begins a pinch gesture, pending building placement is cancelled first.
+## Performance model
 
-This prevents the old failure mode where selecting School and starting a two-finger zoom could accidentally place a School.
+Housing evolution is not calculated at 60 FPS.
 
-Road, Rail, Tree and Remove tools still support paint-drag behavior.
+It runs on the existing low-frequency Living City simulation tick. Civic services continue to use cached/event-driven recomputation, and Housing invalidates service demand only when population/tier changes require it.
 
-## Developer diagnostics
+Developer diagnostics (`?debug=1`) now also report housing evaluations, residential upgrades and desirability recomputes.
 
-Use:
+## Existing game systems preserved
 
-`?debug=1`
-
-The developer overlay includes FPS/frame timing, simulation/render timing, grid/entity counts, service-provider/recompute information, route-search counts and save payload size.
-
-Normal players do not see diagnostics.
+The current game still includes the 44×44 seeded world, ponds, natural trees, roads, rails, water bridges, homes, cafés, parks, trees, lamps, windmills, stations, docks, markets, bakeries, Schools, citizens, trains, boats, Mood, economy, day/night, seasons, weather, festivals, wishes, Ledger, minimap, Look, placement/removal/refunds, persistence and mobile pan/pinch controls.
 
 ## Running locally
 
@@ -145,9 +196,7 @@ From the repository root:
 python3 -m http.server 8000
 ```
 
-Open:
-
-`http://localhost:8000/`
+Open `http://localhost:8000/`.
 
 Regression page:
 
@@ -159,67 +208,39 @@ Module hygiene:
 node tests/module-hygiene.mjs
 ```
 
-## Next major milestone — Housing 2.0
+## Validation policy
 
-The next planned milestone is intended to make neighborhoods visibly evolve instead of simply accumulating houses.
+Automated validation and physical iPhone acceptance are separate gates.
 
-Core relationship:
+Housing 2.0 must prove on the physical phone that:
 
-Road Access
-+ Mood
-+ Education
-+ Existing Household State
-+ Neighborhood Desirability
-→ Upgrade Readiness
-→ Residential Evolution
-→ Higher Capacity
-→ Higher Revenue
-→ Greater Service Demand
+- tier silhouettes are readable
+- Look explains desirability and growth clearly
+- a qualifying home evolves gradually
+- upgraded capacity allows population growth
+- School demand reacts to denser homes
+- the green School service boundary is accurate and readable
+- pinch with School selected still cannot accidentally place a School
+- Save V3 preserves housing state
+- evolved neighborhoods remain smooth
 
-The first Housing 2.0 pass should focus only on systems Meadowline actually has today. It should not show fake Police, Fire or Healthcare requirements before those systems exist.
+See `docs/IPHONE_ACCEPTANCE.md` for the exact checklist.
 
-Likely first-phase goals:
+## Roadmap after Housing 2.0
 
-- introduce multiple residential tiers
-- preserve existing household identity and Education during upgrades
-- create a reusable residential-upgrade definition structure
-- calculate clear upgrade readiness from road access, mood and Education
-- provide understandable Look-panel explanations
-- add visible but restrained house evolution
-- increase resident capacity and tax value with upgraded housing
-- increase School demand naturally as neighborhoods become denser
-- prevent instant chain-upgrades by using progression time/cooldowns or another gentle pacing model
-- prepare Neighborhood Desirability as an extensible derived value
+After physical validation, the next move should be chosen deliberately rather than started automatically. Current candidates are:
 
-Housing 2.0 should become the first major consumer of the Living City service architecture.
+- Progressive Land & City Growth
+- Police / Crime / Jail
+- Recreation 2.0
+- Civic Service Upgrades, beginning with School Level 2
 
-## Later roadmap
+Longer-term plans still include Fire, Healthcare, sickness/medicine, medical research/evolving viruses, Employment/Prosperity, deeper economy, road-over-rail crossings and large-world architecture.
 
-Planned systems remain roadmap-only until implemented:
-
-- progressive land unlocks
-- neighborhood identities
-- Police + Crime
-- arrests and Jail
-- Fire Departments and fires
-- Hospitals and healthcare
-- sickness and medicine
-- medical research
-- evolving viruses
-- employment and prosperity
-- deeper economy
-- road-over-rail crossings
-- larger-world architecture
-- spatial/chunk systems
-- scalable pathfinding and route caching
-- much larger representational NPC populations
-
-See `ROADMAP.md` and `docs/LIVING_CITY_FOUNDATION.md` for the detailed development path.
+See `ROADMAP.md`, `docs/LIVING_CITY_FOUNDATION.md` and `docs/HOUSING_2.md` for the detailed development path.
 
 ## Product principles
 
 Meadowline should remain peaceful, understandable, visually charming, mobile friendly, rewarding to observe, progressively deeper and never unnecessarily punishing.
 
-Problems should create interesting planning decisions, not punishment spirals.
-
-The objective of each milestone is not simply to ship more visible features. It is to make the next group of systems easier to add cleanly.
+Problems should create interesting planning decisions, not punishment spirals. The purpose of each milestone is to make future systems easier to add cleanly.
