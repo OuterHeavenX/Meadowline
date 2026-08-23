@@ -4,7 +4,7 @@ import { COST, H, W } from '../src/core/constants.js';
 import { KEY, KEY_OLD, KEY_V2, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
 import { advanceEducation, educationAssignment, getEducationLevel, invalidateServices, recomputeServices, schoolStats } from '../src/simulation/civic-services.js';
-import { spawnCitizen } from '../src/simulation/citizens.js';
+import { outFrom, spawnCitizen, updateCitizens } from '../src/simulation/citizens.js';
 import { evalHouse, recompute } from '../src/simulation/mood.js';
 import { updateTrains } from '../src/simulation/trains.js';
 import { rollWishes } from '../src/simulation/wishes.js';
@@ -30,6 +30,7 @@ genWorld(24681357); refreshPalette(); recompute(); rollWishes();
 check('new game',S.coins===340&&S.day===1&&S.grid.length===W*H);
 
 check('building registry school exists',BUILDINGS.school?.service?.type==='education'&&BUILDABLE.school===1);
+check('school civic radius has neighborhood reach',BUILDINGS.school.service.radius===7);
 check('building registry costs remain correct',BUILDINGS.road.cost===3&&BUILDINGS.house.cost===24&&BUILDINGS.school.cost===145&&COST.school===145);
 
 const land=firstTile(false), water=firstTile(true);
@@ -48,6 +49,9 @@ const hx=20,hy=20; put('house',hx,hy,4,{education:10}); put('road',hx+1,hy);
 recompute(); const mood=evalHouse(S.grid[idx(hx,hy)]); spawnCitizen();
 check('building and mood',Number.isFinite(mood)&&S.grid[idx(hx,hy)].linked);
 check('citizen movement setup',S.citizens.length>0);
+for(let i=0;i<12;i++) spawnCitizen();
+updateCitizens(0);
+check('household visible citizens never exceed residents',outFrom(hx,hy)<=S.grid[idx(hx,hy)].pop);
 
 // School 2.0: coverage, finite capacity and gradual persistent education.
 put('school',22,20,0,{level:1,futureTag:'keep-me',futureMeta:{funding:2}});
@@ -65,7 +69,7 @@ check('uncovered education does not improve',getEducationLevel(uncovered)===outs
 
 // Add enough nearby demand to exceed one school's 28-seat capacity.
 let added=0;
-for(let y=16;y<=24&&added<15;y++) for(let x=17;x<=27&&added<15;x++){
+for(let y=14;y<=26&&added<15;y++) for(let x=15;x<=29&&added<15;x++){
   if((x===22&&y===20)||S.grid[idx(x,y)]) continue;
   put('house',x,y,4,{education:0}); added++;
 }
