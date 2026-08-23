@@ -8,6 +8,7 @@ import { toast } from '../ui/notify.js';
 import { genWorld } from '../world/map.js';
 import { refreshPalette } from '../world/seasons.js';
 import { idx, inBounds } from '../world/tiles.js';
+import { sanitizeProgression } from '../progression/city-growth.js';
 
 /* ============================================================
    SAVE / LOAD  (guarded — falls back to a session-only game)
@@ -18,9 +19,6 @@ export const store={
   set(k,v){try{localStorage.setItem(k,v);}catch(e){}}
 };
 
-// V3 deliberately preserves small JSON-safe unknown fields so future systems can
-// add optional building metadata without forcing a schema bump for every property.
-// The bounds keep a corrupt save from exploding localStorage or recursive parsing.
 function safeStateValue(v,depth=0){
   if(v===null||typeof v==="string"||typeof v==="boolean") return v;
   if(typeof v==="number") return Number.isFinite(v)?v:undefined;
@@ -58,7 +56,7 @@ function cleanState(type,state){
     out.upgradeProgress=Number.isFinite(state.upgradeProgress)?Math.max(0,Math.min(1,state.upgradeProgress)):Math.max(0,Math.min(1,Number(out.upgradeProgress)||0));
     out.desirability=Number.isFinite(state.desirability)?Math.max(0,Math.min(100,state.desirability)):Math.max(0,Math.min(100,Number(out.desirability)||0));
   }
-  if(type==="school") out.level=Number.isFinite(state.level)?Math.max(1,Math.floor(state.level)):Math.max(1,Math.floor(Number(out.level)||1));
+  if(type==="school") out.level=Number.isFinite(state.level)?Math.max(1,Math.min(2,Math.floor(state.level))):1;
   return out;
 }
 function packBuilding(x){
@@ -79,6 +77,7 @@ export function save(){
   for(let i=0;i<S.natTree.length;i++) woods+=S.natTree[i]?"1":"0";
   const payload=JSON.stringify({
     v:3,seed:S.seed,coins:Math.floor(S.coins),day:S.day,dayT:S.dayT,b,woods,
+    cityProgress:sanitizeProgression(S.cityProgress,false),
     mile:mileHit,granted:S.granted||0,
     wishes:S.wishes.map(w=>({k:w.k,t:w.t,g:w.g,r:w.r})),
     log:S.log.slice(0,40), history:S.history.slice(-40)
@@ -97,10 +96,13 @@ function unpackEntry(entry){
 }
 
 export function applySave(d){
-  genWorld(Number.isFinite(d.seed)?d.seed:S.seed); // rebuild terrain from the same seed
+  genWorld(Number.isFinite(d.seed)?d.seed:S.seed);
   S.coins=Number.isFinite(d.coins)?d.coins:340;
   S.day=Number.isFinite(d.day)?Math.max(1,Math.floor(d.day)):1;
   S.dayT=Number.isFinite(d.dayT)?Math.max(0,Math.min(1,d.dayT)):0.24;
+  // Any save created before City Growth has already enjoyed full-map access.
+  // Never infer parcel mode for it: legacy-open is the safe migration default.
+  S.cityProgress=sanitizeProgression(d.cityProgress,!d.cityProgress);
   setMileHit(d.mile||0);
   S.granted=d.granted||0;
   S.log=Array.isArray(d.log)?d.log.filter(e=>e&&typeof e.text==="string").slice(0,60):[];
@@ -120,7 +122,6 @@ export function applySave(d){
   recompute();
   invalidateServices();
   recomputeServices(true);
-  // saved wishes come back as they were; anything unrecognised is re-rolled
   S.wishes=(d.wishes||[]).filter(w=>w&&WISH_TYPES[w.k]&&w.g>0)
                          .map(w=>({k:w.k,t:String(w.t),g:w.g,r:w.r|0}))
                          .slice(0,2);
