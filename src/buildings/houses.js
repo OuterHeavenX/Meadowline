@@ -2,8 +2,10 @@ import { hash2 } from '../core/constants.js';
 import { SCHOOL_MOOD, SCHOOL_ROOM } from './schools.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
+import { invalidateServices } from '../simulation/civic-services.js';
 
 // How many can live under one roof: four, or six where a school reaches.
+// This legacy capacity perk is preserved while Education becomes the first real service.
 export function capFor(h){
   const schooled=S.ctx.schools.some(k=>Math.abs(k.x-h.x)<=SCHOOL_MOOD.r&&Math.abs(k.y-h.y)<=SCHOOL_MOOD.r);
   return 4+(schooled?SCHOOL_ROOM:0);
@@ -12,13 +14,17 @@ export function capFor(h){
 export function growth(dt){
   for(const h of S.ctx.houses){
     const cap=capFor(h);
-    if(!h.linked){ h.grow=0; if(h.pop>0&&Math.random()<dt*0.05) h.pop--; continue; }
+    if(!h.linked){
+      h.grow=0;
+      if(h.pop>0&&Math.random()<dt*0.05){ h.pop--; invalidateServices(); }
+      continue;
+    }
     if(h.pop<cap&&h.mood>=62){
       h.grow+=dt*(h.mood-55)/60;
-      if(h.grow>=6){ h.grow=0; h.pop++; services.hearts(h.x,h.y); }
+      if(h.grow>=6){ h.grow=0; h.pop++; invalidateServices(); services.hearts(h.x,h.y); }
     } else if(h.mood<32&&h.pop>0){
       h.grow-=dt*0.4;
-      if(h.grow<-8){ h.grow=0; h.pop--; }
+      if(h.grow<-8){ h.grow=0; h.pop--; invalidateServices(); }
     } else h.grow*=(1-dt*0.1);
   }
 }
