@@ -1,24 +1,20 @@
-# Meadowline Housing 2.0 — Physical iPhone Acceptance
+# Meadowline — Physical iPhone / iPad Acceptance
 
-Branch: `feature/housing-2`
+This is the canonical device-acceptance document for Meadowline milestones.
 
-Parent branch: `feature/living-city-foundation`
-
-This checklist separates behavior already physically demonstrated in the Living City / School 2.0 pass from new Housing 2.0 behavior that still requires deliberate device testing.
-
-Automated/browser validation does **not** replace physical-device approval.
+Automated/browser validation does **not** replace physical-device approval. A checked physical item means the owner actually observed it on an iPhone/iPad; CI results belong in the automated-validation section instead.
 
 ---
 
-# Previously confirmed on the owner's iPhone
+## Previously physically proven — Living City / School 2.0
 
-These items were physically observed on the Living City Foundation branch and must not regress:
+These behaviors were observed on an owner iPhone before the production merge and remain permanent regression requirements:
 
 - [x] Meadowline loads successfully in the live mobile build.
 - [x] Core city renders in portrait orientation.
 - [x] School inspection is readable.
 - [x] School reports served / capacity, demand, utilization and homes served.
-- [x] School capacity remains bounded at 28 / 28.
+- [x] Level 1 School capacity remains bounded at 28 / 28.
 - [x] Demand may exceed 28 without served count exceeding capacity.
 - [x] Overloaded School reports `At capacity`.
 - [x] Household inspection shows Education and serving School.
@@ -28,212 +24,231 @@ These items were physically observed on the Living City Foundation branch and mu
 - [x] Two-finger pinch with School selected does not accidentally place a School.
 - [x] The observed visible-pedestrian household over-count was repaired.
 
-These checks remain regression requirements on `feature/housing-2` even though they were proven on the parent branch.
+---
+
+## Implemented on production main — Housing 2.0 regression surface
+
+Housing 2.0 is part of `main` through PR #3. Its branch automation was green before release. These behaviors must continue to work while City Growth is tested:
+
+- [ ] Cottage / Town Home / Established Home silhouettes remain readable at normal phone zoom.
+- [ ] House Look remains scrollable and readable around 390–430 CSS px wide.
+- [ ] Residents / capacity are correct for the current housing tier.
+- [ ] Mood reasons remain understandable.
+- [ ] Education and School state remain present.
+- [ ] Neighborhood Desirability value and label remain present.
+- [ ] Current and next residential tiers are shown correctly.
+- [ ] Upgrade progress and road/Mood/Education/Desirability requirements update correctly.
+- [ ] Good conditions advance residential growth.
+- [ ] Lost conditions pause rather than erase earned progress.
+- [ ] Existing residents are not evicted by capacity migration.
+- [ ] Denser/upgraded Housing increases School demand.
+- [ ] Green School coverage visualization still matches the real service area.
+
+These are regression checks in the City Growth device pass; they are not newly invented City Growth behavior.
 
 ---
 
-# Housing 2.0 — required physical checks
+# City Growth 1.0 — physical acceptance pending
 
-## 1. Boot and migration safety
+Branch:
 
-- [ ] Open the Housing 2.0 branch build with an existing Living City save.
-- [ ] No white page or startup exception appears.
-- [ ] Existing roads, rails, buildings, Schools and landscape remain.
-- [ ] Existing population remains.
-- [ ] Existing coins remain.
-- [ ] Existing household Education remains.
-- [ ] Existing School demand/capacity recomputes sensibly.
-- [ ] Existing households are not evicted because Housing 2.0 retired the old School +2 growth-capacity rule.
-- [ ] A grandfathered household above its tier base remains intact after load.
+`feature/city-growth-progression`
 
-## 2. Cottage / Town Home / Established Home visuals
+Do not merge until the checks below are completed to the owner's satisfaction.
 
-- [ ] A Tier 1 **Cottage** is clearly recognizable at a practical phone zoom.
-- [ ] A Tier 2 **Town Home** is visibly larger/taller than a Cottage.
-- [ ] Town Home dormer / upper-window treatment reads without requiring extreme zoom.
-- [ ] A Tier 3 **Established Home** has a clearly larger silhouette than Tier 2.
-- [ ] Tier 3 extra windows / garden or fence treatment remain clean rather than cluttered.
-- [ ] Seeded roof/wall color variety still exists across homes.
-- [ ] Snow/night/festival rendering still looks correct on upgraded houses.
-- [ ] No tier creates obvious overlap with roads, adjacent buildings or Look selection markers.
+## 1. New progression city
 
-## 3. House Look 3.0
+- [ ] Start a genuinely new valley rather than merely reloading an older save.
+- [ ] Meadowline Center is the only buildable parcel initially.
+- [ ] The starting 20×20 area feels useful for roads, several homes, Green tools, trade, and early neighborhood planning.
+- [ ] The starting area feels meaningfully smaller than the whole world without feeling cramped.
+- [ ] Locked terrain is still visible and attractive.
+- [ ] Ponds, grass, natural trees, seasons, weather, and landscape remain visible in locked parcels.
+- [ ] Locked land uses only a restrained tint/boundary, not a giant opaque overlay.
+- [ ] Camera can freely pan across locked land.
+- [ ] Minimap subtly distinguishes locked land without becoming a progression diagram.
 
-Inspect several homes at different stages.
+## 2. Locked-land behavior
 
-- [ ] Panel remains readable around 390–430 CSS px wide.
-- [ ] Panel scrolls vertically rather than shrinking text when content is long.
-- [ ] Household residents / capacity are shown correctly.
-- [ ] Mood and existing Mood explanations remain understandable.
-- [ ] Education and School status remain present.
-- [ ] Neighborhood Desirability value is shown.
-- [ ] Desirability label is understandable (`Quiet Start`, `Developing`, `Pleasant`, `Desirable`, or `Highly Desirable`).
-- [ ] Current housing tier is shown.
-- [ ] Next tier is shown when one exists.
-- [ ] Upgrade progress is shown.
-- [ ] Road requirement is shown accurately.
-- [ ] Mood requirement is shown accurately.
-- [ ] Education requirement is shown accurately.
-- [ ] Desirability requirement is shown accurately.
-- [ ] No fake Crime, Healthcare, Fire, Employment or Prosperity requirements are shown.
-- [ ] The panel gives a simple `Growing toward…` or `Not ready yet` explanation.
+- [ ] A normal building cannot be placed on locked land.
+- [ ] Road painting stops/rejects locked land.
+- [ ] Rail painting stops/rejects locked land when Rail is unlocked.
+- [ ] Tree/remove paint tools respect parcel access.
+- [ ] Placement feedback says the land has not been opened rather than giving only a generic failure.
+- [ ] Look on locked land identifies the parcel by name.
+- [ ] Look explains the required stage or neighboring parcel when locked.
+- [ ] Look shows the coin cost once the parcel is ready.
+- [ ] Looking/panning across locked land never changes terrain or removes natural trees.
 
-## 4. Neighborhood Desirability
+## 3. City Growth panel
 
-Use Look on homes in meaningfully different locations.
+- [ ] City Growth button is comfortably tappable on iPhone portrait.
+- [ ] Panel fits without colliding badly with the HUD/dock/safe area.
+- [ ] Current stage is obvious.
+- [ ] Next-stage requirements are readable in plain language.
+- [ ] Completed requirements are visually distinguishable.
+- [ ] `any 2 of 3` requirements are understandable without technical wording.
+- [ ] Parcel names, statuses, and costs are readable.
+- [ ] Opening/closing the panel does not accidentally build underneath it.
 
-- [ ] A road-connected, pleasant serviced home has better Desirability than an isolated weak location.
-- [ ] Nearby Park influence makes intuitive sense.
-- [ ] School / Education access makes intuitive sense.
-- [ ] Station proximity contributes where applicable.
-- [ ] Greenery/water contribution feels plausible.
-- [ ] Heavy local crowding can reduce Desirability without destroying the neighborhood.
-- [ ] Desirability remains stable enough that it does not visibly oscillate every frame.
-- [ ] Desirability is clearly different in purpose from Mood.
+## 4. Settlement → Village
 
-## 5. Gradual residential evolution
+Target requirements:
 
-Choose a Cottage that can satisfy Tier 2 requirements.
+- 16 residents
+- 4 occupied homes
+- 10 road tiles
 
-- [ ] Cottage does not upgrade instantly when thresholds are first met.
-- [ ] Upgrade progress begins increasing gradually.
-- [ ] A restrained growth chevron appears while meaningful progress is active.
-- [ ] Progress remains understandable in Look.
-- [ ] Temporarily losing a requirement pauses progress rather than erasing it.
-- [ ] Restoring the requirement resumes progress.
-- [ ] Cottage eventually becomes a Town Home automatically.
-- [ ] Household identity/location remains the same through the upgrade.
-- [ ] Education is preserved through the upgrade.
-- [ ] Existing population is preserved through the upgrade.
-- [ ] Town Home can later progress toward Established Home under stronger conditions.
-- [ ] Housing does not downgrade when conditions later weaken.
+Physical checks:
 
-## 6. Capacity and population feedback
+- [ ] Progress values update while playing normally.
+- [ ] Village is not awarded before all three required conditions are met.
+- [ ] Reaching Village produces one restrained milestone message.
+- [ ] School, Market, and Bakery become available after Village.
+- [ ] The toolbar remains usable and does not jump/overflow badly when tools unlock.
 
-- [ ] Cottage base capacity behaves as 4 for new growth.
-- [ ] Town Home base capacity behaves as 6.
-- [ ] Established Home base capacity behaves as 8.
-- [ ] A grandfathered older household can remain above a lower tier base without eviction.
-- [ ] New residents move into newly available capacity naturally rather than appearing all at once.
-- [ ] Population growth remains governed by the existing Mood/road rules.
+## 5. Village → Township
 
-## 7. Education → Housing → School demand feedback loop
+Target requirements:
 
-This is the key cross-system proof.
+- 30 residents
+- 7 occupied homes
+- any 2 of: average Education 8+, 2 Town Homes, average Desirability 42+
 
-- [ ] Education contributes to Housing upgrade eligibility.
-- [ ] A qualifying home upgrades.
-- [ ] Upgraded housing allows more residents.
-- [ ] As additional residents arrive, that household's student demand rises through the existing Education service logic.
-- [ ] School utilization responds without manually rebuilding the School.
-- [ ] An already-busy School can become capacity constrained as the neighborhood becomes denser.
-- [ ] Household explanation continues to distinguish served vs waiting-for-space states.
+Physical checks:
 
-## 8. Civic placement green service boundary
+- [ ] Township can be reached through more than one healthy-city path.
+- [ ] Education does not feel like an excessive early waiting wall.
+- [ ] Town Home progression contributes naturally.
+- [ ] Desirability contributes naturally.
+- [ ] Rail, Station, and Windmill unlock at Township.
 
-Select **School** and move the placement ghost around the map.
+## 6. Township → Growing Town
 
-- [ ] A green service boundary appears before placement.
-- [ ] A very light green service-area tint is visible but does not obscure streets/buildings.
-- [ ] Boundary moves smoothly with the School ghost.
-- [ ] Boundary represents the actual School service region, not the old 5-tile mood influence.
-- [ ] A home inside actual Education reach can receive the appropriate benefit marker.
-- [ ] A home outside actual Education reach is not falsely marked as served.
-- [ ] Green home markers remain distinguishable from the geographic boundary.
-- [ ] Amber/yellow capacity-pressure markers remain distinguishable from green.
-- [ ] Invalid School placement still has the existing red invalid presentation.
-- [ ] Boundary remains readable when zoomed reasonably close.
-- [ ] Boundary remains readable when zoomed reasonably far out.
-- [ ] Boundary clips cleanly at world edges.
-- [ ] Overlay does not cover critical mobile controls.
+Target requirements:
 
-### Important geometry note
+- 48 residents
+- 10 occupied homes
+- 4 Town Homes
+- 1 Established Home
+- any 2 of: average Education 18+, 8 students served, average Desirability 50+
 
-School uses a **radius of 7** with the current Chebyshev service calculation:
+Physical checks:
 
-`max(abs(dx), abs(dy)) <= 7`
+- [ ] Requirements feel like a developed town rather than arbitrary busywork.
+- [ ] Growing Town milestone appears once.
+- [ ] Dock unlocks at Growing Town.
 
-That means the full center-tile service field extends seven tiles in each direction from the School. The visual preview must match this real simulation region exactly; it should not be judged against an unrelated literal 7×7 decorative square.
+## 7. Parcel expansion
 
-## 9. Touch regression with the new boundary visible
+- [ ] An eligible North/East parcel shows an available visual state.
+- [ ] Tapping the parcel row shows/uses the correct cost.
+- [ ] Purchase requires explicit confirmation.
+- [ ] Cancel leaves coins and land unchanged.
+- [ ] Confirm deducts the cost once.
+- [ ] Purchased parcel opens immediately.
+- [ ] Overlay/boundary fades away for the unlocked parcel.
+- [ ] Roads/buildings can immediately use newly opened tiles.
+- [ ] Duplicate purchase is impossible.
+- [ ] Later parcels correctly respect neighboring prerequisites.
+- [ ] Unlocking land does not regenerate ponds, grass, or woodland.
+- [ ] Unlocking does not cause a noticeable freeze/hitch.
 
-- [ ] With School selected and green boundary visible, start a two-finger pinch: no School is placed accidentally.
-- [ ] Two-finger pan/zoom remains responsive with the overlay active.
-- [ ] A normal single tap still places exactly one School.
-- [ ] Moving the School ghost does not create sticky or stale boundaries.
-- [ ] Road paint-drag still begins on the intended tile.
-- [ ] Rail paint-drag still works.
-- [ ] Tree paint-drag still works.
-- [ ] Remove paint-drag still works.
+## 8. Legacy-save safety — critical
 
-## 10. Ledger
+Use a city created before City Growth 1.0:
 
-- [ ] Living City Education metrics still display correctly.
-- [ ] Housing section displays average Desirability.
-- [ ] Cottage / Town Home / Established Home counts look correct.
-- [ ] `homes ready to grow` count looks plausible.
-- [ ] Ledger remains usable on portrait iPhone without awkward horizontal clipping.
+- [ ] Existing V3 city loads normally.
+- [ ] Full map remains developable.
+- [ ] Existing roads remain.
+- [ ] Existing rails remain.
+- [ ] Existing Stations and train routing still work.
+- [ ] Existing houses and population remain.
+- [ ] Existing Schools and Education remain.
+- [ ] Existing trade/Green buildings remain.
+- [ ] No developed tile becomes unusable because it lies outside Meadowline Center.
+- [ ] All previously available building tools remain available in the legacy city.
+- [ ] Reloading the migrated city keeps full access.
 
-## 11. Residential tax behavior
+## 9. School Level 2
 
-This does not need exact spreadsheet verification on phone, but the direction should be believable.
+Level 1 baseline: 28 capacity / 7-tile radius.
 
-- [ ] Tier 1 city income remains familiar rather than suddenly exploding.
-- [ ] Upgraded occupied homes produce a modestly stronger residential tax contribution.
-- [ ] Trade/mill/festival income still behaves normally.
-- [ ] Residential development does not create an obvious runaway coin spiral during normal testing.
+Level 2 target: Township + 650 coins → 44 capacity / 7-tile radius.
 
-## 12. Save V3 physical verification
+- [ ] Level 1 School Look reports Level 1 and 28 capacity.
+- [ ] Upgrade action remains disabled before Township.
+- [ ] At Township, the panel shows 28 → 44 and 650 coins.
+- [ ] Upgrade requires explicit confirmation.
+- [ ] Cancel leaves level/coins unchanged.
+- [ ] Confirm deducts exactly 650 coins once.
+- [ ] School becomes Level 2.
+- [ ] Capacity becomes 44.
+- [ ] Coverage radius remains exactly 7 tiles.
+- [ ] Waiting nearby students may become served after recomputation.
+- [ ] Education already earned remains intact.
+- [ ] Level 2 visual classroom wings/clock are visibly different at practical phone zoom.
+- [ ] One-tile footprint remains visually clean around roads/adjacent buildings.
+- [ ] Level survives reload.
+- [ ] School cannot be upgraded beyond Level 2 in this milestone.
 
-After at least one home has meaningful Housing state:
+## 10. Touch and gesture regression
 
-- [ ] Note its tier.
-- [ ] Note its Education.
-- [ ] Note its approximate upgrade progress if mid-upgrade.
-- [ ] Close/reload the game or page.
-- [ ] Housing tier persists.
+- [ ] One-finger pan with Move remains smooth.
+- [ ] Pinch zoom remains smooth.
+- [ ] Pinch with School/building selected does not commit a pending building.
+- [ ] Road paint remains usable.
+- [ ] Rail paint remains usable after Township.
+- [ ] Tree paint remains usable.
+- [ ] Remove paint remains usable.
+- [ ] Look selection remains reliable on buildings and locked land.
+- [ ] City Growth panel scrolling/tapping does not leak input to the map.
+
+## 11. Performance
+
+- [ ] Panning over multiple locked parcel boundaries stays smooth.
+- [ ] Locked-land tint does not visibly stutter.
+- [ ] Minimap remains responsive.
+- [ ] Stage progression does not hitch when requirements change.
+- [ ] Parcel unlock does not freeze the game.
+- [ ] School Level 2 recomputation does not hitch badly.
+- [ ] `?debug=1` remains usable and reports City Growth metrics.
+
+## 12. Save / reload
+
+- [ ] City stage persists.
+- [ ] Opened parcels persist.
+- [ ] Claimed milestone metadata persists safely.
+- [ ] School Level 2 persists.
+- [ ] Housing tiers/progress persist.
 - [ ] Education persists.
-- [ ] Upgrade progress persists closely enough to be clearly retained.
-- [ ] Household population persists.
-- [ ] Desirability recomputes into a sensible value.
-- [ ] School assignments/capacity recompute sensibly after reload.
-
-## 13. Performance / stability
-
-- [ ] Normal pan/zoom remains smooth in a neighborhood containing mixed housing tiers.
-- [ ] Multiple homes progressing simultaneously do not create obvious frame hitching.
-- [ ] A housing upgrade transition does not freeze the game.
-- [ ] Opening/scrolling Look remains responsive.
-- [ ] School placement boundary does not visibly tank frame rate while moving the ghost.
-- [ ] Dense housing plus School overload remains usable.
-- [ ] No obvious steadily worsening performance appears during a deliberate 10+ minute session.
-- [ ] `?debug=1` appears only when explicitly requested.
-- [ ] Debug values for Housing evaluations/upgrades/Desirability are present.
+- [ ] Desirability persists/recomputes sensibly.
+- [ ] Coins remain correct after parcel purchase and School upgrade.
+- [ ] Malformed optional progression metadata does not white-page the game.
 
 ---
 
-# Existing-game regression still worth checking
+# Automatically validated — record separately
 
-- [ ] Roads still place and bridge water.
-- [ ] Rails still place and bridge water.
-- [ ] Trains still route.
-- [ ] Boats still work where applicable.
-- [ ] Seasons still change.
-- [ ] Weather still works.
-- [ ] Festivals still work.
-- [ ] Wishes still progress.
-- [ ] Remove/refund still works.
-- [ ] Citizens still route without obvious stuck crowds.
-- [ ] Household visible citizen count never visibly exceeds household population.
+City Growth's GitHub Actions workflow is designed to run:
+
+- JavaScript syntax checks
+- module hygiene / import-cycle checks
+- original Living City + Housing headless browser regression
+- City Growth headless browser regression
+
+Do not check physical boxes above merely because CI passes.
 
 ---
 
-# Acceptance result
+# Merge gate
 
-Previously proven School 2.0 behavior remains the baseline.
+City Growth 1.0 is eligible for a merge decision only after:
 
-Housing 2.0 is only fully accepted when the new Housing / Desirability / tier visuals / civic-boundary / persistence feedback loop is physically demonstrated on the target phone.
-
-- [ ] **FULL HOUSING 2.0 PHYSICAL IPHONE ACCEPTANCE COMPLETE**
-
-Do not merge solely because automated tests pass.
+- [ ] current feature-branch automation is green
+- [ ] critical legacy-save checks pass physically
+- [ ] new-city progression is comfortable on iPhone
+- [ ] parcel interaction is comfortable on iPhone/iPad
+- [ ] School Level 2 is physically verified
+- [ ] no major Housing/Education/touch regression is found
+- [ ] owner explicitly approves the merge
