@@ -22,9 +22,10 @@ export function drawGhost(){
   const p=proj(x,y);
   const ok=S.tool==="erase"?(!!S.grid[idx(x,y)]||!!S.natTree[idx(x,y)]):canPlace(S.tool,x,y).ok;
 
-  // Civic services get the new reusable green service field plus per-building
-  // green/amber benefit markers. This is drawn beneath the placement ghost.
-  const servicePreview=ok&&drawCivicPlacementPreview(S.tool,x,y);
+  // Civic service reach is useful planning information even when the exact tile
+  // under the pointer is invalid. Keep the service field visible while the
+  // placement ghost itself stays red to explain that this tile cannot be built on.
+  const servicePreview=drawCivicPlacementPreview(S.tool,x,y);
 
   diamond(p.x,p.y,1.02);
   g.fillStyle=ok?"rgba(244,240,226,.34)":"rgba(214,96,80,.34)";
