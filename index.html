@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="css/hud.css">
 <link rel="stylesheet" href="css/toolbar.css">
 <link rel="stylesheet" href="css/panels.css">
+<link rel="stylesheet" href="css/growth.css">
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -24,31 +25,20 @@
 <div class="corner">
   <button class="chip" id="b-speed" title="Speed (S)">1&times;</button>
   <button class="chip" id="b-sound" title="Sound (M)">&#9834;</button>
-  <button class="chip" id="b-map" title="Map (B)" aria-label="Toggle map">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20V6.5ZM9 4v13.5M15 6.5V20"/></svg>
-  </button>
-  <button class="chip off" id="b-growth" title="City Growth" aria-label="Open city growth">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V10l5-4 4 3 7-5v15M3 19h18M8 19v-5h4v5M16 19v-7h3v7"/></svg>
-  </button>
-  <button class="chip" id="b-ledger" title="Ledger (L)" aria-label="Toggle the ledger">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V4.5M4 19.5h16M7.5 16.5V11M12 16.5V7M16.5 16.5v-4"/></svg>
-  </button>
-  <button class="chip" id="b-shot" title="Save a postcard (P)" aria-label="Save a postcard">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5h3.5L8 6h8l1.5 2.5H21V19H3V8.5Z"/><circle cx="12" cy="13.2" r="3.4"/></svg>
-  </button>
+  <button class="chip" id="b-map" title="Map (B)" aria-label="Toggle map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20V6.5ZM9 4v13.5M15 6.5V20"/></svg></button>
+  <button class="chip off" id="b-growth" title="City Growth" aria-label="Open city growth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V10l5-4 4 3 7-5v15M3 19h18M8 19v-5h4v5M16 19v-7h3v7"/></svg></button>
+  <button class="chip" id="b-ledger" title="Ledger (L)" aria-label="Toggle the ledger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V4.5M4 19.5h16M7.5 16.5V11M12 16.5V7M16.5 16.5v-4"/></svg></button>
+  <button class="chip" id="b-shot" title="Save a postcard (P)" aria-label="Save a postcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5h3.5L8 6h8l1.5 2.5H21V19H3V8.5Z"/><circle cx="12" cy="13.2" r="3.4"/></svg></button>
   <button class="chip" id="b-new" title="Start a new valley">&#8635;</button>
 </div>
 
 <div class="side"><div class="panel" id="wish-panel"><h2>Wishes</h2><div id="wishes"></div></div></div>
 <div class="mini hide" id="mini"><canvas id="mm" width="132" height="132"></canvas></div>
-
 <div class="ledger" id="ledger"><button class="x" id="ledger-x" aria-label="Close">&times;</button><div id="ledger-body"></div></div>
 <div class="growth" id="growth"><button class="x" id="growth-x" aria-label="Close">&times;</button><div id="growth-body"></div></div>
 <div class="look" id="look"><button class="x" id="look-x" aria-label="Close">&times;</button><div id="look-body"></div></div>
-
 <div class="hint" id="hint"></div>
 <div class="toasts" id="toasts"></div>
-
 <div class="dock"><div class="cats" id="cats"></div><div class="dockrow"><div class="tools" id="tools"></div><div class="modes" id="modes"></div></div></div>
 
 <div class="veil" id="veil">
