@@ -1,121 +1,225 @@
 # Meadowline
 
-A small, calm city builder that runs in a browser tab. Lay roads and rails, plant parks,
-watch trains find their own way around the loop and citizens stroll between the houses.
-The valley turns through spring, summer, autumn and winter while you build.
-No timers, no fail state, nothing to lose.
+Meadowline is a calm, mobile-first isometric city builder evolving into a deeper **living-city simulation** while remaining a lightweight static browser game.
 
-**Play:** serve the repository as static files and open `index.html` — for example
-`python3 -m http.server` and then `http://localhost:8000`. There is no build step and no
-runtime dependency; the browser loads the native ES modules directly. (Opening the file
-straight off disk will not work: browsers refuse to load ES modules over `file://`.)
+The project runs as native ES modules on a 2D canvas. There is no React app, no server runtime, and no gameplay build step required.
 
-## How it plays
+## Current development state
 
-| Tool | Cost | What it does |
-|---|---|---|
-| Move | — | Drag to pan, scroll or pinch to zoom |
-| Road | 3 | Homes only fill up when a road runs alongside them |
-| Rail | 8 | Draw a loop; trains spawn and route themselves |
-| House | 24 | Four residents move in as the mood rises |
-| Café | 55 | Daily trade income plus a mood lift for 5 tiles |
-| Park | 40 | The strongest mood lift, out to 4 tiles |
-| Trees | 2 | A small, cheap lift |
-| Lamp | 9 | A small lift that doubles once the light goes |
-| Windmill | 95 | Grinds coin every day, and most at harvest |
-| Station | 110 | Must touch a rail tile; lifts homes for 6 tiles |
-| Dock | 70 | Must touch water; puts boats on the lake |
-| Market | 130 | Lifts what every café and bakery nearby takes |
-| Bakery | 80 | Pays double with a windmill within 4 tiles |
-| School | 145 | Room for two more in every home it reaches |
-| Look | — | Ask any tile how it's doing, and why |
-| Remove | — | Clears a tile and refunds half |
+Active milestone branch: `feature/living-city-foundation`
 
-The dock groups these into **Ways**, **Homes**, **Trade** and **Green**, with move, look and
-remove pinned beside them.
+Validated foundation branch: `agent/architecture-refactor`
 
-Roads, rails and trees paint continuously while you drag. **Roads and rails cross water on
-their own** — draw straight over a pond and it becomes a bridge, at three times the usual
-price. A house with a `!` above it has no road yet. Each in-game day (100 seconds) pays out
-tax scaled by population and mood, plus café trade and whatever the windmills ground.
+Current milestone: **Living City Foundation / School 2.0**
 
-Keys: `1`–`0` pick building tools and `R`/`K`/`C`/`D` reach the market, bakery, school and
-dock — a shortcut for a tool in a category you aren't looking at switches to it. `I` looks,
-`E` removes, `space` pauses, `S` cycles speed, `M` toggles sound, `B` toggles the map,
-`L` opens the ledger, `P` saves a postcard, `Esc` closes the card, arrows pan.
+This branch now contains the first real civic-service system in Meadowline:
 
-## The year
+- centralized building registry
+- reusable civic-service framework
+- persistent household Education
+- School coverage, demand, finite capacity and overload
+- 7-tile Education-service radius
+- 28-student School capacity
+- deterministic household-to-School assignment
+- gradual Education progression
+- household and School inspection diagnostics
+- green/yellow School placement feedback
+- citywide Education metrics
+- Save Schema V3 with v1/v2 migration
+- mobile build/pinch arbitration repair
+- developer-only diagnostics
+- pedestrian household-count stabilization
+- Housing 2.0 readiness hooks
 
-Five days to a season, twenty to a year. The grass, the trees, the sky and the water all
-shift as it turns, and the season nudges everyone's mood — spring and summer lift it,
-winter costs a little. Autumn is when the windmills earn their keep, and sheds leaves; spring
-drifts blossom. Showers drift through on their own; in winter they fall as snow and settle on
-the roofs. Rain keeps people indoors, and so does the dark.
+The owner has physically tested the School system on iPhone and confirmed that School capacity, overload, household Education status, the 7-tile service radius, and pinch-to-zoom without accidental School placement are working on-device.
 
-**Festivals.** The third day of each season is a festival — Spring Fair, Midsummer, Harvest
-Home, Winter Lights. Every home's mood lifts, a cut of the day's trade goes into the purse,
-pennants run up the roof ridges, confetti drifts by day and lanterns rise after dark.
+## Living City direction
 
-## Wishes
+Meadowline is moving away from simple `Building → bonus` relationships.
 
-Two small goals sit in the corner at any time — house a few more people, open a café, get a
-train running, carry a road across the water. Meet one and it pays out and quietly hands you
-another. Nothing expires and nothing is lost by ignoring them.
+The target simulation pattern is:
 
-## Citizens
+Building
+→ Service
+→ Coverage
+→ Capacity
+→ Household Need
+→ Behavior / Outcome
+→ Neighborhood Consequence
+→ City Growth
 
-Everyone who walks the streets lives in one of your houses and has a name and a day with a
-shape: out to work in the morning, out to the café, park or market in the afternoon, home at
-dusk, indoors overnight. They walk real routes rather than wandering, and come back from the
-market with a basket. Ask a house with **Look** and it will tell you who lives there and how
-many of them are out.
+School 2.0 is the first proof of this architecture.
 
-## The ledger
+### School 2.0
 
-Press `L` for three sparklines — citizens, coins and mood over the last forty days — above a
-chronicle of the valley: festivals, wishes granted, population milestones, and the first time
-each kind of building went up.
+Current Education-service defaults:
 
-## Under the hood
+- School cost: 145 coins
+- Education-service radius: 7 tiles
+- Student capacity: 28
+- Household demand: roughly half household population, rounded up
+- Education scale: 0–100
+- Progression: gradual while served
+- Lost coverage does not erase Education already earned
+- Overloaded Schools stop at real capacity rather than serving unlimited demand
 
-Vanilla ES modules on a 2D canvas, isometric 44×44 grid, painter's-algorithm depth sort.
-Trains, boats and citizens share one no-backtracking step rule, so a rail loop just works and
-a dead end reverses; `stepWhere` takes a predicate, which is the only difference between a
-train on rails and a boat on water. Citizens layer a breadth-first `findPath` on top and only
-re-plan when they arrive somewhere. Bridges are drawn in the depth-sorted pass rather than with
-the flat ground, so a raised deck layers correctly against what's behind it.
+The older School mood and +2 resident-capacity proximity perk remain local at 5 tiles for compatibility. The new 7-tile Education service is intentionally separate so civic reach can grow without making every legacy School bonus too strong.
 
-Every mood number is computed by one function that can optionally write down its own
-reasoning; the Look tool just prints what it wrote, so the panel can never drift from the
-simulation. Season colours are hex blends of two adjacent seasons, re-shaded downstream, so
-one palette drives ground, canopy, sky, water and the minimap together.
+Future civic buildings will each have independently configurable reach. Police, Fire and Healthcare are expected to use larger practical service areas than small local amenities so the map does not become crowded with duplicate civic buildings.
 
-Each building owns its own tuning — radius, strength, yield — in `src/buildings/`, so the
-mood model and the economy read those rather than hard-coding numbers. `tests/module-hygiene.mjs`
-runs without a browser and fails the build on three things this layout can silently break:
-assignment to an imported binding, re-export shim modules, and import cycles.
+## Existing game systems
 
-Progress saves to `localStorage` every few seconds (guarded, so it degrades to a session-only
-game where storage is blocked). Saves from the previous version load and carry over.
-`prefers-reduced-motion` thins the weather, slows the windmill sails, and drops the birds and
-fireflies entirely.
+The current game still includes:
 
-## Publishing this to GitHub
+- 44×44 seeded isometric world
+- ponds and natural trees
+- roads and rails
+- automatic water bridges
+- homes
+- cafés
+- parks
+- planted trees
+- lamps
+- windmills
+- stations
+- docks
+- markets
+- bakeries
+- schools
+- citizens and routing
+- trains
+- boats
+- mood
+- economy
+- day/night
+- seasons
+- weather
+- festivals
+- wishes
+- ledger and chronicle
+- minimap
+- Look inspection
+- placement/removal/refunds
+- local persistence
+- mobile pan and pinch zoom
+
+## Citizen representation
+
+Visible pedestrians represent the city population without turning every resident into a heavyweight saved agent.
+
+Citizens still route between homes, work and leisure destinations. A restrained portion of morning activity can route toward an assigned School.
+
+A stabilization fix now ensures a household can never report more visible residents out on the streets than actually live there.
+
+## Save system
+
+Current key: `meadowline.v3`
+
+Save V3 stores extensible building objects and building-specific state, including household Education and School level state.
+
+V1 and V2 saves remain supported and migrate with safe defaults. Malformed optional state or unknown building entries are skipped defensively instead of crashing or wiping the city.
+
+## Mobile controls
+
+A normal building tap is committed only after a valid single-pointer tap completes. If a second finger begins a pinch gesture, pending building placement is cancelled first.
+
+This prevents the old failure mode where selecting School and starting a two-finger zoom could accidentally place a School.
+
+Road, Rail, Tree and Remove tools still support paint-drag behavior.
+
+## Developer diagnostics
+
+Use:
+
+`?debug=1`
+
+The developer overlay includes FPS/frame timing, simulation/render timing, grid/entity counts, service-provider/recompute information, route-search counts and save payload size.
+
+Normal players do not see diagnostics.
+
+## Running locally
+
+From the repository root:
 
 ```bash
-git init
-git add index.html src css assets README.md
-git commit -m "Meadowline: a calm little city builder"
-gh repo create meadowline --public --source=. --push
+python3 -m http.server 8000
 ```
 
-Then turn on Pages: **Settings → Pages → Source: Deploy from a branch → `main` / `root`**.
-It'll be live at `https://<your-username>.github.io/meadowline/` in a minute or two.
+Open:
 
-Without the `gh` CLI, create an empty repo on github.com and:
+`http://localhost:8000/`
+
+Regression page:
+
+`http://localhost:8000/tests/regression.html`
+
+Module hygiene:
 
 ```bash
-git remote add origin https://github.com/<your-username>/meadowline.git
-git branch -M main
-git push -u origin main
+node tests/module-hygiene.mjs
 ```
+
+## Next major milestone — Housing 2.0
+
+The next planned milestone is intended to make neighborhoods visibly evolve instead of simply accumulating houses.
+
+Core relationship:
+
+Road Access
++ Mood
++ Education
++ Existing Household State
++ Neighborhood Desirability
+→ Upgrade Readiness
+→ Residential Evolution
+→ Higher Capacity
+→ Higher Revenue
+→ Greater Service Demand
+
+The first Housing 2.0 pass should focus only on systems Meadowline actually has today. It should not show fake Police, Fire or Healthcare requirements before those systems exist.
+
+Likely first-phase goals:
+
+- introduce multiple residential tiers
+- preserve existing household identity and Education during upgrades
+- create a reusable residential-upgrade definition structure
+- calculate clear upgrade readiness from road access, mood and Education
+- provide understandable Look-panel explanations
+- add visible but restrained house evolution
+- increase resident capacity and tax value with upgraded housing
+- increase School demand naturally as neighborhoods become denser
+- prevent instant chain-upgrades by using progression time/cooldowns or another gentle pacing model
+- prepare Neighborhood Desirability as an extensible derived value
+
+Housing 2.0 should become the first major consumer of the Living City service architecture.
+
+## Later roadmap
+
+Planned systems remain roadmap-only until implemented:
+
+- progressive land unlocks
+- neighborhood identities
+- Police + Crime
+- arrests and Jail
+- Fire Departments and fires
+- Hospitals and healthcare
+- sickness and medicine
+- medical research
+- evolving viruses
+- employment and prosperity
+- deeper economy
+- road-over-rail crossings
+- larger-world architecture
+- spatial/chunk systems
+- scalable pathfinding and route caching
+- much larger representational NPC populations
+
+See `ROADMAP.md` and `docs/LIVING_CITY_FOUNDATION.md` for the detailed development path.
+
+## Product principles
+
+Meadowline should remain peaceful, understandable, visually charming, mobile friendly, rewarding to observe, progressively deeper and never unnecessarily punishing.
+
+Problems should create interesting planning decisions, not punishment spirals.
+
+The objective of each milestone is not simply to ship more visible features. It is to make the next group of systems easier to add cleanly.
