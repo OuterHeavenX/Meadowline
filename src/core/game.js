@@ -9,6 +9,7 @@ import { drawMini, elMini } from '../rendering/minimap.js';
 import { render } from '../rendering/renderer.js';
 import { resize } from '../rendering/terrain.js';
 import { advanceEducation, recomputeServices } from '../simulation/civic-services.js';
+import { advanceHousing } from '../simulation/housing.js';
 import { updateCitizens } from '../simulation/citizens.js';
 import { payday } from '../simulation/economy.js';
 import { recompute } from '../simulation/mood.js';
@@ -58,6 +59,7 @@ export function frame(now){
       recompute();
       recomputeServices();
       advanceEducation(step);
+      advanceHousing(step);
       checkMiles(); checkWishes();
     }
     growth(sdt);
