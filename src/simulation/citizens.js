@@ -1,17 +1,17 @@
 import { FIRSTS } from '../buildings/houses.js';
 import { TAU, clamp } from '../core/constants.js';
 import { S } from '../core/state.js';
+import { educationProvider } from './civic-services.js';
 import { findPath, stepFrom } from '../transport/pathfinding.js';
 import { roadNear } from '../transport/roads.js';
-import { isType } from '../world/tiles.js';
+import { idx, isType } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 
 export const SHIRTS=["#e8735f","#5d8fc4","#e0b451","#6fae7c","#c273a8","#e9e2cf","#7a6fb5"];
-
 const walkable=(x,y)=>isType(x,y,"road");
 
 /* ---------- where someone is headed, and why ----------
-   The day has a shape: out to work in the morning, out to the café or the
+   The day has a shape: out to work/school in the morning, out to the café or
    park in the afternoon, home at dusk, indoors overnight. */
 export function errand(){
   const t=S.dayT;
@@ -28,17 +28,30 @@ function pool(kind){
   return [];
 }
 
+function schoolDestination(c){
+  if(!c.home||Math.random()>=0.38) return null; // visible hint, not one agent per student
+  const h=S.grid[idx(c.home.x,c.home.y)];
+  if(!h||h.type!=="house") return null;
+  const p=educationProvider(h);
+  return p&&p.provider?p.provider:null;
+}
+
 function chooseDest(c){
   const kind=errand();
   c.doing=kind;
+  let b=null;
+  if(kind==="work"){
+    b=schoolDestination(c);
+    if(b) c.doing="school";
+  }
   const options=pool(kind);
-  if(!options.length){
+  if(!b&&options.length) b=options[(Math.random()*options.length)|0];
+  if(!b){
     const r=c.homeRoad;
     if(r&&(r.x!==c.x||r.y!==c.y)) return r;
-    c.linger=3+Math.random()*7;               // already home: rest a while
+    c.linger=3+Math.random()*7;
     return null;
   }
-  const b=options[(Math.random()*options.length)|0];
   const r=roadNear(b.x,b.y);
   if(!r) return null;
   c.carry=(b.type==="market"||b.type==="bakery")?1:0;
@@ -50,9 +63,9 @@ function nextStep(c){
   if(c.path&&c.pi<c.path.length){
     const n=c.path[c.pi++];
     if(Math.abs(n[0]-c.x)+Math.abs(n[1]-c.y)===1&&walkable(n[0],n[1])) return n;
-    c.path=null;                              // the road changed under them
+    c.path=null;
   }
-  if(c.path){ c.path=null; c.linger=1.5+Math.random()*4; }   // arrived
+  if(c.path){ c.path=null; c.linger=1.5+Math.random()*4; }
   const dest=chooseDest(c);
   if(dest){
     const path=findPath(c.x,c.y,dest.x,dest.y,walkable);
@@ -60,7 +73,7 @@ function nextStep(c){
   }
   if(!c.linger) c.linger=1+Math.random()*3;
   const wander=stepFrom(c.x,c.y,c.px,c.py,"road");
-  return wander||[c.x,c.y];                   // stand still rather than vanish
+  return wander||[c.x,c.y];
 }
 
 export function spawnCitizen(){
@@ -81,7 +94,6 @@ export function spawnCitizen(){
 }
 
 export function updateCitizens(dt){
-  // fewer people out in a downpour, and fewer again once it is properly dark
   const shelter=1-0.55*clamp(S.wx.amt,0,1);
   const abed=1-0.72*clamp((darkness()-0.26)/0.28,0,1);
   const want=Math.round(clamp(S.pop,0,150)*shelter*abed);
@@ -90,7 +102,7 @@ export function updateCitizens(dt){
 
   for(let i=S.citizens.length-1;i>=0;i--){
     const c=S.citizens[i];
-    if(c.linger>0){ c.linger-=dt; continue; }   // standing about
+    if(c.linger>0){ c.linger-=dt; continue; }
     c.p+=dt*c.sp;
     while(c.p>=1){
       c.p-=1;
@@ -104,7 +116,6 @@ export function updateCitizens(dt){
   }
 }
 
-// how many of a home's residents are out on the streets right now
 export function outFrom(hx,hy){
   let n=0;
   for(const c of S.citizens) if(c.home&&c.home.x===hx&&c.home.y===hy) n++;
