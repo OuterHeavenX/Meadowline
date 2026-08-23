@@ -1,8 +1,9 @@
 import { canPlace } from '../buildings/buildings.js';
 import { H, W, clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
-import { previewEducationAt } from '../simulation/civic-services.js';
-import { drawBakery, drawCafe, drawDock, drawHouse, drawLamp, drawMarket, drawPark, drawSchool, drawStation, drawWindmill } from './buildings.js';
+import { drawBakery, drawCafe, drawDock, drawLamp, drawMarket, drawPark, drawSchool, drawStation, drawWindmill } from './buildings.js';
+import { drawHousingHouse } from './housing.js';
+import { drawCivicPlacementPreview } from './service-overlays.js';
 import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
 import { drawBoat, drawCitizen, drawTrain } from './entities.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
@@ -14,34 +15,27 @@ import { darkness } from '../world/time.js';
 
 /* ---------- hover ghost ---------- */
 export let hover={x:-1,y:-1,on:false};
-function drawSchoolBenefits(x,y){
-  for(const p of previewEducationAt(x,y)){
-    if(p.state==="neutral") continue;
-    const q=proj(p.house.x,p.house.y);
-    diamond(q.x,q.y,0.74);
-    const green=p.state==="green";
-    g.fillStyle=green?"rgba(78,168,104,.28)":"rgba(220,177,74,.25)";
-    g.fill();
-    g.strokeStyle=green?"rgba(119,214,139,.78)":"rgba(239,202,103,.78)";
-    g.lineWidth=1.45*S.cam.z;
-    g.stroke();
-  }
-}
 export function drawGhost(){
   if(!hover.on||S.tool==="move"||S.tool==="look") return;
   const{x,y}=hover;
   if(!inBounds(x,y)) return;
   const p=proj(x,y);
   const ok=S.tool==="erase"?(!!S.grid[idx(x,y)]||!!S.natTree[idx(x,y)]):canPlace(S.tool,x,y).ok;
-  if(S.tool==="school"&&ok) drawSchoolBenefits(x,y);
+
+  // Civic services get the new reusable green service field plus per-building
+  // green/amber benefit markers. This is drawn beneath the placement ghost.
+  const servicePreview=ok&&drawCivicPlacementPreview(S.tool,x,y);
+
   diamond(p.x,p.y,1.02);
   g.fillStyle=ok?"rgba(244,240,226,.34)":"rgba(214,96,80,.34)";
   g.fill();
   g.strokeStyle=ok?"rgba(244,240,226,.85)":"rgba(214,96,80,.9)";
   g.lineWidth=1.6*S.cam.z; g.stroke();
-  // restrained service/mood boundary preview; affected homes carry the stronger signal.
-  const RADII={park:4,cafe:5,station:6,lamp:2,mill:3,market:5,bakery:4,school:5,dock:4};
-  const rad=RADII[S.tool]||0;
+
+  // Legacy mood/amenity previews remain restrained. Service buildings use the
+  // green boundary above instead of a second competing outline.
+  const RADII={park:4,cafe:5,station:6,lamp:2,mill:3,market:5,bakery:4,dock:4};
+  const rad=servicePreview?0:(RADII[S.tool]||0);
   if(rad){
     g.strokeStyle="rgba(244,240,226,.22)"; g.lineWidth=1.2*S.cam.z;
     const c=[[-rad,-rad],[rad+1,-rad],[rad+1,rad+1],[-rad,rad+1]].map(o=>proj(x+o[0]-0.5,y+o[1]-0.5));
@@ -95,7 +89,7 @@ export function render(){
       const p=proj(it.b.x,it.b.y);
       if(p.x<-120||p.x>innerWidth+120||p.y<-160||p.y>innerHeight+120) continue;
       const t=it.b.type;
-      if(t==="house") drawHouse(it.b,p,dark);
+      if(t==="house") drawHousingHouse(it.b,p,dark);
       else if(t==="park") drawPark(it.b,p);
       else if(t==="cafe") drawCafe(it.b,p,dark);
       else if(t==="station") drawStation(it.b,p,dark);
