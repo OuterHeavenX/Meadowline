@@ -4,12 +4,16 @@ import { CAFE_TRADE } from '../buildings/cafes.js';
 import { MILL_BASE } from '../buildings/windmills.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
+import { housingTaxMultiplier } from './housing.js';
 import { PAL } from '../world/seasons.js';
 import { activeFestival } from '../world/festivals.js';
 
 /* ---------- economy & clock ---------- */
 export function payday(){
-  const tax=Math.round(S.pop*2.6*(0.55+S.mood/140));
+  // Tier 1 preserves the old tax curve exactly. Improved homes contribute a
+  // modest multiplier, so residential evolution matters without exploding income.
+  const weightedResidents=(S.ctx.houses||[]).reduce((n,h)=>n+(h.pop||0)*housingTaxMultiplier(h),0);
+  const tax=Math.round(weightedResidents*2.6*(0.55+S.mood/140));
   // markets lift what the trades around them take
   const markets=S.ctx.markets.length;
   const lift=1+Math.min(markets*MARKET_TRADE,MARKET_TRADE*3);
@@ -31,7 +35,7 @@ export function payday(){
   const total=tax+trade+milled+grant+feast;
   S.coins+=total;
   S.lastPay={tax,trade,milled,grant,feast,total};
-  services.toast("Day "+S.day+" \u00b7 +"+total+" coins","gold");
+  services.toast("Day "+S.day+" · +"+total+" coins","gold");
   services.blip(660,0.2,"triangle");
   if(mills&&(PAL.yield||0)>=MILL_BASE) services.toast("A good harvest at the mill");
 }
