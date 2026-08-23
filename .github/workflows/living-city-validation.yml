@@ -1,0 +1,31 @@
+name: Living City Validation
+
+on:
+  push:
+    branches:
+      - feature/living-city-foundation
+  pull_request:
+    branches:
+      - agent/architecture-refactor
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check JavaScript syntax
+        run: find src tests -name '*.js' -o -name '*.mjs' | xargs -n1 node --check
+      - name: Module hygiene
+        run: node tests/module-hygiene.mjs
+      - name: Browser regression
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/meadowline-http.log 2>&1 &
+          sleep 1
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 \
+            --dump-dom http://127.0.0.1:8000/tests/regression.html >/tmp/meadowline-regression.html
+          cat /tmp/meadowline-regression.html
+          grep -q 'data-result="pass"' /tmp/meadowline-regression.html
