@@ -5,6 +5,7 @@ on:
     branches:
       - feature/living-city-foundation
       - feature/housing-2
+      - feature/city-growth-progression
   pull_request:
     branches:
       - feature/living-city-foundation
@@ -31,3 +32,9 @@ jobs:
             --dump-dom http://127.0.0.1:8000/tests/regression.html >/tmp/meadowline-regression.html
           cat /tmp/meadowline-regression.html
           grep -q 'data-result="pass"' /tmp/meadowline-regression.html
+      - name: City Growth regression
+        run: |
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 \
+            --dump-dom http://127.0.0.1:8000/tests/city-growth-regression.html >/tmp/meadowline-city-growth.html
+          cat /tmp/meadowline-city-growth.html
+          grep -q 'data-result="pass"' /tmp/meadowline-city-growth.html
