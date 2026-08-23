@@ -1,4 +1,4 @@
-import { clamp } from '../core/constants.js';
+import { H, W, clamp } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { BUILDINGS, getBuildingDefinition } from '../buildings/registry.js';
 
@@ -19,6 +19,14 @@ function providerDefinition(b){
   const level=Math.max(1,Number(ensureState(b).level)||1);
   const upgrade=(def.upgrades||[]).find(u=>u.level===level);
   return {...def.service,...(upgrade||{})};
+}
+
+export function serviceBoundaryGeometry(type,x,y){
+  const def=getBuildingDefinition(type);
+  const service=def&&def.service;
+  if(!service||!Number.isFinite(service.radius)) return null;
+  const r=Math.max(0,Math.floor(service.radius));
+  return {def:service,r,minX:Math.max(0,x-r),maxX:Math.min(W-1,x+r),minY:Math.max(0,y-r),maxY:Math.min(H-1,y+r)};
 }
 
 export function invalidateServices(){ dirty=true; }
