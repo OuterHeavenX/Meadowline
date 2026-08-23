@@ -22,9 +22,11 @@ The registry is designed to grow toward:
 
 Education uses cached deterministic household assignments. Rebuilds are invalidated when providers, homes or household population change rather than scanning the city every rendered frame. The current 44×44 map remains unchanged.
 
+Civic-service reach is configured per provider in the building registry. It is not globally fixed to five tiles. This allows future Police, Fire, Healthcare and other civic buildings to use larger or smaller practical service areas without crowding the map with excessive duplicate buildings.
+
 ### School 2.0 defaults
 
-- coverage radius: 5 tiles (Chebyshev/isometric-square reach, matching Meadowline's existing local-effect convention)
+- education-service coverage radius: 7 tiles (Chebyshev/isometric-square reach, matching Meadowline's existing local-effect convention)
 - capacity: 28 student-demand units
 - demand: half of current household population, rounded up
 - provider choice: deterministic nearest eligible School with capacity-aware fallback
@@ -34,7 +36,7 @@ Education uses cached deterministic household assignments. Rebuilds are invalida
 - loss of coverage: education already earned remains; future growth pauses
 - School level: persisted as an upgrade-ready `state.level` field; no player upgrade UI exists yet
 
-The previous School mood effect and +2 covered-home resident-capacity perk are preserved for compatibility, but Education is now the real civic-service state.
+The previous School mood effect and +2 covered-home resident-capacity perk remain local at 5 tiles for compatibility. Expanding Education reach therefore does not silently expand every legacy School proximity bonus. Education is the real civic-service state.
 
 ## Household Education API
 
@@ -59,7 +61,7 @@ When placing a School, covered homes that would gain useful service receive rest
 
 The normal Look panel now explains household Education, assigned School, capacity, coverage and progress state. Inspecting a School shows demand, served count, capacity, utilization, homes served, radius and overload state. The Ledger includes citywide Education and student-service totals.
 
-A restrained share of morning pedestrian routines from served homes will choose their assigned School, keeping visible citizens as a lightweight representation rather than persistent per-child agents.
+A restrained share of morning pedestrian routines from served homes will choose their assigned School, keeping visible citizens as a lightweight representation rather than persistent per-child agents. The visible representation is capped per household so Look can never report more people out than actually live there.
 
 ## Save Schema V3
 
@@ -143,7 +145,7 @@ Every future major building should answer:
 9. What visible citizen behavior does it create?
 10. What pressure state can occur?
 
-School 2.0 is the reference implementation: Education; households/students; finite capacity; gradual Education progress; radius/capacity limits; future upgrades; population demand; future employment/crime/prosperity/housing hooks; morning attendance; overload pressure.
+School 2.0 is the reference implementation: Education; households/students; finite capacity; gradual Education progress; independently tuned service radius/capacity limits; future upgrades; population demand; future employment/crime/prosperity/housing hooks; morning attendance; overload pressure.
 
 ## Intentionally not implemented
 
