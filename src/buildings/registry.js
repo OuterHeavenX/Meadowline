@@ -7,8 +7,20 @@ export const BUILDINGS={
   rail:{id:"rail",name:"Rail",category:"ways",cost:8,key:"3",description:"Draw a loop and trains will run it on their own. Crosses water too.",renderKey:"rail",placement:{waterSpan:true},destination:{rail:true},saveDefaults:{}},
   station:{id:"station",name:"Station",category:"ways",cost:110,key:"0",description:"Must touch a rail tile. Lifts homes for six tiles.",renderKey:"station",placement:{requiresAdjacent:"rail"},destination:{work:true,visit:true},saveDefaults:{}},
   dock:{id:"dock",name:"Dock",category:"ways",cost:70,key:"d",description:"Must touch water. Boats put out from here and sail the lake.",renderKey:"dock",placement:{requiresAdjacentWater:true},destination:{work:true,visit:true},saveDefaults:{}},
-  house:{id:"house",name:"House",category:"homes",cost:24,key:"4",description:"Four neighbours move in once they're happy.",renderKey:"house",placement:{},destination:{home:true},saveDefaults:{education:0}},
-  school:{id:"school",name:"School",category:"homes",cost:145,key:"c",description:"Provides gradual education across a neighborhood, with room for 28 students.",renderKey:"school",placement:{},service:{type:"education",radius:7,capacity:28},destination:{work:true,visit:true},upgrades:[{level:1,capacity:28,radius:7}],saveDefaults:{level:1}},
+  house:{
+    id:"house",name:"House",category:"homes",cost:24,key:"4",
+    description:"A starter home that can gradually grow with a strong neighborhood.",
+    renderKey:"house",placement:{},destination:{home:true},
+    housing:{
+      tiers:[
+        {id:1,name:"Cottage",capacity:4,taxMultiplier:1,upgradeSeconds:0,requirements:{}},
+        {id:2,name:"Town Home",capacity:6,taxMultiplier:1.25,upgradeSeconds:50,requirements:{road:true,mood:65,education:15,desirability:45}},
+        {id:3,name:"Established Home",capacity:8,taxMultiplier:1.55,upgradeSeconds:85,requirements:{road:true,mood:78,education:35,desirability:62}}
+      ]
+    },
+    saveDefaults:{education:0,housingTier:1,upgradeProgress:0,desirability:0}
+  },
+  school:{id:"school",name:"School",category:"homes",cost:145,key:"c",description:"Provides gradual education across a neighborhood, with room for 28 students.",renderKey:"school",placement:{},service:{type:"education",radius:7,capacity:28,visual:{boundary:"green"}},destination:{work:true,visit:true},upgrades:[{level:1,capacity:28,radius:7}],saveDefaults:{level:1}},
   cafe:{id:"cafe",name:"Café",category:"trade",cost:55,key:"5",description:"Earns coins every day and cheers up the street.",renderKey:"cafe",placement:{},destination:{work:true,visit:true},saveDefaults:{}},
   market:{id:"market",name:"Market",category:"trade",cost:130,key:"r",description:"A hub for trade — lifts what every café and bakery nearby takes.",renderKey:"market",placement:{},destination:{work:true,visit:true},saveDefaults:{}},
   bakery:{id:"bakery",name:"Bakery",category:"trade",cost:80,key:"k",description:"Bakes what the windmills grind. Wants a mill within four tiles.",renderKey:"bakery",placement:{},destination:{work:true,visit:true},saveDefaults:{}},
