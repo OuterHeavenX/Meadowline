@@ -50,7 +50,7 @@ check('building and mood',Number.isFinite(mood)&&S.grid[idx(hx,hy)].linked);
 check('citizen movement setup',S.citizens.length>0);
 
 // School 2.0: coverage, finite capacity and gradual persistent education.
-put('school',22,20,0,{level:1});
+put('school',22,20,0,{level:1,futureTag:'keep-me',futureMeta:{funding:2}});
 const covered=S.grid[idx(hx,hy)];
 put('house',35,35,4,{education:7});
 recompute(); invalidateServices(); recomputeServices(true);
@@ -85,8 +85,10 @@ const educationBeforeSave=getEducationLevel(covered);
 save(); const savedCoins=S.coins; S.coins=1; covered.state.education=0;
 check('v3 save/reload round trip',load()&&S.coins===Math.floor(savedCoins));
 const reloadedCovered=S.grid[idx(hx,hy)];
+const reloadedSchool=S.grid[idx(22,20)];
 check('v3 education persists',Math.abs(getEducationLevel(reloadedCovered)-educationBeforeSave)<0.001);
-check('v3 school state persists',S.grid[idx(22,20)]?.state?.level===1);
+check('v3 school state persists',reloadedSchool?.state?.level===1);
+check('v3 optional metadata persists',reloadedSchool?.state?.futureTag==='keep-me'&&reloadedSchool?.state?.futureMeta?.funding===2);
 
 store.set(KEY,''); store.set(KEY_V2,JSON.stringify({v:2,seed:97531,coins:233,day:4,dayT:.3,b:[['house',6,6,3],['school',7,7,0]],woods:''})); store.set(KEY_OLD,'');
 check('v2 migration',load()&&S.coins===233&&S.grid[idx(6,6)]?.pop===3&&getEducationLevel(S.grid[idx(6,6)])===0&&S.grid[idx(7,7)]?.state?.level===1);
