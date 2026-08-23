@@ -1,5 +1,4 @@
 name: Living City Validation
-
 on:
   push:
     branches:
@@ -11,7 +10,6 @@ on:
       - feature/living-city-foundation
       - agent/architecture-refactor
       - main
-
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -28,13 +26,16 @@ jobs:
         run: |
           python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/meadowline-http.log 2>&1 &
           sleep 1
-          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 \
-            --dump-dom http://127.0.0.1:8000/tests/regression.html >/tmp/meadowline-regression.html
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 --dump-dom http://127.0.0.1:8000/tests/regression.html >/tmp/meadowline-regression.html
           cat /tmp/meadowline-regression.html
           grep -q 'data-result="pass"' /tmp/meadowline-regression.html
       - name: City Growth regression
         run: |
-          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 \
-            --dump-dom http://127.0.0.1:8000/tests/city-growth-regression.html >/tmp/meadowline-city-growth.html
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 --dump-dom http://127.0.0.1:8000/tests/city-growth-regression.html >/tmp/meadowline-city-growth.html
           cat /tmp/meadowline-city-growth.html
           grep -q 'data-result="pass"' /tmp/meadowline-city-growth.html
+      - name: City Growth 1.1 goals and touch regression
+        run: |
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 --dump-dom http://127.0.0.1:8000/tests/city-growth-1-1-regression.html >/tmp/meadowline-city-growth-1-1.html
+          cat /tmp/meadowline-city-growth-1-1.html
+          grep -q 'data-result="pass"' /tmp/meadowline-city-growth-1-1.html
