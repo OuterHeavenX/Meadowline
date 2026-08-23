@@ -1,3 +1,5 @@
+import { buildingToolDefinitions } from '../buildings/registry.js';
+
 /* ---------- tiny utilities ---------- */
 export const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 export const lerp=(a,b,t)=>a+(b-a)*t;
@@ -38,32 +40,22 @@ export const TW=64,TH=32;            // iso tile footprint at zoom 1
 export const DAY=100;                // seconds per in-game day
 export const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
+// Buildable tool metadata now comes from src/buildings/registry.js. Only runtime
+// interaction modes live here, so costs/descriptions/categories cannot drift.
 export const TOOLS=[
-  {id:"road",  name:"Road",   cost:3,   key:"2", desc:"Homes need a road alongside them. Drag to draw \u2014 water becomes a bridge.", cat:"ways"},
-  {id:"rail",  name:"Rail",   cost:8,   key:"3", desc:"Draw a loop and trains will run it on their own. Crosses water too.", cat:"ways"},
-  {id:"station",name:"Station",cost:110,key:"0", desc:"Must touch a rail tile. Lifts homes for six tiles.", cat:"ways"},
-  {id:"dock",  name:"Dock",   cost:70, key:"d", desc:"Must touch water. Boats put out from here and sail the lake.", cat:"ways"},
-  {id:"house", name:"House",  cost:24,  key:"4", desc:"Four neighbours move in once they're happy.", cat:"homes"},
-  {id:"school",name:"School", cost:145,key:"c", desc:"Room for two more in every home it reaches, and a fine mood lift.", cat:"homes"},
-  {id:"cafe",  name:"Caf\u00e9",   cost:55,  key:"5", desc:"Earns coins every day and cheers up the street.", cat:"trade"},
-  {id:"market",name:"Market", cost:130,key:"r", desc:"A hub for trade \u2014 lifts what every caf\u00e9 and bakery nearby takes.", cat:"trade"},
-  {id:"bakery",name:"Bakery", cost:80, key:"k", desc:"Bakes what the windmills grind. Wants a mill within four tiles.", cat:"trade"},
-  {id:"mill",  name:"Windmill",cost:95, key:"9", desc:"Grinds coin every day \u2014 most of all at harvest. Wants open ground.", cat:"trade"},
-  {id:"park",  name:"Park",   cost:40,  key:"6", desc:"The strongest mood lift, out to four tiles.", cat:"green"},
-  {id:"tree",  name:"Trees",  cost:2,   key:"7", desc:"A small, cheap lift. Nice along a road.", cat:"green"},
-  {id:"lamp",  name:"Lamp",   cost:9,   key:"8", desc:"A small lift that doubles after dark. Line them along a street.", cat:"green"},
-  {id:"move",  name:"Move",   cost:0,   key:"1", desc:"Drag to pan the valley. Scroll or pinch to zoom.", cat:"mode"},
-  {id:"look",  name:"Look",   cost:0,   key:"i", desc:"Tap anything to ask how it's doing, and why.", cat:"mode"},
-  {id:"erase", name:"Remove", cost:0,   key:"e", desc:"Clears a tile and refunds half the cost.", cat:"mode"}
+  ...buildingToolDefinitions(),
+  {id:"move",name:"Move",cost:0,key:"1",desc:"Drag to pan the valley. Scroll or pinch to zoom.",cat:"mode"},
+  {id:"look",name:"Look",cost:0,key:"i",desc:"Tap anything to ask how it's doing, and why.",cat:"mode"},
+  {id:"erase",name:"Remove",cost:0,key:"e",desc:"Clears a tile and refunds half the cost.",cat:"mode"}
 ];
 export const COST={}; for(const t of TOOLS) COST[t.id]=t.cost;
 
 // The dock groups tools so sixteen of them still fit a phone.
 export const CATEGORIES=[
-  {id:"ways",  name:"Ways"},
-  {id:"homes", name:"Homes"},
-  {id:"trade", name:"Trade"},
-  {id:"green", name:"Green"}
+  {id:"ways",name:"Ways"},
+  {id:"homes",name:"Homes"},
+  {id:"trade",name:"Trade"},
+  {id:"green",name:"Green"}
 ];
 
 export const ICONS={
@@ -86,27 +78,12 @@ export const ICONS={
 };
 
 /* ---------- seasons ---------- */
-// The valley turns through a year of four seasons, five days each. Every
-// colour below is a hex string so the blend between two seasons can be
-// re-shaded and re-mixed further downstream.
 export const SEASON_DAYS=5;
 export const SEASONS=[
-  {name:"Spring",
-   grass:["#8fc077","#96c67e","#89ba6d","#9dcb83"], dark:"#6f9d5c",
-   fall:0, leaf:"#63a052", leafHi:"#86bf6d", bloom:1, snow:0, mood:3, yield:2,
-   skyTop:"#b6dde5", skyBot:"#86ba7f", nightTop:"#3b566f", nightBot:"#2e4441"},
-  {name:"Summer",
-   grass:["#82b968","#8bbf70","#79b060","#92c578"], dark:"#639250",
-   fall:0, leaf:"#4f9146", leafHi:"#71b05e", bloom:.55, snow:0, mood:2, yield:5,
-   skyTop:"#a6d8e8", skyBot:"#7fb476", nightTop:"#37506c", nightBot:"#2a4038"},
-  {name:"Autumn",
-   grass:["#b5ad6a","#bfb474","#aaa161","#c6bb7e"], dark:"#8d8650",
-   fall:1, leaf:"#cf8a3c", leafHi:"#e3ad50", bloom:.2, snow:0, mood:0, yield:12,
-   skyTop:"#cbd2c8","skyBot":"#a89f68", nightTop:"#3d4a5e", nightBot:"#3a3d36"},
-  {name:"Winter",
-   grass:["#dee4dc","#e7ebe3","#d5dbd3","#edf0e9"], dark:"#c2cabf",
-   fall:0, leaf:"#8ea892", leafHi:"#b8cab7", bloom:0, snow:1, mood:-4, yield:0,
-   skyTop:"#d3dee4", skyBot:"#c3ccc6", nightTop:"#3a4763", nightBot:"#414c50"}
+  {name:"Spring",grass:["#8fc077","#96c67e","#89ba6d","#9dcb83"],dark:"#6f9d5c",fall:0,leaf:"#63a052",leafHi:"#86bf6d",bloom:1,snow:0,mood:3,yield:2,skyTop:"#b6dde5",skyBot:"#86ba7f",nightTop:"#3b566f",nightBot:"#2e4441"},
+  {name:"Summer",grass:["#82b968","#8bbf70","#79b060","#92c578"],dark:"#639250",fall:0,leaf:"#4f9146",leafHi:"#71b05e",bloom:.55,snow:0,mood:2,yield:5,skyTop:"#a6d8e8",skyBot:"#7fb476",nightTop:"#37506c",nightBot:"#2a4038"},
+  {name:"Autumn",grass:["#b5ad6a","#bfb474","#aaa161","#c6bb7e"],dark:"#8d8650",fall:1,leaf:"#cf8a3c",leafHi:"#e3ad50",bloom:.2,snow:0,mood:0,yield:12,skyTop:"#cbd2c8",skyBot:"#a89f68",nightTop:"#3d4a5e",nightBot:"#3a3d36"},
+  {name:"Winter",grass:["#dee4dc","#e7ebe3","#d5dbd3","#edf0e9"],dark:"#c2cabf",fall:0,leaf:"#8ea892",leafHi:"#b8cab7",bloom:0,snow:1,mood:-4,yield:0,skyTop:"#d3dee4",skyBot:"#c3ccc6",nightTop:"#3a4763",nightBot:"#414c50"}
 ];
 
 /* ---------- palette ---------- */
