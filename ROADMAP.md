@@ -14,7 +14,13 @@ PR #1: Living City Foundation / School 2.0 — **draft, unmerged**
 
 Current milestone: **Housing 2.0 / Neighborhood Desirability / Residential Evolution / Civic Coverage Visualization**
 
-Status: **implemented on its own branch and awaiting branch validation plus physical-iPhone acceptance; nothing merged into `main`**
+Status: **implemented on its own branch; automated validation is green; physical-iPhone Housing 2.0 acceptance remains pending; nothing merged into `main`**
+
+Automated Housing 2.0 validation currently proves:
+
+- JavaScript syntax checks pass
+- module hygiene passes with no import cycles, imported-binding assignments or meaningless re-export shims
+- headless browser regression passes, including Housing tiers, Desirability, Save V3 Housing state, School-demand feedback and civic-boundary geometry
 
 ---
 
