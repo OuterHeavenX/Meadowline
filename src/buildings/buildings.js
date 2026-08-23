@@ -1,0 +1,81 @@
+import { note } from '../simulation/chronicle.js';
+import { DIRS } from '../core/constants.js';
+import { services } from '../core/services.js';
+import { S } from '../core/state.js';
+import { invalidateServices } from '../simulation/civic-services.js';
+import { BUILDABLE, BUILDING_COST, defaultBuildingState } from './registry.js';
+import { SPANS } from '../transport/bridges.js';
+import { idx, inBounds, isType, isWater } from '../world/tiles.js';
+
+export { BUILDABLE } from './registry.js';
+
+/* ---------- building placement ---------- */
+// A span over water costs three times what it does on dry ground.
+export function costOf(kind,x,y){ return BUILDING_COST[kind]*(SPANS[kind]&&isWater(x,y)?3:1); }
+
+export function canPlace(kind,x,y){
+  if(!BUILDABLE[kind]) return {ok:false};
+  if(!inBounds(x,y)) return {ok:false};
+  const i=idx(x,y);
+  if(S.terr[i]===1&&!SPANS[kind]) return {ok:false,why:"Only roads and rails can cross the water."};
+  const cur=S.grid[i];
+  if(cur){
+    if(cur.type===kind) return {ok:false};
+    return {ok:false,why:"Something's already there — remove it first."};
+  }
+  if(kind==="station"){
+    let touching=false;
+    for(const[dx,dy]of DIRS) if(isType(x+dx,y+dy,"rail")) touching=true;
+    if(!touching) return {ok:false,why:"Stations have to touch a rail tile."};
+  }
+  if(kind==="dock"){
+    let touching=false;
+    for(const[dx,dy]of DIRS) if(isWater(x+dx,y+dy)) touching=true;
+    if(!touching) return {ok:false,why:"A dock has to stand at the water's edge."};
+  }
+  const c=costOf(kind,x,y);
+  if(S.coins<c){
+    return {ok:false,why:S.terr[i]===1
+      ? "A bridge across costs "+c+" — not enough coins yet."
+      : "Not enough coins yet — wait for the next payday."};
+  }
+  return {ok:true};
+}
+
+// the first of each kind is worth writing down
+const NOTED={};
+const NOTE_NAMES={cafe:"The first café opened",park:"The first park was laid out",
+  station:"The first station opened",mill:"The first windmill turned",
+  market:"The first market day",bakery:"The first bakery lit its oven",
+  school:"The first school took pupils",dock:"The first dock was built",
+  rail:"The first rail was laid",house:"The first house went up"};
+
+export function place(kind,x,y){
+  const r=canPlace(kind,x,y);
+  if(!r.ok){ if(r.why) services.hint(r.why,true); return false; }
+  const i=idx(x,y);
+  S.coins-=costOf(kind,x,y);
+  S.natTree[i]=0;
+  S.grid[i]={type:kind,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:0,grow:0,mood:50,linked:false,state:defaultBuildingState(kind)};
+  invalidateServices();
+  if(NOTE_NAMES[kind]&&!NOTED[kind]){ NOTED[kind]=1; note(NOTE_NAMES[kind]); }
+  services.puff(x,y);
+  services.blip(kind==="house"?520:kind==="park"?400:kind==="mill"?300:340);
+  return true;
+}
+
+export function erase(x,y){
+  if(!inBounds(x,y)) return false;
+  const i=idx(x,y);
+  const b=S.grid[i];
+  if(!b){
+    if(S.natTree[i]){ S.natTree[i]=0; services.puff(x,y); services.blip(240); return true; }
+    return false;
+  }
+  S.coins+=Math.floor(costOf(b.type,x,y)/2);
+  S.grid[i]=null;
+  invalidateServices();
+  services.puff(x,y);
+  services.blip(220);
+  return true;
+}
