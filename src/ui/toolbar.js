@@ -1,26 +1,25 @@
 import { CATEGORIES, COST, ICONS, TOOLS } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
+import { buildingUnlockStage, isBuildingUnlocked, CITY_STAGES } from '../progression/city-growth.js';
 import { hint } from './notify.js';
 
-/* ---------- the tool dock ----------
-   Sixteen tools will not sit in one strip on a phone, so building tools are
-   grouped into categories and the three plain modes (move, look, remove) are
-   pinned beside them where they are always reachable. */
 export const elDock=document.querySelector(".dock");
 export const elTools=document.getElementById("tools");
 export const elModes=document.getElementById("modes");
 export const elCats=document.getElementById("cats");
-
 export let category=CATEGORIES[0].id;
 
 function button(t,compact){
+  const locked=t.cat!=="mode"&&!isBuildingUnlocked(t.id);
   const b=document.createElement("button");
-  b.className="tool"+(t.id===S.tool?" on":"");
+  b.className="tool"+(t.id===S.tool?" on":"")+(locked?" locked":"");
   b.dataset.id=t.id;
-  b.title=t.name+(t.cost?" · "+t.cost:"")+" ("+t.key.toUpperCase()+")";
+  b.disabled=locked;
+  const unlock=locked?" · unlocks at "+CITY_STAGES[buildingUnlockStage(t.id)-1].name:"";
+  b.title=t.name+(t.cost?" · "+t.cost:"")+unlock+" ("+t.key.toUpperCase()+")";
   b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[t.id]+'</svg>'+
-              (compact?'':'<i>'+t.name+'</i><u>'+(t.cost?t.cost:"&nbsp;")+'</u>');
+              (compact?'':'<i>'+t.name+'</i><u>'+(locked?'Locked':(t.cost?t.cost:"&nbsp;"))+'</u>');
   b.addEventListener("click",()=>pickTool(t.id));
   return b;
 }
@@ -43,10 +42,14 @@ export function showCategory(id){
 }
 
 export function pickTool(id){
+  const t=TOOLS.find(t=>t.id===id);
+  if(!t) return;
+  if(t.cat!=="mode"&&!isBuildingUnlocked(id)){
+    hint(t.name+' unlocks at '+CITY_STAGES[buildingUnlockStage(id)-1].name+'.',true);
+    return;
+  }
   if(id!=="look"&&S.tool==="look") services.closeLook();
   S.tool=id;
-  const t=TOOLS.find(t=>t.id===id);
-  // a keyboard shortcut can reach a tool whose category is not showing
   if(t.cat!=="mode"&&t.cat!==category) showCategory(t.cat);
   for(const b of [...elTools.children,...elModes.children]) b.classList.toggle("on",b.dataset.id===id);
   hint(t.desc);
@@ -54,13 +57,23 @@ export function pickTool(id){
 }
 
 export function paintTools(){
+  // Rebuild the visible category if a stage change may have unlocked tools.
+  const expected=TOOLS.filter(t=>t.cat===category);
+  const ids=[...elTools.children].map(b=>b.dataset.id);
+  const should=expected.map(t=>t.id);
+  const unlockChanged=expected.some(t=>{
+    const b=[...elTools.children].find(x=>x.dataset.id===t.id);
+    return b&&b.disabled===isBuildingUnlocked(t.id);
+  });
+  if(ids.join('|')!==should.join('|')||unlockChanged){
+    elTools.replaceChildren(...expected.map(t=>button(t,false)));
+  }
   for(const b of [...elTools.children,...elModes.children]){
     const c=COST[b.dataset.id];
-    b.classList.toggle("broke",c>0&&S.coins<c);
+    b.classList.toggle("broke",!b.disabled&&c>0&&S.coins<c);
     b.classList.toggle("on",b.dataset.id===S.tool);
   }
-  elDock.classList.toggle("more",
-    elTools.scrollLeft+elTools.clientWidth < elTools.scrollWidth-2);
+  elDock.classList.toggle("more",elTools.scrollLeft+elTools.clientWidth < elTools.scrollWidth-2);
 }
 
 showCategory(category);
