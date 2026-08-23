@@ -1,495 +1,264 @@
 # Meadowline Roadmap
 
-Meadowline is evolving from a calm small city builder into a deeper **living-city simulation** while preserving its lightweight static-browser architecture, isometric presentation and mobile-first controls.
+Meadowline is evolving from a calm small city builder into a deeper **living-city simulation** while preserving its lightweight static-browser architecture, native ES modules, isometric canvas presentation, mobile-first controls, and low-stress character.
 
-## Project status snapshot
+This roadmap distinguishes production status, historical branches, automated proof, physical-device proof, and roadmap-only systems.
 
-Current development branch: `feature/housing-2`
+---
 
-Validated parent branch: `feature/living-city-foundation`
+## Status snapshot
 
-Architectural foundation: `agent/architecture-refactor`
+### Implemented on `main`
 
-PR #1: Living City Foundation / School 2.0 — **draft, unmerged**
+Production release at the start of City Growth planning:
 
-Current milestone: **Housing 2.0 / Neighborhood Desirability / Residential Evolution / Civic Coverage Visualization**
+`5d4054f764d603b23ddf1a74ab63824de67ea778`
 
-Status: **implemented on its own branch; automated validation is green; physical-iPhone Housing 2.0 acceptance remains pending; nothing merged into `main`**
+Merged through PR #3:
 
-Automated Housing 2.0 validation currently proves:
+- architectural modularization
+- Living City Foundation
+- School 2.0 / Education service
+- Save Schema V3
+- mobile gesture stabilization
+- Housing 2.0
+- Neighborhood Desirability
+- residential evolution
+- civic-service placement visualization
 
-- JavaScript syntax checks pass
-- module hygiene passes with no import cycles, imported-binding assignments or meaningless re-export shims
-- headless browser regression passes, including Housing tiers, Desirability, Save V3 Housing state, School-demand feedback and civic-boundary geometry
+PR #1 and PR #2 are historical development PRs. Both were superseded and closed without separate merge.
+
+### Current development branch
+
+`feature/city-growth-progression`
+
+Current milestone:
+
+**City Growth 1.0 — Progressive Land / Development Milestones / Building Unlocks / Civic Upgrade Foundation**
+
+This work is not production until its branch validation is green and the owner completes physical iPhone/iPad acceptance. Nothing should merge automatically.
 
 ---
 
 # Milestone 1 — Living City Foundation / School 2.0
 
-Implemented on `feature/living-city-foundation`:
+**Production status:** merged into `main` through PR #3.
+
+**Historical development branch:** `feature/living-city-foundation`.
+
+Established architecture:
 
 - centralized authoritative building registry
-- reusable civic-service architecture
+- reusable civic-service provider model
 - Education as the first real civic service
 - persistent household Education
-- deterministic provider assignment
-- finite School capacity and overload
-- 7-tile School Education-service radius
-- 28-student capacity
-- School and household inspection
+- deterministic School assignment
+- finite service capacity and overload
+- 7-tile School service radius
+- 28-student Level 1 capacity
+- household/School Look inspection
 - citywide Education metrics
-- Save Schema V3 with v1/v2 migration
-- mobile pinch/build arbitration repair
-- representative School attendance
-- per-household visible-pedestrian cap
+- Save V3 with V1/V2 migration
+- mobile pinch/build arbitration protection
+- representative citizen count protection
 - developer diagnostics
-- regression and module-hygiene coverage
+- browser regression and module-hygiene coverage
 
-Physically demonstrated on iPhone:
+**Physical proof recorded:** School overload/capacity behavior, waiting-for-space language, Education gain, 7-tile reach, and the pinch-with-School-selected regression were observed on an owner device before the production merge.
 
-- School demand changes with population
-- 28 / 28 capacity remains bounded
-- demand can exceed capacity
-- `At capacity` and `Waiting for school space` are understandable
-- household Education increases while served
-- 7-tile School reach is live
-- two-finger pinch with School selected does not accidentally place a School
-- the observed household pedestrian over-count was repaired
-
-This remains the architectural base for all future civic providers.
+This remains the provider architecture for future Police, Fire, Healthcare, Recreation, Employment, Sanitation, and other civic services.
 
 ---
 
-# Milestone 2 — Housing 2.0
+# Milestone 2 — Housing 2.0 / Neighborhood Desirability
 
-Current branch: `feature/housing-2`
+**Production status:** merged into `main` through PR #3.
+
+**Historical development branch:** `feature/housing-2`.
 
 Primary loop:
 
-Good Neighborhood
-→ Better Housing
-→ More Residents
-→ More Residential Tax Value
-→ Greater Civic Demand
-→ More Civic Investment
-→ Better Neighborhood
-→ Further Growth
+Road + Mood + Education + Desirability
+→ residential upgrade readiness
+→ Cottage / Town Home / Established Home evolution
+→ greater household capacity
+→ higher residential tax value
+→ more residents
+→ more School demand
+→ greater civic pressure.
 
-## Residential tiers
+Production residential tiers:
 
-Current first-pass tiers:
+- Cottage — capacity 4, 1.0× residential tax
+- Town Home — capacity 6, 1.25× residential tax
+- Established Home — capacity 8, 1.55× residential tax
 
-### Tier 1 — Cottage
+Neighborhood Desirability is intentionally separate from short-term Mood. It uses real existing factors including roads, Mood, Education, parks, cafés, stations, lamps, trees/water, and local crowding.
 
-- base capacity: 4
-- residential tax multiplier: 1.00×
-- no upgrade requirements because this is the starting tier
-
-### Tier 2 — Town Home
-
-- base capacity: 6
-- residential tax multiplier: 1.25×
-- road access
-- Mood 65+
-- Education 15+
-- Desirability 45+
-- approximately 50 seconds of qualifying simulation time with a small deterministic per-house timing offset
-
-### Tier 3 — Established Home
-
-- base capacity: 8
-- residential tax multiplier: 1.55×
-- road access
-- Mood 78+
-- Education 35+
-- Desirability 62+
-- approximately 85 seconds of qualifying simulation time with a small deterministic per-house timing offset
-
-Upgrade progress pauses when a requirement is lost; it does not reset or aggressively decay. Homes do not downgrade in this milestone.
-
-## Legacy School housing-capacity decision
-
-The former School proximity rule added +2 resident capacity to homes within the old 5-tile School influence.
-
-Housing 2.0 retires that rule for **future resident growth** because residential tier now owns residential density and Education is the School's real civic outcome.
-
-Migration rule:
-
-- existing residents are grandfathered
-- nobody is evicted because a save is loaded under Housing 2.0
-- a Tier 1 home that already contains 6 residents may keep all 6
-- it simply cannot grow further until residential tier capacity catches up
-
-The older 5-tile School mood influence remains.
-
-## Neighborhood Desirability
-
-Desirability is a real 0–100 derived residential-development value distinct from Mood.
-
-Current inputs use only working Meadowline systems:
-
-- road access
-- current Mood
-- Education-service status
-- household Education
-- parks
-- cafés
-- station proximity
-- lamps
-- trees and water
-- local crowding
-
-Current labels:
-
-- Quiet Start
-- Developing
-- Pleasant
-- Desirable
-- Highly Desirable
-
-Future systems may add Safety, Healthcare, Employment, Prosperity and other real service outcomes after those systems actually exist.
-
-## Residential visual evolution
-
-Housing tiers change silhouette within the existing one-tile footprint.
-
-- Cottage: smallest form
-- Town Home: larger/taller form, additional upper window and dormer
-- Established Home: largest form, extra windows plus small visible garden/fence detail
-
-Seeded wall/roof variation remains independent from tier.
-
-A restrained growth chevron appears while upgrade progress is active so evolving homes can be spotted without filling the map with permanent icons.
-
-## Housing inspection 3.0
-
-House Look now explains:
-
-- residents / current capacity
-- Mood and Mood reasons
-- Education and serving School
-- School capacity state
-- Neighborhood Desirability
-- current housing tier
-- next tier
-- upgrade progress
-- each active requirement
-- whether growth is active or waiting
-
-Only real systems are shown. Crime, Fire, Healthcare and Employment requirements remain absent.
-
-## Residential economy
-
-Tier 1 preserves the old tax curve.
-
-Higher tiers scale the residential portion of daily tax without altering café, bakery, market, windmill or festival logic.
-
-This means upgraded neighborhoods provide more revenue while simultaneously creating more School demand as their population fills the new capacity.
-
-## Cross-system proof
-
-Housing 2.0 must prove this relationship without special-case School code:
-
-Residential tier increases capacity
-→ household population increases
-→ existing Education demand formula sees more residents
-→ School utilization rises
-→ capacity pressure appears naturally
-
-Housing invalidates the generic civic-service cache when relevant state changes rather than directly editing School statistics.
-
-## Civic-service placement boundary
-
-Housing 2.0 also establishes a reusable civic-placement language.
-
-When a School is positioned:
-
-- a green perimeter marks the actual Education-service area
-- a light green interior tint shows the reachable field
-- green household markers show strong useful service
-- amber/yellow household markers indicate potential capacity pressure
-- the building placement ghost remains visually dominant
-- invalid placement still uses the existing red treatment
-
-The overlay reads service metadata from the building registry and is intended for later Police, Fire and Healthcare providers.
-
-Important geometry rule:
-
-The School's `radius: 7` uses the current Chebyshev service calculation. That means every tile center within 7 grid steps in either axis is reachable. The rendered boundary follows that exact simulation region; it is not a decorative circle and does not falsely highlight homes outside service reach.
-
-## Save V3
-
-No Save V4 is introduced.
-
-Housing adds optional V3 house state:
-
-- `housingTier`
-- `upgradeProgress`
-- `desirability`
-- existing `education`
-
-V1, V2 and earlier V3 saves default safely to Tier 1. Invalid state is clamped defensively.
-
-## Performance model
-
-Housing and desirability run on the low-frequency Living City simulation tick rather than render frequency.
-
-Diagnostics now track:
-
-- housing evaluations
-- housing upgrades
-- desirability recomputes
-- existing civic-service recomputes
-
-The current 44×44 world remains the stable simulation test bed.
+The House Look card explains current tier, next tier, Desirability, Education, upgrade progress, and individual requirements. Tier evolution is gradual, non-destructive, and does not evict grandfathered residents.
 
 ---
 
-# Housing 2.0 physical-iPhone gate
+# Milestone 3 — City Growth 1.0
 
-Housing 2.0 should not be called fully validated until the owner physically confirms:
+**Status:** current feature-branch development.
 
-- existing city/save loads
-- Cottage / Town Home / Established Home silhouettes are distinguishable on iPhone
-- Look panel remains readable and scrollable
-- a qualifying home visibly accumulates growth progress
-- a home eventually evolves automatically
-- household identity/Education are preserved
-- increased capacity fills with additional population
-- School demand increases as the upgraded home fills
-- the green School service field matches real 7-tile reach
-- green and amber household markers remain distinguishable
-- pinch with School selected still cancels pending placement
-- evolved neighborhoods remain smooth
-- housing state survives page close/reload
+Primary loop:
 
-See `docs/IPHONE_ACCEPTANCE.md`.
+Small Settlement
+→ healthy neighborhood
+→ population growth
+→ Education / housing development
+→ city-development milestone
+→ new land
+→ new building capabilities
+→ greater civic demand
+→ civic upgrade choice
+→ larger town.
+
+## Stage system
+
+Four stages only for this pass:
+
+1. Settlement
+2. Village
+3. Township
+4. Growing Town
+
+Stages use real city health rather than a giant XP ladder. The milestone evaluator supports hard requirements plus `any X of Y` groups to permit different successful city styles.
+
+## Progressive land
+
+The existing 44×44 world stays intact. New progression cities begin with Meadowline Center (20×20) and expand into deterministic North, East, South, West, and four outer-corner parcels.
+
+Locked terrain still exists, renders normally beneath a restrained tint, receives weather/seasons, keeps ponds and natural trees, and remains camera-accessible.
+
+Expansion requires:
+
+city progress + neighboring prerequisite where relevant + coins + explicit player confirmation.
+
+Legacy saves use full access and are never retroactively locked.
+
+## Building unlock foundation
+
+Registry-driven first pass:
+
+**Settlement:** Road, House, Café, Park, Trees, Lamp
+
+**Village:** School, Market, Bakery
+
+**Township:** Rail, Station, Windmill
+
+**Growing Town:** Dock
+
+This sequence is balancing data, not hard-coded UI logic. Legacy cities retain every currently existing tool.
+
+## School Level 2
+
+The first reusable civic upgrade:
+
+- Township required
+- 650 coins
+- Level 1: 28 capacity / radius 7
+- Level 2: 44 capacity / radius 7
+- visible one-tile visual improvement
+- persistent `state.level`
+
+Design choice:
+
+**build another School** versus **upgrade the existing School**.
+
+The milestone proves generic registry-driven civic upgrades without implementing Police, Fire, or Hospital yet.
+
+See `docs/CITY_GROWTH_1.md` for exact parcel geometry, requirements, migration, tests, and acceptance criteria.
 
 ---
 
-# Decision point after Housing 2.0
+# Future system graph
 
-Do **not** automatically begin the next milestone after Housing 2.0. Choose deliberately based on device testing and what feels most valuable.
+The long-term living-city model remains systemic rather than a disconnected building catalog.
 
-## Option A — Progressive Land & City Growth
+## Safety / Police / Crime / Jail — roadmap only
 
-Target relationship:
+Education + density + future Prosperity
+→ crime pressure
+→ Police safety coverage
+→ incidents / arrests
+→ Jail
+→ neighborhood Safety
+→ Desirability.
 
-Start with a smaller usable city
-→ reach population / housing / service milestones
-→ unlock new land
-→ unlock additional buildings
-→ expand into a larger city
+Do not implement until City Growth is physically proven.
 
-Why it may be next:
+## Recreation 2.0 — roadmap only
 
-- gives Housing 2.0 a progression purpose
-- makes early-game pacing clearer
-- supports the owner's desire for a city that starts small and progressively expands
+Parks / recreation providers
+→ recreation access
+→ less boredom
+→ better Mood
+→ better Desirability
+→ stronger housing development.
 
-Risks:
+This can turn the existing Park from a simple Mood bonus into a true service provider.
 
-- should not enlarge simulation workload substantially until large-world architecture is planned
-- land gating needs a migration strategy for existing worlds
+## Fire / Emergency Foundation — roadmap only
 
-## Option B — Police / Crime / Jail
+Development density
+→ fire risk
+→ Fire Department coverage
+→ response
+→ recovery
+→ neighborhood stability / Safety.
 
-Target relationship:
+Keep fire events understandable and non-punishing rather than destructive chaos.
 
-Education + Density + future Employment/Prosperity
-→ Crime Pressure
-→ incidents
-→ Police safety service
-→ response / arrests
-→ Jail capacity
-→ safer neighborhoods
+## Employment / Prosperity — roadmap only
+
+Education
+→ job qualification
+→ employment
+→ household Prosperity
 → Desirability
+→ housing development / tax base.
 
-Why it may be next:
+This is a strong future bridge from Education into an economic household simulation.
 
-- directly proves the service framework can support a second truly different civic system
-- creates a major new input into Desirability
+## Healthcare — roadmap only
 
-Risks:
+Population + age/density/future illness pressure
+→ Hospital/clinic service
+→ healthcare access
+→ recovery/wellbeing
+→ household stability / Desirability.
 
-- crime should remain readable and low-stress
-- employment/prosperity do not yet exist, so first crime pressure would need intentionally limited inputs
+No disease/medicine/research system exists yet.
 
-## Option C — Recreation 2.0
+## Neighborhood identity — roadmap only
 
-Target relationship:
+Future neighborhoods may eventually gain names, identity, service profiles, prosperity, safety, recreation, and visual evolution. City Growth parcels are development regions, not yet neighborhood identities.
 
-Parks
-→ Recreation Service
-→ boredom relief / better Mood
-→ Desirability
-→ Housing growth
+## Larger world / chunks — roadmap only
 
-Why it may be next:
+Do not enlarge Meadowline until progression, service pressure, touch interaction, and performance are proven on the 44×44 world.
 
-- relatively low risk
-- reuses existing Park assets and Living City service architecture
-- deepens current neighborhoods without introducing emergencies
+The parcel API uses IDs/regions so a future larger map can reuse the concept without assuming today's fixed geometry.
 
-## Option D — Civic Service Upgrades
+## Transport evolution — roadmap only
 
-Start with School Level 2:
+Potential future work includes:
 
-School Level 1
-→ capacity pressure
-→ upgrade investment
-→ more student capacity
-→ possibly modest service/reach improvement
+- road-over-rail automatic crossings
+- traffic/usage modeling
+- stronger station/transit service
+- district-to-district mobility
 
-Why it may be next:
-
-- Housing 2.0 will create more School pressure
-- gives players an alternative to placing duplicate Schools
-- establishes the reusable civic-building upgrade pattern before Police/Fire/Hospital arrive
-
-Current planning recommendation after successful Housing 2.0 testing: compare **Progressive Land Growth** against **Civic Service Upgrades** first, then decide whether the city needs progression space or deeper service management more urgently.
+Do not rewrite A* or the renderer as part of City Growth.
 
 ---
 
-# Later roadmap systems
+# Design principles that remain permanent
 
-## Progressive land and city growth
-
-Planned:
-
-- smaller starting buildable area for future new games
-- land expansion earned through city-development milestones
-- progressive building unlocks
-- existing neighborhoods remain valuable instead of being discarded
-- avoid requiring the player to fill every tile before expanding
-
-## Police, Crime and Jail
-
-Planned:
-
-- `safety` civic service
-- larger practical geographic reach than School where appropriate
-- finite response/capacity
-- household/neighborhood crime pressure
-- visible but restrained incidents
-- arrests
-- Jail capacity
-- Safety feeding Neighborhood Desirability
-
-No fake Crime/Safety value should appear before this exists.
-
-## Fire and emergency response
-
-Planned:
-
-- Fire Department service
-- broad coverage
-- finite response capacity
-- building fires and recovery
-- readable response state
-- low-stress tuning
-
-## Healthcare, sickness and medical research
-
-Long-term chain:
-
-Hospital
-→ Healthcare Coverage
-→ Treatment
-→ Healthier Households
-→ Neighborhood Stability
-→ Medical Research
-→ Medicine
-→ Disease Control
-→ possible virus evolution
-→ new research requirements
-
-Implement in stages; do not jump directly to complex disease mutation.
-
-## Employment and Prosperity
-
-Planned:
-
-- job demand/capacity
-- Education affecting qualification
-- household prosperity
-- stronger residential/economic links
-- Employment/Prosperity feeding Desirability and future crime pressure
-
-## Road-over-rail crossings
-
-Owner-requested future behavior:
-
-- roads automatically create an appropriate crossing over rail
-- interaction should feel as natural as current water spans
-- placement architecture must remain compatible with this
-
-## Large-world architecture
-
-Do not dramatically enlarge the world until deeper simulation is stable.
-
-Expected future technical work:
-
-- chunks/spatial organization
-- service-provider spatial indexes
-- visible-region rendering
-- scalable route solving / A* or equivalent
-- route caching
-- virtual off-screen population
-- many more visible representative NPCs without permanently saving every pedestrian
-
-## Neighborhood identities
-
-Future district character should emerge from actual state such as:
-
-- housing tiers
-- age of development
-- Education
-- Mood
-- Desirability
-- greenery
-- transit
-- later Prosperity, Safety and Healthcare
-
----
-
-# Civic-service coverage philosophy
-
-Current planning guide:
-
-- small/local amenity: roughly 2–4 tiles
-- neighborhood amenity: roughly 4–6 tiles
-- School: 7-tile service radius
-- future Police / Fire / Healthcare: likely 8–12+ depending on capacity and response design
-
-Coverage determines who **can** be served. Capacity determines how much demand **is** served.
-
-This keeps large civic buildings from being crammed onto every few blocks.
-
----
-
-# Major-building mini-ecosystem standard
-
-Every future major building should answer:
-
-1. What service does it provide?
-2. Who uses it?
-3. What does it consume?
-4. What does it produce?
-5. What limits it?
-6. What can be upgraded?
-7. Which systems influence it?
-8. Which systems does it influence?
-9. What visible citizen behavior does it create?
-10. What pressure state can occur?
-
-School 2.0 remains the reference civic-service implementation. Housing 2.0 becomes the reference **consumer** of service outcomes.
-
----
-
-# Product principles
-
-Meadowline should remain:
+Meadowline should be:
 
 - peaceful
 - understandable
@@ -498,8 +267,47 @@ Meadowline should remain:
 - mobile friendly
 - rewarding to observe
 - progressively deeper
-- never unnecessarily punishing
+- forgiving rather than punishing
 
-The player should be able to ask **why is this happening?** and get a useful answer.
+Progression must not become:
 
-The purpose of each milestone is not the raw number of features added. It is the number of future systems that become easier to add cleanly.
+- premium-currency gating
+- energy systems
+- arbitrary waiting
+- hour-long construction timers
+- monetization-style queues
+- repetitive busywork
+
+A normal play session should create visible progress through city planning and healthy neighborhoods.
+
+---
+
+# Validation policy
+
+## Automatically validated
+
+Only call a branch automatically validated when its current head has actually passed:
+
+- JavaScript syntax
+- module hygiene / import-cycle checks
+- browser regression
+- milestone-specific regression tests
+
+## Physically validated
+
+Only call something physically validated after the owner tests the relevant build on an actual iPhone/iPad and reports the behavior.
+
+CI is never physical proof.
+
+## Current gate
+
+City Growth 1.0 must pass its automated suite and then physical iPhone/iPad acceptance before any merge decision.
+
+After City Growth physical testing, stop and recommend the next milestone among:
+
+- Police / Crime / Jail
+- Recreation 2.0
+- Fire / Emergency Foundation
+- Employment / Prosperity
+
+Base that recommendation on what real play reveals rather than automatically starting another branch.
