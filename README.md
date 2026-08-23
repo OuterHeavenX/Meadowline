@@ -16,6 +16,8 @@ Current milestone: **Housing 2.0 / Neighborhood Desirability / Residential Evolu
 
 PR #1 for the Living City Foundation remains draft and unmerged. Housing 2.0 is intentionally being developed on top of that validated branch without modifying `main`.
 
+**Automated Housing 2.0 validation is green.** GitHub Actions has passed JavaScript syntax validation, module hygiene and the headless browser regression suite on the Housing branch. Physical-iPhone Housing 2.0 acceptance is still required before any merge.
+
 ### Living City Foundation already established
 
 - centralized building registry
@@ -212,7 +214,13 @@ node tests/module-hygiene.mjs
 
 Automated validation and physical iPhone acceptance are separate gates.
 
-Housing 2.0 must prove on the physical phone that:
+Automated status on this branch:
+
+- JavaScript syntax: **PASS**
+- module hygiene: **PASS** — no imported-binding assignment, re-export shim or import cycle
+- browser regression: **PASS**
+
+Housing 2.0 must still prove on the physical phone that:
 
 - tier silhouettes are readable
 - Look explains desirability and growth clearly
