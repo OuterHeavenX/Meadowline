@@ -7,7 +7,7 @@ let el=null,frames=0,lastPaint=performance.now(),lastFrame=performance.now();
 if(enabled){
   el=document.createElement("pre");
   el.setAttribute("aria-label","Meadowline developer diagnostics");
-  el.style.cssText="position:fixed;left:8px;top:8px;z-index:9999;margin:0;padding:8px 10px;max-width:236px;pointer-events:none;background:rgba(18,28,31,.78);color:#eef4e9;border:1px solid rgba(255,255,255,.18);border-radius:8px;font:11px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap";
+  el.style.cssText="position:fixed;left:8px;top:8px;z-index:9999;margin:0;padding:8px 10px;max-width:248px;pointer-events:none;background:rgba(18,28,31,.78);color:#eef4e9;border:1px solid rgba(255,255,255,.18);border-radius:8px;font:11px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap";
   document.body.appendChild(el);
 }
 
@@ -30,6 +30,8 @@ export function paintDiagnostics(){
   const svc=S.services&&S.services.education;
   const providers=svc?Object.keys(svc.providers||{}).length:0;
   const visible=(S.citizens.length+S.trains.length+S.boats.length+grid);
+  const schools=(S.ctx?.schools||[]);
+  const l2=schools.filter(s=>(Number(s.state?.level)||1)>=2).length;
   el.textContent=[
     "MEADOWLINE DEBUG",
     "FPS             "+(S.diagnostics.fps||0),
@@ -41,6 +43,14 @@ export function paintDiagnostics(){
     "Visible approx  "+visible,
     "Citizens        "+S.citizens.length,
     "Trains / boats  "+S.trains.length+" / "+S.boats.length,
+    "City stage      "+(S.cityProgress?.stage||1)+" · "+(S.cityProgress?.mode||"legacy-open"),
+    "Open parcels    "+(S.cityProgress?.mode==='legacy-open'?"all":(S.cityProgress?.unlockedParcels||[]).length),
+    "Progress checks "+(S.diagnostics.progressionRecomputes||0),
+    "Milestone evals "+(S.diagnostics.milestoneEvaluations||0),
+    "Parcel unlocks  "+(S.diagnostics.parcelUnlocks||0),
+    "School L2       "+l2,
+    "School upgrades "+(S.diagnostics.schoolUpgrades||0),
+    "Education cap   "+(svc?.metrics?.capacity||0),
     "Service prov.   "+providers,
     "Service rebuild "+(S.services.recomputes||0),
     "Housing evals   "+(S.diagnostics.housingEvaluations||0),
