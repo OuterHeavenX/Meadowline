@@ -14,5 +14,10 @@ S.cityProgress.stage=2;S.wishes=[];const village=[...getEligibleGoals('primary')
 S.cityProgress.stage=3;S.wishes=[];const townshipBefore=[...getEligibleGoals('primary'),...getEligibleGoals('optional')];check('township can guide rail',townshipBefore.includes('rail'));check('train waits for infrastructure',!townshipBefore.includes('train'));
 for(let x=14;x<20;x++)put('rail',x,16);put('station',14,17);recompute();check('rail readiness becomes meaningful',hasFunctionalRailRoute());const townshipAfter=[...getEligibleGoals('primary'),...getEligibleGoals('optional')];check('train becomes eligible after transit readiness',townshipAfter.includes('train'));
 check('touch building drag pans',touchIntent({tool:'house',movedPx:12,heldMs:50,pointers:1})==='pan');check('touch road quick drag pans',touchIntent({tool:'road',movedPx:12,heldMs:80,pointers:1})==='pan');check('touch road hold paints',touchIntent({tool:'road',movedPx:2,heldMs:TOUCH_PAINT_HOLD_MS,pointers:1})==='paint');check('touch remove quick drag pans',touchIntent({tool:'erase',movedPx:12,heldMs:80,pointers:1})==='pan');check('second pointer pinches',touchIntent({tool:'school',movedPx:0,heldMs:0,pointers:2})==='pinch');
-const bad=sanitizeGoals([{k:'boats',slot:'primary',t:'boat',g:1,r:1},{k:'train',slot:'optional',t:'train',g:1,r:1}]);check('old ineligible transport goals are sanitized',bad.length===0);
+// Migration safety must be tested in the original inappropriate context: an
+// early Settlement. A Township with a real rail route is intentionally allowed
+// to keep a Train goal, so resetting the stage here prevents the fixture from
+// contradicting the new progression rules.
+S.cityProgress.stage=1;
+const bad=sanitizeGoals([{k:'boats',slot:'primary',t:'boat',g:1,r:1},{k:'train',slot:'optional',t:'train',g:1,r:1}]);check('old early transport goals are sanitized',bad.length===0);
 const failed=checks.filter(c=>!c.pass);document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);document.documentElement.dataset.result=failed.length?'fail':'pass';
