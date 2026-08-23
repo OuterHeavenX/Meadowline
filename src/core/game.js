@@ -29,6 +29,8 @@ import { activeFestival } from '../world/festivals.js';
 import { note, recordDay } from '../simulation/chronicle.js';
 import { paintLedger } from '../ui/ledger.js';
 import { seedBirds, seedClouds, updateBirds, updateClouds, updateDrops, updateMotes, updateWeather } from '../world/weather.js';
+import { cityStage, evaluateCityGrowth, resetProgression } from '../progression/city-growth.js';
+import { paintGrowthPanel } from '../ui/growth.js';
 
 /* ============================================================
    MAIN LOOP
@@ -60,6 +62,14 @@ export function frame(now){
       recomputeServices();
       advanceEducation(step);
       advanceHousing(step);
+      const growthResult=evaluateCityGrowth();
+      if(S.diagnostics) S.diagnostics.milestoneEvaluations=(S.diagnostics.milestoneEvaluations||0)+1;
+      if(growthResult.stageChanged){
+        toast(cityStage().name+' established','gold');
+        note(cityStage().name+' established');
+        paintTools();
+        paintGrowthPanel();
+      }
       checkMiles(); checkWishes();
     }
     growth(sdt);
@@ -69,7 +79,6 @@ export function frame(now){
     updateWeather(sdt);
     updateClouds(sdt);
   }
-  // these drift on real time, so the valley still breathes while paused
   updateDrops(dt);
   updateMotes(dt);
   updateBirds(dt);
@@ -93,10 +102,13 @@ export function frame(now){
 /* ---------- boot ---------- */
 resize();
 seedClouds(); seedBirds(); refreshPalette();
-if(!load()){ genWorld(S.seed); recompute(); rollWishes(); }
+if(!load()){
+  resetProgression('parcel');
+  genWorld(S.seed); recompute(); rollWishes();
+}
 recomputeServices(true);
-S.muted=true; bSound.classList.add("off");   // never start a tab making noise
+S.muted=true; bSound.classList.add("off");
 elMini.classList.remove("hide");
 bMap.classList.remove("off");
-paintHud(); paintTools(); paintWishes(); drawMini();
+paintHud(); paintTools(); paintWishes(); drawMini(); paintGrowthPanel();
 requestAnimationFrame(frame);
