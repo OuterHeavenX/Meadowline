@@ -1,7 +1,8 @@
-import { FIRSTS, HOUSE_NAMES, residents } from '../buildings/houses.js';
+import { HOUSE_NAMES, residents } from '../buildings/houses.js';
 import { capFor } from '../buildings/houses.js';
 import { outFrom } from '../simulation/citizens.js';
-import { educationAssignment, educationProvider, educationStatus, educationTier, evaluateUpgradeReadiness, getEducationLevel, schoolStats } from '../simulation/civic-services.js';
+import { educationAssignment, educationProvider, educationStatus, educationTier, getEducationLevel, schoolStats } from '../simulation/civic-services.js';
+import { desirabilityDetails, desirabilityLabel, evaluateHousingReadiness, getDesirability, housingTier } from '../simulation/housing.js';
 import { hash2 } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
@@ -44,7 +45,6 @@ function educationBlock(h){
   const a=educationAssignment(h);
   const p=educationProvider(h);
   const status=educationStatus(h);
-  const readiness=evaluateUpgradeReadiness(h);
   const schoolLine=p
     ? '<dt>School</dt><dd>Schoolhouse · '+p.provider.x+','+p.provider.y+'</dd><dt>School capacity</dt><dd>'+p.served+' / '+p.capacity+'</dd>'
     : '<dt>School</dt><dd>None serving this home</dd>';
@@ -52,12 +52,36 @@ function educationBlock(h){
   return '<h4>Education</h4><dl class="service">'+
     '<dt>Education</dt><dd>'+level+' · '+educationTier(level)+'</dd>'+
     schoolLine+'<dt>Coverage</dt><dd>'+coverage+'</dd></dl>'+
-    '<p><b>'+status.label+'.</b> '+status.detail+'</p>'+
-    '<h4>Upgrade readiness</h4><dl class="service">'+
-    '<dt>'+readiness.road.label+'</dt><dd class="'+(readiness.road.met?'up':'dn')+'">'+(readiness.road.met?'Ready':'Not yet')+'</dd>'+
-    '<dt>'+readiness.mood.label+'</dt><dd class="'+(readiness.mood.met?'up':'dn')+'">'+(readiness.mood.met?'Ready':'Not yet')+'</dd>'+
-    '<dt>'+readiness.education.label+'</dt><dd class="'+(readiness.education.met?'up':'dn')+'">'+(readiness.education.met?'Ready':'Not yet')+'</dd></dl>'+
-    '<p class="muted">Housing upgrades are coming later; these are the working requirements Meadowline can already evaluate.</p>';
+    '<p><b>'+status.label+'.</b> '+status.detail+'</p>';
+}
+
+function housingBlock(h){
+  const current=housingTier(h);
+  const readiness=evaluateHousingReadiness(h);
+  const desirability=getDesirability(h);
+  const details=desirabilityDetails(h);
+  const best=details.rows.filter(r=>r.value>0).sort((a,b)=>b.value-a.value).slice(0,2).map(r=>r.label.toLowerCase());
+  let html='<h4>Neighborhood</h4><dl class="service">'+
+    '<dt>Desirability</dt><dd>'+desirability+' · '+desirabilityLabel(desirability)+'</dd></dl>'+
+    (best.length?'<p class="muted">Helped most by '+best.join(' and ')+'.</p>':'');
+
+  html+='<h4>Residential growth</h4><dl class="service">'+
+    '<dt>Home</dt><dd>'+current.name+'</dd>';
+  if(!readiness.next){
+    html+='<dt>Growth</dt><dd class="up">Established</dd></dl><p>This home has reached the highest residential tier currently available.</p>';
+    return html;
+  }
+
+  const pct=Math.round(((h.state&&h.state.upgradeProgress)||0)*100);
+  html+='<dt>Next</dt><dd>'+readiness.next.name+'</dd>'+
+    '<dt>Progress</dt><dd class="'+(readiness.ready?'up':'')+'">'+pct+'%</dd></dl>'+
+    '<dl class="service readiness">'+readiness.requirements.map(r=>
+      '<dt>'+r.label+'</dt><dd class="'+(r.met?'up':'dn')+'">'+(r.met?'✓ Ready':'○ Not yet')+'</dd>'
+    ).join('')+'</dl>'+
+    (readiness.ready
+      ? '<p><b>Growing toward '+readiness.next.name+'.</b> Good conditions are being sustained; progress pauses rather than disappearing if something changes.</p>'
+      : '<p><b>Not ready yet.</b> Improve the missing conditions and this home will begin growing automatically.</p>');
+  return html;
 }
 
 export function describe(x,y){
@@ -80,7 +104,7 @@ export function describe(x,y){
     const line=b.pop
       ? '<p><b>'+listOut(who)+'</b> live'+(who.length===1?"s":"")+' here.</p>'
       : (b.linked?'<p>Empty for now. Lift the mood past <b>62</b> and someone will move in.</p>':'<p>Empty, and no road reaches the door.</p>');
-    return card(HOUSE_NAMES[(hash2(b.seed,1,777)*HOUSE_NAMES.length)|0],"Home · "+b.pop+" of "+capFor(b),line+doing+dl+moodRow(mood)+educationBlock(b));
+    return card(HOUSE_NAMES[(hash2(b.seed,1,777)*HOUSE_NAMES.length)|0],"Home · "+b.pop+" of "+capFor(b)+" · "+housingTier(b).name,line+doing+dl+moodRow(mood)+educationBlock(b)+housingBlock(b));
   }
   if(b) switch(b.type){
     case "cafe": return card("The Corner Café","Café",'<p>Trades for <b>9 coins</b> a day and lifts every home within <b>5 tiles</b>.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,5)+'</dd></dl>');
