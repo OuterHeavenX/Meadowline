@@ -5,6 +5,7 @@ import { drawBakery, drawCafe, drawDock, drawLamp, drawMarket, drawPark, drawSch
 import { drawHousingHouse } from './housing.js';
 import { drawCivicPlacementPreview } from './service-overlays.js';
 import { drawLandAccess } from './land-overlays.js';
+import { drawSchoolUpgradeDetails } from './school-upgrades.js';
 import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
 import { drawBoat, drawCitizen, drawTrain } from './entities.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
@@ -85,7 +86,7 @@ export function render(){
       else if(t==="mill") drawWindmill(it.b,p,dark);
       else if(t==="market") drawMarket(it.b,p,dark);
       else if(t==="bakery") drawBakery(it.b,p,dark);
-      else if(t==="school") drawSchool(it.b,p,dark);
+      else if(t==="school"){ drawSchool(it.b,p,dark); drawSchoolUpgradeDetails(it.b,p,dark); }
       else if(t==="dock") drawDock(it.b,p,dark);
       else if(t==="tree") drawTree(p.x,p.y,it.b.seed,1);
     } else if(it.k===1){
