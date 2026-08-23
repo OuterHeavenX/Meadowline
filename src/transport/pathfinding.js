@@ -1,4 +1,5 @@
 import { DIRS } from '../core/constants.js';
+import { S } from '../core/state.js';
 import { isType } from '../world/tiles.js';
 
 /* The no-backtracking step rule: prefer any exit that is not the way you came,
@@ -24,6 +25,7 @@ export function stepFrom(x,y,px,py,type){
    first: the grid is 44x44, so a full sweep is a couple of thousand steps and
    a citizen only re-plans when they arrive somewhere. */
 export function findPath(sx,sy,tx,ty,passable,limit=4000){
+  if(S.diagnostics&&S.diagnostics.enabled) S.diagnostics.pathSearches++;
   if(sx===tx&&sy===ty) return [];
   const seen=new Map(), q=[[sx,sy]];
   seen.set(sx+','+sy,null);
@@ -36,7 +38,7 @@ export function findPath(sx,sy,tx,ty,passable,limit=4000){
       if(nx===tx&&ny===ty){
         const out=[]; let cur=[nx,ny];
         while(cur){ out.push(cur); cur=seen.get(cur[0]+','+cur[1]); }
-        out.pop();                       // drop the tile they are standing on
+        out.pop();
         return out.reverse();
       }
       q.push([nx,ny]);
