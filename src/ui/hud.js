@@ -8,11 +8,13 @@ import { genWorld } from '../world/map.js';
 import { refreshPalette, seasonName } from '../world/seasons.js';
 import { shortTime, timeName } from '../world/time.js';
 import { weatherName } from '../world/weather.js';
+import { resetProgression } from '../progression/city-growth.js';
 import { toast } from './notify.js';
 import { closeLook } from './panels.js';
 import { postcard } from './postcard.js';
 import { toggleLedger } from './ledger.js';
 import { pickTool } from './toolbar.js';
+import { paintGrowthPanel } from './growth.js';
 
 export const S_day=document.getElementById("s-day"), S_time=document.getElementById("s-time"),
       S_coins=document.getElementById("s-coins"), S_pop=document.getElementById("s-pop"),
@@ -28,7 +30,6 @@ export function paintHud(){
   S_mood.textContent=moodName();
 }
 
-/* ---------- corner chips ---------- */
 export const bSpeed=document.getElementById("b-speed"), bSound=document.getElementById("b-sound"),
       bMap=document.getElementById("b-map"), bShot=document.getElementById("b-shot"),
       bLedger=document.getElementById("b-ledger"), bNew=document.getElementById("b-new");
@@ -49,7 +50,8 @@ bSound.classList.add("off");
 bLedger.classList.add("off");
 bNew.addEventListener("click",()=>{
   if(confirm("Start a brand new valley? This clears the town you've built.")){
-    genWorld((Math.random()*1e9)|0); setMileHit(0); S.granted=0; refreshPalette(); recompute(); rollWishes(); closeLook(); save(); toast("A fresh valley");
+    resetProgression('parcel');
+    genWorld((Math.random()*1e9)|0); setMileHit(0); S.granted=0; refreshPalette(); recompute(); rollWishes(); closeLook(); save(); paintGrowthPanel(); toast("A fresh valley");
   }
 });
 document.getElementById("b-start").addEventListener("click",()=>{
