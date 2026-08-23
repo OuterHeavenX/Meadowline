@@ -3,10 +3,12 @@ import { growth } from '../buildings/houses.js';
 import { DAY } from './constants.js';
 import { load, save } from './save.js';
 import { configureServices } from './services.js';
+import { diagnosticFrameStart, recordRenderMs, recordSimulationMs } from './diagnostics.js';
 import { S } from './state.js';
 import { drawMini, elMini } from '../rendering/minimap.js';
 import { render } from '../rendering/renderer.js';
 import { resize } from '../rendering/terrain.js';
+import { advanceEducation, recomputeServices } from '../simulation/civic-services.js';
 import { updateCitizens } from '../simulation/citizens.js';
 import { payday } from '../simulation/economy.js';
 import { recompute } from '../simulation/mood.js';
@@ -34,9 +36,11 @@ export let last=performance.now();
 configureServices({blip,puff,hearts,hint,toast,paintTools,paintWishes,closeLook});
 let simClock=0, uiClock=0, lookClock=0, miniClock=0, saveClock=0, ledgerClock=0;
 export function frame(now){
+  diagnosticFrameStart(now);
   let dt=(now-last)/1000; last=now;
   dt=Math.min(dt,0.05);
   const sdt=dt*(S.running?S.speed:0);
+  const simStart=S.diagnostics.enabled?performance.now():0;
 
   S.t+=dt;
   refreshPalette();
@@ -46,10 +50,16 @@ export function frame(now){
       S.dayT-=1; S.day++; payday();
       recordDay();
       const fest=activeFestival();
-      if(fest){ toast(fest.name+" \u00b7 the valley is dressed for it","gold"); note(fest.name); }
+      if(fest){ toast(fest.name+" · the valley is dressed for it","gold"); note(fest.name); }
     }
     simClock+=sdt;
-    if(simClock>0.9){ simClock=0; recompute(); checkMiles(); checkWishes(); }
+    if(simClock>0.9){
+      const step=simClock; simClock=0;
+      recompute();
+      recomputeServices();
+      advanceEducation(step);
+      checkMiles(); checkWishes();
+    }
     growth(sdt);
     updateCitizens(sdt);
     updateTrains(sdt);
@@ -63,6 +73,7 @@ export function frame(now){
   updateBirds(dt);
   updatePuffs(dt);
   ambientTick(dt);
+  if(S.diagnostics.enabled) recordSimulationMs(performance.now()-simStart);
 
   uiClock+=dt; if(uiClock>0.2){ uiClock=0; paintHud(); paintTools(); paintWishes(); }
   lookClock+=dt; if(lookClock>0.7){ lookClock=0; refreshLook(); }
@@ -71,7 +82,9 @@ export function frame(now){
   tickHint(dt);
   saveClock+=dt; if(saveClock>6){ saveClock=0; save(); }
 
+  const renderStart=S.diagnostics.enabled?performance.now():0;
   render();
+  if(S.diagnostics.enabled) recordRenderMs(performance.now()-renderStart);
   requestAnimationFrame(frame);
 }
 
@@ -79,6 +92,7 @@ export function frame(now){
 resize();
 seedClouds(); seedBirds(); refreshPalette();
 if(!load()){ genWorld(S.seed); recompute(); rollWishes(); }
+recomputeServices(true);
 S.muted=true; bSound.classList.add("off");   // never start a tab making noise
 elMini.classList.remove("hide");
 bMap.classList.remove("off");
