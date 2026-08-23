@@ -18,6 +18,8 @@ import { screen2world, world2screen } from '../world/map.js';
    ============================================================ */
 export const ptrs=new Map();
 export let dragged=false, lastPinch=0, painted=new Set();
+let pendingTap=null, pinchActive=false;
+const PAINT_TOOLS=new Set(["road","rail","tree","erase"]);
 
 export function toGrid(e){
   const w=screen2world(e.clientX,e.clientY);
@@ -37,9 +39,15 @@ export function applyTool(gp){
 cv.addEventListener("pointerdown",e=>{
   cv.setPointerCapture(e.pointerId);
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY});
-  dragged=false; painted.clear();
-  if(ptrs.size===1&&S.tool!=="move"&&e.button!==1){
-    applyTool(toGrid(e));
+  if(ptrs.size===1){
+    dragged=false; pinchActive=false; painted.clear();
+    pendingTap=(S.tool!=="move"&&e.button!==1)?{pointerId:e.pointerId,gp:toGrid(e)}:null;
+  } else {
+    // A second finger always wins over a build tap. Nothing is committed until
+    // pointerup, so pinch/zoom can never accidentally place the pending building.
+    pendingTap=null;
+    pinchActive=true;
+    dragged=true;
   }
 });
 cv.addEventListener("pointermove",e=>{
@@ -49,9 +57,11 @@ cv.addEventListener("pointermove",e=>{
   if(!p) return;
   const dx=e.clientX-p.x, dy=e.clientY-p.y;
   p.x=e.clientX; p.y=e.clientY;
-  if(Math.hypot(e.clientX-p.sx,e.clientY-p.sy)>6) dragged=true;
+  const moved=Math.hypot(e.clientX-p.sx,e.clientY-p.sy)>6;
+  if(moved) dragged=true;
 
   if(ptrs.size>=2){
+    pendingTap=null; pinchActive=true;
     const a=[...ptrs.values()];
     const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
     const mx=(a[0].x+a[1].x)/2, my=(a[0].y+a[1].y)/2;
@@ -63,17 +73,28 @@ cv.addEventListener("pointermove",e=>{
     S.cam.x+=dx/2; S.cam.y+=dy/2;
     return;
   }
-  if(S.tool==="move"||e.buttons===4){ S.cam.x+=dx; S.cam.y+=dy; }
-  else if(e.buttons&&(S.tool==="road"||S.tool==="rail"||S.tool==="tree"||S.tool==="erase")) applyTool(gp);
+  if(S.tool==="move"||e.buttons===4){ S.cam.x+=dx; S.cam.y+=dy; return; }
+  if(e.buttons&&moved&&PAINT_TOOLS.has(S.tool)){
+    if(pendingTap){ applyTool(pendingTap.gp); pendingTap=null; }
+    applyTool(gp);
+  }
 });
 export function endPtr(e){
+  const wasLast=ptrs.size===1&&ptrs.has(e.pointerId);
+  if(wasLast&&!pinchActive&&!dragged&&pendingTap&&pendingTap.pointerId===e.pointerId){
+    applyTool(pendingTap.gp);
+  }
   ptrs.delete(e.pointerId);
+  pendingTap=null;
   if(ptrs.size<2) lastPinch=0;
-  if(e.pointerType==="touch"&&ptrs.size===0) hover.on=false;
+  if(ptrs.size===0){
+    pinchActive=false; dragged=false; painted.clear();
+    if(e.pointerType==="touch") hover.on=false;
+  }
 }
 cv.addEventListener("pointerup",endPtr);
-cv.addEventListener("pointercancel",endPtr);
-cv.addEventListener("pointerleave",e=>{ if(ptrs.size===0) hover.on=false; endPtr(e); });
+cv.addEventListener("pointercancel",e=>{ pendingTap=null; pinchActive=true; endPtr(e); });
+cv.addEventListener("pointerleave",e=>{ if(ptrs.size===0) hover.on=false; if(ptrs.has(e.pointerId)) endPtr(e); });
 
 export function zoomAt(sx,sy,f){
   const anchor=screen2world(sx,sy);          // world point under the cursor
