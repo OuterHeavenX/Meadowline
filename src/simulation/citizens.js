@@ -76,11 +76,19 @@ function nextStep(c){
   return wander||[c.x,c.y];
 }
 
+export function outFrom(hx,hy){
+  let n=0;
+  for(const c of S.citizens) if(c.home&&c.home.x===hx&&c.home.y===hy) n++;
+  const h=S.grid&&S.grid[idx(hx,hy)];
+  const pop=h&&h.type==="house"?Math.max(0,h.pop|0):0;
+  return Math.min(n,pop);
+}
+
 export function spawnCitizen(){
   const homes=S.ctx.houses;
   if(!homes.length) return;
   const h=homes[(Math.random()*homes.length)|0];
-  if(!h.linked||h.pop<=0) return;
+  if(!h.linked||h.pop<=0||outFrom(h.x,h.y)>=h.pop) return;
   const r=roadNear(h.x,h.y); if(!r) return;
   S.citizens.push({
     x:r.x,y:r.y,px:r.x,py:r.y,nx:r.x,ny:r.y,p:1,
@@ -93,7 +101,22 @@ export function spawnCitizen(){
   });
 }
 
+function trimHouseholdRepresentatives(){
+  const kept=new Map();
+  for(let i=S.citizens.length-1;i>=0;i--){
+    const c=S.citizens[i];
+    if(!c.home) continue;
+    const h=S.grid[idx(c.home.x,c.home.y)];
+    const cap=h&&h.type==="house"?Math.max(0,h.pop|0):0;
+    const key=c.home.x+","+c.home.y;
+    const n=kept.get(key)||0;
+    if(n>=cap) S.citizens.splice(i,1);
+    else kept.set(key,n+1);
+  }
+}
+
 export function updateCitizens(dt){
+  trimHouseholdRepresentatives();
   const shelter=1-0.55*clamp(S.wx.amt,0,1);
   const abed=1-0.72*clamp((darkness()-0.26)/0.28,0,1);
   const want=Math.round(clamp(S.pop,0,150)*shelter*abed);
@@ -114,10 +137,4 @@ export function updateCitizens(dt){
       if(Math.random()<0.25) c.sp=0.36+Math.random()*0.34;
     }
   }
-}
-
-export function outFrom(hx,hy){
-  let n=0;
-  for(const c of S.citizens) if(c.home&&c.home.x===hx&&c.home.y===hy) n++;
-  return n;
 }
