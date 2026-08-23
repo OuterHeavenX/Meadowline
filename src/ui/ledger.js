@@ -1,4 +1,5 @@
 import { HISTORY_DAYS, series } from '../simulation/chronicle.js';
+import { getCityEducationAverage, recomputeServices } from '../simulation/civic-services.js';
 import { moodName } from '../simulation/mood.js';
 import { S } from '../core/state.js';
 
@@ -12,12 +13,11 @@ export function isLedgerOpen(){ return openState; }
 export function toggleLedger(want){
   openState = want===undefined ? !openState : want;
   elLedger.classList.toggle("show",openState);
-  document.body.classList.toggle("ledger-open",openState);   // the wishes panel shares this corner
+  document.body.classList.toggle("ledger-open",openState);
   if(openState) paintLedger();
   return openState;
 }
 
-// a sparkline as an SVG polyline, scaled to its own range
 function spark(values,colour){
   const w=196, h=30;
   if(values.length<2) return '<svg class="spark" viewBox="0 0 '+w+' '+h+'"></svg>';
@@ -29,19 +29,22 @@ function spark(values,colour){
     return x.toFixed(1)+','+y.toFixed(1);
   }).join(' ');
   return '<svg class="spark" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'+
-         '<polyline points="'+pts+'" fill="none" stroke="'+colour+'" stroke-width="2" '+
-         'stroke-linejoin="round" stroke-linecap="round"/></svg>';
+         '<polyline points="'+pts+'" fill="none" stroke="'+colour+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 }
 
 function row(label,values,colour,now){
-  return '<div class="lrow"><div class="lhead"><span>'+label+'</span><b>'+now+'</b></div>'+
-         spark(values,colour)+'</div>';
+  return '<div class="lrow"><div class="lhead"><span>'+label+'</span><b>'+now+'</b></div>'+spark(values,colour)+'</div>';
 }
 
 export function paintLedger(){
   if(!openState) return;
+  recomputeServices();
+  const edu=S.services.education.metrics;
   const days=S.history.length;
-  let html='<h2>The last '+Math.min(days,HISTORY_DAYS)+' days</h2>';
+  let html='<h2>Living city</h2>'+
+    '<div class="lrow"><div class="lhead"><span>Education</span><b>'+getCityEducationAverage()+'%</b></div>'+
+    '<p class="lempty">Students served <b>'+edu.served+' / '+edu.demand+'</b> · capacity '+edu.capacity+' · utilization '+edu.utilization+'%</p></div>'+
+    '<h2 class="lsep">The last '+Math.min(days,HISTORY_DAYS)+' days</h2>';
   if(days<2){
     html+='<p class="lempty">Come back after a day or two and this will have something to show.</p>';
   } else {
@@ -53,9 +56,7 @@ export function paintLedger(){
   if(!S.log.length){
     html+='<p class="lempty">Nothing has happened yet worth writing down.</p>';
   } else {
-    html+='<ol class="chron">'+
-      S.log.slice(0,24).map(e=>'<li><em>Day '+e.day+'</em><span>'+e.text+'</span></li>').join('')+
-      '</ol>';
+    html+='<ol class="chron">'+S.log.slice(0,24).map(e=>'<li><em>Day '+e.day+'</em><span>'+e.text+'</span></li>').join('')+'</ol>';
   }
   elBody.innerHTML=html;
 }
