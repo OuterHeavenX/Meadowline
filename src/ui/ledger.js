@@ -1,5 +1,6 @@
 import { HISTORY_DAYS, series } from '../simulation/chronicle.js';
 import { getCityEducationAverage, recomputeServices } from '../simulation/civic-services.js';
+import { housingMetrics, RESIDENTIAL_TIERS } from '../simulation/housing.js';
 import { moodName } from '../simulation/mood.js';
 import { S } from '../core/state.js';
 
@@ -40,10 +41,14 @@ export function paintLedger(){
   if(!openState) return;
   recomputeServices();
   const edu=S.services.education.metrics;
+  const housing=housingMetrics();
+  const tierSummary=RESIDENTIAL_TIERS.map((t,i)=>t.name+' '+(housing.tiers[i]||0)).join(' · ');
   const days=S.history.length;
   let html='<h2>Living city</h2>'+
     '<div class="lrow"><div class="lhead"><span>Education</span><b>'+getCityEducationAverage()+'%</b></div>'+
     '<p class="lempty">Students served <b>'+edu.served+' / '+edu.demand+'</b> · capacity '+edu.capacity+' · utilization '+edu.utilization+'%</p></div>'+
+    '<div class="lrow"><div class="lhead"><span>Housing</span><b>'+housing.averageDesirability+' desirability</b></div>'+
+    '<p class="lempty">'+tierSummary+'<br>'+housing.ready+' home'+(housing.ready===1?'':'s')+' ready to grow</p></div>'+
     '<h2 class="lsep">The last '+Math.min(days,HISTORY_DAYS)+' days</h2>';
   if(days<2){
     html+='<p class="lempty">Come back after a day or two and this will have something to show.</p>';
