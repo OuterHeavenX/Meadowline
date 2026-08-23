@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - feature/living-city-foundation
+      - feature/housing-2
   pull_request:
     branches:
+      - feature/living-city-foundation
       - agent/architecture-refactor
       - main
 
