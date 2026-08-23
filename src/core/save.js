@@ -1,5 +1,5 @@
 import { BUILDABLE } from '../buildings/buildings.js';
-import { defaultBuildingState } from '../buildings/registry.js';
+import { BUILDINGS, defaultBuildingState } from '../buildings/registry.js';
 import { S } from './state.js';
 import { recompute } from '../simulation/mood.js';
 import { invalidateServices, recomputeServices } from '../simulation/civic-services.js';
@@ -51,7 +51,13 @@ function cleanState(type,state){
     const clean=safeStateValue(v);
     if(clean!==undefined) out[k]=clean;
   }
-  if(type==="house") out.education=Number.isFinite(state.education)?Math.max(0,Math.min(100,state.education)):Math.max(0,Math.min(100,Number(out.education)||0));
+  if(type==="house"){
+    const tierCount=(BUILDINGS.house.housing&&BUILDINGS.house.housing.tiers&&BUILDINGS.house.housing.tiers.length)||1;
+    out.education=Number.isFinite(state.education)?Math.max(0,Math.min(100,state.education)):Math.max(0,Math.min(100,Number(out.education)||0));
+    out.housingTier=Number.isFinite(state.housingTier)?Math.max(1,Math.min(tierCount,Math.floor(state.housingTier))):Math.max(1,Math.min(tierCount,Math.floor(Number(out.housingTier)||1)));
+    out.upgradeProgress=Number.isFinite(state.upgradeProgress)?Math.max(0,Math.min(1,state.upgradeProgress)):Math.max(0,Math.min(1,Number(out.upgradeProgress)||0));
+    out.desirability=Number.isFinite(state.desirability)?Math.max(0,Math.min(100,state.desirability)):Math.max(0,Math.min(100,Number(out.desirability)||0));
+  }
   if(type==="school") out.level=Number.isFinite(state.level)?Math.max(1,Math.floor(state.level)):Math.max(1,Math.floor(Number(out.level)||1));
   return out;
 }
