@@ -2,104 +2,85 @@
 
 ## Status
 
-**Production status:** implemented on `main`.
+**Production on `main`.** Historical implementation branch: `feature/living-city-foundation`. Architectural source: `agent/architecture-refactor`. Living City / School 2.0 was included with Housing 2.0 in merged PR #3; historical PR #1 was superseded and closed without separate merge.
 
-**Historical development branch:** `feature/living-city-foundation`.
+This document records permanent architecture that City Growth and future civic systems must preserve.
 
-**Architectural source:** `agent/architecture-refactor`.
+## Static-browser architecture
 
-**Release path:** Living City / School 2.0 was originally developed and validated on its feature branch, then included with Housing 2.0 in merged PR #3. Historical PR #1 was superseded and closed without a separate merge.
+Meadowline remains native ES modules + Canvas 2D/isometric rendering. No React/Vue application, server runtime, or gameplay build process is required during normal play.
 
-This document records the provider architecture that remains the foundation for City Growth and future civic systems. The game remains a lightweight static browser game using native ES modules and the existing canvas/isometric renderer.
+## Authoritative building registry
 
-## Building registry
+`src/buildings/registry.js` is the shared source for building identity, category, cost, shortcuts, placement metadata, service metadata, save defaults, progression unlock metadata, and civic upgrade metadata wherever practical.
 
-`src/buildings/registry.js` is the authoritative shared source for buildable metadata wherever practical. It owns building identity, name, category, cost, shortcut, placement metadata, service metadata, save defaults, and now progression/upgrade metadata.
+Future systems should query the registry instead of creating parallel School/toolbar/save/unlock tables.
 
-This avoids parallel School/toolbar/save tables and gives future civic providers one place to describe capacity, radius, upgrades, and unlock stage.
+## Reusable civic providers
 
-## Civic-service architecture
+Education is the first real service provider.
 
-The first real provider is Education.
+Level 1 School:
 
-A School has:
+- radius 7
+- capacity 28
+- persistent `state.level`
 
-- service type: Education
-- Level 1 radius: 7 tiles
-- Level 1 capacity: 28 students
-- persistent building state including `state.level`
+Households generate demand from real population. Assignment is deterministic and capacity-bounded. A household can be geographically covered but waiting for space. Household Education is persistent 0–100; service loss pauses gain rather than deleting learned Education.
 
-Households generate student demand from their real population. Provider assignment is deterministic and capacity-bounded. A School may be in range while unable to fully serve all demand.
+The provider layer is designed to support future Safety, Fire, Healthcare, Recreation, Employment, Transit, Sanitation, and similar services without implying those systems already exist.
 
-Household Education is persistent 0–100 state. Served households improve gradually; uncovered or capacity-blocked households stop gaining but do not lose previously earned Education.
+## Cached recomputation
 
-The generic service layer remains designed for future Safety, Fire Protection, Healthcare, Recreation, Employment, Transit, and Sanitation providers. Those future services are not implemented merely because their service-type hooks exist.
-
-## Provider state and recomputation
-
-Service data is cached and invalidated when relevant city state changes. It is not rebuilt every render frame.
-
-The existing Education model exposes provider statistics including:
-
-- capacity
-- demand in reach
-- served students
-- utilization
-- homes covered
-- radius
-- level
-- overload state
-
-Housing population growth therefore produces real additional School demand without a Housing-specific School shortcut.
+Service data is cached and invalidated on relevant state changes. It is not rebuilt every render frame. Housing density therefore pressures Education through the generic service path rather than a Housing-only shortcut.
 
 ## Save Schema V3
 
-The Living City milestone established `meadowline.v3` and V1/V2 migration.
+Current key: `meadowline.v3`.
 
-Building state is JSON-safe, bounded, and deliberately tolerant of optional future metadata. School level and household Education survive reload. Malformed optional state is repaired defensively rather than crashing the city.
+V1/V2 migration and defensive optional building state remain permanent compatibility requirements. City Growth and Town Goals continue using V3; missing City Growth metadata must never retroactively lock an established city.
 
-City Growth continues using V3 rather than introducing an unnecessary V4.
+## Mobile input evolution
 
-## Mobile input foundation
+The original Living City repair changed placement from immediate pointer-down commitment to a pending tap that a second finger could cancel, proving that pinch/zoom must never place a building accidentally.
 
-A critical Living City repair changed placement from pointer-down commitment to a pending tap that is cancelled when a second finger begins a pinch gesture.
+City Growth 1.1 strengthens that permanent rule after physical iPad testing exposed another failure mode: with a paint tool selected, an intended one-finger pan could begin construction.
 
-This means a player can keep a building tool selected and pinch/zoom without accidentally placing that building. Paint tools still work after movement crosses the drag threshold.
+The current touch contract is now:
 
-This behavior is a permanent regression requirement for all future milestones.
+- tap = one intentional action;
+- immediate one-finger drag = camera navigation regardless of selected build tool;
+- second finger = pinch/zoom, cancelling pending build/paint intent;
+- Road/Rail/Tree/Remove drag painting requires a deliberate short hold before movement;
+- pointer cancellation and UI input shielding remain required.
 
-## Inspection and visualization
+This newer contract supersedes the earlier assumption that paint tools begin painting immediately after a drag threshold, while preserving the earlier pinch safety reasoning.
 
-School and household Look cards expose service state in player language rather than raw debug output.
+Desktop mouse controls may remain faster and separate from coarse-pointer behavior.
 
-The civic placement preview reads provider radius from the registry and draws the same geometric field the simulation actually uses. School coverage is therefore not a decorative circle that disagrees with service calculations.
+## Inspection and service visualization
 
-Housing 2.0 later added green/amber usefulness feedback around that generic provider-boundary layer.
+Look cards expose player-facing service state. Civic placement boundaries read provider metadata from the registry and match the actual service geometry rather than a decorative approximation.
 
 ## Diagnostics and tests
 
-The foundation includes developer-only `?debug=1` diagnostics, browser regression coverage, and module-hygiene checks for cycles, imported-binding assignment, and meaningless re-export shims.
+Developer-only `?debug=1`, browser regressions, and module-hygiene checks remain required. City Growth 1.1 adds input-state and Town Goal diagnostics without replacing existing performance/service/Housing checks.
 
 ## Physical validation record
 
-Previously physically demonstrated on an owner iPhone before the production merge:
+Previously physically demonstrated before the production merge:
 
-- Meadowline loads and renders in portrait
-- School Look information is readable
-- School capacity remains bounded at 28 / 28
-- demand can exceed capacity
-- `At capacity` and `Waiting for school space` states appear correctly
-- household Education rises while served
-- 7-tile School reach is live
-- two-finger pinch with School selected does not accidentally build
-- the observed household visible-pedestrian over-count was repaired
+- mobile load/render
+- School Look readability
+- 28/28 finite capacity and overload
+- waiting-for-space language
+- household Education gain
+- radius 7 service reach
+- two-finger pinch with School selected does not build
+- representative pedestrian count repair
 
-Automated tests do not replace this device record, and this device record does not automatically validate later City Growth UI or performance.
+Those facts do not automatically validate later City Growth UI. Current City Growth 1.1 device checks remain in `docs/IPHONE_ACCEPTANCE.md`.
 
-## Current consumer: City Growth 1.0
+## Current consumer
 
-`feature/city-growth-progression` reuses this architecture rather than replacing it.
-
-School Level 2 is defined as a generic civic upgrade in registry metadata. The same provider resolver reads the upgraded level and changes capacity from 28 to 44 while keeping radius 7.
-
-Future Police, Fire, and Hospital work should follow the same provider/registry pattern only after their own milestones are approved.
+`feature/city-growth-progression` reuses this foundation. School Level 2 remains a registry-driven generic civic upgrade: 44 capacity at radius 7. Future Police/Fire/Hospital work should use the same architecture only after their milestones are approved.

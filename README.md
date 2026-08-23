@@ -1,203 +1,133 @@
 # Meadowline
 
-Meadowline is a calm, mobile-first isometric city builder evolving into a deeper **living-city simulation** while remaining a lightweight static browser game.
+Meadowline is a calm, mobile-first isometric living-city builder. It remains a lightweight static browser game built with native ES modules and Canvas 2D. Normal play requires no React/Vue application, Node process, server runtime, or backend dependency.
 
-It uses native ES modules and a 2D canvas. Normal gameplay requires no Node/npm process, server runtime, React app, or heavy framework.
+## Production status
 
-## Production and development status
-
-### Implemented on `main`
-
-Production `main` begins this milestone at:
+Production `main` at the start of City Growth remains:
 
 `5d4054f764d603b23ddf1a74ab63824de67ea778`
 
-That release already includes:
+PR #3 promoted the validated modular architecture, Living City Foundation / School 2.0, Save V3, Housing 2.0, Neighborhood Desirability, residential evolution, civic coverage visualization, and the original mobile pinch/build repair to `main`.
 
-- modular static ES-module architecture
-- Living City Foundation
-- centralized building registry
-- reusable civic-service framework
-- School 2.0 / Education service
-- finite School demand, assignment and capacity
-- 7-tile School service radius
-- 28-student School capacity
-- Save Schema V3 with V1/V2 migration
-- Housing 2.0
-- Cottage → Town Home → Established Home residential evolution
-- Neighborhood Desirability
-- higher-tier residential capacity and tax value
-- Housing-driven School demand
-- green civic placement coverage visualization
-- mobile pinch/build arbitration stabilization
-- developer diagnostics
+Historical implementation branches remain preserved:
 
-### Historical development branches
+- `agent/architecture-refactor`
+- `feature/living-city-foundation`
+- `feature/housing-2`
 
-- `agent/architecture-refactor` — architectural refactor foundation
-- `feature/living-city-foundation` — original Living City / School 2.0 development branch
-- `feature/housing-2` — original Housing 2.0 development branch
+PR #1 and PR #2 were superseded and closed without separate merge.
 
-PR #1 and PR #2 are historical drafts that were closed **without separate merge**. PR #3 superseded them and merged the validated Living City + Housing release into `main`.
+## Current development
 
-### Current development milestone
+Branch: `feature/city-growth-progression`
 
-Branch:
+Draft PR: **#4**
 
-`feature/city-growth-progression`
+Current milestone: **City Growth 1.1 — Guided Development, progression-aware Town Goals, safe touch building, and mobile UI re-haul**.
 
-Milestone:
+City Growth is not production and must not merge until the owner completes the physical iPhone/iPad gate.
 
-**City Growth 1.0 — progressive land, development milestones, building unlocks and civic-upgrade foundation**
+## City Growth foundation
 
-This branch must not be merged until automated validation is green and physical iPhone/iPad acceptance is complete.
+The world stays **44×44**. New progression cities begin in a 20×20 Meadowline Center rather than receiving the entire map at once. The seeded terrain underneath locked land continues to exist, render, receive weather/seasons, contain ponds and woodland, and remain camera-accessible.
 
-## What City Growth 1.0 adds
-
-Meadowline already models:
-
-Services → household development → residential evolution → population growth → greater civic demand.
-
-City Growth adds:
-
-Small Settlement → healthy neighborhood → Village → new land and buildings → Township → stronger civic pressure → civic upgrades → Growing Town.
-
-The world remains **44×44**. City Growth does not enlarge it; it makes the existing seeded landscape progressively developable.
-
-### City stages
+City stages:
 
 1. Settlement
 2. Village
 3. Township
 4. Growing Town
 
-Progression uses real city health rather than a generic XP bar. Inputs include population, occupied homes, road development, residential tiers, Education, School service, and Desirability.
+Building unlocks remain registry-driven:
 
-The requirement model also supports flexible `any X of Y` groups so different successful layouts can progress.
+- Settlement — Road, House, Café, Park, Trees, Lamp
+- Village — School, Market, Bakery
+- Township — Rail, Station, Windmill
+- Growing Town — Dock
 
-### Progressive land
+Legacy pre-City-Growth saves use `legacy-open`, retain full land access, and retain every existing tool.
 
-A new progression city begins in **Meadowline Center**, a 20×20 central development sector. The rest of the world still exists and remains visible with its terrain, ponds, natural trees, weather, and seasons.
+## City Growth 1.1 refinement
 
-Expansion occurs through deterministic parcels:
+The first physical iPad City Growth pass revealed three acceptance problems:
 
-- Meadowline Center
-- North Meadow
-- East Meadow
-- South Meadow
-- West Meadow
-- Northwest Fields
-- Northeast Fields
-- Southwest Fields
-- Southeast Fields
+1. old random Wishes could request a Boat merely because any water existed somewhere in the generated map;
+2. Train goals could appear before transit was a meaningful progression step;
+3. with a build/paint tool selected, an intended map drag could accidentally construct or erase tiles.
 
-A parcel requires an appropriate city stage, any neighboring prerequisite, and a reasonable coin investment. Meeting requirements makes land **available**; the player still chooses and confirms the purchase.
+City Growth 1.1 addresses those findings without adding unrelated simulation systems.
 
-Locked land uses a restrained isometric tint/boundary instead of an opaque wall. The minimap uses a subtle equivalent treatment. Camera movement remains unrestricted.
+### Town Goals
 
-### Legacy city safety
+The old player-facing **Wishes** panel is now **Town Goals**. The V3 `wishes` save field remains compatible internally so this refinement does not require Save V4.
 
-Pre–City Growth saves are never retroactively restricted.
+Town Goals contain approximately:
 
-City Growth has two save modes:
+- one **Next Step** that helps the city move through its current stage;
+- one **Optional** contextual goal chosen only from currently sensible eligible goals.
 
-- `parcel` — new progression city
-- `legacy-open` — established city with full land and building access
+Eligibility now understands city stage, building unlocks, current infrastructure, land access, Housing, Education, Desirability, rail readiness, and maritime readiness.
 
-Any V1, V2, or earlier V3 save that lacks City Growth metadata migrates to `legacy-open`. Existing roads, rails, buildings, population, and train routes remain intact.
+Hard progression rules include:
 
-## Building unlocks
+- Settlement cannot request School, Rail, Station, Train, Dock, or Boat goals when those systems are unavailable;
+- Village may guide School/Housing/Education but still does not request Train/Boat;
+- Township may introduce Rail and Station; a Train goal requires meaningful rail readiness;
+- Growing Town may introduce Dock; a Boat goal requires an existing Dock rather than merely global water presence;
+- old now-ineligible transport Wishes are sanitized during V3 load and replaced by appropriate Town Goals.
 
-The authoritative building registry now owns each tool's `unlockStage`, so toolbar, keyboard selection, and placement all read the same metadata.
+### Safe touch navigation
 
-Current first-pass sequence:
+On touch devices the physical gesture rule is now:
 
-**Settlement**
-- Road
-- House
-- Café
-- Park
-- Trees
-- Lamp
+- **tap** — intentional single-tile action;
+- **immediate one-finger drag** — pan the camera, even when a build tool is selected;
+- **two fingers** — pinch/zoom and pan; pending construction is cancelled;
+- **hold ~300 ms + drag** with Road/Rail/Tree/Remove — enter deliberate paint/removal mode.
 
-**Village**
-- School
-- Market
-- Bakery
+One-off touch building placement returns to neutral Move/navigation after a successful placement. Desktop mouse interaction remains fast and retains click-drag painting.
 
-**Township**
-- Rail
-- Station
-- Windmill
+### Mobile build UI
 
-**Growing Town**
-- Dock
+The old permanently expanded tool dock has been reorganized into:
 
-Legacy cities retain access to all existing tools.
+- compact bottom command bar;
+- dedicated **Build** button;
+- collapsible category build tray;
+- Move / Look / Remove mode controls;
+- an active-tool pill explaining current cost and gesture, for example `Tap to place · Drag to move` or `Tap once · Hold + drag to paint`;
+- explicit Cancel action.
 
-## School Level 2
+Locked tools continue to display stage requirements from the authoritative registry rather than a second unlock table.
 
-City Growth 1.0 also proves a reusable civic-building upgrade path.
+## Living City systems preserved
 
-**Level 1 School**
-- capacity 28
-- radius 7
+Production relationships remain:
 
-**Level 2 Expanded School**
-- Township required
-- cost 650 coins
-- capacity 44
-- radius remains 7
-- persistent `state.level = 2`
-- visible classroom-wing / clock upgrade
+Road + Mood + Education + Neighborhood Desirability
+→ residential evolution
+→ higher household capacity
+→ more residents
+→ greater School demand
+→ stronger civic pressure.
 
-The choice is intentionally:
+Residential tiers remain:
 
-Build another School **or** upgrade the existing School.
+- Cottage — 4 capacity, 1.00× residential tax
+- Town Home — 6 capacity, 1.25×
+- Established Home — 8 capacity, 1.55×
 
-The School upgrade increases capacity rather than making one provider cover the entire map.
+School remains the first reusable civic provider:
 
-## Housing 2.0 production behavior
-
-The production residential loop remains:
-
-Road Access + Mood + Education + Neighborhood Desirability
-→ Upgrade Readiness
-→ Residential Evolution
-→ Higher Capacity
-→ Higher Residential Tax Value
-→ More Residents
-→ More School Demand.
-
-Current tiers:
-
-- **Cottage** — 4 residents, 1.0× residential tax
-- **Town Home** — 6 residents, 1.25× residential tax
-- **Established Home** — 8 residents, 1.55× residential tax
-
-Residential growth pauses rather than losing earned progress when conditions dip. Existing residents are not evicted by capacity-model changes.
-
-## Neighborhood Desirability
-
-Desirability is a separate 0–100 long-term neighborhood-development signal. It currently uses real systems such as road access, Mood, Education, parks, cafés, station access, lamps, trees/water, and local crowding.
-
-Player-facing labels remain:
-
-- Quiet Start
-- Developing
-- Pleasant
-- Desirable
-- Highly Desirable
-
-Future Safety, Healthcare, Employment, and Prosperity remain roadmap-only.
+- Level 1 — 28 students, radius 7
+- Level 2 — Township + 650 coins, 44 students, radius still 7
 
 ## Save system
 
-Current key:
+Current key: `meadowline.v3`.
 
-`meadowline.v3`
-
-V3 persists Housing state, School level, optional bounded building metadata, and now optional City Growth metadata:
+City Growth persists optional metadata:
 
 ```text
 cityProgress: {
@@ -208,38 +138,43 @@ cityProgress: {
 }
 ```
 
-Save V4 was not required.
+The existing `wishes` field now stores progression-aware Town Goal entries with a `slot` (`primary` or `optional`). Older compatible entries are accepted only if still eligible; inappropriate old goals are discarded safely.
 
-## Performance model
+Missing City Growth metadata still defaults an established save to `legacy-open`. Never infer locked parcels for a pre-City-Growth city.
 
-Housing, Education, and City Growth do not evaluate at 60 FPS.
+## Performance
 
-City Growth uses Meadowline's existing low-frequency simulation cadence and cheap tile/parcel lookups. Rendering only shades locked tiles that are currently visible.
+Education, Housing, City Growth, and Town Goal evaluation use the existing low-frequency simulation path rather than 60 FPS evaluation. Tile access remains cheap. Touch intent uses pointer state/timers and does not add a UI framework.
 
-`?debug=1` includes performance, service, Housing, City Growth, parcel, and School-upgrade diagnostics.
+`?debug=1` now includes goal and input counters in addition to existing service/Housing/City Growth diagnostics.
 
-## Existing game systems preserved
+## Validation policy
 
-The game still includes the 44×44 seeded world, ponds, natural trees, roads, rails, water bridges, homes, cafés, parks, trees, lamps, windmills, stations, docks, markets, bakeries, Schools, citizens, trains, boats, Mood, economy, day/night, seasons, weather, festivals, Wishes, Ledger, minimap, Look, placement/removal/refunds, persistence, and mobile pan/pinch controls.
+Automated proof and physical-device proof are separate.
 
-Wishes remain temporary optional goals. City milestones are permanent progression and are intentionally separate.
+Current workflow covers:
+
+- JavaScript syntax
+- module hygiene/import cycles
+- Living City + Housing browser regression
+- City Growth 1.0 regression
+- City Growth 1.1 Town Goal / touch-policy regression
+
+Only the owner can complete the physical iPhone/iPad acceptance checklist in `docs/IPHONE_ACCEPTANCE.md`.
 
 ## Running locally
-
-From the repository root:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Open:
-
-`http://localhost:8000/`
+Open `http://localhost:8000/`.
 
 Regression pages:
 
-- `http://localhost:8000/tests/regression.html`
-- `http://localhost:8000/tests/city-growth-regression.html`
+- `/tests/regression.html`
+- `/tests/city-growth-regression.html`
+- `/tests/city-growth-1-1-regression.html`
 
 Module hygiene:
 
@@ -247,53 +182,20 @@ Module hygiene:
 node tests/module-hygiene.mjs
 ```
 
-## Validation policy
-
-Never treat CI as physical acceptance.
-
-### Automatically validated
-
-The GitHub Actions Living City Validation workflow checks:
-
-- JavaScript syntax
-- module hygiene / import-cycle safety
-- original Living City + Housing browser regression
-- City Growth browser regression
-
-A feature is only called automatically validated after those checks have actually passed for the current branch head.
-
-### Physically validated
-
-Living City / School 2.0 and Housing 2.0 have prior owner-device acceptance recorded in `docs/IPHONE_ACCEPTANCE.md` and are production systems on `main`.
-
-### Pending physical validation
-
-City Growth 1.0 still requires physical iPhone/iPad acceptance for:
-
-- starting-area feel
-- locked-land appearance
-- parcel interaction and confirmation
-- touch/pinch/build regression
-- Housing/Desirability/Education regression
-- School Level 2 action and visual readability
-- save/reload behavior
-- performance while panning and opening land
-
-See `docs/CITY_GROWTH_1.md` for the technical milestone record and `docs/IPHONE_ACCEPTANCE.md` for the device checklist.
-
 ## Roadmap-only systems
 
-Not part of City Growth 1.0:
+Not implemented by City Growth 1.1:
 
-- larger worlds / chunking
 - Police / Crime / Jail
-- Fire / emergencies
+- Recreation 2.0
+- Fire / Emergency
 - Hospital / Healthcare
 - Employment / Prosperity
+- larger worlds/chunking
 - advanced traffic
 - road-over-rail crossings
 - neighborhood identity
 - giant persistent NPC populations
-- civic staffing/budgets
+- full Waterworks terrain sculpting
 
-After City Growth physical acceptance, the next milestone will be selected from Police/Crime, Recreation 2.0, Fire/Emergency, or Employment/Prosperity based on what actual play reveals.
+Waterworks / Landscaping is now explicitly planned as a future system; it is not used as a workaround for badly gated Boat goals.

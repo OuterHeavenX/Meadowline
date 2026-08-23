@@ -2,15 +2,11 @@
 
 ## Status
 
-**Production status:** implemented on `main` through merged PR #3.
+**Production on `main` through PR #3.** Historical implementation branch: `feature/housing-2`. Historical parent: `feature/living-city-foundation`.
 
-**Historical development branch:** `feature/housing-2`.
+Housing 2.0 is not an experiment; City Growth and Town Goals consume its real outputs.
 
-**Historical parent:** `feature/living-city-foundation`.
-
-Housing 2.0 is no longer an unmerged experiment. It is the production residential system that City Growth 1.0 consumes.
-
-## Product relationship
+## Core relationship
 
 Road Access + Mood + Education + Neighborhood Desirability
 → Upgrade Readiness
@@ -21,108 +17,59 @@ Road Access + Mood + Education + Neighborhood Desirability
 → More School Demand
 → Greater Civic Pressure.
 
-Homes improve automatically when good conditions are sustained. The player places one House tool rather than manually choosing residential tiers.
+The player places one House tool. Homes evolve automatically after good conditions are sustained.
 
 ## Residential tiers
 
-| Tier | Name | Base capacity | Residential tax multiplier | Key requirements |
+| Tier | Name | Base capacity | Tax multiplier | Key requirements |
 | --- | --- | ---: | ---: | --- |
 | 1 | Cottage | 4 | 1.00× | starting tier |
 | 2 | Town Home | 6 | 1.25× | road, Mood 65+, Education 15+, Desirability 45+ |
 | 3 | Established Home | 8 | 1.55× | road, Mood 78+, Education 35+, Desirability 62+ |
 
-The first upgrade uses roughly 50 seconds of sustained qualifying simulation time and the second roughly 85 seconds, with restrained deterministic variation. Progress pauses rather than resetting if conditions fall away, and higher-tier homes do not downgrade.
+The first upgrade takes roughly 50 seconds of sustained qualifying simulation time and the second roughly 85 seconds, with restrained deterministic variation. Progress pauses rather than resets, and homes do not downgrade.
 
 ## Capacity migration
 
-The older School +2 residential-capacity behavior is retired as a source of new density. Education is the School's civic role and residential tier owns residential capacity.
-
-Migration remains gentle: a household already above a new tier's nominal capacity is grandfathered. Existing residents are not evicted; further growth waits for the appropriate tier.
+The former School +2 residential-capacity shortcut is retired. Education is the School's civic role; Housing tier owns residential density. Existing households above a nominal tier cap remain grandfathered and are never evicted by migration.
 
 ## Neighborhood Desirability
 
-Desirability is a persistent 0–100 development signal separate from Mood.
+Desirability is a 0–100 long-term development signal distinct from short-term Mood. Inputs currently include roads, Mood, Education access/level, parks, cafés, stations, lamps, trees/water, and local crowding.
 
-Current real inputs include:
+Labels remain Quiet Start, Developing, Pleasant, Desirable, and Highly Desirable.
 
-- road access
-- Mood
-- Education access / household Education
-- parks
-- cafés
-- station access
-- lamps
-- trees and water
-- local crowding pressure
+Future Safety, Healthcare, Employment, and Prosperity are not simulated yet.
 
-Current labels:
+## House Look and visuals
 
-- Quiet Start
-- Developing
-- Pleasant
-- Desirable
-- Highly Desirable
+House Look explains residents/capacity, Mood, Education/School state, Desirability, current/next tier, progress, and real requirements. It remains scrollable on mobile.
 
-Future Safety, Healthcare, Employment, and Prosperity are not simulated by Housing 2.0.
-
-## House Look
-
-The production Look panel explains:
-
-- residents and capacity
-- Mood and Mood reasons
-- Education and serving School state
-- Neighborhood Desirability
-- current residential tier
-- next tier
-- upgrade progress
-- each real upgrade requirement
-- growing versus waiting state
-
-The panel stays scrollable on mobile rather than shrinking its text.
-
-## Visual evolution
-
-Residential tiers change silhouette at practical phone zoom:
-
-- Cottage — smallest form
-- Town Home — wider/taller form with upper-window/dormer treatment
-- Established Home — largest form with extra upper detail and restrained landscaping
-
-Seeded wall/roof variation remains. Active upgrade progress uses a restrained indicator rather than permanent map clutter.
+Tier silhouettes remain readable at practical phone zoom: Cottage < Town Home < Established Home while seeded visual variation remains.
 
 ## Education feedback
 
-Denser Housing creates additional School demand through the generic Education service path. This is important for City Growth: a successful neighborhood can naturally pressure a 28-seat School and make another School or a Level 2 upgrade meaningful.
+Denser Housing raises School demand through the generic civic provider model. This remains the reason City Growth can create a meaningful choice between building another School and upgrading an existing one.
 
-## Save V3
+## Save / performance
 
-Housing remains inside `meadowline.v3`.
+Housing remains inside `meadowline.v3`; per-house state includes Education, Housing tier, upgrade progress, Desirability, and bounded optional metadata. Invalid values are repaired defensively.
 
-Per-house state includes:
+Housing/Desirability use low-frequency Living City evaluation and cached service data, not frame-by-frame progression.
 
-- `education`
-- `housingTier`
-- `upgradeProgress`
-- `desirability`
-- bounded optional metadata
+## Relationship to City Growth 1.1
 
-Earlier saves receive safe Tier 1 defaults. Invalid tier/progress/Education/Desirability values are clamped defensively.
+City Growth stages and **Town Goals** read actual Housing results such as occupied homes, Town Homes, Established Homes, Education, Desirability, and School demand. They do not create a parallel residential XP system.
 
-## Performance
+Typical guided relationships now include:
 
-Housing does not evaluate at 60 FPS. Residential evolution and Desirability use the low-frequency Living City simulation path and cached service data.
+healthy Village
+→ first School / Education
+→ Town Homes / Desirability
+→ Township
+→ denser Housing / School pressure
+→ School Level 2 or another School.
 
-Developer diagnostics record housing evaluations, upgrades, and Desirability recomputes.
+Town Goals may suggest Housing improvement only when it makes sense for the current city stage. Housing thresholds themselves remain unchanged by the UI/goal refinement unless a separately documented balance pass proves a need.
 
-## Validation record
-
-Housing 2.0 was automatically validated on its development branch before inclusion in PR #3, and its production status is now represented by the merged `main` release.
-
-Physical-device observations and regression requirements are maintained in `docs/IPHONE_ACCEPTANCE.md`.
-
-## Relationship to City Growth 1.0
-
-City Growth reads Housing outcomes rather than creating parallel progression counters. City stages use real values such as occupied homes, Town Homes, Established Homes, average Education, and average Desirability.
-
-Housing therefore becomes a path to earning land and civic capability rather than an isolated cosmetic upgrade system.
+Physical regression requirements are maintained in `docs/IPHONE_ACCEPTANCE.md`.
