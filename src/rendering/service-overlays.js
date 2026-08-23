@@ -1,7 +1,6 @@
-import { H, W } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { getServiceDefinition } from '../buildings/registry.js';
-import { previewEducationAt } from '../simulation/civic-services.js';
+import { previewEducationAt, serviceBoundaryGeometry } from '../simulation/civic-services.js';
 import { proj } from '../world/map.js';
 import { diamond, g } from './terrain.js';
 
@@ -12,18 +11,6 @@ const THEMES={
 function serviceTheme(def){
   const key=def&&def.visual&&def.visual.boundary;
   return THEMES[key]||THEMES.green;
-}
-
-// The perimeter follows the exact tile set used by Chebyshev service distance:
-// every tile whose center is within radius R of the provider. For School R=7,
-// that is a 15×15 center-tile service field, clipped at the world edge.
-export function serviceBoundaryGeometry(tool,x,y){
-  const def=getServiceDefinition(tool);
-  if(!def||!Number.isFinite(def.radius)) return null;
-  const r=Math.max(0,Math.floor(def.radius));
-  const minX=Math.max(0,x-r),maxX=Math.min(W-1,x+r);
-  const minY=Math.max(0,y-r),maxY=Math.min(H-1,y+r);
-  return {def,r,minX,maxX,minY,maxY};
 }
 
 export function drawServiceBoundary(tool,x,y){
