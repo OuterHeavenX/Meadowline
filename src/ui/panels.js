@@ -4,12 +4,17 @@ import { outFrom } from '../simulation/citizens.js';
 import { educationAssignment, educationProvider, educationStatus, educationTier, getEducationLevel, schoolStats } from '../simulation/civic-services.js';
 import { desirabilityDetails, desirabilityLabel, evaluateHousingReadiness, getDesirability, housingTier } from '../simulation/housing.js';
 import { hash2 } from '../core/constants.js';
+import { save } from '../core/save.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
+import { CITY_STAGES, isTileUnlocked, parcelAt, parcelStatus } from '../progression/city-growth.js';
+import { civicUpgradeStatus, upgradeCivic } from '../progression/civic-upgrades.js';
 import { evalHouse } from '../simulation/mood.js';
 import { PAL } from '../world/seasons.js';
 import { idx, inBounds, isWater } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
+import { toast } from './notify.js';
+import { paintGrowthPanel } from './growth.js';
 
 /* ---------- the Look card ---------- */
 export const elLook=document.getElementById("look"), elLookBody=document.getElementById("look-body");
@@ -84,6 +89,39 @@ function housingBlock(h){
   return html;
 }
 
+function lockedLandCard(x,y){
+  if(isTileUnlocked(x,y)) return null;
+  const parcel=parcelAt(x,y);
+  if(!parcel) return card("Future Meadow","Undeveloped land",'<p>This land is outside the current development area.</p>');
+  const st=parcelStatus(parcel.id);
+  const terrain=S.terr[idx(x,y)]===1?'The water and shoreline remain part of the valley.':S.natTree[idx(x,y)]?'The old woodland remains untouched until this district opens.':'The meadow is still here — it simply is not open for development yet.';
+  let status;
+  if(st.state==='available') status='<p><b>'+parcel.name+' is ready to open.</b> It costs <b>'+parcel.cost+' coins</b> in City Growth.</p>';
+  else status='<p><b>Unlock requirement:</b> '+CITY_STAGES[parcel.stage-1].name+(st.prereqOk?'':' and neighboring land')+'.</p>';
+  return card(parcel.name,"Undeveloped land",'<p>'+terrain+'</p>'+status+'<p class="muted">You can still pan across and enjoy this part of Meadowline before building reaches it.</p>');
+}
+
+function schoolCard(b){
+  const st=schoolStats(b);
+  const label=st.overloaded?"At capacity":st.utilization>=75?"Busy":"Good";
+  const level=Math.max(1,Math.floor(Number(b.state?.level)||1));
+  const up=civicUpgradeStatus(b);
+  let upgradeHtml='';
+  if(up.maxed){
+    upgradeHtml='<h4>Upgrade</h4><p><b>Level 2 complete.</b> This school now has room for '+st.capacity+' students while keeping its '+st.radius+'-tile neighborhood reach.</p>';
+  }else if(up.next){
+    const future=up.next;
+    const requirement=up.stageOk?'Township reached':'Reach Township first';
+    upgradeHtml='<h4>Upgrade</h4><dl class="service"><dt>Level</dt><dd>'+level+' → '+future.level+'</dd><dt>Capacity</dt><dd>'+st.capacity+' → '+future.capacity+'</dd><dt>Coverage</dt><dd>'+st.radius+' tiles</dd><dt>Requirement</dt><dd class="'+(up.stageOk?'up':'dn')+'">'+requirement+'</dd><dt>Cost</dt><dd>'+future.cost+' coins</dd></dl>'+
+      '<button class="go civic-upgrade" data-upgrade-school="1" '+(up.available?'':'disabled')+'>Upgrade to Level 2</button>'+
+      (!up.stageOk?'<p class="muted">The larger school becomes available once Meadowline reaches Township.</p>':!up.coinsOk?'<p class="muted">Save '+future.cost+' coins or build another School instead.</p>':'<p class="muted">This adds classroom space; it does not expand the service radius.</p>');
+  }
+  return card("Meadowline School","School · Level "+level+" · Education service",
+    '<p>Education grows gradually for households this school can serve. Knowledge already gained is kept if coverage changes.</p>'+
+    '<dl><dt>Students served</dt><dd>'+st.served+' / '+st.capacity+'</dd><dt>Demand in reach</dt><dd>'+st.demand+'</dd><dt>Utilization</dt><dd>'+st.utilization+'%</dd><dt>Homes served</dt><dd>'+st.homesCovered+'</dd><dt>Coverage radius</dt><dd>'+st.radius+' tiles</dd><dt>Status</dt><dd class="'+(st.overloaded?'dn':'up')+'">'+label+'</dd></dl>'+
+    (st.overloaded?'<p><b>Some nearby demand is waiting.</b> Build another School or add classroom capacity.</p>':'<p>There is room for this neighborhood to keep learning.</p>')+upgradeHtml);
+}
+
 export function describe(x,y){
   const i=idx(x,y), b=S.grid[i];
   if(b&&b.type==="house"){
@@ -117,23 +155,34 @@ export function describe(x,y){
       const supplied=S.ctx.mills.some(w=>Math.abs(w.x-x)<=4&&Math.abs(w.y-y)<=4);
       return card("The Bakery","Bakery",'<p>Bakes what the windmills grind. '+(supplied?'A mill is in reach, so it runs at <b>full tilt</b>.':'No mill within <b>4 tiles</b>, so it runs at <b>half</b>.')+'</p><dl><dt>Flour supply</dt><dd class="'+(supplied?'up':'dn')+'">'+(supplied?'Good':'Short')+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,4)+'</dd></dl>');
     }
-    case "school": {
-      const st=schoolStats(b);
-      const label=st.overloaded?"At capacity":st.utilization>=75?"Busy":"Good";
-      return card("Meadowline School","School · Education service",
-        '<p>Education grows gradually for households this school can serve. Knowledge already gained is kept if coverage changes.</p>'+
-        '<dl><dt>Students served</dt><dd>'+st.served+' / '+st.capacity+'</dd><dt>Demand in reach</dt><dd>'+st.demand+'</dd><dt>Utilization</dt><dd>'+st.utilization+'%</dd><dt>Homes served</dt><dd>'+st.homesCovered+'</dd><dt>Coverage radius</dt><dd>'+st.radius+' tiles</dd><dt>Status</dt><dd class="'+(st.overloaded?'dn':'up')+'">'+label+'</dd><dt>Upgrade</dt><dd>Not yet available</dd></dl>'+
-        (st.overloaded?'<p><b>Some nearby demand is waiting.</b> Another school will relieve the pressure.</p>':'<p>There is room for this neighborhood to keep learning.</p>'));
-    }
+    case "school": return schoolCard(b);
     case "dock": return card("The Dock","Dock",'<p>Boats put out from here and sail the open water. Homes with a view of it are cheered for <b>4 tiles</b>.</p><dl><dt>Boats afloat</dt><dd>'+S.boats.length+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,4)+'</dd></dl>');
     case "tree": return card("Planted Trees","Trees",'<p>A small lift to any home with a view of them, out to <b>3 tiles</b>.</p>');
     case "road": return card(isWater(x,y)?"Road Bridge":"Road",isWater(x,y)?"Span":"Road",'<p>Homes fill up only when a road runs alongside. Citizens walk wherever it leads.</p>');
     case "rail": return card(isWater(x,y)?"Rail Bridge":"Rail",isWater(x,y)?"Span":"Rail",'<p>Trains appear once <b>6 tiles</b> of rail exist, and one more for every 13 after.</p>');
   }
+  const locked=lockedLandCard(x,y);
+  if(locked) return locked;
   if(S.terr[i]===1) return card("Open Water","Water",'<p>Only <b>roads and rails</b> can cross, and a span costs <b>three times</b> the usual. Water cheers up the homes that can see it.</p>');
   if(S.natTree[i]) return card("Old Woodland","Wild trees",'<p>Here before you were. Worth the same as a planted tree — and free to leave standing.</p>');
   return card("Meadow","Open ground",'<p>Room for anything you like.</p><dl><dt>Homes within 4</dt><dd>'+countNear("houses",x,y,4)+'</dd><dt>Parks within 4</dt><dd>'+countNear("parks",x,y,4)+'</dd></dl>');
 }
+
+elLookBody.addEventListener('click',e=>{
+  const btn=e.target.closest('[data-upgrade-school]');
+  if(!btn||!S.pick) return;
+  const b=S.grid[idx(S.pick.x,S.pick.y)];
+  if(!b||b.type!=="school") return;
+  const st=civicUpgradeStatus(b);
+  if(!st.available){ toast(st.reason||'That upgrade is not ready yet.'); return; }
+  if(!confirm('Upgrade this School to Level 2 for '+st.next.cost+' coins?')) return;
+  const r=upgradeCivic(b);
+  if(!r.ok){ toast(r.why||'The School could not be upgraded.'); return; }
+  toast('School Level 2 · capacity '+r.upgrade.capacity,'gold');
+  save();
+  paintGrowthPanel();
+  refreshLook();
+});
 
 export function inspect(x,y){
   if(!inBounds(x,y)){ closeLook(); return; }
