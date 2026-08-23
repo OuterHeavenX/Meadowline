@@ -1,25 +1,27 @@
 import { note } from '../simulation/chronicle.js';
-import { COST, DIRS } from '../core/constants.js';
+import { DIRS } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
+import { invalidateServices } from '../simulation/civic-services.js';
+import { BUILDABLE, BUILDING_COST, defaultBuildingState } from './registry.js';
 import { SPANS } from '../transport/bridges.js';
 import { idx, inBounds, isType, isWater } from '../world/tiles.js';
 
-/* ---------- building placement ---------- */
-export const BUILDABLE={road:1,rail:1,house:1,cafe:1,park:1,tree:1,lamp:1,mill:1,station:1,
-                        market:1,bakery:1,school:1,dock:1};
+export { BUILDABLE } from './registry.js';
 
+/* ---------- building placement ---------- */
 // A span over water costs three times what it does on dry ground.
-export function costOf(kind,x,y){ return COST[kind]*(SPANS[kind]&&isWater(x,y)?3:1); }
+export function costOf(kind,x,y){ return BUILDING_COST[kind]*(SPANS[kind]&&isWater(x,y)?3:1); }
 
 export function canPlace(kind,x,y){
+  if(!BUILDABLE[kind]) return {ok:false};
   if(!inBounds(x,y)) return {ok:false};
   const i=idx(x,y);
   if(S.terr[i]===1&&!SPANS[kind]) return {ok:false,why:"Only roads and rails can cross the water."};
   const cur=S.grid[i];
   if(cur){
     if(cur.type===kind) return {ok:false};
-    return {ok:false,why:"Something's already there \u2014 remove it first."};
+    return {ok:false,why:"Something's already there — remove it first."};
   }
   if(kind==="station"){
     let touching=false;
@@ -34,15 +36,15 @@ export function canPlace(kind,x,y){
   const c=costOf(kind,x,y);
   if(S.coins<c){
     return {ok:false,why:S.terr[i]===1
-      ? "A bridge across costs "+c+" \u2014 not enough coins yet."
-      : "Not enough coins yet \u2014 wait for the next payday."};
+      ? "A bridge across costs "+c+" — not enough coins yet."
+      : "Not enough coins yet — wait for the next payday."};
   }
   return {ok:true};
 }
 
 // the first of each kind is worth writing down
 const NOTED={};
-const NOTE_NAMES={cafe:"The first caf\u00e9 opened",park:"The first park was laid out",
+const NOTE_NAMES={cafe:"The first café opened",park:"The first park was laid out",
   station:"The first station opened",mill:"The first windmill turned",
   market:"The first market day",bakery:"The first bakery lit its oven",
   school:"The first school took pupils",dock:"The first dock was built",
@@ -54,7 +56,8 @@ export function place(kind,x,y){
   const i=idx(x,y);
   S.coins-=costOf(kind,x,y);
   S.natTree[i]=0;
-  S.grid[i]={type:kind,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:0,grow:0,mood:50,linked:false};
+  S.grid[i]={type:kind,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:0,grow:0,mood:50,linked:false,state:defaultBuildingState(kind)};
+  invalidateServices();
   if(NOTE_NAMES[kind]&&!NOTED[kind]){ NOTED[kind]=1; note(NOTE_NAMES[kind]); }
   services.puff(x,y);
   services.blip(kind==="house"?520:kind==="park"?400:kind==="mill"?300:340);
@@ -71,6 +74,7 @@ export function erase(x,y){
   }
   S.coins+=Math.floor(costOf(b.type,x,y)/2);
   S.grid[i]=null;
+  invalidateServices();
   services.puff(x,y);
   services.blip(220);
   return true;
