@@ -27,6 +27,9 @@
   <button class="chip" id="b-map" title="Map (B)" aria-label="Toggle map">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20V6.5ZM9 4v13.5M15 6.5V20"/></svg>
   </button>
+  <button class="chip off" id="b-growth" title="City Growth" aria-label="Open city growth">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V10l5-4 4 3 7-5v15M3 19h18M8 19v-5h4v5M16 19v-7h3v7"/></svg>
+  </button>
   <button class="chip" id="b-ledger" title="Ledger (L)" aria-label="Toggle the ledger">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V4.5M4 19.5h16M7.5 16.5V11M12 16.5V7M16.5 16.5v-4"/></svg>
   </button>
@@ -36,51 +39,33 @@
   <button class="chip" id="b-new" title="Start a new valley">&#8635;</button>
 </div>
 
-<div class="side">
-  <div class="panel" id="wish-panel">
-    <h2>Wishes</h2>
-    <div id="wishes"></div>
-  </div>
-</div>
-
+<div class="side"><div class="panel" id="wish-panel"><h2>Wishes</h2><div id="wishes"></div></div></div>
 <div class="mini hide" id="mini"><canvas id="mm" width="132" height="132"></canvas></div>
 
-<div class="ledger" id="ledger">
-  <button class="x" id="ledger-x" aria-label="Close">&times;</button>
-  <div id="ledger-body"></div>
-</div>
-
-<div class="look" id="look">
-  <button class="x" id="look-x" aria-label="Close">&times;</button>
-  <div id="look-body"></div>
-</div>
+<div class="ledger" id="ledger"><button class="x" id="ledger-x" aria-label="Close">&times;</button><div id="ledger-body"></div></div>
+<div class="growth" id="growth"><button class="x" id="growth-x" aria-label="Close">&times;</button><div id="growth-body"></div></div>
+<div class="look" id="look"><button class="x" id="look-x" aria-label="Close">&times;</button><div id="look-body"></div></div>
 
 <div class="hint" id="hint"></div>
 <div class="toasts" id="toasts"></div>
 
-<div class="dock">
-  <div class="cats" id="cats"></div>
-  <div class="dockrow">
-    <div class="tools" id="tools"></div>
-    <div class="modes" id="modes"></div>
-  </div>
-</div>
+<div class="dock"><div class="cats" id="cats"></div><div class="dockrow"><div class="tools" id="tools"></div><div class="modes" id="modes"></div></div></div>
 
 <div class="veil" id="veil">
   <div class="card">
     <h1>Meadowline</h1>
     <p class="sub">A calm little city builder</p>
     <ul>
-      <li><em>1</em><span>Lay <b>roads</b> first. Houses only fill up when a road runs alongside them.</span></li>
-      <li><em>2</em><span>Loop some <b>rail</b> and drop a <b>station</b> beside it. Trains find their own way around.</span></li>
+      <li><em>1</em><span>Begin in <b>Meadowline Center</b>. Grow a healthy neighborhood to open more land.</span></li>
+      <li><em>2</em><span>Lay <b>roads</b> first. Houses only fill up when a road runs alongside them.</span></li>
       <li><em>3</em><span><b>Parks, cafés and lamps</b> lift the mood of every home nearby.</span></li>
-      <li><em>4</em><span>Roads and rails <b>bridge water</b> on their own &mdash; just draw straight across.</span></li>
+      <li><em>4</em><span>Use <b>City Growth</b> to see the next stage and expansion opportunities.</span></li>
       <li><em>5</em><span>Use <b>Look</b> to ask any home how it&rsquo;s feeling, and why.</span></li>
     </ul>
     <button class="go" id="b-start">Start building</button>
   </div>
 </div>
 
-<script type="module" src="src/main.js?v=architecture-refactor"></script>
+<script type="module" src="src/main.js?v=city-growth-1"></script>
 </body>
 </html>
