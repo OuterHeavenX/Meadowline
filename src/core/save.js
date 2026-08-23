@@ -18,11 +18,41 @@ export const store={
   set(k,v){try{localStorage.setItem(k,v);}catch(e){}}
 };
 
+// V3 deliberately preserves small JSON-safe unknown fields so future systems can
+// add optional building metadata without forcing a schema bump for every property.
+// The bounds keep a corrupt save from exploding localStorage or recursive parsing.
+function safeStateValue(v,depth=0){
+  if(v===null||typeof v==="string"||typeof v==="boolean") return v;
+  if(typeof v==="number") return Number.isFinite(v)?v:undefined;
+  if(depth>=2) return undefined;
+  if(Array.isArray(v)){
+    const out=[];
+    for(const item of v.slice(0,16)){
+      const clean=safeStateValue(item,depth+1);
+      if(clean!==undefined) out.push(clean);
+    }
+    return out;
+  }
+  if(v&&typeof v==="object"){
+    const out={}; let count=0;
+    for(const[k,item]of Object.entries(v)){
+      if(count++>=16) break;
+      const clean=safeStateValue(item,depth+1);
+      if(clean!==undefined) out[k]=clean;
+    }
+    return out;
+  }
+  return undefined;
+}
 function cleanState(type,state){
   const out=defaultBuildingState(type);
   if(!state||typeof state!=="object"||Array.isArray(state)) return out;
-  if(type==="house"&&Number.isFinite(state.education)) out.education=Math.max(0,Math.min(100,state.education));
-  if(type==="school"&&Number.isFinite(state.level)) out.level=Math.max(1,Math.floor(state.level));
+  for(const[k,v]of Object.entries(state)){
+    const clean=safeStateValue(v);
+    if(clean!==undefined) out[k]=clean;
+  }
+  if(type==="house") out.education=Number.isFinite(state.education)?Math.max(0,Math.min(100,state.education)):Math.max(0,Math.min(100,Number(out.education)||0));
+  if(type==="school") out.level=Number.isFinite(state.level)?Math.max(1,Math.floor(state.level)):Math.max(1,Math.floor(Number(out.level)||1));
   return out;
 }
 function packBuilding(x){
