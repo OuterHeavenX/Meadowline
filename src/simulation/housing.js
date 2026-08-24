@@ -3,6 +3,7 @@ import { clamp, hash2 } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { educationAssignment, getEducationLevel, invalidateServices } from './civic-services.js';
+import { recreationStatus } from './recreation.js';
 import { idx, inBounds, isType } from '../world/tiles.js';
 
 const HOUSE_DEF=BUILDINGS.house;
@@ -17,6 +18,8 @@ function stateFor(h){
   h.state.upgradeProgress=clamp(h.state.upgradeProgress,0,1);
   if(!Number.isFinite(h.state.desirability)) h.state.desirability=0;
   h.state.desirability=clamp(h.state.desirability,0,100);
+  if(!Number.isFinite(h.state.recreationSatisfaction)) h.state.recreationSatisfaction=0;
+  h.state.recreationSatisfaction=clamp(h.state.recreationSatisfaction,0,100);
   return h.state;
 }
 
@@ -79,8 +82,11 @@ export function desirabilityDetails(h){
   const knowledge=Math.round(edu*0.10);
   if(knowledge){ total+=knowledge; rows.push({label:"Household education",value:knowledge}); }
 
-  const parks=countNear(c.parks,h,4), park=Math.min(12,parks*6);
-  if(park){ total+=park; rows.push({label:parks+" park"+(parks===1?"":"s")+" nearby",value:park}); }
+  // Recreation is a modest neighborhood-quality input. Its larger effect is
+  // already visible through Mood, so this direct contribution stays bounded.
+  const rec=recreationStatus(h);
+  const recValue=Math.round(clamp(rec.satisfaction,0,100)*0.06);
+  if(recValue){ total+=recValue; rows.push({label:rec.label,value:recValue}); }
 
   const cafes=countNear(c.cafes,h,5), cafe=Math.min(6,cafes*2);
   if(cafe){ total+=cafe; rows.push({label:"Cafés nearby",value:cafe}); }
