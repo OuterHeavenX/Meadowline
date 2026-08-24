@@ -114,13 +114,18 @@ Owner iPad testing of the first City Growth build identified these acceptance fa
 - with a selected Road/building tool, trying to drag/pan could accidentally construct;
 - the existing dock did not make active build state/gesture intent clear enough.
 
-These findings mean City Growth 1.0 is **not physically accepted**. They are refinements on PR #4, not evidence for starting another feature branch.
+A first 1.1 UI retest then exposed two additional friction points:
+
+- normal structures auto-cancelled after one placement, forcing repeated menu navigation;
+- the floating active `Look` strip could obstruct the open build catalog.
+
+These findings are refinements on PR #4, not evidence for starting another feature branch.
 
 ## Guided Development / Town Goals
 
 Player-facing `Wishes` become **Town Goals** while the internal V3 `wishes` field remains for backward compatibility.
 
-The new model keeps City Milestones permanent and Town Goals short-term/contextual.
+The model keeps City Milestones permanent and Town Goals short-term/contextual.
 
 Target visible structure:
 
@@ -167,14 +172,16 @@ No Save V4 is required.
 
 ## Safe-touch input contract
 
-Touch interaction is now intent-first:
+Touch interaction is intent-first:
 
 - quick tap = one action/placement;
 - immediate one-finger drag > ~7 px = camera pan;
 - two-finger input = pinch/zoom and cancels pending construction;
 - Road/Rail/Tree/Remove use ~300 ms hold to enter intentional paint mode;
 - movement before the hold threshold cancels pending build intent and pans;
-- one-off touch building placement returns to Move/navigation after successful placement.
+- normal building tools remain armed after successful placement until the player explicitly cancels or replaces them.
+
+Keeping normal building tools armed was chosen after the first 1.1 iPad retest showed that auto-return-to-Move made repeated House/School/etc. construction tedious. Safe drag-to-pan remains active even while the building tool stays selected.
 
 Desktop mouse input retains immediate drag painting for paint tools.
 
@@ -188,8 +195,10 @@ The old always-expanded dock is replaced with:
 - dedicated Build button;
 - collapsible build tray with Ways/Homes/Trade/Green categories;
 - Move/Look/Remove mode buttons;
-- active-tool pill containing name, cost and concise gesture instruction;
-- explicit Cancel action.
+- in-dock active build controls containing name, cost and concise gesture instruction;
+- `✓` to keep the selected tool armed and close the tray for map focus;
+- `×` to cancel the selected tool and return to neutral navigation;
+- no floating active `Look` strip over the catalog.
 
 Examples:
 
@@ -198,6 +207,19 @@ Examples:
 - `Remove` / `Tap once · Hold + drag to paint`
 
 The UI respects existing safe-area positioning and remains framework-free.
+
+## Latest physical iPad evidence
+
+The latest owner iPad play session reports the updated build as **“looking great.”** The supplied Day 14 screenshot visibly demonstrates:
+
+- `Growing Town` reached on physical iPad;
+- 92 citizens and 1,524 coins in an actively developed progression city;
+- a coherent `NEXT STEP` of opening another development parcel;
+- a sensible optional Tree goal rather than premature transport noise;
+- the compact bottom command bar without an obvious floating overlay obstruction;
+- readable parcel boundaries, roads, homes, lamps, pedestrians and natural trees while the map remains dominant.
+
+This is strong positive physical evidence for City Growth 1.1 presentation and progression coherence. It does **not** automatically prove every saved-game, gesture, School Level 2, or long-session checklist item; those remain tracked separately in `docs/IPHONE_ACCEPTANCE.md`.
 
 ## Goal/update cadence
 
@@ -240,7 +262,7 @@ and adds `tests/city-growth-1-1-regression.html/.js` covering:
 
 ## Waterworks / Landscaping — roadmap hook only
 
-Player-created ponds/rivers/creeks/canals are now explicitly documented for a future milestone. City Growth 1.1 does not mutate terrain to make a Boat goal possible.
+Player-created ponds/rivers/creeks/canals are explicitly documented for a future milestone. City Growth 1.1 does not mutate terrain to make a Boat goal possible.
 
 Potential future relationship:
 
@@ -252,4 +274,4 @@ No Police/Crime/Jail, Fire, Healthcare, Employment/Prosperity, advanced traffic,
 
 ## Merge gate
 
-PR #4 remains unmerged until the canonical physical checklist in `docs/IPHONE_ACCEPTANCE.md` is satisfied and the owner explicitly approves merge.
+PR #4 remains unmerged until the canonical physical checklist in `docs/IPHONE_ACCEPTANCE.md` is satisfactory and the owner explicitly approves merge.
