@@ -50,10 +50,11 @@ export const TOOLS=[
 ];
 export const COST={}; for(const t of TOOLS) COST[t.id]=t.cost;
 
-// The dock groups tools so sixteen of them still fit a phone.
+// The dock groups tools so the catalog stays legible on a phone.
 export const CATEGORIES=[
   {id:"ways",name:"Ways"},
   {id:"homes",name:"Homes"},
+  {id:"civic",name:"Civic"},
   {id:"trade",name:"Trade"},
   {id:"green",name:"Green"}
 ];
@@ -63,6 +64,7 @@ export const ICONS={
   road:'<path d="M7 21 4.5 3M17 21l2.5-18M12 4.5v3M12 11v3M12 17.5v3"/>',
   rail:'<path d="M8 3v18M16 3v18M5 7.5h14M5 12h14M5 16.5h14"/>',
   house:'<path d="M3.5 11.5 12 4l8.5 7.5M6 10.5V20h12v-9.5M10 20v-5h4v5"/>',
+  cityHall:'<path d="M3 9.5 12 4l9 5.5M5 10h14M6.5 10v8M10 10v8M14 10v8M17.5 10v8M4 20h16M12 4V2.8M12 2.8h4"/>',
   cafe:'<path d="M5 8h11v5.5A4.5 4.5 0 0 1 11.5 18h-2A4.5 4.5 0 0 1 5 13.5V8ZM16 9.5h2a2.5 2.5 0 0 1 0 5h-2M4 21h14"/>',
   park:'<path d="M12 3.5c3 0 5.2 2.4 5.2 5.2S15 13.5 12 13.5 6.8 11.5 6.8 8.7 9 3.5 12 3.5ZM12 13.5V20M8 20h8"/>',
   tree:'<path d="M9 4 5.5 10.5h7L9 4ZM9 10.5V19M17 9.5l-2.6 4.5h5.2l-2.6-4.5ZM17 14v5M3.5 19.5h17"/>',
