@@ -5,6 +5,7 @@ on:
       - feature/living-city-foundation
       - feature/housing-2
       - feature/city-growth-progression
+      - feature/city-hall-civic-center
   pull_request:
     branches:
       - feature/living-city-foundation
@@ -39,3 +40,8 @@ jobs:
           google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 --dump-dom http://127.0.0.1:8000/tests/city-growth-1-1-regression.html >/tmp/meadowline-city-growth-1-1.html
           cat /tmp/meadowline-city-growth-1-1.html
           grep -q 'data-result="pass"' /tmp/meadowline-city-growth-1-1.html
+      - name: City Hall 1.0 regression
+        run: |
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 --dump-dom http://127.0.0.1:8000/tests/city-hall-regression.html >/tmp/meadowline-city-hall.html
+          cat /tmp/meadowline-city-hall.html
+          grep -q 'data-result="pass"' /tmp/meadowline-city-hall.html
