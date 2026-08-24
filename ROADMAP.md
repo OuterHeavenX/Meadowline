@@ -205,3 +205,13 @@ Recreation 2.0 may only move toward merge after:
 - owner explicitly approves the Recreation merge.
 
 Physical acceptance remains separate from CI.
+
+## Living City 3.1 — AAA Visual / Release-Candidate Development
+
+**Current development; not Production.**
+
+Branch: `feature/living-city-3-1-aaa-visual`, based on the exact unmerged Living City 3 candidate.
+
+This focused pass productionizes the renderer boundary with a stable WebGL2 presentation layer and continuous Canvas fallback, graphics presets, richer terrain/Road/water/night/weather treatment, municipal incident arrival/working/return presentation, restrained procedural audio, truthful municipal Look/Town Goal completion, and measurable diagnostics. WebGPU remains optional future research rather than a runtime requirement. It does not add another simulation layer, save version, map expansion or progression stage.
+
+See `docs/RENDERING_2.md`. Merge still requires exact-head automation, owner physical acceptance of the stacked prerequisites and explicit approval.

@@ -74,3 +74,8 @@ jobs:
           google-chrome --headless --no-sandbox --use-gl=angle --use-angle=swiftshader --enable-webgl --virtual-time-budget=15000 --dump-dom http://127.0.0.1:8000/tests/renderer-benchmark.html >/tmp/meadowline-renderer-benchmark.html
           cat /tmp/meadowline-renderer-benchmark.html
           grep -q 'data-result="pass"' /tmp/meadowline-renderer-benchmark.html
+      - name: Game boot smoke test
+        run: |
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=4000 --dump-dom http://127.0.0.1:8000/?debug=1 >/tmp/meadowline-game.html
+          grep -q 'graphics-settings' /tmp/meadowline-game.html
+          grep -q 'MEADOWLINE DEBUG' /tmp/meadowline-game.html

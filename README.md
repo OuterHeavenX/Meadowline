@@ -39,7 +39,11 @@ Draft PR: **#7 — Recreation 2.0 / Town Life — Multi-Tile Facilities, Recreat
 
 Integration branch: `feature/living-city-3-aaa-municipal`
 
-Current milestone: **Living City 3.0 / Municipal Integration**, stacked transparently on the validated, unmerged Recreation candidate. Neither milestone is Production or physically accepted.
+Visual release-candidate child branch: `feature/living-city-3-1-aaa-visual`
+
+Current milestone: **Living City 3.1 / AAA Visual Completion**, stacked transparently on the validated, unmerged Living City 3 candidate. Recreation, Living City 3.0 and 3.1 remain draft development; none is Production or physically accepted.
+
+Living City 3.1 adds an optional one-pass WebGL2 presentation layer with a continuously available Canvas fallback, Auto/GPU/Compatibility renderer selection, four graphics presets, richer terrain/water/Road/weather treatment, stronger municipal incident presentation, and lightweight procedural audio. WebGPU remains diagnostic-only. See `docs/RENDERING_2.md`.
 
 The milestone makes public space a real resident need and introduces reusable multi-tile facility architecture without enlarging the 44×44 world or replacing Meadowline's lightweight pathfinding/rendering stack.
 
@@ -163,6 +167,8 @@ Regression pages include:
 - `/tests/roads-mobility-regression.html`
 - `/tests/recreation-regression.html`
 - `/tests/living-city-3-regression.html`
+- `/tests/living-city-3-1-regression.html`
+- `/tests/renderer-benchmark.html`
 
 Module hygiene:
 

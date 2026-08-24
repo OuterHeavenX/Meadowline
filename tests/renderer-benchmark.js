@@ -1,4 +1,4 @@
-const canvas=document.getElementById('bench'),out=document.getElementById('results'),W=canvas.width,H=canvas.height,FRAMES=180;
+const canvas=document.getElementById('bench'),out=document.getElementById('results'),W=canvas.width,H=canvas.height,FRAMES=40;
 function scene2d(ctx,t){
   const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#263a54');sky.addColorStop(1,'#66806b');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
   for(let y=0;y<20;y++)for(let x=0;x<30;x++){const sx=640+(x-y)*22,sy=90+(x+y)*11,water=(x>20&&y>11);ctx.fillStyle=water?'#4d879c':((x+y)%3?'#789d61':'#82aa68');ctx.beginPath();ctx.moveTo(sx,sy-11);ctx.lineTo(sx+22,sy);ctx.lineTo(sx,sy+11);ctx.lineTo(sx-22,sy);ctx.closePath();ctx.fill();if(!water&&(x%4===0||y%5===0)){ctx.strokeStyle='#545d59';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(sx-20,sy);ctx.lineTo(sx+20,sy);ctx.stroke();}}

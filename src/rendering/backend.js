@@ -21,12 +21,12 @@ function ensure(){
     gl=overlay.getContext('webgl2',{alpha:false,antialias:false,preserveDrawingBuffer:false,powerPreference:effectiveQuality()==='battery'?'low-power':'high-performance',failIfMajorPerformanceCaveat:S.rendererMode!=='gpu'});if(!gl)throw new Error('WebGL2 unavailable');resources();overlay.hidden=false;S.diagnostics.rendererBackend='webgl2-hybrid';return true;
   }catch(e){failed=true;if(overlay)overlay.hidden=true;S.diagnostics.rendererBackend='canvas2d-fallback';return false;}
 }
-export function resetRendererBackend(){if(overlay)overlay.remove();overlay=gl=program=buffer=texture=null;textureW=textureH=0;lost=false;failed=false;S.diagnostics.rendererBackend='canvas2d';}
+export function resetRendererBackend(){try{if(gl){if(texture)gl.deleteTexture(texture);if(buffer)gl.deleteBuffer(buffer);if(program)gl.deleteProgram(program);}}catch(e){}if(overlay)overlay.remove();overlay=gl=program=buffer=texture=null;textureW=textureH=0;lost=false;failed=false;S.diagnostics.rendererBackend='canvas2d';S.diagnostics.rendererDrawCalls=0;S.diagnostics.rendererTextures=0;}
 export function presentFrame(){
   if(!ensure())return;const profile=graphicsProfile();if(overlay.width!==cv.width||overlay.height!==cv.height){overlay.width=cv.width;overlay.height=cv.height;textureW=textureH=0;}
   gl.viewport(0,0,overlay.width,overlay.height);gl.useProgram(program);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bindTexture(gl.TEXTURE_2D,texture);
   if(textureW!==cv.width||textureH!==cv.height){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);textureW=cv.width;textureH=cv.height;}else gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,cv);
   const rain=S.wx?.k==='rain'?S.wx.amt||0:0,dark=Math.max(0,Math.min(1,Math.abs((S.dayT||0)-.5)*2-.35));gl.uniform4f(gl.getUniformLocation(program,'u_grade'),1-rain*.05,1-rain*.015,1+rain*.035,1.035+dark*.025);gl.uniform1f(gl.getUniformLocation(program,'u_bloom'),profile.bloom);gl.drawArrays(gl.TRIANGLES,0,6);
-  S.diagnostics.rendererDrawCalls=1;S.diagnostics.rendererTextures=1;S.diagnostics.rendererDpr=window.devicePixelRatio||1;
+  S.diagnostics.rendererDrawCalls=1;S.diagnostics.rendererTextures=1;S.diagnostics.rendererDpr=innerWidth?cv.width/innerWidth:1;
 }
 export function rendererSnapshot(){return{backend:S.diagnostics.rendererBackend||'canvas2d',mode:S.rendererMode||'auto',quality:effectiveQuality(),drawCalls:S.diagnostics.rendererDrawCalls||0,textures:S.diagnostics.rendererTextures||0,contextLosses:S.diagnostics.rendererContextLosses||0,contextRestores:S.diagnostics.rendererContextRestores||0};}

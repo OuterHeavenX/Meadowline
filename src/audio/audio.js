@@ -114,3 +114,4 @@ export function ambientTick(dt){
 export function siren(kind='police'){
   if(S.muted)return;const a=ac();if(!a)return;try{if(a.state==='suspended')a.resume();const o=a.createOscillator(),gg=a.createGain(),n=a.currentTime;o.type='triangle';const base=kind==='fire'?360:kind==='medical'?520:440;o.frequency.setValueAtTime(base,n);o.frequency.linearRampToValueAtTime(base*1.28,n+.22);o.frequency.linearRampToValueAtTime(base,n+.44);gg.gain.setValueAtTime(.0001,n);gg.gain.linearRampToValueAtTime(.035,n+.03);gg.gain.exponentialRampToValueAtTime(.0001,n+.48);o.connect(gg);gg.connect(a.destination);o.start(n);o.stop(n+.5);}catch(e){}
 }
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&amb.on)ambientStop();});
