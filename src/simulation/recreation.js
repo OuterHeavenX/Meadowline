@@ -82,16 +82,27 @@ function ensureState(){
   return S.services.recreation;
 }
 
+function refreshVisitorCounts(svc){
+  const providers=svc.providers||{};
+  for(const p of Object.values(providers)) p.visitors=0;
+  let active=0;
+  for(const c of S.citizens||[]){
+    if(!c.recreationRoot||!c.facilityLocal) continue;
+    const p=providers[key(c.recreationRoot.x,c.recreationRoot.y)];
+    if(p){ p.visitors++; active++; }
+  }
+  svc.metrics.activeVisitors=active;
+  if(S.diagnostics) S.diagnostics.recreationVisitors=active;
+  return active;
+}
+
 export function recomputeRecreation(force=false){
   const svc=ensureState();
   const homes=(S.ctx?.houses||[]).filter(h=>(h.pop|0)>0);
   const popSig=populationSignature(homes);
   if(!force&&!dirty&&popSig===lastPopulationSignature){
     // Visitor count is transient even while service assignment is cached.
-    let active=0;
-    for(const c of S.citizens||[]) if(c.recreationRoot) active++;
-    svc.metrics.activeVisitors=active;
-    if(S.diagnostics) S.diagnostics.recreationVisitors=active;
+    refreshVisitorCounts(svc);
     return svc;
   }
   dirty=false; lastPopulationSignature=popSig;
@@ -146,16 +157,11 @@ export function recomputeRecreation(force=false){
     assignments[houseKey(h)]={house:h,demand:hd,served:hs,satisfaction,providers:used,nearest:(candidatesByHome.get(h)||[])[0]?.p||null};
   }
 
-  let activeVisitors=0;
-  for(const c of S.citizens||[]){
-    if(!c.recreationRoot) continue;
-    const p=providers[key(c.recreationRoot.x,c.recreationRoot.y)];
-    if(p){ p.visitors++; activeVisitors++; }
-  }
   const capacity=Object.values(providers).reduce((n,p)=>n+p.capacity,0);
   svc.providers=providers;
   svc.assignments=assignments;
-  svc.metrics={facilities:facilities.length,demand,served,capacity,underserved:Math.max(0,demand-served),activeVisitors};
+  svc.metrics={facilities:facilities.length,demand,served,capacity,underserved:Math.max(0,demand-served),activeVisitors:0};
+  const activeVisitors=refreshVisitorCounts(svc);
 
   if(S.diagnostics){
     S.diagnostics.recreationRecomputes=(S.diagnostics.recreationRecomputes||0)+1;
@@ -200,8 +206,8 @@ export function recreationDestinationForCitizen(c){
   if(!h||h.type!=='house'||!(h.pop>0)) return null;
   const a=recreationAssignment(h);
   if(!a.providers?.length) return null;
-  // Prefer facilities with room while distributing visible visitors across the
-  // household's genuinely assigned providers.
+  // Prefer facilities with fewer people currently inside relative to capacity,
+  // while using only providers that genuinely serve this household.
   const ranked=a.providers.map(u=>{
     const p=S.services.recreation.providers[u.key];
     return p?{p,u,score:(p.visitors+1)/Math.max(1,p.capacity)}:null;
