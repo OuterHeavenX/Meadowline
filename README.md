@@ -26,7 +26,7 @@ Draft PR: **#4**
 
 Current milestone: **City Growth 1.1 — Guided Development, progression-aware Town Goals, safe touch building, and mobile UI re-haul**.
 
-City Growth is not production and must not merge until the owner completes the physical iPhone/iPad gate.
+City Growth is not production and must not merge until the owner completes the physical iPhone/iPad gate and explicitly approves the merge.
 
 ## City Growth foundation
 
@@ -50,11 +50,12 @@ Legacy pre-City-Growth saves use `legacy-open`, retain full land access, and ret
 
 ## City Growth 1.1 refinement
 
-The first physical iPad City Growth pass revealed three acceptance problems:
+The first physical iPad City Growth pass revealed acceptance problems in the old sandbox-era goal logic and mobile interaction:
 
 1. old random Wishes could request a Boat merely because any water existed somewhere in the generated map;
 2. Train goals could appear before transit was a meaningful progression step;
-3. with a build/paint tool selected, an intended map drag could accidentally construct or erase tiles.
+3. with a build/paint tool selected, an intended map drag could accidentally construct or erase tiles;
+4. the first UI refinement auto-cancelled one-off buildings after placement and allowed an active-mode strip to obstruct the build catalog.
 
 City Growth 1.1 addresses those findings without adding unrelated simulation systems.
 
@@ -86,7 +87,7 @@ On touch devices the physical gesture rule is now:
 - **two fingers** — pinch/zoom and pan; pending construction is cancelled;
 - **hold ~300 ms + drag** with Road/Rail/Tree/Remove — enter deliberate paint/removal mode.
 
-One-off touch building placement returns to neutral Move/navigation after a successful placement. Desktop mouse interaction remains fast and retains click-drag painting.
+Normal building tools intentionally **remain armed after successful placement** so repeated House/School/etc. construction does not require reopening the menu. Safe one-finger drag-to-pan remains active while the tool is armed. The player explicitly cancels or replaces the tool when finished. Desktop mouse interaction remains fast and retains click-drag painting.
 
 ### Mobile build UI
 
@@ -96,10 +97,16 @@ The old permanently expanded tool dock has been reorganized into:
 - dedicated **Build** button;
 - collapsible category build tray;
 - Move / Look / Remove mode controls;
-- an active-tool pill explaining current cost and gesture, for example `Tap to place · Drag to move` or `Tap once · Hold + drag to paint`;
-- explicit Cancel action.
+- in-dock active build controls explaining current cost and gesture;
+- **✓** to keep the selected tool armed while closing the tray for map focus;
+- **×** to cancel the selected tool and return to navigation;
+- no obstructive active `Look` strip over the build catalog.
 
 Locked tools continue to display stage requirements from the authoritative registry rather than a second unlock table.
+
+### Latest physical iPad evidence
+
+The latest owner iPad retest reports the updated City Growth 1.1 build as **“looking great.”** The supplied screenshot visibly demonstrates a functioning Growing Town with 92 citizens, coherent `Town Goals`, the compact command bar, a clear unobstructed map, mature residential density, roads, lamps, citizens, trees, and parcel boundaries. This is positive physical evidence for presentation/coherence, but it does not by itself check every gesture, save-migration, School Level 2, or long-session acceptance item in `docs/IPHONE_ACCEPTANCE.md`.
 
 ## Living City systems preserved
 
@@ -146,7 +153,7 @@ Missing City Growth metadata still defaults an established save to `legacy-open`
 
 Education, Housing, City Growth, and Town Goal evaluation use the existing low-frequency simulation path rather than 60 FPS evaluation. Tile access remains cheap. Touch intent uses pointer state/timers and does not add a UI framework.
 
-`?debug=1` now includes goal and input counters in addition to existing service/Housing/City Growth diagnostics.
+`?debug=1` includes goal and input counters in addition to existing service/Housing/City Growth diagnostics.
 
 ## Validation policy
 
@@ -198,4 +205,4 @@ Not implemented by City Growth 1.1:
 - giant persistent NPC populations
 - full Waterworks terrain sculpting
 
-Waterworks / Landscaping is now explicitly planned as a future system; it is not used as a workaround for badly gated Boat goals.
+Waterworks / Landscaping is explicitly planned as a future system; it is not used as a workaround for badly gated Boat goals.
