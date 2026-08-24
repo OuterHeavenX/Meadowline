@@ -6,6 +6,8 @@
 
 Branch: `feature/city-hall-civic-center`
 
+Draft PR: **#5 — City Hall 1.0 — Civic Center Foundation**
+
 Starting production SHA: `1d9e7e9c110fad465b332ef85503d102ed5af6e0`
 
 That starting SHA is the verified `main` produced by the owner-approved merge of City Growth PR #4. City Hall work is not on production `main` and must not merge before owner iPhone/iPad acceptance.
@@ -183,7 +185,11 @@ The main workflow retains all prior regression suites and adds City Hall 1.0.
 
 ## Automatic validation status
 
-Pending final branch workflow result at the time this record was created. A green workflow is automated proof only.
+The implementation commit `000d6cf8a1e7be30a5e13fc2b86200775350c9fb` passed **Living City Validation run #97** after CI first exposed and the branch repaired a syntax regression in `src/progression/city-growth.js`.
+
+That green run includes JavaScript syntax, module hygiene/import-cycle checks, Living City/Housing regression, City Growth 1.0 regression, City Growth 1.1 Town Goal/touch-policy regression, and City Hall 1.0 regression. Later documentation-only heads must still retain green PR checks before device handoff.
+
+A green workflow is automated proof only.
 
 ## Physical validation status
 
