@@ -58,7 +58,7 @@ Owner iPad retest on August 23, 2026 confirmed the new Town Goals presentation a
 - [x] **FAIL / NEEDS REFINEMENT:** selecting a structure collapsed the Build tray automatically instead of allowing the player to explicitly finish choosing.
 - [x] **FAIL / NEEDS REFINEMENT:** the floating active `Look` strip overlapped and visually obstructed the open build catalog.
 
-The follow-up refinement changes the intended behavior to:
+The follow-up refinement changed the intended behavior to:
 
 - normal structure tools remain armed after successful placement;
 - one-finger drag remains safe camera pan even while that structure tool stays armed;
@@ -68,21 +68,36 @@ The follow-up refinement changes the intended behavior to:
 - Look does not show an active-tool strip over the build menu;
 - active build controls live inside the dock flow rather than floating over tool rows.
 
-These are implementation targets only until the owner confirms them on the physical device.
+# City Growth 1.1 latest physical iPad evidence — POSITIVE
 
-# City Growth 1.1 physical retest — PENDING
+A later owner iPad session on August 23, 2026 reported the current refinement as **“Everything is looking great!”**
+
+Directly visible in the supplied physical-device screenshot:
+
+- [x] City Growth 1.1 still loads/renders during a developed Day 14 city.
+- [x] the city has progressed to **Growing Town** on physical iPad.
+- [x] the city is supporting 92 citizens in a visibly dense residential layout.
+- [x] `Town Goals` shows a coherent primary `NEXT STEP` (`Open another development parcel`).
+- [x] the optional goal shown (`Plant 38 trees`) is stage-appropriate and not premature Train/Boat noise.
+- [x] the compact bottom command bar is visible without an obvious floating `Look` strip covering it.
+- [x] the map remains visually dominant despite Town Goals, minimap, HUD, corner controls, parcel boundaries and the command bar.
+- [x] roads, lamps, pedestrians, homes, natural trees and parcel boundaries remain readable together at practical iPad zoom.
+
+This is strong positive physical evidence for presentation, progression coherence and the latest UI direction. It is **not** a substitute for directly exercising every gesture, Save V3 migration, School Level 2, iPhone portrait, or long-session checklist item below.
+
+# City Growth 1.1 physical retest — REMAINING CHECKS
 
 Branch: `feature/city-growth-progression`
 
-PR #4 must remain unmerged until the checks below are satisfactory.
+PR #4 must remain unmerged until the checks below are satisfactory and the owner explicitly approves the merge.
 
 ## 1. Guided Development / Town Goals
 
 Start a genuinely new progression city.
 
-- [ ] panel is now clearly labeled `Town Goals`.
-- [ ] one primary `NEXT STEP` is easy to distinguish from one `OPTIONAL` goal.
-- [ ] Settlement goals sensibly begin with roads/homes/population/neighborhood quality.
+- [x] panel is now clearly labeled `Town Goals`.
+- [x] one primary `NEXT STEP` is easy to distinguish from one `OPTIONAL` goal in the latest iPad screenshot.
+- [ ] Settlement goals sensibly begin with roads/homes/population/neighborhood quality across multiple starts.
 - [ ] Settlement never requests Train.
 - [ ] Settlement never requests Boat.
 - [ ] Settlement does not request locked School/Rail/Station/Dock tools.
@@ -93,7 +108,7 @@ Start a genuinely new progression city.
 - [ ] Growing Town Dock goal appears only when usable unlocked waterfront actually exists.
 - [ ] Boat goal appears only after a Dock exists.
 - [ ] landlocked/awkward random seeds use sensible fallback goals instead of impossible maritime goals.
-- [ ] optional-goal randomness feels varied without feeling random/nonsensical.
+- [ ] optional-goal randomness feels varied without feeling random/nonsensical over longer play.
 - [ ] rewards help development but do not dominate the economy.
 
 ## 2. Safe touch navigation — critical
@@ -138,9 +153,9 @@ Pinch:
 
 ## 3. Active-tool / Build UI re-haul
 
-- [ ] bottom UI reads as a compact command bar rather than a permanently expanded catalog.
-- [ ] Build button is obvious and comfortably tappable.
-- [ ] Build opens/closes the category tray reliably.
+- [x] bottom UI reads as a compact command bar rather than a permanently expanded catalog.
+- [x] Build button is obvious in the latest iPad screenshot.
+- [ ] Build opens/closes the category tray reliably during repeated use.
 - [ ] Ways/Homes/Trade/Green categories remain understandable.
 - [ ] locked tool labels show the appropriate city stage without overwhelming the tray.
 - [ ] Move / Look / Remove remain easy to reach.
@@ -159,9 +174,9 @@ Pinch:
 
 ### Landscape
 
-- [ ] HUD, Town Goals, corner controls, minimap, build bar, active build strip, Look and Growth panels do not collide badly.
-- [ ] extra width is used without making controls comically large.
-- [ ] map remains dominant.
+- [x] latest screenshot shows HUD, Town Goals, corner controls, minimap and compact command bar coexisting without obvious severe collision.
+- [x] extra width is used without making controls comically large.
+- [x] map remains dominant.
 
 ### Portrait
 
@@ -184,14 +199,14 @@ Around 390–430 CSS px:
 ## 6. City Growth 1.0 regression
 
 - [ ] new city begins with Meadowline Center only.
-- [ ] locked terrain remains attractive/visible.
+- [x] locked terrain / parcel boundaries remain attractive and readable in latest iPad play.
 - [ ] camera can freely pan across future land.
 - [ ] locked normal building placement is rejected clearly.
 - [ ] Road/Rail painting respects locked land.
 - [ ] City Growth panel stage requirements update correctly.
 - [ ] Settlement → Village requirements still function.
 - [ ] Village → Township `any 2 of 3` still functions.
-- [ ] Township → Growing Town still functions.
+- [x] physical iPad play has reached Growing Town, providing positive end-to-end evidence that stage progression can advance through the ladder.
 - [ ] parcel purchase requires explicit confirmation.
 - [ ] unlocked parcel becomes immediately buildable.
 - [ ] terrain is not regenerated when opening land.
@@ -230,7 +245,7 @@ Open a city created before City Growth:
 - [ ] immediate drag/pan remains smooth.
 - [ ] hold-to-paint does not cause obvious frame hitch.
 - [ ] Town Goal updates do not stutter.
-- [ ] locked-land overlay remains smooth.
+- [x] latest developed-city screenshot shows the locked/parcel visualization still functioning at 92 citizens without a visible rendering failure.
 - [ ] parcel unlock does not freeze.
 - [ ] School Level 2 recomputation does not hitch badly.
 - [ ] `?debug=1` remains usable.
@@ -239,18 +254,18 @@ Open a city created before City Growth:
 
 Current branch workflow runs syntax, module hygiene, original Living City/Housing browser regression, City Growth 1.0 regression, and City Growth 1.1 goal/touch-policy regression.
 
-Do **not** check any physical boxes merely because CI passes.
+Do **not** check physical boxes merely because CI passes.
 
 # Merge gate
 
 PR #4 is eligible for a merge decision only after:
 
-- [ ] current branch automation is green;
-- [ ] early Boat/Train goal failures are physically confirmed repaired;
+- [ ] current branch automation is green at the final candidate SHA;
+- [ ] early Boat/Train goal failures are physically confirmed repaired across appropriate stages;
 - [ ] one-finger drag is safe with build tools selected;
 - [ ] repeated House/School placement is comfortable without repeated menu navigation;
 - [ ] hold-to-paint/remove is comfortable on real touch hardware;
-- [ ] new UI is comfortable on iPad and iPhone;
+- [x] latest iPad presentation/UI direction is owner-approved as looking great;
 - [ ] critical legacy-save checks pass;
 - [ ] School Level 2 is physically verified;
 - [ ] no major Housing/Education/parcel regression appears;
