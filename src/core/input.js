@@ -14,6 +14,7 @@ import { toggleLedgerChip, toggleSound, toggleSpeed } from '../ui/hud.js';
 import { postcard } from '../ui/postcard.js';
 import { pickTool, paintActiveTool } from '../ui/toolbar.js';
 import { screen2world, world2screen } from '../world/map.js';
+import { facilityRootAt } from '../world/tiles.js';
 
 /* ============================================================
    INPUT — touch navigation is always the safe default.
@@ -39,7 +40,8 @@ export function applyTool(gp,{touch=false,paint=false}={}){
   painted.add(key);
   let changed=false;
   if(S.tool==='look'){
-    if(!inspectCityHall(gp.x,gp.y)) inspect(gp.x,gp.y);
+    const root=facilityRootAt(gp.x,gp.y),x=root?.x??gp.x,y=root?.y??gp.y;
+    if(!inspectCityHall(x,y)) inspect(x,y);
     return true;
   }
   if(S.tool==='erase') changed=erase(gp.x,gp.y);
