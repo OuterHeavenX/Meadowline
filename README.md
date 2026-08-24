@@ -4,9 +4,9 @@ Meadowline is a calm, mobile-first isometric living-city builder. It remains a l
 
 ## Production status
 
-Verified production `main` at the start of Roads & Mobility 2.0:
+Verified production `main` at the start of Recreation 2.0:
 
-`fcf7f8c02291c7cd1bc2a164522353b7476e81ef`
+`6ed2225ba008a91610715c63aca44e4cd02486bb`
 
 That production commit includes:
 
@@ -19,7 +19,8 @@ That production commit includes:
 - Town Goals
 - safe-touch navigation and mobile Build UI refinement
 - School Level 2
-- City Hall 1.0 / Civic Center Foundation through merged PR #5
+- City Hall 1.0 / Civic Center Foundation
+- Roads & Mobility 2.0 through owner-approved merged PR #6
 
 Historical implementation branches remain preserved, including:
 
@@ -28,16 +29,17 @@ Historical implementation branches remain preserved, including:
 - `feature/housing-2`
 - `feature/city-growth-progression`
 - `feature/city-hall-civic-center`
+- `feature/roads-mobility-2`
 
 ## Current development
 
-Branch: `feature/roads-mobility-2`
+Branch: `feature/recreation-2-town-life`
 
-Draft PR: **#6 — Roads & Mobility 2.0 — Streets, Sidewalks, Vehicles & Rail Crossings**
+Draft PR: **#7 — Recreation 2.0 / Town Life — Multi-Tile Facilities, Recreation Demand & Living Public Spaces**
 
-Current milestone: **Roads & Mobility 2.0**.
+Current milestone: **Recreation 2.0 / Town Life**.
 
-This milestone evolves the existing Road tool into Meadowline's permanent shared street infrastructure. It does not create a second Road database or replace the existing 44×44 world/pathfinding architecture.
+The milestone makes public space a real resident need and introduces reusable multi-tile facility architecture without enlarging the 44×44 world or replacing Meadowline's lightweight pathfinding/rendering stack.
 
 ## Permanent product architecture
 
@@ -52,79 +54,77 @@ City stages remain exactly:
 3. Township
 4. Growing Town
 
-Current living-city relationships remain:
+Current living-city relationship now includes:
 
-Road Access + Mood + Education + Neighborhood Desirability
-→ residential evolution
-→ higher household capacity
-→ more residents
-→ greater School/civic pressure.
+Population + Housing density
+→ Recreation demand
+→ connected facility capacity/access
+→ Recreation satisfaction
+→ Mood
+→ Neighborhood Desirability
+→ residential evolution.
+
+Housing remains authoritative for residential tiers and does not downgrade homes.
 
 City Hall preserves the UI rule:
 
 **Local buildings explain local conditions. City Hall explains citywide conditions.**
 
-## Roads & Mobility 2.0
+## Roads & Mobility 2.0 — production
 
-The existing Road tile remains the authoritative Road object for:
+Roads & Mobility 2.0 is production through merged PR #6. The existing Road tile remains authoritative for placement, saves, Housing access and City Growth Road counts while visually providing carriageway + curb/sidewalk space.
 
-- placement/economy;
-- building access;
-- Housing requirements;
-- City Growth Road counts;
-- saves;
-- safe-touch painting.
+Pedestrians reuse the existing Road graph with stable sidewalk-biased rendering. Representative compact cars, pickups and service vans remain bounded and transient. Clean perpendicular Road/Rail crossings retain one V3 grid object with dual-network semantics and train priority.
 
-One Road tile now visually reads as a complete small-town street with a darker vehicle carriageway and lighter sidewalk/curb space.
+Recreation is the first major post-Roads gameplay consumer of sidewalk-separated pedestrian town life.
 
-Pedestrians retain the existing Road graph but render on stable side-of-street offsets instead of visibly occupying the vehicle centerline.
+## Recreation 2.0 / Town Life
 
-A lightweight mobility layer adds bounded representative:
+The existing internal `park` ID remains a compatible 1×1 **Pocket Green** for old saves. It is never automatically expanded, moved, rebuilt or charged again.
 
-- compact cars;
-- pickups;
-- delivery/service vans.
+New Recreation facilities are registry-driven:
 
-Ambient vehicles reuse the existing 44×44 breadth-first route search, cache routes by network version, reroute/despawn safely when Roads change, and are regenerated rather than persisted.
+| Facility | Footprint | Stage | Cost | Capacity | Reach |
+| --- | ---: | --- | ---: | ---: | ---: |
+| Pocket Park | 2×2 | Settlement | 70 | 12 | 5 |
+| Playground | 2×2 | Village | 95 | 18 | 5 |
+| Picnic Green | 3×3 | Village | 150 | 24 | 6 |
+| Sports Court | 2×3 | Township | 190 | 28 | 6 |
+| Town Park | 4×4 | Growing Town | 340 | 55 | 8 |
 
-No traffic congestion/parking/commute simulator is introduced.
+Multi-tile facilities use one authoritative root building plus derived footprint-occupancy markers. Placement validates the entire footprint atomically. Look/Remove on any footprint tile resolves to the root. Save V3 persists only the root and reconstructs occupancy from registry footprint metadata.
 
-## Road / Rail crossing foundation
+Recreation demand comes from real occupied-house population, not representative actors. Service is finite and requires both local reach and a real Road route from the household to at least one facility perimeter entrance. A facility needs one logical street/sidewalk connection, not Roads around every edge.
 
-Road and Rail can now intentionally share a clean perpendicular land tile without deleting either network.
+Representative pedestrians may take bounded afternoon leisure trips over the existing Road network, enter a Recreation facility, use simple facility-local leisure points, then leave. No global pathfinding rewrite or one-resident-one-actor simulation is introduced.
 
-The existing one-object-per-tile save architecture is retained through generic V3 state. A crossing is semantically both Road and Rail, so vehicles and trains can traverse it while Road/Rail counts remain coherent.
+## Recreation, Mood and Desirability
 
-Train priority is absolute at crossings. Representative road vehicles and pedestrians wait while a train occupies the protected crossing zone.
+The former geometric Park Mood stack is retired in favor of one bounded Recreation-satisfaction Mood contribution. Recreation also contributes a smaller bounded direct Desirability component. Housing tier thresholds, capacities, tax multipliers, timers and the non-downgrade rule remain unchanged.
 
-Existing water bridges remain separate and continue using the production span/bridge architecture.
+## City Hall Recreation summary
 
-## City Hall Mobility summary
+City Hall reads real Recreation state:
 
-City Hall now exposes only real Mobility values:
+- Recreation facilities
+- residents served / demand
+- available capacity
+- underserved residents
+- representative visitors now
 
-- Road tiles;
-- connected Road components;
-- Rail crossings;
-- active representative vehicles.
-
-There is no fake Traffic Health score.
+There is no invented Recreation Health percentage.
 
 ## Save system
 
 Current key: `meadowline.v3`.
 
-Roads 2.0 does not require Save V4.
-
-Existing Roads automatically load with upgraded street rendering and mobility semantics. No Road rebuilding or upgrade charge occurs.
-
-Crossing metadata uses ordinary generic building `state`. Active vehicles, routes and lane geometry are transient/derived and are not saved.
+Recreation 2.0 does not require Save V4. V1/V2 migration remains supported. Existing 1×1 Parks remain in place. Multi-tile child occupancy is derived rather than redundantly persisted. Corrupt/overlapping facility entries are rejected deterministically without crashing neighboring state.
 
 ## Performance and diagnostics
 
-Mobility uses event/network-version route generation rather than one path search per vehicle per frame.
+Recreation assignment is invalidated/recomputed on meaningful topology/population changes rather than every render frame. Road connectivity searches are cached. Representative visitors are bounded by the existing citizen philosophy.
 
-`?debug=1` includes Road components, active vehicles/routes, Rail crossings, route searches/failures/reroutes/despawns, crossing waits and network invalidations alongside existing diagnostics.
+`?debug=1` includes Recreation facilities, capacity, demand, served/underserved residents, active visitors, Recreation route searches/failures/recomputes, multi-tile facility counts and occupied facility tiles alongside existing Mobility/Housing/City Growth diagnostics.
 
 ## Validation policy
 
@@ -139,10 +139,9 @@ The workflow covers:
 - City Growth 1.1 Town Goal/touch regression
 - City Hall 1.0 regression
 - Roads & Mobility 2.0 regression
+- Recreation 2.0 / Town Life regression
 
-Validation history is preserved in the PR and `docs/ROADS_MOBILITY_2.md`. Physical owner-device acceptance remains pending.
-
-Only the owner can complete physical acceptance in `docs/IPHONE_ACCEPTANCE.md`.
+Historical failures are preserved rather than rewritten. Physical Recreation acceptance remains owner-only in `docs/IPHONE_ACCEPTANCE.md`.
 
 ## Running locally
 
@@ -159,6 +158,7 @@ Regression pages include:
 - `/tests/city-growth-1-1-regression.html`
 - `/tests/city-hall-regression.html`
 - `/tests/roads-mobility-regression.html`
+- `/tests/recreation-regression.html`
 
 Module hygiene:
 
@@ -170,16 +170,16 @@ node tests/module-hygiene.mjs
 
 Production:
 
-Living City / School → Housing 2.0 → City Growth 1.0 / 1.1 → City Hall 1.0
+Living City / School → Housing 2.0 → City Growth 1.0 / 1.1 → City Hall 1.0 → Roads & Mobility 2.0
 
 Current development:
 
-**Roads & Mobility 2.0**
-
-Next:
-
 **Recreation 2.0 / Town Life**
 
-Later systems may include Safety / Police / Crime, Employment / Prosperity, Fire / Emergency, Healthcare, Waterworks / Landscaping and further transport evolution. Their exact post-Recreation order remains playtest-sensitive.
+Likely next major milestone after Recreation acceptance:
 
-See `docs/ROADS_MOBILITY_2.md` for the canonical technical record.
+**Safety / Police / Crime**
+
+Later systems may include Employment / Prosperity, Fire / Emergency, Healthcare, Waterworks / Landscaping and further transport evolution. Their exact post-Recreation order remains playtest-sensitive.
+
+See `docs/RECREATION_2.md` for the canonical Recreation technical record.
