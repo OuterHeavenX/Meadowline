@@ -411,11 +411,11 @@ Final City Hall candidate `283f3a174a9d0a0fbf226d10fb7d4bcabb76afdc` had Living 
 
 This release decision supersedes the old merge gate as a source-control state, but **does not convert any unchecked device box above into physical proof**.
 
-# ROADS & MOBILITY 2.0 — PHYSICAL ACCEPTANCE
+# ROADS & MOBILITY 2.0 — HISTORICAL PHYSICAL ACCEPTANCE CHECKLIST
 
 Branch: `feature/roads-mobility-2`
 
-**Current status: pending physical acceptance. Do not check any item below from CI/browser tests.**
+**Historical device-check status: the individual boxes below were not separately checked before the later owner-authorized production merge. Do not check them from CI/browser tests.**
 
 ## Visual Roads
 
@@ -577,19 +577,285 @@ Around 390–430 CSS px:
 
 The feature workflow includes syntax, module hygiene, Living City/Housing regression, City Growth 1.0 regression, City Growth 1.1 Town Goal/touch regression, City Hall 1.0 regression and Roads & Mobility 2.0 regression.
 
-A green workflow may be recorded as **automatically validated** only. It must never check Roads & Mobility physical boxes above.
+Final exact Roads head `0c748bc819deaecba7ced391628643ee3afeffd6` passed Living City Validation #118 before production merge.
 
-# Roads & Mobility merge gate
+A green workflow is automated proof only. It does not check the individual physical boxes above.
 
-Roads & Mobility 2.0 may only be merged after:
+# Roads & Mobility release record
 
-- [ ] final candidate automation is green;
-- [ ] Roads visually read as streets on owner hardware;
-- [ ] pedestrians visually favor sidewalks;
-- [ ] representative vehicles feel calm/readable;
-- [ ] Road/Rail crossing is understandable and safe;
-- [ ] train priority/wait-resume is physically satisfactory;
-- [ ] Road safe-touch behavior remains trustworthy;
-- [ ] existing city/save/Housing/Education/City Growth/City Hall/Rail behavior shows no major regression;
-- [ ] 100+ citizen performance is acceptable;
-- [ ] owner explicitly approves the Roads & Mobility merge.
+PR #6 was explicitly approved by the owner on August 24, 2026 and merged to production `main` at:
+
+`6ed2225ba008a91610715c63aca44e4cd02486bb`
+
+That owner authorization is the source-control release decision required before Recreation 2.0 could begin. It does **not** retroactively convert the unchecked Roads device boxes above into individual physical observations.
+
+# RECREATION 2.0 / TOWN LIFE — PHYSICAL ACCEPTANCE
+
+Branch: `feature/recreation-2-town-life`
+
+Draft PR: #7
+
+**Current status: pending physical acceptance. Do not check any item below from CI/browser tests.**
+
+## Visual facilities
+
+- [ ] Pocket Green preserves the familiar small 1×1 historical Park presence.
+- [ ] Pocket Park reads as a real small public space rather than four repeated tiles.
+- [ ] Playground is immediately recognizable at practical phone zoom.
+- [ ] Picnic Green is visually distinct from Pocket Park and Town Park.
+- [ ] Sports Court is immediately readable as a court.
+- [ ] Town Park reads as one coherent large facility.
+- [ ] large facilities have no obvious repeated-tile seams.
+- [ ] large footprints feel appropriately larger than Houses.
+- [ ] paths, lawns, trees, benches and landmarks remain readable without visual clutter.
+- [ ] Town Park fountain/gathering area reads as a public-space anchor.
+- [ ] seasonal changes remain coherent inside Recreation facilities.
+- [ ] Recreation remains readable at night without a separate lighting style fighting the city.
+
+## Multi-tile placement
+
+- [ ] complete footprint preview is obvious before placement.
+- [ ] Pocket Park 2×2 footprint is easy to understand.
+- [ ] Playground 2×2 footprint is easy to understand.
+- [ ] Picnic Green 3×3 footprint is easy to understand.
+- [ ] Sports Court 2×3 footprint is easy to understand.
+- [ ] Town Park 4×4 footprint is easy to understand.
+- [ ] legal placement feels comfortable.
+- [ ] occupied/blocked placement feedback is understandable.
+- [ ] locked parcel tile blocks the entire facility clearly.
+- [ ] world-edge placement fails clearly.
+- [ ] invalid terrain placement fails clearly.
+- [ ] player understands how much land the selected facility consumes.
+- [ ] no accidental partial placement occurs.
+- [ ] one successful placement deducts exactly one facility cost.
+- [ ] no visual child/segment implementation leaks into the map or UI.
+
+## Multi-tile Look / removal
+
+- [ ] Look on the facility anchor opens the facility.
+- [ ] Look on every child footprint tile opens the same facility.
+- [ ] no `facilityPart`, segment, or child-tile wording appears to the player.
+- [ ] Remove on a child tile clearly identifies/removes the whole facility.
+- [ ] large-facility removal confirmation is understandable.
+- [ ] refund occurs once for the complete facility.
+- [ ] no orphan footprint marker remains visibly after removal.
+- [ ] unrelated Roads/buildings remain intact after facility removal.
+
+## Road / sidewalk access
+
+- [ ] facility entrance visibly meets a logical street/sidewalk edge.
+- [ ] one valid Road connection is enough for the facility.
+- [ ] Roads are not required around all four sides.
+- [ ] a facility with no Road perimeter connection reads as disconnected.
+- [ ] citizens approach via existing sidewalk-biased Road movement.
+- [ ] pedestrians do not constantly cut across the vehicle carriageway to enter Parks.
+- [ ] Cars remain visually separate from Park visitors.
+- [ ] Rail crossings and train priority remain understandable near Recreation trips.
+
+## Pedestrian Town Life
+
+- [ ] residents visibly take occasional Recreation trips rather than constantly visiting.
+- [ ] residents walk along streets toward real Recreation facilities.
+- [ ] residents enter larger facilities naturally from the entrance.
+- [ ] visitors visibly occupy internal Recreation space rather than disappearing at the curb.
+- [ ] Pocket Park visitor count feels appropriately small.
+- [ ] Town Park can visibly contain more people without looking crowded or chaotic.
+- [ ] visitors spread reasonably across larger facilities.
+- [ ] visitors do not stack badly into one single point.
+- [ ] visitor idle/leisure duration feels calm.
+- [ ] people eventually leave the facility.
+- [ ] visitors do not accumulate permanently over a long session.
+- [ ] removing a facility with visitors does not crash or strand invisible citizens.
+- [ ] removing/changing Roads during a trip resolves safely.
+- [ ] facilities feel alive rather than merely decorative.
+
+## Recreation service
+
+- [ ] low-population town creates low Recreation demand.
+- [ ] population growth creates visibly/understandably greater Recreation demand.
+- [ ] denser Housing increases demand through real residents rather than representative actor count.
+- [ ] Pocket Green capacity feels small.
+- [ ] Pocket Park capacity feels small but useful.
+- [ ] Playground capacity feels larger than a tiny green.
+- [ ] Picnic Green provides meaningful neighborhood capacity.
+- [ ] Sports Court provides meaningful Township-scale capacity.
+- [ ] Town Park meaningfully serves more residents than small facilities.
+- [ ] one tiny Park cannot satisfy an entire Growing Town.
+- [ ] adding Recreation improves service when eligible demand exists.
+- [ ] removing Recreation lowers service/capacity coherently.
+- [ ] disconnected Recreation does not magically serve nearby homes.
+- [ ] adding a valid Road connection can make the service available.
+- [ ] capacity/demand/underserved relationships feel believable.
+- [ ] Recreation helps Mood/Desirability without instantly maxing neighborhood quality.
+
+## House Look
+
+- [ ] Recreation line/block is concise.
+- [ ] semantic status such as Good / Limited / No Recreation access is understandable.
+- [ ] residents served / demand is plausible.
+- [ ] nearby serving facility explanation makes sense.
+- [ ] crowded/limited status makes sense when capacity is constrained.
+- [ ] disconnected/no-access explanation makes sense.
+- [ ] House Look remains scrollable/readable on phone.
+- [ ] Education/Housing/Desirability information remains intact.
+
+## Facility Look
+
+- [ ] facility name is correct from any footprint tile.
+- [ ] footprint is readable.
+- [ ] capacity is readable.
+- [ ] residents served is readable.
+- [ ] nearby demand is readable.
+- [ ] visitors-now value looks plausible and counts people actually inside the space.
+- [ ] street access / entrance status is understandable.
+- [ ] crowded/underserved status is understandable.
+- [ ] legacy Pocket Green explanation is coherent for an old Park.
+- [ ] no child-tile implementation detail appears.
+
+## City Hall
+
+- [ ] Recreation section appears.
+- [ ] Recreation facility count matches the city.
+- [ ] residents served / demand values look plausible.
+- [ ] available capacity looks plausible.
+- [ ] underserved count looks plausible.
+- [ ] visitors-now count looks plausible.
+- [ ] no fake Recreation Health percentage appears.
+- [ ] Overview remains intact.
+- [ ] Town Goals remain intact.
+- [ ] Growth remains intact.
+- [ ] Land remains intact.
+- [ ] Finances remain intact.
+- [ ] Education remains intact.
+- [ ] Mobility remains intact.
+- [ ] no fake Safety/Fire/Healthcare/Employment meters appear.
+
+## Town Goals
+
+- [ ] first Recreation goal appears only after a real settlement/neighborhood exists.
+- [ ] early city does not demand an oversized facility merely because it unlocked.
+- [ ] Village may request more Recreation access only when real demand is underserved.
+- [ ] Township may request more capacity when real demand warrants it.
+- [ ] Growing Town can be encouraged toward Town Park when substantial demand warrants it.
+- [ ] a city with adequate Recreation does not spam duplicate Park goals.
+- [ ] Recreation rewards remain modest development help rather than dominant income.
+- [ ] historical Train/Boat gating remains coherent.
+
+## Safe touch
+
+With a multi-tile normal Recreation facility selected:
+
+- [ ] tap a legal anchor → exactly one complete facility is placed.
+- [ ] selected normal facility tool remains armed after successful placement.
+- [ ] immediate one-finger drag → camera pans and places nothing.
+- [ ] second pointer / pinch → places nothing.
+- [ ] UI scrolling → places nothing underneath.
+- [ ] invalid full footprint → nothing is partially placed.
+- [ ] invalid placement gives clear feedback.
+- [ ] explicit `×` cancels the tool.
+- [ ] footprint preview remains visible/readable while deciding where to build.
+
+## iPhone portrait
+
+Around 390–430 CSS px:
+
+- [ ] no horizontal page overflow.
+- [ ] Recreation category fits comfortably in Build UI.
+- [ ] facility cards show name/cost/footprint without becoming too dense.
+- [ ] complete footprint preview is readable.
+- [ ] large facility does not disappear behind the UI during placement.
+- [ ] active tool strip remains readable.
+- [ ] Look panels scroll comfortably.
+- [ ] City Hall Recreation section scrolls comfortably.
+- [ ] map remains visually dominant.
+- [ ] internal Park details remain readable.
+- [ ] representative visitors are not too tiny.
+- [ ] representative visitors are not oversized.
+- [ ] Roads/cars/sidewalks/public space remain visually distinct together.
+- [ ] Town Park remains understandable at practical portrait zoom.
+
+## iPad portrait
+
+- [ ] multi-tile placement is easy to understand.
+- [ ] Pocket/medium/large Recreation scale differences are obvious.
+- [ ] Town Park scale feels appropriate to the 44×44 city.
+- [ ] Build UI remains comfortable.
+- [ ] House/facility Look remain readable and scrollable.
+- [ ] dense city plus large Recreation remains legible.
+- [ ] map remains dominant.
+- [ ] visitors remain readable without becoming oversized.
+
+## iPad landscape
+
+- [ ] larger neighborhoods visibly benefit from public-space anchors.
+- [ ] Town Park feels like part of actual city planning rather than a repeated decoration.
+- [ ] city remains map-dominant.
+- [ ] Roads + sidewalks + vehicles + Parks + buildings feel cohesive.
+- [ ] large public spaces improve visual neighborhood structure.
+- [ ] facility entrances are easy to identify.
+- [ ] Town Park visitors and nearby cars can coexist without visual chaos.
+- [ ] City Hall remains a civic centerpiece alongside major public spaces.
+
+## Save / migration
+
+- [ ] current Roads-inclusive production city loads.
+- [ ] old 1×1 Parks remain exactly where they were.
+- [ ] old Parks do not auto-expand into neighboring property.
+- [ ] old Parks provide coherent small Recreation capacity.
+- [ ] existing money remains unchanged by Recreation migration.
+- [ ] no forced Recreation construction occurs.
+- [ ] Roads remain.
+- [ ] Road water bridges remain.
+- [ ] Rail remains.
+- [ ] Road/Rail crossing state remains.
+- [ ] Housing remains.
+- [ ] residents remain.
+- [ ] residential tier/progress remains.
+- [ ] Education remains.
+- [ ] School Level 2 remains.
+- [ ] City Growth stage/parcels remain.
+- [ ] Town Goals remain coherent.
+- [ ] City Hall remains and keeps its level.
+- [ ] new multi-tile facility survives reload.
+- [ ] full footprint reconstructs after reload.
+- [ ] no duplicate child facilities appear after reload.
+- [ ] legacy-open V3 remains usable.
+- [ ] V2 migration remains usable.
+- [ ] V1 migration remains usable.
+- [ ] malformed/overlapping multi-tile facility data fails safely rather than white-screening.
+
+## Performance
+
+- [ ] 100+ citizen city remains smooth.
+- [ ] representative vehicles remain smooth alongside Recreation visitors.
+- [ ] Rail/trains remain smooth alongside Recreation visitors.
+- [ ] several large Recreation facilities remain smooth.
+- [ ] active Park visitors do not cause obvious hitching.
+- [ ] large facility rendering remains smooth.
+- [ ] large facility placement/removal does not visibly freeze.
+- [ ] Recreation recompute does not visibly stutter.
+- [ ] Road changes near Recreation do not produce route-search storms.
+- [ ] long session does not continuously accumulate visitors.
+- [ ] `?debug=1` remains usable with Recreation + Mobility counters.
+
+# Recreation 2.0 automated validation — separate record
+
+The feature workflow includes JavaScript syntax, module hygiene, Living City/Housing regression, City Growth 1.0 regression, City Growth 1.1 Town Goal/touch regression, City Hall 1.0 regression, Roads & Mobility 2.0 regression and Recreation 2.0 / Town Life regression.
+
+A green workflow is **automated proof only**. It must never check the physical boxes above.
+
+# Recreation 2.0 merge gate
+
+Recreation 2.0 may only be merged after:
+
+- [ ] final exact-head automation is green;
+- [ ] old Park/save compatibility is physically satisfactory;
+- [ ] multi-tile placement/removal/Look is physically understandable;
+- [ ] public-space silhouettes are readable on owner hardware;
+- [ ] Road/sidewalk entrances are understandable;
+- [ ] pedestrians visibly reach/use/leave Recreation naturally;
+- [ ] House/facility/City Hall Recreation explanations are satisfactory;
+- [ ] safe touch remains trustworthy with large facilities;
+- [ ] existing Housing/Education/City Growth/City Hall/Roads/Rail behavior shows no major regression;
+- [ ] 100+ citizen + vehicles + Rail + Recreation performance is acceptable;
+- [ ] owner explicitly approves the Recreation merge.
