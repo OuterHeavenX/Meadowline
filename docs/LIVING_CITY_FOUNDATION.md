@@ -2,42 +2,31 @@
 
 ## Status
 
-**Production on `main`.** Historical implementation branch: `feature/living-city-foundation`. Architectural source: `agent/architecture-refactor`. Living City / School 2.0 was included with Housing 2.0 in merged PR #3.
+**Production on `main`.** Historical implementation branch: `feature/living-city-foundation`. Architectural source: `agent/architecture-refactor`.
 
-City Growth 1.0 / 1.1 is also now **production through merged PR #4**. Its historical implementation branch is `feature/city-growth-progression`.
-
-This document records permanent architecture that City Hall and future civic systems must preserve.
+Production consumers now include Housing 2.0, City Growth 1.0 / 1.1 and City Hall 1.0. Roads & Mobility 2.0 is the current development consumer on `feature/roads-mobility-2`.
 
 ## Static-browser architecture
 
-Meadowline remains native ES modules + Canvas 2D/isometric rendering. No React/Vue application, server runtime, or gameplay build process is required during normal play.
+Meadowline remains native ES modules + Canvas 2D/isometric rendering. No React/Vue application, server runtime, or gameplay build process is required during normal play. The world remains 44×44.
 
 ## Authoritative building registry
 
-`src/buildings/registry.js` is the shared source for building identity, category, cost, shortcuts, placement metadata, service metadata, save defaults, progression unlock metadata, and civic upgrade metadata wherever practical.
+`src/buildings/registry.js` remains the shared source for building identity, category, cost, shortcuts, placement metadata, service metadata, save defaults, progression unlock metadata, and civic upgrade metadata wherever practical.
 
-City Hall 1.0 follows this rule with registry ID `cityHall` and generic `state.level`; no parallel City Hall database was introduced.
+Roads & Mobility 2.0 evolves registry ID `road`; it does not introduce a second Road registry or duplicate save identity.
 
 ## Reusable civic providers
 
-Education is the first real service provider.
+Education remains the first real service provider.
 
-Level 1 School:
+Level 1 School: radius 7 / capacity 28.
 
-- radius 7
-- capacity 28
-- persistent `state.level`
+School Level 2: Township + 650 coins → capacity 44 / radius 7.
 
-School Level 2:
+Households generate demand from real population. Assignment is deterministic and capacity-bounded. Household Education remains persistent 0–100.
 
-- Township
-- 650 coins
-- capacity 44
-- radius remains 7
-
-Households generate demand from real population. Assignment is deterministic and capacity-bounded. A household can be geographically covered but waiting for space. Household Education is persistent 0–100; service loss pauses gain rather than deleting learned Education.
-
-The provider layer is designed to support future Safety, Fire, Healthcare, Recreation, Employment, Transit, Sanitation, and similar services without implying those systems already exist.
+The provider layer is designed to support future Safety, Fire, Healthcare, Recreation, Employment, Transit, Sanitation and similar services only when those simulations actually exist.
 
 ## Local truth vs citywide truth
 
@@ -45,71 +34,70 @@ Permanent UI philosophy:
 
 **Local providers explain local service. City Hall summarizes citywide service.**
 
-A House continues to explain that household's Mood, Education, Desirability, residents and Housing readiness. A School explains its own capacity, students and level. Future Parks should explain local Recreation.
+A House explains its household. A School explains its own service. Future Parks should explain local Recreation.
 
-City Hall may summarize Education/Housing/Recreation citywide, but it must query those authoritative simulations rather than own or duplicate their state.
-
-This rule exists to prevent every new system from becoming another permanent HUD meter.
+City Hall reads authoritative systems rather than owning them. Roads & Mobility 2.0 follows this by exposing only real Mobility values—Road tiles, connected Road components, Rail crossings and active representative vehicles—without a fake congestion/Traffic Health score.
 
 ## Cached recomputation
 
-Service data is cached and invalidated on relevant state changes. It is not rebuilt every render frame. Housing density therefore pressures Education through the generic service path rather than a Housing-only shortcut.
+Civic services and city summaries are cached/invalidated on relevant state changes rather than rebuilt every render frame.
 
-City Hall 1.0 extends the same philosophy with a cached aggregate city-summary read model rather than a per-frame or per-citizen municipal dashboard.
+Roads & Mobility applies the same rule to vehicle routing. Existing Road connectivity is reused; vehicle routes are generated on trips/topology changes, cached by network version, and invalidated when Road/Rail crossing topology changes. There is no path search per vehicle per render frame.
 
 ## Save Schema V3
 
 Current key: `meadowline.v3`.
 
-V1/V2 migration and defensive optional building state remain permanent compatibility requirements. City Growth and Town Goals use V3. City Hall also remains V3 because its only persistent data is ordinary building existence/position and generic `state.level`.
+V1/V2 migration and defensive optional building state remain permanent compatibility requirements.
 
-Missing City Growth metadata must never retroactively lock an established city. A pre-City-Hall city must never be charged, reset, relocked or force-edited during migration.
+Roads & Mobility 2.0 does not require Save V4. Existing Road objects automatically gain new visual/mobility semantics. Road/Rail crossing metadata uses generic bounded building `state`; active vehicles, routes and lane geometry are transient/derived and are not persisted.
 
 ## Mobile input evolution
 
-The original Living City repair changed placement from immediate pointer-down commitment to a pending tap that a second finger could cancel, proving that pinch/zoom must never place a building accidentally.
-
-City Growth 1.1 strengthened that permanent rule after physical iPad testing exposed another failure mode: with a paint tool selected, an intended one-finger pan could begin construction.
-
-The production touch contract is:
+Production touch contract remains:
 
 - tap = one intentional action;
 - immediate one-finger drag = camera navigation regardless of selected build tool;
 - second finger = pinch/zoom, cancelling pending build/paint intent;
 - Road/Rail/Tree/Remove drag painting requires a deliberate short hold before movement;
-- pointer cancellation and UI input shielding remain required.
+- pointer cancellation and UI shielding remain required.
 
-City Hall placement deliberately reuses this contract rather than adding a special pointer mode.
+Road/Rail crossing creation is reached only through that normal intentional Road/Rail placement path. Pan/pinch does not get a special construction bypass.
+
+## Shared movement architecture
+
+Before Roads 2.0, representative citizens already used the Road graph and the shared 44×44 breadth-first `findPath()` helper. Roads 2.0 preserves that route architecture.
+
+Pedestrians now render at stable sidewalk-side offsets derived from direction of travel instead of being visually scattered through the center of the Road.
+
+Representative vehicles reuse the same Road connectivity and existing path helper through a mobility wrapper/cache. No navmesh, ECS, global A* rewrite or one-graph-per-citizen architecture was added.
+
+This shared lightweight network is intentionally suitable for future Police cruisers, Fire engines and ambulances, but those simulations do not exist yet.
 
 ## Inspection and service visualization
 
-Look cards expose player-facing local state. Civic placement boundaries read provider metadata from the registry and match actual service geometry.
+Look cards expose local state. City Hall is the deliberate whole-city inspection destination.
 
-City Hall 1.0 adds the deliberate whole-city inspection destination. It shows only derived real data and future service modules must not appear until their simulation exists.
+Roads & Mobility does not add a large per-Road management panel. Map readability remains the primary feedback channel.
 
 ## Diagnostics and tests
 
-Developer-only `?debug=1`, browser regressions, and module-hygiene checks remain required. City Growth added input/Town Goal diagnostics. City Hall adds civic-center count/level, city-summary recomputation/invalidation and panel-open diagnostics without replacing existing checks.
+Developer-only `?debug=1`, browser regressions and module-hygiene checks remain required.
+
+Roads & Mobility adds diagnostics for Road tiles/components, Rail crossings, active vehicles/routes, route searches/failures/reroutes/despawns, Rail waits and Road-network invalidations.
+
+The Roads regression suite is additive; no earlier test is removed to make it pass.
 
 ## Physical validation record
 
-Previously physically demonstrated before production merge:
+Previously physically demonstrated Living City / School behavior and City Growth evidence remain preserved in `docs/IPHONE_ACCEPTANCE.md`.
 
-- mobile load/render
-- School Look readability
-- 28/28 finite capacity and overload
-- waiting-for-space language
-- household Education gain
-- radius 7 service reach
-- two-finger pinch with School selected does not build
-- representative pedestrian count repair
+City Hall was explicitly owner-approved for production merge, but unchecked historical City Hall physical boxes remain unchecked because release approval is not retroactive test evidence.
 
-City Growth later received its own physical evidence and owner-approved PR #4 merge. Unchecked physical items remain unchecked; merge status does not rewrite history.
+Roads & Mobility 2.0 physical validation is pending.
 
-City Hall physical validation is currently pending in `docs/IPHONE_ACCEPTANCE.md`.
+## Current consumer / next handoff
 
-## Current consumer
+Current development consumer: `feature/roads-mobility-2`.
 
-`feature/city-hall-civic-center` is the current development consumer of this foundation.
-
-After City Hall acceptance, Recreation 2.0 is the planned next major simulation consumer. Future Police/Fire/Hospital systems should use the same provider/summary separation only when their own milestones are approved.
+After Roads acceptance, Recreation 2.0 / Town Life is the planned next major simulation milestone. Future Police/Fire/Healthcare systems may consume the mobility network later without owning or duplicating Road truth.

@@ -2,15 +2,15 @@
 
 Meadowline is evolving from a calm small city builder into a deeper living-city simulation while preserving its static browser architecture, native ES modules, isometric Canvas 2D presentation, mobile-first interaction, and low-stress character.
 
-Status labels are deliberate: **production**, **historical implementation**, **automatically validated**, **physically validated**, **current development**, and **roadmap only** are not interchangeable.
+Status labels remain deliberate: **production**, **historical implementation**, **automatically validated**, **physically validated**, **current development**, and **roadmap only** are not interchangeable.
 
 ## Production baseline
 
-Verified `main` at the start of City Hall 1.0:
+Verified `main` at the start of Roads & Mobility 2.0:
 
-`1d9e7e9c110fad465b332ef85503d102ed5af6e0`
+`fcf7f8c02291c7cd1bc2a164522353b7476e81ef`
 
-City Growth PR #4 was explicitly owner-approved and merged. Historical development failures and unchecked physical acceptance items remain preserved in `docs/CITY_GROWTH_1.md` and `docs/IPHONE_ACCEPTANCE.md`; a merge does not retroactively prove an unchecked device behavior.
+City Hall PR #5 was explicitly approved by the owner in the Roads milestone kickoff and merged to production. The merge does not retroactively check any previously unchecked physical item in `docs/IPHONE_ACCEPTANCE.md`.
 
 Historical implementation branches remain preserved:
 
@@ -18,82 +18,75 @@ Historical implementation branches remain preserved:
 - `feature/living-city-foundation`
 - `feature/housing-2`
 - `feature/city-growth-progression`
+- `feature/city-hall-civic-center`
 
 ## Milestone 1 — Living City Foundation / School 2.0
 
 **Production.**
 
-Authoritative building registry, reusable civic-provider architecture, persistent household Education, deterministic capacity-bounded School assignment, Save V3 migration, Look explanations, diagnostics and mobile pinch/build safety.
+Authoritative building registry, reusable civic-provider architecture, persistent household Education, capacity-bounded School assignment, Save V3 migration, Look explanations, diagnostics and mobile pinch/build safety.
 
 ## Milestone 2 — Housing 2.0 / Neighborhood Desirability
 
 **Production.**
 
-Road + Mood + Education + Desirability
-→ residential readiness
-→ Cottage / Town Home / Established Home
-→ higher capacity and tax value
-→ greater population
-→ greater civic demand.
+Road + Mood + Education + Desirability → residential evolution → higher capacity/tax value → more residents → greater civic demand.
 
 ## Milestone 3 — City Growth 1.0 / 1.1
 
 **Production through merged PR #4.**
 
-Historical implementation branch: `feature/city-growth-progression`.
+Settlement → Village → Township → Growing Town, Meadowline Center + progressive parcels, stage unlocks, Town Goals, safe touch, mobile Build refinement and School Level 2.
 
-City Growth established:
-
-- Settlement → Village → Township → Growing Town;
-- Meadowline Center plus eight progressive land parcels on the existing 44×44 world;
-- registry-driven stage unlocks;
-- City Milestones;
-- progression-aware Town Goals;
-- safe touch: tap acts, immediate drag pans, pinch cancels build intent, hold+drag paints/removes;
-- compact mobile command bar/build tray;
-- School Level 2 at Township.
-
-Historical physical failures included premature Boat/Train goals, unsafe drag/build behavior, mobile toolbar ambiguity, one-off placement friction and Look/build overlap. Later owner iPad evidence showed a coherent 92-citizen Growing Town and the owner explicitly approved the final PR #4 merge. Unchecked physical items remain unchecked.
+Historical physical failures remain preserved in the canonical acceptance record.
 
 ## Milestone 4 — City Hall / Civic Center Foundation
 
-**Current development.**
+**Production through merged PR #5.**
 
-Branch: `feature/city-hall-civic-center`.
-
-Core product rule:
+City Hall established Meadowline's civic centerpiece and the permanent rule:
 
 **Local buildings explain local conditions. City Hall explains citywide conditions.**
 
-City Hall becomes Meadowline's physical civic centerpiece and the deliberate home for whole-city information without creating another permanent HUD dashboard.
+Town Office → Village Hall → Town Hall → Meadowline City Hall.
 
-Current civic ladder:
+City Hall summarizes real Housing, Town Goals, City Growth, land, finances and Education without owning those systems or inventing fake meters.
 
-1. Town Office — Settlement
-2. Village Hall — Village
-3. Town Hall — Township
-4. Meadowline City Hall — Growing Town
+## Milestone 5 — Roads & Mobility 2.0
 
-City stage unlocks the next civic improvement. City Hall is not a hard City Growth requirement in 1.0.
+**Current development.**
 
-The City Hall panel summarizes existing authoritative systems:
-
-- Overview / Housing aggregate health
-- Town Goals
-- City Growth milestones
-- land/parcels
-- real finances
-- current civic services, beginning with Education
-
-It does not own those simulations and does not show fake modules for future systems.
-
-See `docs/CITY_HALL_1.md` for the technical record.
-
-## Milestone 5 — Recreation 2.0 / Town Life
-
-**Next planned major simulation milestone after City Hall is physically accepted and explicitly merged.**
+Branch: `feature/roads-mobility-2`.
 
 Core relationship:
+
+existing Road network
+→ believable street rendering
+→ sidewalk-biased pedestrians
+→ lightweight vehicle routes
+→ safe Road/Rail crossings
+→ shared mobility infrastructure for future municipal vehicles.
+
+Permanent decisions:
+
+- evolve the existing Road tool; do not create another Road system;
+- one world Road tile remains one progression/save/access Road tile;
+- one tile visually contains sidewalk/curb/carriageway;
+- pedestrians reuse the Road graph with stable sidewalk offsets;
+- vehicles reuse the existing lightweight route search and bounded route cache;
+- ambient cars/pickups/vans are representative, transient and capped;
+- clean Road/Rail crossings preserve both networks through one V3 grid object;
+- trains have crossing priority;
+- no traffic-congestion/parking/commute simulator;
+- no Police/Fire/Healthcare gameplay yet.
+
+See `docs/ROADS_MOBILITY_2.md`.
+
+## Milestone 6 — Recreation 2.0 / Town Life
+
+**Next planned major simulation milestone after Roads & Mobility 2.0 is physically accepted and explicitly merged.**
+
+Likely relationship:
 
 Population + Density
 → Recreation demand
@@ -103,47 +96,38 @@ Population + Density
 → Desirability
 → Housing.
 
-City Hall should later summarize Recreation citywide while House/Park Look explains local Recreation conditions.
+Roads 2.0 should let citizens visibly approach recreation from sidewalks while vehicle lanes remain distinct from leisure space.
 
-Likely Recreation principles:
+Do not begin Recreation automatically as part of Roads 2.0.
 
-- Park becomes a real bounded civic provider rather than only a map-wide-style mood object;
-- demand/capacity must be observable and forgiving;
-- effects should deepen Mood/Desirability without catastrophic failure loops;
-- Town Goals should react to real Recreation demand;
-- Save V3 compatibility should be preferred;
-- physical iPhone/iPad acceptance remains mandatory.
+## Later systems — order intentionally not fully locked
 
-Do not begin Recreation automatically as part of City Hall 1.0.
+Roads & Mobility now provides the shared foundation for later municipal response systems. Likely later systems include:
 
-## Later systems — order intentionally not locked
-
-The project may later explore, based on playtesting:
-
+- Safety / Police / Crime
 - Employment / Prosperity
-- Safety / Police
 - Fire / Emergency
 - Healthcare
 - Waterworks / Landscaping
-- transport evolution, including a future road-over-rail crossing pass
+- further transport evolution
 
-Possible relationships:
+Potential relationships:
 
 Education → qualification → Employment / Prosperity → household stability / tax base.
 
-Density + future prosperity/safety pressures → Police coverage → Safety → Desirability.
+Density + future safety pressure → Police coverage → Safety → Desirability.
 
-Density → fire risk → Fire coverage → recovery / stability.
+Police Station → incident → cruiser dispatch → Road route → response.
 
-Population / wellbeing pressure → Healthcare access → recovery / stability.
+Density → fire risk → Fire Station → engine dispatch → Road route → response/recovery.
 
-Landscaping → Pond / Creek / Canal → waterfront Desirability / Recreation → Dock opportunities.
+Healthcare emergency → ambulance → Road route → response.
 
-Exact sequencing after Recreation is not promised until the real project state and physical playtests justify it.
+The exact sequence after Recreation remains a future playtesting decision. The critical owner decision is permanent: **Roads & Mobility 2.0 comes before Police/Fire/Healthcare because those systems need trustworthy streets.**
 
 ## Explicitly deferred architecture changes
 
-Do not enlarge the world, introduce chunk streaming, rewrite A*, replace Canvas 2D, add an ECS, or add a backend merely because future municipal systems exist.
+Do not enlarge the world, introduce chunk streaming, rewrite global pathfinding, replace Canvas 2D, add an ECS, or add a backend merely because future municipal systems exist.
 
 The 44×44 map remains the production proving ground.
 
@@ -159,20 +143,22 @@ Meadowline should remain:
 - progressively deeper
 - map-first rather than dashboard-first
 
-Do not introduce premium currencies, energy systems, monetization pacing, arbitrary waiting gates, or repetitive busywork.
+Do not introduce premium currencies, energy systems, monetization pacing, arbitrary waiting gates, repetitive busywork, full traffic management or violent citizen injury simulation.
 
 ## Current gate
 
-City Hall 1.0 may only move toward merge after:
+Roads & Mobility 2.0 may only move toward merge after:
 
 - final branch automation is green;
-- City Hall placement/uniqueness/removal are proven;
-- all four civic levels and costs are physically understandable;
-- City Hall panel works comfortably on iPhone and iPad;
-- Town Goals, City Growth and parcel confirmation remain coherent;
-- displayed finances match real simulation values;
-- Save V3/current production/legacy cities remain safe;
-- no major Housing/Education/safe-touch regression appears;
+- existing Road saves load without forced rebuilding or coin loss;
+- streets clearly read as streets on iPhone/iPad;
+- pedestrian sidewalk positioning is visually stable;
+- representative vehicles stay on Roads and remain bounded;
+- clean Road/Rail crossing works without deleting either network;
+- train priority/wait-resume behavior is physically understandable;
+- safe-touch Road painting/crossing creation remains trustworthy;
+- Housing, City Growth, City Hall and Rail regressions remain green;
+- dense 100+ citizen performance is physically acceptable;
 - owner explicitly approves the merge.
 
 Physical acceptance remains separate from CI.

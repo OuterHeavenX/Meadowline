@@ -6,9 +6,11 @@
 
 Historical implementation branch: `feature/city-growth-progression`.
 
-Verified merge commit: `1d9e7e9c110fad465b332ef85503d102ed5af6e0`.
+Verified City Growth merge commit: `1d9e7e9c110fad465b332ef85503d102ed5af6e0`.
 
-The owner explicitly approved the final City Growth 1.1 merge after positive physical iPad evidence. That approval does not retroactively mark every unchecked physical item as tested. `docs/IPHONE_ACCEPTANCE.md` remains the canonical device record.
+City Hall 1.0 subsequently reached production through PR #5. Roads & Mobility 2.0 is current development and must preserve every authoritative City Growth requirement below.
+
+The owner explicitly approved the final City Growth 1.1 merge after positive physical iPad evidence. That approval did not retroactively mark every unchecked physical item as tested. `docs/IPHONE_ACCEPTANCE.md` remains canonical.
 
 ## Product loop
 
@@ -22,7 +24,7 @@ Settlement
 → civic upgrade / transport choices
 → Growing Town.
 
-The purpose is real progression, not arbitrary waiting or a generic XP ladder.
+The purpose is real progression, not arbitrary waiting or generic XP.
 
 ## City stages
 
@@ -32,7 +34,7 @@ Required:
 
 - 16 residents
 - 4 occupied homes
-- 10 road tiles
+- **10 Road tiles**
 
 ### Village → Township
 
@@ -80,7 +82,7 @@ World remains 44×44. New progression cities begin with Meadowline Center, x12�
 | Southwest Fields | 12×12 | Growing Town | 560 | South + West |
 | Southeast Fields | 12×12 | Growing Town | 580 | South + East |
 
-Locked terrain remains real, visible, seeded, weather/season-aware, camera-accessible, and unchanged when development permission is purchased. Parcel purchases remain explicit confirmed actions.
+Locked terrain remains real, visible, seeded, weather/season-aware, camera-accessible and unchanged when development permission is purchased. Parcel purchases remain explicit confirmed actions.
 
 Legacy pre-City-Growth cities use `legacy-open` and keep full world/building access.
 
@@ -88,146 +90,84 @@ Legacy pre-City-Growth cities use `legacy-open` and keep full world/building acc
 
 Registry-owned production unlocks:
 
-- Settlement — Road, House, Café, Park, Trees, Lamp
+- Settlement — Road, House, Café, Park, Trees, Lamp, Town Office
 - Village — School, Market, Bakery
 - Township — Rail, Station, Windmill
 - Growing Town — Dock
 
-City Hall 1.0 later adds Town Office at Settlement as an optional civic-center building without rewriting the above City Growth requirements.
+City Hall is optional civic progression and does not rewrite City Growth requirements.
 
 ## School Level 2
 
 Level 1: 28 capacity / radius 7.
 
-Level 2: Township + 650 coins → 44 capacity / radius 7, same one-tile footprint, persistent `state.level = 2`, visible expanded silhouette.
+Level 2: Township + 650 coins → 44 capacity / radius 7, one-tile footprint, persistent `state.level = 2`.
 
-This remains the first proof of generic civic-upgrade metadata.
+## City Growth 1.1 physical-history rules
 
-# City Growth 1.1 refinement history
+The original owner iPad pass exposed real failures that remain architectural memory:
 
-## Physical failures that triggered 1.1
+- an early Boat goal could appear based merely on global water;
+- Train could be suggested before meaningful transit readiness;
+- Road/building tools could paint/place during an intended camera drag;
+- build-mode presentation was not clear enough;
+- a subsequent UI attempt auto-cancelled normal buildings after one placement and allowed the active Look strip to obstruct the build menu.
 
-The first owner iPad City Growth pass exposed real acceptance failures that must remain part of architectural memory:
+Production 1.1 corrected those failures with stage/context-aware Town Goals and intent-first safe touch. Later owner iPad evidence showed Growing Town, 92 citizens, coherent Town Goals, readable parcels/roads/homes/pedestrians and a non-obstructive command bar. Unchecked device items remain unchecked in the acceptance record.
 
-- an early `Put 1 boat on the water` goal could appear because old Wish logic only tested whether any world water existed;
-- `Keep 1 train running` could appear before transit had earned a place in progression;
-- with Road/building tools selected, an intended pan could accidentally construct;
-- the first mobile dock did not communicate active build state/gesture intent clearly enough.
+## Town Goals
 
-The first revised UI then exposed two more friction points:
+Player-facing Wishes remain **Town Goals** while the V3 `wishes` field stays backward compatible.
 
-- normal structures auto-cancelled after one placement, forcing repeated menu navigation;
-- the floating active `Look` strip could obstruct the open build catalog.
+The visible structure remains one primary `NEXT STEP` plus one `OPTIONAL` contextual goal.
 
-These failures were not erased after the merge. They explain why the production safe-touch and UI rules exist.
+Eligibility uses real stage, unlocks, population/Housing, Education, Desirability, parcels, transit readiness and waterfront readiness. Settlement/Village do not receive premature Train/Boat goals. Train waits for meaningful Rail readiness; Boat requires a real Dock.
 
-## Guided Development / Town Goals
-
-Player-facing Wishes became **Town Goals** while the internal V3 `wishes` field stayed backward-compatible.
-
-City Milestones are permanent progression. Town Goals are shorter contextual suggestions.
-
-Visible structure remains approximately:
-
-- one `NEXT STEP` primary goal;
-- one `OPTIONAL` contextual goal.
-
-Eligibility uses real state:
-
-- current stage and building unlocks;
-- population / occupied homes;
-- Housing tiers;
-- Education and students served;
-- Desirability;
-- parcel expansion;
-- rail readiness;
-- usable waterfront / Dock readiness.
-
-Settlement does not request unavailable School/Rail/Station/Train/Dock/Boat systems. Village may guide Education/Housing but not Train/Boat. Township may introduce transit, but Train waits for meaningful rail readiness. Growing Town may introduce Dock; Boat requires an actual Dock rather than global water presence.
-
-Old now-ineligible V3 goal entries are sanitized and replaced without Save V4.
+Roads & Mobility 2.0 does **not** add a parallel Mobility Tasks system. Any future mobility goal must use this existing engine and real contextual eligibility.
 
 ## Safe-touch input contract
 
-Production touch interaction is intent-first:
+Production touch interaction remains:
 
 - quick tap = one action/placement;
-- immediate one-finger drag > the movement threshold = camera pan;
-- two-finger input = pinch/zoom and cancels pending construction;
-- Road/Rail/Tree/Remove use a short intentional hold before drag painting/removal;
-- movement before that hold cancels build intent and pans;
-- normal building tools remain armed after successful placement until explicitly cancelled/replaced.
+- immediate one-finger drag = camera pan;
+- two fingers = pinch/zoom and cancellation of pending construction intent;
+- Road/Rail/Tree/Remove require a short intentional hold before drag painting/removal;
+- movement before hold cancels build intent and pans;
+- normal building tools remain armed until explicitly cancelled/replaced.
 
-Keeping normal buildings armed was a direct response to one-off placement friction. Safe drag-to-pan remains active while a tool is armed.
+Road/Rail crossing construction in Roads 2.0 uses this same placement path. It does not bypass the input policy.
 
-Desktop mouse input retains fast paint behavior.
+## Roads & Mobility 2.0 compatibility
 
-## Mobile UI history
+Road count semantics are permanent:
 
-The old always-expanded dock evolved into:
+**one semantic Road tile = one City Growth Road tile.**
 
-- compact command bar;
-- Build button;
-- collapsible Ways/Homes/Trade/Green categories;
-- Move/Look/Remove controls;
-- active build name/cost/gesture information;
-- `✓` keep tool / close tray;
-- `×` cancel tool;
-- no obstructive floating Look strip.
+Sidewalk, curb and carriageway sub-elements never count separately.
 
-City Hall 1.0 later introduces a Civic category without changing the touch contract.
+A clean Road/Rail crossing exposes both Road and Rail semantics at one grid tile. It therefore counts once as Road and once as Rail while remaining one saved grid object. This is infrastructure evolution, not a new City Growth stage.
 
-## Later positive physical evidence
+Existing Road affordability remains unchanged: base Road cost stays 3 coins.
 
-A later owner iPad session reported the refined build as **“Everything is looking great!”** / “looking great.” The supplied Day 14 screenshot visibly demonstrated:
-
-- Growing Town reached on physical iPad;
-- 92 citizens and 1,524 coins in an actively developed progression city;
-- coherent parcel-expansion/Trees Town Goals instead of premature transport noise;
-- compact bottom command bar without the earlier obvious overlay obstruction;
-- readable parcel boundaries, roads, homes, lamps, pedestrians and natural trees while the map remained dominant.
-
-This was strong positive evidence for presentation and progression coherence. It did not itself prove every gesture, save migration, School Level 2, iPhone, or long-session item. Those unchecked items remain historically unchecked.
-
-The owner subsequently gave explicit final approval to merge PR #4. PR #4 is therefore release history, not a pending gate.
-
-## Automated validation history
-
-City Growth 1.1 added regression coverage for:
-
-- no early Train/Boat/School goals in Settlement;
-- Village School guidance without Train/Boat;
-- Township Rail guidance;
-- Train waits for real transit readiness;
-- inappropriate old transport goals sanitize safely;
-- touch building drag resolves to pan;
-- quick Road/Remove drag resolves to pan;
-- held Road resolves to paint;
-- second pointer resolves to pinch.
-
-Automation remains distinct from physical acceptance.
+Road painting remains subject to parcel ownership. Road-over-Rail does not permit construction on locked land.
 
 ## Current relationship to City Hall
 
-City Hall 1.0 is built on top of this production system.
+City Hall is now production. It reads City Growth/Town Goals/parcel/Housing/Education/economy state and does not duplicate it.
 
-City Hall reads:
+Roads 2.0 adds only truthful Mobility aggregates to City Hall. There is no fake fifth growth stage or fake traffic rating.
 
-- `cityStage()` / `nextStageProgress()`;
-- existing Town Goals;
-- parcel state / confirmed purchase APIs;
-- real Housing/Education/economy aggregates.
+## Save compatibility
 
-It does not duplicate City Growth state and does not alter the four-stage ladder or existing stage requirements.
+City Growth remains inside `meadowline.v3`. Roads 2.0 does not force Save V4.
+
+Old Roads load as the same Road objects and automatically receive upgraded street semantics. No coin deduction or player rebuild is required.
 
 ## Waterworks / Landscaping — roadmap only
 
-Player-created ponds/rivers/creeks/canals remain future work. City Growth never mutates terrain merely to satisfy a Boat goal.
+Player-created ponds/rivers/creeks/canals remain future work. Roads 2.0 preserves existing automatic Road/Rail spans over current world water.
 
-Potential future relationship:
+## Explicitly not part of City Growth / Roads
 
-Landscaping → Water → waterfront Desirability / Recreation → Docks / Boats / bridges → waterfront neighborhoods.
-
-## Explicit non-goals retained
-
-City Growth did not implement Police/Crime/Jail, Fire, Healthcare, Employment/Prosperity, advanced traffic, road-over-rail work, larger world/chunks, neighborhood identity, giant NPC populations, School Level 3+, premium currency, construction timers, or full Waterworks terrain editing.
+No Police/Crime/Jail, Fire, Healthcare, Employment/Prosperity, full traffic congestion, parking simulation, larger world/chunks, new City Growth stage or global pathfinding rewrite is introduced by Roads & Mobility 2.0.

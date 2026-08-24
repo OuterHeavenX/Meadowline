@@ -2,27 +2,28 @@
 
 ## Status
 
-**Current development milestone — not production.**
+**Production on `main` through merged PR #5.**
 
-- Branch: `feature/city-hall-civic-center`
-- Draft PR: **#5 — City Hall 1.0 — Civic Center Foundation**
-- Verified starting production SHA: `1d9e7e9c110fad465b332ef85503d102ed5af6e0`
-- City Growth PR #4: merged production history
-- Physical validation: **pending owner iPhone/iPad acceptance**
+- Historical implementation branch: `feature/city-hall-civic-center`
+- Starting production SHA for City Hall work: `1d9e7e9c110fad465b332ef85503d102ed5af6e0`
+- Final validated City Hall candidate: `283f3a174a9d0a0fbf226d10fb7d4bcabb76afdc`
+- Living City Validation run #109: passed
+- Production merge commit: `fcf7f8c02291c7cd1bc2a164522353b7476e81ef`
+- Merge authorization: explicit owner approval at the Roads & Mobility 2.0 kickoff
 
-City Hall must not merge before physical acceptance and explicit owner approval.
+The owner approval/merge is release history. It does **not** retroactively check previously unchecked City Hall device items in `docs/IPHONE_ACCEPTANCE.md`; those remain an honest historical physical-testing record.
 
 ## Permanent product rule
 
 **Local buildings explain local conditions. City Hall explains citywide conditions.**
 
-House Look remains authoritative for one household's residents, Mood, Education, Desirability and Housing evolution. School Look remains authoritative for one School's students, capacity and level. Future Park Look should explain local Recreation. City Hall only summarizes real citywide state; it does not own Housing, Education, City Growth, Town Goals, parcels or economy simulation.
+House Look remains authoritative for one household's residents, Mood, Education, Desirability and Housing evolution. School Look remains authoritative for one School. Future Park Look should explain local Recreation. City Hall summarizes real citywide state and does not own Housing, Education, City Growth, Town Goals, parcels, economy or mobility simulation.
 
 ## Architecture
 
-Meadowline remains a static-browser, native-ES-module, Canvas 2D, isometric, mobile-first game. This milestone adds no React/Vue/Angular application, backend runtime, renderer replacement, A* rewrite, ECS rewrite, larger world, chunk streaming or mandatory online dependency.
+Meadowline remains a static-browser, native-ES-module, Canvas 2D, isometric, mobile-first game. City Hall introduced no framework/backend/renderer/world-size/pathfinding rewrite.
 
-Authoritative building identity remains `src/buildings/registry.js`. Citywide aggregate reads live in `src/simulation/city-summary.js`. UI queries simulation; DOM state is never authoritative.
+Authoritative building identity remains `src/buildings/registry.js`. Citywide aggregate reads live in `src/simulation/city-summary.js`. UI queries simulation; DOM state is not authoritative.
 
 ## Registry metadata and uniqueness
 
@@ -30,198 +31,99 @@ Registry ID: `cityHall`
 
 - category: `civic`
 - unlock stage: Settlement
-- base placement cost: **90 coins**
-- footprint: **1×1**
-- unique: **one active civic center per city**
+- base placement cost: 90 coins
+- footprint: 1×1
+- unique: one active civic center per city
 - saved level field: generic `state.level`
 
-The one-tile footprint is deliberate. Production placement/removal/save/Look/touch architecture is proven around one-tile buildings; City Hall 1.0 avoids introducing a risky multi-tile subsystem merely for spectacle.
-
-Placement uses the normal safe-touch contract. A second active City Hall is rejected. Removal requires explicit confirmation. Removing the civic building does not erase city stage, parcels, Town Goals, population, Housing or Education, and the player may rebuild it.
+Placement uses the normal safe-touch contract. Removal requires confirmation and does not erase City Growth, parcels, Town Goals, population, Housing or Education.
 
 ## Civic progression
 
-| Level | Name | Stage required | Cost | Readable visual change |
-| --- | --- | --- | ---: | --- |
-| 1 | Town Office | Settlement | placement 90 | modest civic facade, broad entrance, simple flag |
-| 2 | Village Hall | Village | 280 | taller hall, more windows, steps and tower |
-| 3 | Town Hall | Township | 520 | stronger silhouette, taller tower and readable clock |
-| 4 | Meadowline City Hall | Growing Town | 850 | mature roofline/cupola, clock, flag, steps and landscaping |
+| Level | Name | Stage required | Cost |
+| --- | --- | --- | ---: |
+| 1 | Town Office | Settlement | placement 90 |
+| 2 | Village Hall | Village | 280 |
+| 3 | Town Hall | Township | 520 |
+| 4 | Meadowline City Hall | Growing Town | 850 |
 
-There is no Level 5. Stage advancement unlocks the next civic improvement; City Hall upgrades do **not** hard-gate City Growth 1.0/1.1.
-
-Rendering lives in `src/rendering/city-hall.js` and uses the existing Canvas 2D primitives. Level readability depends on silhouette, height, roof shape, entrance, tower/cupola, clock, flag, steps and landscaping rather than tiny text. City Hall gives no magical map-wide Mood or Desirability bonus in 1.0.
+There is no Level 5. Civic upgrades do not hard-gate City Growth.
 
 ## City Hall UI
 
-City Hall reuses the existing Look destination instead of adding another permanent HUD dashboard.
+The municipal view reuses Look rather than adding a permanent dashboard.
 
-The municipal view contains:
+It exposes truthful citywide sections for:
 
-### Overview
+- Overview / Housing tier aggregates
+- Town Goals
+- City Growth
+- Land
+- Finances from real `S.lastPay`
+- Education
+- Mobility once Roads & Mobility 2.0 is present
 
-Derived real values only:
+No fake future municipal meters are allowed.
 
-- current city stage
-- population
-- total and occupied homes
-- exact Cottage count
-- exact Town Home count
-- exact Established Home count
-- average Mood
-- average Education
-- average Desirability
-- treasury
+## Roads & Mobility 2.0 integration
 
-### Town Goals
+Roads & Mobility is the first post-City-Hall system to use the municipal summary extension point.
 
-The panel reads the existing `S.wishes` / Town Goal engine and `goalAt()` progress. There is no parallel City Hall task system.
+City Hall may show only real mobility data:
 
-### City Growth
+- Road tiles
+- connected Road components
+- Rail crossings
+- active representative vehicles
 
-The panel reads `cityStage()` and `nextStageProgress()`. The production ladder remains exactly Settlement → Village → Township → Growing Town with the existing requirements unchanged. Growing Town shows that Meadowline has reached its current civic stage rather than inventing Stage 5.
+It does not show Traffic Health, congestion, commute satisfaction, parking demand or any other metric that Meadowline does not actually simulate.
 
-### Land
+Mobility truth is owned by `src/simulation/mobility.js`; City Hall only reads `getCitySummary()`.
 
-The panel reads `LAND_PARCELS` and `parcelStatus()` and purchases through the existing `unlockParcel()` path. Parcel ownership is never duplicated. Purchase still requires explicit confirmation.
+## Town Goals / City Growth / Land
 
-### Finances
+City Hall continues reading the existing authoritative Town Goal, City Growth and parcel APIs. Roads 2.0 does not add a separate mobility task system and does not change the four-stage ladder.
 
-Treasury uses current `S.coins`. The income breakdown uses the real `S.lastPay` generated by `src/simulation/economy.js`:
+Growing Town remains the current final stage.
 
-- residential taxes
-- Trade
-- milling
-- Town grant
-- total last payday
+## Finances
 
-Before the first payday, the panel shows less rather than fabricating an estimate. No tax sliders, policy system, debt, bonds or municipal accounting simulator were added.
+Treasury uses `S.coins`. Breakdown uses the real last payday categories generated by economy simulation. Before first payday, the panel shows less rather than fabricating an estimate.
 
-### Services
+Roads 2.0 does not add road maintenance, tolls, traffic fines or a transport budget simulator.
 
-Education is the only current citywide service module:
+## Save V3
 
-- School count
-- Expanded School count
-- students served
-- demand
-- waiting demand
-- average Education
+Save key remains `meadowline.v3`.
 
-No fake Recreation, Safety, Fire, Healthcare, Employment or Transit meters exist.
+City Hall persists ordinary building existence/position + generic `state.level`. Derived summaries are not saved.
 
-## City summary API and performance
-
-`getCitySummary()` provides an aggregate cached read model for Overview, Town Goals, Growth, Land, Finances and current Services. It is derived from the authoritative simulations and is not persisted.
-
-The cache is keyed by relevant city-state changes rather than rebuilding one municipal model every render frame. There is no per-citizen DOM row or persistent municipal record per resident. Closed-state City Hall cost is effectively negligible by architecture; 100+ citizen smoothness still requires physical acceptance.
-
-`?debug=1` reports City Hall count/level, city-summary recomputes/invalidations, panel opens, occupied homes, average Education and average Desirability alongside existing diagnostics.
-
-## Town Goals integration and scaling audit
-
-The existing goal engine remains authoritative. Contextual civic goals were added only when logically eligible:
-
-- Settlement: establish a Town Office after basic roads and occupied homes exist
-- Village: improve to Village Hall
-- Township: improve to Town Hall
-- Growing Town: complete Meadowline City Hall
-
-Civic goals coexist with Housing, Education, land, Trade, transport and environment goals. They do not replace the rest of the game.
-
-The Tree ladder was audited rather than blindly reduced. A late Growing Town may still receive a valid 38-tree target; younger stages use smaller stage-aware ladders so that target is not applied indiscriminately.
-
-## Save V3 and migration
-
-Save key remains `meadowline.v3`; no Save V4 is required.
-
-Persisted City Hall state is ordinary building existence/position plus `state.level`. Derived summaries are not saved.
-
-Existing pre-City-Hall V3 cities:
-
-- keep population, Housing, Education, City Growth, parcels and Town Goals
-- receive no forced City Hall placement
-- lose no coins
-- are not relocked or reset
-
-Malformed state is repaired defensively:
-
-- missing/invalid levels resolve safely
-- level values clamp to 1–4
-- duplicate saved City Halls retain the first valid civic center and skip later duplicates
-- unknown/invalid building data follows existing defensive save rules
-
-V1/V2 migration continues through the existing V3 loader and remains covered by the pre-existing regression suite.
+Roads & Mobility also remains inside V3: crossing metadata uses generic building state while ambient vehicles/routes remain transient.
 
 ## Safe touch
 
-City Hall is classified under the normal building touch policy:
+City Hall uses normal building placement touch rules; its panel shields UI input from map placement. Roads 2.0 preserves the same input-policy architecture for Road/Rail crossings.
 
-- tap → one intentional placement
-- immediate one-finger drag → pan
-- second pointer → pinch/zoom and cancel pending placement intent
-- tool remains armed according to normal building behavior
-- explicit × cancels
+## Automated validation history
 
-City Hall panel controls remain DOM UI and must not leak upgrade/parcel interactions through to map placement; this remains a physical acceptance item in `docs/IPHONE_ACCEPTANCE.md`.
+The City Hall suite covers registry identity/uniqueness, safe touch, four civic levels, unchanged City Growth requirements, removal/rebuild, stage-gated upgrades, Housing/Education/finance summaries, Town Goal gating, V3 migration/repair and persistence.
 
-## Future Recreation hook
+Final City Hall candidate `283f3a174a9d0a0fbf226d10fb7d4bcabb76afdc` passed Living City Validation #109 before the owner-authorized merge.
 
-No Recreation 2.0 simulation was implemented here. The City Hall summary shape intentionally allows a future real Recreation module while House/Park Look continues to explain local Recreation truth.
+Roads & Mobility 2.0 adds a new regression suite without deleting City Hall coverage.
 
-Planned handoff after City Hall acceptance:
+## Physical validation record
 
-Population + Density → Recreation demand → Parks → leisure satisfaction → Mood → Desirability → Housing.
+The City Hall checklist in `docs/IPHONE_ACCEPTANCE.md` intentionally retains all unchecked historical device items. The subsequent explicit owner merge approval is recorded separately as release history, not retroactive test proof.
 
-## Automated tests
-
-`tests/city-hall-regression.html/.js` covers:
-
-- registry identity/category/cost/footprint/uniqueness
-- normal safe-touch classification
-- direct City Hall tap, drag-to-pan and second-pointer/pinch intent
-- four civic levels and no Level 5
-- unchanged four-stage City Growth ladder and key requirements
-- first legal placement vs duplicate rejection
-- deliberate confirmed removal and legal rebuild
-- stage-gated upgrades and exact single deductions
-- exact Housing tier summary
-- Mood/Education/Desirability aggregates
-- Education served/demand/waiting summary
-- real last-payday finance categories
-- contextual Town Office/Village Hall goal gating
-- pre-City-Hall V3 migration without forced placement, coin deduction or progression loss
-- malformed level clamping
-- duplicate City Hall save repair without City Growth corruption
-- City Hall level V3 save/reload persistence
-
-The workflow retains all earlier regressions; no existing test was deleted to make City Hall pass.
-
-## Automatic validation history
-
-CI initially exposed a browser parse regression in `src/progression/city-growth.js`. That module was normalized without changing the four-stage ladder or requirements, and the complete suite returned green. The failure/repair is intentionally part of the validation history rather than hidden.
-
-The strengthened implementation commit `692c4e13a98eac5741e08d7036a6a9ad62f0b951` passed Living City Validation run **#103**.
-
-The later PR/documentation candidate `0705c9cc0035e77f828748294bd7410715db2a19` passed Living City Validation run **#107**.
-
-Run #107 passed:
-
-- JavaScript syntax
-- module hygiene / import-cycle checks
-- Living City + Housing browser regression
-- City Growth 1.0 regression
-- City Growth 1.1 Town Goal / safe-touch regression
-- City Hall 1.0 regression
-
-These are **automated** results only. They do not check any physical acceptance box.
-
-## Physical validation status
-
-**Not yet physically accepted.**
-
-The canonical physical checklist remains `docs/IPHONE_ACCEPTANCE.md`. No City Hall physical item may be checked until the owner directly tests it on iPhone/iPad.
+Roads & Mobility has its own new unchecked physical acceptance section.
 
 ## Roadmap handoff
 
-After City Hall is physically accepted and explicitly merged, the planned next major simulation milestone is **Recreation 2.0 / Town Life**. The exact order of later Employment/Prosperity, Safety/Police, Fire/Emergency, Healthcare, Waterworks/Landscaping and transport evolution remains intentionally provisional until playtesting justifies it.
+City Hall is production.
+
+Current development: **Roads & Mobility 2.0**.
+
+Next after Roads physical acceptance/explicit merge: **Recreation 2.0 / Town Life**.
+
+Later Safety/Police, Fire and Healthcare systems can consume the mobility network without turning City Hall into a second simulation owner.
