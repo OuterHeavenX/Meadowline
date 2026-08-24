@@ -59,8 +59,18 @@ export function applySave(d){
     const def=getBuildingDefinition(type),fp=def?.placement?.footprint||[1,1];
     if(!isFootprintUnlocked(x,y,fp[0],fp[1])){ if(S.diagnostics) S.diagnostics.invalidFacilityCleanup=(S.diagnostics.invalidFacilityCleanup||0)+1; continue; }
     const root={type,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:Math.max(0,Math.floor(Number(e.pop)||0)),grow:0,mood:50,linked:false,state:cleanState(type,e.state)};
-    // Deterministic first-valid-wins overlap handling. Corrupt/out-of-bounds
-    // multi-tile entries are rejected without crashing or deleting neighbors.
+    if(fp[0]===1&&fp[1]===1){
+      // Historical V1/V2/V3 single-tile saves were authoritative about the
+      // building position even when regenerated terrain classifications were
+      // awkward. Keep that compatibility rule exactly: first saved object wins,
+      // no charge, no relocation, and no forced rebuild.
+      const i=idx(x,y);
+      if(S.grid[i]){ if(S.diagnostics) S.diagnostics.invalidFacilityCleanup=(S.diagnostics.invalidFacilityCleanup||0)+1; continue; }
+      S.grid[i]=root; S.natTree[i]=0;
+      continue;
+    }
+    // New multi-tile facilities are stricter: the complete derived footprint
+    // must reconstruct safely on valid terrain without overlap.
     if(!restoreFacilityOccupancy(root)){ if(S.diagnostics) S.diagnostics.invalidFacilityCleanup=(S.diagnostics.invalidFacilityCleanup||0)+1; continue; }
   }
   refreshPalette(); invalidateRecreation(); recompute(); recomputeRecreation(true); invalidateServices(); recomputeServices(true); invalidateCitySummary();
