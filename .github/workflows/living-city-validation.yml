@@ -66,11 +66,11 @@ jobs:
           grep -q 'data-result="pass"' /tmp/meadowline-living-city-3.html
       - name: Living City 3.1 renderer and incident regression
         run: |
-          google-chrome --headless --no-sandbox --use-gl=swiftshader --enable-webgl --virtual-time-budget=12000 --dump-dom http://127.0.0.1:8000/tests/living-city-3-1-regression.html >/tmp/meadowline-living-city-3-1.html
+          google-chrome --headless --no-sandbox --use-gl=angle --use-angle=swiftshader --enable-webgl --virtual-time-budget=12000 --dump-dom http://127.0.0.1:8000/tests/living-city-3-1-regression.html >/tmp/meadowline-living-city-3-1.html
           cat /tmp/meadowline-living-city-3-1.html
           grep -q 'data-result="pass"' /tmp/meadowline-living-city-3-1.html
       - name: Controlled renderer benchmark
         run: |
-          google-chrome --headless --no-sandbox --use-gl=swiftshader --enable-webgl --virtual-time-budget=15000 --dump-dom http://127.0.0.1:8000/tests/renderer-benchmark.html >/tmp/meadowline-renderer-benchmark.html
+          google-chrome --headless --no-sandbox --use-gl=angle --use-angle=swiftshader --enable-webgl --virtual-time-budget=15000 --dump-dom http://127.0.0.1:8000/tests/renderer-benchmark.html >/tmp/meadowline-renderer-benchmark.html
           cat /tmp/meadowline-renderer-benchmark.html
           grep -q 'data-result="pass"' /tmp/meadowline-renderer-benchmark.html
