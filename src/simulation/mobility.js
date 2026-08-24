@@ -1,8 +1,8 @@
-import { clamp, lerp } from '../core/constants.js';
+import { lerp } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { findPath } from '../transport/pathfinding.js';
 import { connectedRoadComponents, roadDegree, roadTiles, validRoadTile } from '../transport/roads.js';
-import { isRoadRailCrossing, isType } from '../world/tiles.js';
+import { idx, isRoadRailCrossing, isType } from '../world/tiles.js';
 
 const TYPES=['car','pickup','van'];
 const COLORS=['#b75f55','#5e7f96','#c8a454','#718b68','#8b6f8c','#d7d0bd'];
@@ -39,7 +39,7 @@ export function mobilitySnapshot(){
   };
 }
 
-function desiredVehicleCount(){
+export function vehicleCap(){
   const roads=roadTiles().length;
   if(roads<8||S.pop<8) return 0;
   const stage=Math.max(1,Math.min(4,Number(S.cityProgress?.stage)||1));
@@ -109,7 +109,7 @@ function reroute(v){
 }
 
 export function crossingBlockedByTrain(x,y){
-  const b=(S.grid||[]).find(q=>q&&q.x===x&&q.y===y);
+  const b=S.grid?.[idx(x,y)];
   if(!isRoadRailCrossing(b)) return false;
   for(const t of S.trains||[]){
     const fx=Number.isFinite(t.fx)?t.fx:lerp(t.x,t.nx,t.p||0);
@@ -121,7 +121,8 @@ export function crossingBlockedByTrain(x,y){
 
 function pedestrianConflict(x,y){
   if(!isType(x,y,'road')) return false;
-  const protectedTile=roadDegree(x,y)>=3||isRoadRailCrossing((S.grid||[]).find(q=>q&&q.x===x&&q.y===y));
+  const b=S.grid?.[idx(x,y)];
+  const protectedTile=roadDegree(x,y)>=3||isRoadRailCrossing(b);
   if(!protectedTile) return false;
   for(const c of S.citizens||[]){
     const fx=lerp(c.x,c.nx,c.p||0), fy=lerp(c.y,c.ny,c.p||0);
@@ -162,7 +163,7 @@ function finishSegment(v){
 
 export function updateMobility(dt){
   if(!S.vehicles) S.vehicles=[];
-  const want=desiredVehicleCount();
+  const want=vehicleCap();
   if(S.vehicles.length<want&&Math.random()<dt*0.9) spawnVehicle();
   while(S.vehicles.length>want){ S.vehicles.pop(); diag('vehicleDespawns'); }
 

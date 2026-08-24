@@ -17,6 +17,18 @@ export function costOf(kind,x,y){ return BUILDING_COST[kind]*(SPANS[kind]&&isWat
 function canMakeRoadRailCrossing(kind,cur){
   return !!cur&&!isRoadRailCrossing(cur)&&((kind==='road'&&cur.type==='rail')||(kind==='rail'&&cur.type==='road'));
 }
+function axisAt(type,x,y){
+  const ew=isType(x-1,y,type)||isType(x+1,y,type);
+  const ns=isType(x,y-1,type)||isType(x,y+1,type);
+  if(ew&&!ns) return 'ew';
+  if(ns&&!ew) return 'ns';
+  return null;
+}
+function cleanCrossingGeometry(kind,x,y,cur){
+  const baseAxis=axisAt(cur.type,x,y);
+  const overlayAxis=axisAt(kind,x,y);
+  return !!baseAxis&&!!overlayAxis&&baseAxis!==overlayAxis;
+}
 export function canPlace(kind,x,y){
   if(!BUILDABLE[kind]) return {ok:false};
   if(!inBounds(x,y)) return {ok:false};
@@ -39,6 +51,7 @@ export function canPlace(kind,x,y){
   if(cur){
     if(canMakeRoadRailCrossing(kind,cur)){
       if(S.terr[i]===1) return {ok:false,why:'Road and Rail crossings must be built on land.'};
+      if(!cleanCrossingGeometry(kind,x,y,cur)) return {ok:false,why:'Road and Rail need to cross cleanly here.'};
       const c=costOf(kind,x,y);
       if(S.coins<c) return {ok:false,why:'Not enough coins yet — wait for the next payday.'};
       return {ok:true,crossing:true};

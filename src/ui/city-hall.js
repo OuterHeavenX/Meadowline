@@ -10,7 +10,6 @@ import { toast } from './notify.js';
 
 const elLook=document.getElementById('look');
 const elLookBody=document.getElementById('look-body');
-const strip=s=>String(s||'').replace(/<[^>]+>/g,'');
 
 function row(label,value,cls=''){ return '<dt>'+label+'</dt><dd class="'+cls+'">'+value+'</dd>'; }
 function growthRows(next){
@@ -67,7 +66,7 @@ export function renderCityHall(){
   const summary=getCitySummary();
   const level=Math.max(1,Math.min(4,Math.floor(Number(b.state?.level)||1)));
   const name=getUpgradeDefinition('cityHall',level)?.name||'Town Office';
-  const o=summary.overview, ed=summary.services.education;
+  const o=summary.overview, ed=summary.services.education, mob=summary.mobility;
   elLookBody.innerHTML='<h3>MEADOWLINE</h3><div class="kind">'+name+' · Level '+level+' · '+o.stage+'</div>'+
     '<h4>Overview</h4><dl class="service">'+row('Population',o.population)+row('Occupied homes',o.occupiedHomes+' / '+o.homes)+row('Cottages',o.cottages)+row('Town Homes',o.townHomes)+row('Established Homes',o.establishedHomes)+row('Mood',o.mood)+row('Education',o.education)+row('Desirability',o.desirability)+'</dl>'+
     '<h4>Town Goals</h4>'+goalRows(summary.goals)+
@@ -75,6 +74,7 @@ export function renderCityHall(){
     '<h4>Land</h4>'+landRows(summary)+
     '<h4>Finances</h4>'+financeRows(summary.finances)+
     '<h4>Services</h4><h5>Education</h5><dl class="service">'+row('Schools',ed.schools)+row('Expanded Schools',ed.level2)+row('Students served',ed.served+' / '+ed.demand)+row('Waiting',ed.waiting)+row('Average Education',o.education)+'</dl>'+
+    '<h4>Mobility</h4><dl class="service">'+row('Road tiles',mob.roadTiles)+row('Road components',mob.components)+row('Rail crossings',mob.crossings)+row('Vehicles active',mob.vehicles)+'</dl><p class="muted">Vehicles are representative town life, not a congestion score.</p>'+
     upgradeBlock(b);
   return true;
 }
