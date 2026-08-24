@@ -64,8 +64,8 @@ check('failed placement leaves unrelated blocker intact',S.grid[idx(25,25)]?.typ
 // Demand, capacity and real Road access.
 reset();
 for(let x=10;x<=28;x++) road(x,20);
-dryRect(12,19,1,1); dryRect(14,19,1,1); dryRect(20,18,2,2);
-const h1=root('house',12,19,8),h2=root('house',14,19,8),park=root('pocketPark',20,18);
+dryRect(15,19,1,1); dryRect(17,19,1,1); dryRect(20,18,2,2);
+const h1=root('house',15,19,8),h2=root('house',17,19,8),park=root('pocketPark',20,18);
 recompute(); invalidateRecreation(); recomputeRecreation(true);
 let rec=recreationSnapshot();
 check('real population creates Recreation demand',rec.demand===16);
