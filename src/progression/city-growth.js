@@ -1,3 +1,4 @@
+import { BUILDINGS } from '../buildings/registry.js';
 import { H, W } from '../core/constants.js';
 import { S } from '../core/state.js';
 
@@ -20,22 +21,12 @@ export const LAND_PARCELS = Object.freeze([
   { id: 'southeast', name: 'Southeast Fields', x: 32, y: 32, w: 12, h: 12, cost: 580, stage: 4, requires: ['south', 'east'] }
 ]);
 
-export const BUILDING_STAGE = Object.freeze({
-  road: 1,
-  house: 1,
-  cafe: 1,
-  park: 1,
-  tree: 1,
-  lamp: 1,
-  cityHall: 1,
-  school: 2,
-  market: 2,
-  bakery: 2,
-  rail: 3,
-  station: 3,
-  mill: 3,
-  dock: 4
-});
+// Registry unlock metadata is authoritative. This compatibility export remains
+// for tests/consumers that inspect BUILDING_STAGE, but it is derived rather
+// than maintained as a second progression database.
+export const BUILDING_STAGE = Object.freeze(Object.fromEntries(
+  Object.values(BUILDINGS).map(def => [def.id, Math.max(1, Math.min(4, Math.floor(Number(def.unlockStage) || 1)))])
+));
 
 export const STAGE_REQUIREMENTS = Object.freeze({
   2: {
@@ -158,7 +149,7 @@ export function isFootprintUnlocked(x, y, w = 1, h = 1) {
 }
 
 export function isBuildingUnlocked(type) {
-  return isLegacyOpen() || (S.cityProgress?.stage || 1) >= (BUILDING_STAGE[type] || 1);
+  return isLegacyOpen() || (S.cityProgress?.stage || 1) >= buildingUnlockStage(type);
 }
 
 export function buildingUnlockStage(type) {
