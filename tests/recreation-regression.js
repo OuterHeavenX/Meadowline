@@ -11,7 +11,7 @@ import { genWorld } from '../src/world/map.js';
 import { facilityRootAt, footprintCells, idx, isFacilityPart } from '../src/world/tiles.js';
 
 const checks=[];
-const check=(name,value)=>checks.push({name,pass:Boolean(value)});
+const check=(name,value,detail='')=>checks.push({name,pass:Boolean(value),...(detail?{detail}:{})});
 function root(type,x,y,pop=0){
   const b={type,x,y,seed:1,pop,grow:0,mood:50,linked:false,state:type==='house'?{education:0,housingTier:1,upgradeProgress:0,desirability:0,recreationSatisfaction:0}:{}};
   if(type==='house') S.grid[idx(x,y)]=b;
@@ -40,7 +40,8 @@ check('multi-tile second pointer remains pinch',touchIntent({tool:'townPark',mov
 // Atomic placement and root/marker ownership.
 dryRect(18,18,2,2);
 const before=S.coins;
-check('legal full Pocket Park footprint is placeable',canPlace('pocketPark',18,18).ok);
+const placementCheck=canPlace('pocketPark',18,18);
+check('legal full Pocket Park footprint is placeable',placementCheck.ok,placementCheck.why||'');
 check('Pocket Park placement succeeds atomically',place('pocketPark',18,18));
 const placed=facilityRootAt(18,18);
 check('placement charges facility cost exactly once',S.coins===before-BUILDINGS.pocketPark.cost);
