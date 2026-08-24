@@ -60,15 +60,14 @@ check('distant train releases crossing',!crossingBlockedByTrain(20,20));
 const snap=mobilitySnapshot();
 check('mobility snapshot reports real Road tiles',snap.roadTiles===countType('road'));
 check('mobility snapshot reports crossing',snap.crossings===1);
-check('ambient vehicle cap stays bounded',vehicleCap()>=1&&vehicleCap()<=12);
+check('tiny Road network spawns no ambient traffic',vehicleCap()===0);
+for(let x=4;x<20;x++) put('road',x,8);
+invalidateMobility();
+check('eligible developed network gets positive bounded vehicle cap',vehicleCap()>=1&&vehicleCap()<=12);
 
-// Parallel/ambiguous geometry must not become a corrupt crossing.
-put('road',29,30); put('road',31,30);
-put('rail',29,30); // replaced below with a clean standalone setup
-S.grid[idx(29,30)]={type:'road',x:29,y:30,state:{},seed:1,pop:0,grow:0,mood:50,linked:false};
-S.grid[idx(31,30)]={type:'road',x:31,y:30,state:{},seed:1,pop:0,grow:0,mood:50,linked:false};
-put('rail',30,30); put('rail',29,30); put('rail',31,30);
-check('parallel Road/Rail overlap is rejected',!canPlace('road',30,30).ok);
+// Ambiguous base geometry must fail rather than corrupt two networks.
+put('rail',30,30); put('rail',30,29); put('rail',31,30); put('road',29,30);
+check('ambiguous Road/Rail overlap is rejected',!canPlace('road',30,30).ok);
 
 // First erase removes only the overlay Road; Rail survives. Second erase removes base Rail.
 const refundBefore=S.coins;
