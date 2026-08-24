@@ -1,7 +1,7 @@
 import { BUILDABLE, erase, place } from '../buildings/buildings.js';
 import { TOOLS, clamp } from './constants.js';
 import { S } from './state.js';
-import { isOneShotTool, isPaintTool, TOUCH_DRAG_THRESHOLD, TOUCH_PAINT_HOLD_MS } from './input-policy.js';
+import { isPaintTool, TOUCH_DRAG_THRESHOLD, TOUCH_PAINT_HOLD_MS } from './input-policy.js';
 import { toggleMap } from '../rendering/minimap.js';
 import { hover } from '../rendering/renderer.js';
 import { cv } from '../rendering/terrain.js';
@@ -17,6 +17,8 @@ import { screen2world, world2screen } from '../world/map.js';
 /* ============================================================
    INPUT — touch navigation is always the safe default.
    Tap places. Immediate drag pans. Paint/destructive drag requires a hold.
+   Building tools remain armed after successful placement until explicitly
+   cancelled or replaced.
    ============================================================ */
 export const ptrs=new Map();
 export let dragged=false, lastPinch=0, painted=new Set();
@@ -41,7 +43,9 @@ export function applyTool(gp,{touch=false,paint=false}={}){
   if(changed){
     recompute();
     checkWishes();
-    if(touch&&!paint&&isOneShotTool(S.tool)) pickTool('move');
+    // Repetitive building stays fast. The safe drag-to-pan rule still applies
+    // while the selected building remains armed.
+    if(touch&&!paint) paintActiveTool();
   }
   return changed;
 }
