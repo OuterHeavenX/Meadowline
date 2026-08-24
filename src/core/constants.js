@@ -35,13 +35,11 @@ export function mix(h1,h2,t){
 }
 
 /* ---------- constants ---------- */
-export const W=44,H=44;              // grid size
-export const TW=64,TH=32;            // iso tile footprint at zoom 1
-export const DAY=100;                // seconds per in-game day
+export const W=44,H=44;
+export const TW=64,TH=32;
+export const DAY=100;
 export const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
-// Buildable tool metadata now comes from src/buildings/registry.js. Only runtime
-// interaction modes live here, so costs/descriptions/categories cannot drift.
 export const TOOLS=[
   ...buildingToolDefinitions(),
   {id:"move",name:"Move",cost:0,key:"1",desc:"Drag to pan the valley. Scroll or pinch to zoom.",cat:"mode"},
@@ -50,12 +48,12 @@ export const TOOLS=[
 ];
 export const COST={}; for(const t of TOOLS) COST[t.id]=t.cost;
 
-// The dock groups tools so the catalog stays legible on a phone.
 export const CATEGORIES=[
   {id:"ways",name:"Ways"},
   {id:"homes",name:"Homes"},
   {id:"civic",name:"Civic"},
   {id:"trade",name:"Trade"},
+  {id:"recreation",name:"Recreation"},
   {id:"green",name:"Green"}
 ];
 
@@ -67,6 +65,11 @@ export const ICONS={
   cityHall:'<path d="M3 9.5 12 4l9 5.5M5 10h14M6.5 10v8M10 10v8M14 10v8M17.5 10v8M4 20h16M12 4V2.8M12 2.8h4"/>',
   cafe:'<path d="M5 8h11v5.5A4.5 4.5 0 0 1 11.5 18h-2A4.5 4.5 0 0 1 5 13.5V8ZM16 9.5h2a2.5 2.5 0 0 1 0 5h-2M4 21h14"/>',
   park:'<path d="M12 3.5c3 0 5.2 2.4 5.2 5.2S15 13.5 12 13.5 6.8 11.5 6.8 8.7 9 3.5 12 3.5ZM12 13.5V20M8 20h8"/>',
+  pocketPark:'<path d="M4 19h16M6 16c2-4 3-8 6-11 3 3 4 7 6 11M12 7v12M7 13h10"/>',
+  playground:'<path d="M4 19h16M6 17 10 7l5 10M8 12h8M17 6v11M17 6h3M20 6v8"/>',
+  picnicGreen:'<path d="M4 19h16M6 13h12M8 13l-2 6M16 13l2 6M9 9h6l-1.5 4h-3L9 9ZM12 4v5"/>',
+  sportsCourt:'<rect x="4" y="5" width="16" height="14" rx="1"/><path d="M12 5v14M4 12h16"/><circle cx="12" cy="12" r="3"/>',
+  townPark:'<path d="M4 19h16M7 15c0-4 2-8 5-11 3 3 5 7 5 11M12 7v12"/><circle cx="12" cy="14" r="3"/>',
   tree:'<path d="M9 4 5.5 10.5h7L9 4ZM9 10.5V19M17 9.5l-2.6 4.5h5.2l-2.6-4.5ZM17 14v5M3.5 19.5h17"/>',
   lamp:'<path d="M12 3.5a3.6 3.6 0 0 1 3.6 3.6c0 1.7-1.2 2.6-1.6 3.9h-4c-.4-1.3-1.6-2.2-1.6-3.9A3.6 3.6 0 0 1 12 3.5ZM10 11h4M11 13.5h2M12 13.5V21M9 21h6"/>',
   mill:'<path d="M10 21h4l-1-9h-2l-1 9ZM12 12 5.5 8.5M12 12l3.5-6.5M12 12l6.5 3.5M12 12l-3.5 6.5"/>',
