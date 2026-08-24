@@ -1,8 +1,10 @@
 import { HOUSE_NAMES, residents } from '../buildings/houses.js';
 import { capFor } from '../buildings/houses.js';
+import { getBuildingDefinition } from '../buildings/registry.js';
 import { outFrom } from '../simulation/citizens.js';
 import { educationAssignment, educationProvider, educationStatus, educationTier, getEducationLevel, schoolStats } from '../simulation/civic-services.js';
 import { desirabilityDetails, desirabilityLabel, evaluateHousingReadiness, getDesirability, housingTier } from '../simulation/housing.js';
+import { recreationFacilityStats, recreationStatus } from '../simulation/recreation.js';
 import { hash2 } from '../core/constants.js';
 import { save } from '../core/save.js';
 import { services } from '../core/services.js';
@@ -11,7 +13,7 @@ import { CITY_STAGES, isTileUnlocked, parcelAt, parcelStatus } from '../progress
 import { civicUpgradeStatus, upgradeCivic } from '../progression/civic-upgrades.js';
 import { evalHouse } from '../simulation/mood.js';
 import { PAL } from '../world/seasons.js';
-import { idx, inBounds, isWater } from '../world/tiles.js';
+import { facilityFootprint, facilityRootAt, idx, inBounds, isWater } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
@@ -41,7 +43,7 @@ export function moodLabel(m){
 }
 export function countNear(type,x,y,r){
   let n=0;
-  for(const b of S.ctx[type]) if(Math.abs(b.x-x)<=r&&Math.abs(b.y-y)<=r) n++;
+  for(const b of S.ctx[type]||[]) if(Math.abs(b.x-x)<=r&&Math.abs(b.y-y)<=r) n++;
   return n;
 }
 
@@ -58,6 +60,17 @@ function educationBlock(h){
     '<dt>Education</dt><dd>'+level+' · '+educationTier(level)+'</dd>'+
     schoolLine+'<dt>Coverage</dt><dd>'+coverage+'</dd></dl>'+
     '<p><b>'+status.label+'.</b> '+status.detail+'</p>';
+}
+
+function recreationBlock(h){
+  const status=recreationStatus(h),a=status.assignment;
+  const nearest=a.nearest;
+  const facility=nearest?.name||'None within walking reach';
+  const cls=status.satisfaction>=65?'up':status.satisfaction>0?'':'dn';
+  return '<h4>Recreation</h4><dl class="service">'+
+    '<dt>Status</dt><dd class="'+cls+'">'+status.label+'</dd>'+
+    '<dt>Residents served</dt><dd>'+a.served+' / '+a.demand+'</dd>'+
+    '<dt>Nearby space</dt><dd>'+facility+'</dd></dl><p>'+status.detail+'</p>';
 }
 
 function housingBlock(h){
@@ -122,8 +135,24 @@ function schoolCard(b){
     (st.overloaded?'<p><b>Some nearby demand is waiting.</b> Build another School or add classroom capacity.</p>':'<p>There is room for this neighborhood to keep learning.</p>')+upgradeHtml);
 }
 
+function recreationCard(b){
+  const def=getBuildingDefinition(b.type),st=recreationFacilityStats(b),fp=facilityFootprint(b);
+  const connected=!!st?.connected;
+  const demand=st?.demand||0,served=st?.served||0,capacity=st?.capacity||(def?.service?.capacity||0),visitors=st?.visitors||0;
+  let status='Ready for neighbors';
+  if(!connected) status='Needs a street entrance';
+  else if(demand>served&&served>=capacity) status='Crowded — more recreation would help';
+  else if(demand>served) status='Some nearby demand is still underserved';
+  else if(demand>0) status='Serving nearby residents well';
+  const entrance=st?.entrance?(st.entrance.x+','+st.entrance.y):'None';
+  const legacy=b.type==='park'?'<p class="muted">This classic 1×1 green is preserved from earlier Meadowline saves and now provides real small-scale Recreation capacity.</p>':'';
+  return card(def?.name||'Public Space','Recreation · '+fp[0]+'×'+fp[1],
+    '<dl class="service"><dt>Capacity</dt><dd>'+served+' / '+capacity+' served</dd><dt>Nearby demand</dt><dd>'+demand+'</dd><dt>Visitors now</dt><dd>'+visitors+'</dd><dt>Street access</dt><dd class="'+(connected?'up':'dn')+'">'+(connected?'Connected at '+entrance:'Not connected')+'</dd><dt>Status</dt><dd class="'+(demand>served?'dn':'up')+'">'+status+'</dd></dl>'+legacy);
+}
+
 export function describe(x,y){
-  const i=idx(x,y), b=S.grid[i];
+  const root=facilityRootAt(x,y),rx=root?.x??x,ry=root?.y??y;
+  const i=idx(rx,ry), b=root||S.grid[i];
   if(b&&b.type==="house"){
     const why=[];
     const mood=evalHouse(b,why);
@@ -137,41 +166,44 @@ export function describe(x,y){
       dl+='<dt>'+(raw>mood?"Happier than it can hold":"As low as it goes")+'</dt><dd>'+(mood-raw>0?"+":"")+(mood-raw)+'</dd>';
     }
     dl+='</dl>';
-    const out_=outFrom(x,y);
+    const out_=outFrom(rx,ry);
     const doing=out_?'<p><b>'+out_+'</b> of them '+(out_===1?'is':'are')+' out on the streets just now.</p>':'';
     const line=b.pop
       ? '<p><b>'+listOut(who)+'</b> live'+(who.length===1?"s":"")+' here.</p>'
       : (b.linked?'<p>Empty for now. Lift the mood past <b>62</b> and someone will move in.</p>':'<p>Empty, and no road reaches the door.</p>');
-    return card(HOUSE_NAMES[(hash2(b.seed,1,777)*HOUSE_NAMES.length)|0],"Home · "+b.pop+" of "+capFor(b)+" · "+housingTier(b).name,line+doing+dl+moodRow(mood)+educationBlock(b)+housingBlock(b));
+    return card(HOUSE_NAMES[(hash2(b.seed,1,777)*HOUSE_NAMES.length)|0],"Home · "+b.pop+" of "+capFor(b)+" · "+housingTier(b).name,line+doing+dl+moodRow(mood)+educationBlock(b)+recreationBlock(b)+housingBlock(b));
   }
-  if(b) switch(b.type){
-    case "cafe": return card("The Corner Café","Café",'<p>Trades for <b>9 coins</b> a day and lifts every home within <b>5 tiles</b>.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,5)+'</dd></dl>');
-    case "park": return card("The Green","Park",'<p>The strongest lift there is, out to <b>4 tiles</b>. Fireflies come here after dark.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,4)+'</dd></dl>');
-    case "station": return card("Meadowline Halt","Station",'<p>Worth <b>16</b> to every home within <b>6 tiles</b>, whether or not a train has come yet.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,6)+'</dd><dt>Trains running</dt><dd>'+S.trains.length+'</dd></dl>');
-    case "lamp": return card("Street Lamp","Lamp",'<p>A small lift within <b>2 tiles</b> that <b>doubles</b> once the light goes.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,2)+'</dd><dt>Right now</dt><dd>'+(darkness()>0.2?"Lit":"Waiting for dusk")+'</dd></dl>');
-    case "mill": return card("The Windmill","Windmill",'<p>Grinds coin every day, and best of all at harvest.</p><dl><dt>Today’s yield</dt><dd>'+Math.round(9+(PAL.yield||0))+'</dd><dt>Charm within 3</dt><dd class="up">+4</dd></dl>');
-    case "market": return card("The Market","Market",'<p>Lifts what every café and bakery takes, and cheers the streets within <b>5 tiles</b>.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,5)+'</dd><dt>Trades lifted</dt><dd>'+(S.ctx.cafes.length+S.ctx.bakeries.length)+'</dd></dl>');
-    case "bakery": {
-      const supplied=S.ctx.mills.some(w=>Math.abs(w.x-x)<=4&&Math.abs(w.y-y)<=4);
-      return card("The Bakery","Bakery",'<p>Bakes what the windmills grind. '+(supplied?'A mill is in reach, so it runs at <b>full tilt</b>.':'No mill within <b>4 tiles</b>, so it runs at <b>half</b>.')+'</p><dl><dt>Flour supply</dt><dd class="'+(supplied?'up':'dn')+'">'+(supplied?'Good':'Short')+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,4)+'</dd></dl>');
+  if(b){
+    if(getBuildingDefinition(b.type)?.service?.type==='recreation') return recreationCard(b);
+    switch(b.type){
+      case "cafe": return card("The Corner Café","Café",'<p>Trades for <b>9 coins</b> a day and lifts every home within <b>5 tiles</b>.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,5)+'</dd></dl>');
+      case "station": return card("Meadowline Halt","Station",'<p>Worth <b>16</b> to every home within <b>6 tiles</b>, whether or not a train has come yet.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,6)+'</dd><dt>Trains running</dt><dd>'+S.trains.length+'</dd></dl>');
+      case "lamp": return card("Street Lamp","Lamp",'<p>A small lift within <b>2 tiles</b> that <b>doubles</b> once the light goes.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,2)+'</dd><dt>Right now</dt><dd>'+(darkness()>0.2?"Lit":"Waiting for dusk")+'</dd></dl>');
+      case "mill": return card("The Windmill","Windmill",'<p>Grinds coin every day, and best of all at harvest.</p><dl><dt>Today’s yield</dt><dd>'+Math.round(9+(PAL.yield||0))+'</dd><dt>Charm within 3</dt><dd class="up">+4</dd></dl>');
+      case "market": return card("The Market","Market",'<p>Lifts what every café and bakery takes, and cheers the streets within <b>5 tiles</b>.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,5)+'</dd><dt>Trades lifted</dt><dd>'+(S.ctx.cafes.length+S.ctx.bakeries.length)+'</dd></dl>');
+      case "bakery": {
+        const supplied=S.ctx.mills.some(w=>Math.abs(w.x-rx)<=4&&Math.abs(w.y-ry)<=4);
+        return card("The Bakery","Bakery",'<p>Bakes what the windmills grind. '+(supplied?'A mill is in reach, so it runs at <b>full tilt</b>.':'No mill within <b>4 tiles</b>, so it runs at <b>half</b>.')+'</p><dl><dt>Flour supply</dt><dd class="'+(supplied?'up':'dn')+'">'+(supplied?'Good':'Short')+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,4)+'</dd></dl>');
+      }
+      case "school": return schoolCard(b);
+      case "dock": return card("The Dock","Dock",'<p>Boats put out from here and sail the open water. Homes with a view of it are cheered for <b>4 tiles</b>.</p><dl><dt>Boats afloat</dt><dd>'+S.boats.length+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,4)+'</dd></dl>');
+      case "tree": return card("Planted Trees","Trees",'<p>A small lift to any home with a view of them, out to <b>3 tiles</b>.</p>');
+      case "road": return card(isWater(rx,ry)?"Road Bridge":"Road",isWater(rx,ry)?"Span":"Road",'<p>Homes fill up only when a road runs alongside. Citizens walk wherever it leads.</p>');
+      case "rail": return card(isWater(rx,ry)?"Rail Bridge":"Rail",isWater(rx,ry)?"Span":"Rail",'<p>Trains appear once <b>6 tiles</b> of rail exist, and one more for every 13 after.</p>');
     }
-    case "school": return schoolCard(b);
-    case "dock": return card("The Dock","Dock",'<p>Boats put out from here and sail the open water. Homes with a view of it are cheered for <b>4 tiles</b>.</p><dl><dt>Boats afloat</dt><dd>'+S.boats.length+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,4)+'</dd></dl>');
-    case "tree": return card("Planted Trees","Trees",'<p>A small lift to any home with a view of them, out to <b>3 tiles</b>.</p>');
-    case "road": return card(isWater(x,y)?"Road Bridge":"Road",isWater(x,y)?"Span":"Road",'<p>Homes fill up only when a road runs alongside. Citizens walk wherever it leads.</p>');
-    case "rail": return card(isWater(x,y)?"Rail Bridge":"Rail",isWater(x,y)?"Span":"Rail",'<p>Trains appear once <b>6 tiles</b> of rail exist, and one more for every 13 after.</p>');
   }
   const locked=lockedLandCard(x,y);
   if(locked) return locked;
-  if(S.terr[i]===1) return card("Open Water","Water",'<p>Only <b>roads and rails</b> can cross, and a span costs <b>three times</b> the usual. Water cheers up the homes that can see it.</p>');
-  if(S.natTree[i]) return card("Old Woodland","Wild trees",'<p>Here before you were. Worth the same as a planted tree — and free to leave standing.</p>');
-  return card("Meadow","Open ground",'<p>Room for anything you like.</p><dl><dt>Homes within 4</dt><dd>'+countNear("houses",x,y,4)+'</dd><dt>Parks within 4</dt><dd>'+countNear("parks",x,y,4)+'</dd></dl>');
+  const ii=idx(x,y);
+  if(S.terr[ii]===1) return card("Open Water","Water",'<p>Only <b>roads and rails</b> can cross, and a span costs <b>three times</b> the usual. Water cheers up the homes that can see it.</p>');
+  if(S.natTree[ii]) return card("Old Woodland","Wild trees",'<p>Here before you were. Worth the same as a planted tree — and free to leave standing.</p>');
+  return card("Meadow","Open ground",'<p>Room for anything you like.</p><dl><dt>Homes within 4</dt><dd>'+countNear("houses",x,y,4)+'</dd><dt>Recreation nearby</dt><dd>'+((S.ctx.recreation||[]).filter(r=>Math.abs(r.x-x)<=4&&Math.abs(r.y-y)<=4).length)+'</dd></dl>');
 }
 
 elLookBody.addEventListener('click',e=>{
   const btn=e.target.closest('[data-upgrade-school]');
   if(!btn||!S.pick) return;
-  const b=S.grid[idx(S.pick.x,S.pick.y)];
+  const root=facilityRootAt(S.pick.x,S.pick.y),b=root||S.grid[idx(S.pick.x,S.pick.y)];
   if(!b||b.type!=="school") return;
   const st=civicUpgradeStatus(b);
   if(!st.available){ toast(st.reason||'That upgrade is not ready yet.'); return; }
@@ -186,8 +218,9 @@ elLookBody.addEventListener('click',e=>{
 
 export function inspect(x,y){
   if(!inBounds(x,y)){ closeLook(); return; }
-  S.pick={x,y};
-  elLookBody.innerHTML=describe(x,y);
+  const root=facilityRootAt(x,y);
+  S.pick={x:root?.x??x,y:root?.y??y};
+  elLookBody.innerHTML=describe(S.pick.x,S.pick.y);
   elLook.classList.add("show");
   services.blip(600,0.04,"triangle");
 }
