@@ -50,6 +50,26 @@ Acceptance problems physically observed:
 
 Those findings prevent City Growth 1.0 from being called physically accepted.
 
+# City Growth 1.1 first physical UI retest — NEEDS REFINEMENT
+
+Owner iPad retest on August 23, 2026 confirmed the new Town Goals presentation and safe-touch UI were loading, but exposed a second interaction problem:
+
+- [x] **FAIL / NEEDS REFINEMENT:** after placing one normal structure, the build tool auto-cancelled to navigation, forcing repeated Build → category → structure selection for each additional House/School/etc.
+- [x] **FAIL / NEEDS REFINEMENT:** selecting a structure collapsed the Build tray automatically instead of allowing the player to explicitly finish choosing.
+- [x] **FAIL / NEEDS REFINEMENT:** the floating active `Look` strip overlapped and visually obstructed the open build catalog.
+
+The follow-up refinement changes the intended behavior to:
+
+- normal structure tools remain armed after successful placement;
+- one-finger drag remains safe camera pan even while that structure tool stays armed;
+- selecting a structure leaves the Build tray open;
+- `✓` explicitly keeps the selected tool and closes the tray for map focus;
+- `×` explicitly cancels the selected tool and returns to navigation;
+- Look does not show an active-tool strip over the build menu;
+- active build controls live inside the dock flow rather than floating over tool rows.
+
+These are implementation targets only until the owner confirms them on the physical device.
+
 # City Growth 1.1 physical retest — PENDING
 
 Branch: `feature/city-growth-progression`
@@ -81,11 +101,14 @@ Start a genuinely new progression city.
 With House selected:
 
 - [ ] single tap places exactly one House.
-- [ ] immediate one-finger drag pans the map and places nothing.
-- [ ] after successful one-off touch placement, interaction returns to neutral navigation.
+- [ ] House remains selected after successful placement so several homes can be placed without reopening Build.
+- [ ] immediate one-finger drag pans the map and places nothing even while House remains selected.
+- [ ] explicit `×` cancels House and returns to neutral navigation.
 
 With School selected:
 
+- [ ] single tap places exactly one School when legal.
+- [ ] School remains selected after successful placement until cancelled/replaced.
 - [ ] drag pans and never places a School.
 - [ ] pinch never places a School.
 
@@ -115,32 +138,35 @@ Pinch:
 
 ## 3. Active-tool / Build UI re-haul
 
-- [ ] bottom UI now reads as a compact command bar rather than a permanently expanded catalog.
+- [ ] bottom UI reads as a compact command bar rather than a permanently expanded catalog.
 - [ ] Build button is obvious and comfortably tappable.
 - [ ] Build opens/closes the category tray reliably.
 - [ ] Ways/Homes/Trade/Green categories remain understandable.
 - [ ] locked tool labels show the appropriate city stage without overwhelming the tray.
 - [ ] Move / Look / Remove remain easy to reach.
+- [ ] selecting House does **not** auto-close the Build tray.
 - [ ] selected tool is unmistakable.
-- [ ] active-tool pill shows tool name and cost.
-- [ ] active-tool pill explains `Tap to place · Drag to move` for one-off buildings.
-- [ ] active-tool pill explains `Tap once · Hold + drag to paint` for paint/removal tools.
-- [ ] Cancel is easy to hit and returns to navigation.
-- [ ] build tray/active pill do not cover too much of the city.
+- [ ] active build strip shows tool name and cost.
+- [ ] active build strip explains `Tap to place · Drag to move` for normal buildings.
+- [ ] active build strip explains `Tap once · Hold + drag to paint` for paint/removal tools.
+- [ ] `✓` closes the tray while keeping the selected build tool armed.
+- [ ] `×` cancels the tool and returns to navigation.
+- [ ] Look does not display an obstructive active-tool strip.
+- [ ] active build controls stay inside the dock layout and do not cover category/tool rows.
 - [ ] UI taps/drags do not leak through and build on the map underneath.
 
 ## 4. iPad layouts
 
 ### Landscape
 
-- [ ] HUD, Town Goals, corner controls, minimap, build bar, active-tool pill, Look and Growth panels do not collide badly.
+- [ ] HUD, Town Goals, corner controls, minimap, build bar, active build strip, Look and Growth panels do not collide badly.
 - [ ] extra width is used without making controls comically large.
 - [ ] map remains dominant.
 
 ### Portrait
 
 - [ ] Build tray stays within safe width.
-- [ ] active-tool pill remains readable.
+- [ ] active build strip remains readable.
 - [ ] panels remain scrollable.
 - [ ] no important control sits under the home gesture area.
 
@@ -151,7 +177,7 @@ Around 390–430 CSS px:
 - [ ] no horizontal page overflow.
 - [ ] Build / mode controls remain ≥ comfortable touch size.
 - [ ] build categories can be reached without tiny text.
-- [ ] active-tool pill does not obscure critical city area.
+- [ ] active build controls do not obscure critical city area.
 - [ ] Town Goals remain readable.
 - [ ] Growth/Look panels remain usable and scrollable.
 
@@ -211,7 +237,7 @@ Open a city created before City Growth:
 
 # Automated validation — record separately
 
-Current branch workflow is expected to run syntax, module hygiene, original Living City/Housing browser regression, City Growth 1.0 regression, and City Growth 1.1 goal/touch-policy regression.
+Current branch workflow runs syntax, module hygiene, original Living City/Housing browser regression, City Growth 1.0 regression, and City Growth 1.1 goal/touch-policy regression.
 
 Do **not** check any physical boxes merely because CI passes.
 
@@ -222,6 +248,7 @@ PR #4 is eligible for a merge decision only after:
 - [ ] current branch automation is green;
 - [ ] early Boat/Train goal failures are physically confirmed repaired;
 - [ ] one-finger drag is safe with build tools selected;
+- [ ] repeated House/School placement is comfortable without repeated menu navigation;
 - [ ] hold-to-paint/remove is comfortable on real touch hardware;
 - [ ] new UI is comfortable on iPad and iPhone;
 - [ ] critical legacy-save checks pass;
