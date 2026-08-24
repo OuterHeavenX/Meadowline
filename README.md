@@ -33,6 +33,8 @@ Historical implementation branches remain preserved, including:
 
 Branch: `feature/roads-mobility-2`
 
+Draft PR: **#6 — Roads & Mobility 2.0 — Streets, Sidewalks, Vehicles & Rail Crossings**
+
 Current milestone: **Roads & Mobility 2.0**.
 
 This milestone evolves the existing Road tool into Meadowline's permanent shared street infrastructure. It does not create a second Road database or replace the existing 44×44 world/pathfinding architecture.
@@ -137,6 +139,8 @@ The workflow covers:
 - City Growth 1.1 Town Goal/touch regression
 - City Hall 1.0 regression
 - Roads & Mobility 2.0 regression
+
+Validation history is preserved in the PR and `docs/ROADS_MOBILITY_2.md`. Physical owner-device acceptance remains pending.
 
 Only the owner can complete physical acceptance in `docs/IPHONE_ACCEPTANCE.md`.
 
