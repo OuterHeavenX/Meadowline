@@ -46,9 +46,10 @@ function sidewalkOffset(c,fx,fy){
 
 export function drawCitizen(c){
   const z=S.cam.z;
-  const fx=lerp(c.x,c.nx,c.p), fy=lerp(c.y,c.ny,c.p);
-  const p=proj(fx,fy), side=sidewalkOffset(c,fx,fy);
-  const bob=Math.abs(Math.sin(S.t*6+c.bob))*1.6*z;
+  const local=c.facilityLocal;
+  const fx=local?local.x:lerp(c.x,c.nx,c.p), fy=local?local.y:lerp(c.y,c.ny,c.p);
+  const p=proj(fx,fy), side=local?{x:0,y:0}:sidewalkOffset(c,fx,fy);
+  const bob=Math.abs(Math.sin(S.t*(local?2.2:6)+c.bob))*(local?0.55:1.6)*z;
   const px=p.x+side.x,py=p.y+side.y;
   g.fillStyle="rgba(30,44,38,.18)";
   g.beginPath(); g.ellipse(px,py+2*z,2.6*z,1.3*z,0,0,TAU); g.fill();
@@ -56,7 +57,7 @@ export function drawCitizen(c){
   g.fillRect(px-1.5*z,py-5.4*z-bob,3*z,4*z);
   g.fillStyle="#f0d9bd";
   g.beginPath(); g.arc(px,py-6.8*z-bob,1.7*z,0,TAU); g.fill();
-  if(c.carry){
+  if(c.carry&&!local){
     g.fillStyle="#b98d5c";
     g.fillRect(px+1.6*z,py-3.4*z-bob,2.4*z,2*z);
     g.strokeStyle="#8d6a42"; g.lineWidth=0.6*z;
