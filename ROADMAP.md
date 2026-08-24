@@ -84,6 +84,8 @@ The first revised UI then proved that auto-cancelling normal building tools afte
 
 A later owner iPad session reports the refined build as **“Everything is looking great!”** and physically shows a Day 14, 92-citizen **Growing Town** with coherent parcel-expansion/Trees Town Goals, readable dense development, and the compact command bar while the map remains dominant. This is strong positive device evidence, but PR #4 still awaits the remaining explicit gesture/save/School checks and owner merge approval.
 
+The latest documentation-reconciled branch state has also passed the full Living City Validation workflow (run #82). Automated success remains separate from physical acceptance.
+
 #### Guided Development / Town Goals
 
 City Milestones remain permanent progression. Town Goals remain shorter contextual goals with modest rewards.
