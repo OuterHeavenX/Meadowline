@@ -42,6 +42,7 @@ export const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
 export const TOOLS=[
   ...buildingToolDefinitions(),
+  {id:"water",name:"Water",cost:6,key:"w",desc:"Hold and drag to shape a pond on clear, opened land.",cat:"landscaping"},
   {id:"move",name:"Move",cost:0,key:"1",desc:"Drag to pan the valley. Scroll or pinch to zoom.",cat:"mode"},
   {id:"look",name:"Look",cost:0,key:"i",desc:"Tap anything to ask how it's doing, and why.",cat:"mode"},
   {id:"erase",name:"Remove",cost:0,key:"e",desc:"Clears a tile and refunds half the cost.",cat:"mode"}
@@ -55,6 +56,7 @@ export const CATEGORIES=[
   {id:"trade",name:"Trade"},
   {id:"recreation",name:"Recreation"},
   {id:"green",name:"Green"}
+  ,{id:"safety",name:"Safety"},{id:"health",name:"Health"},{id:"landscaping",name:"Landscape"}
 ];
 
 export const ICONS={
@@ -80,6 +82,11 @@ export const ICONS={
   dock:'<path d="M12 4v13M12 17c-3.2 0-5.8-2-6.6-4.6h13.2C17.8 15 15.2 17 12 17ZM8.5 8.5h7M3 20.5c1.6 0 1.6 1 3.2 1s1.6-1 3.2-1 1.6 1 3.2 1 1.6-1 3.2-1 1.6 1 3.2 1"/>',
   look:'<path d="M12 5c5 0 8.5 4.2 9.5 7-1 2.8-4.5 7-9.5 7s-8.5-4.2-9.5-7C3.5 9.2 7 5 12 5Z"/><circle cx="12" cy="12" r="2.9"/>',
   erase:'<path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l1 13.2h9L17.5 7M10.5 10.8v6M13.5 10.8v6"/>'
+  ,water:'<path d="M12 3C9 7 5.5 10.5 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 10.5 15 7 12 3Z"/>',
+  policeStation:'<path d="M12 3 20 7v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4Zm0 5v8m-4-4h8"/>',
+  fireStation:'<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-5 4-7 0 3 1 4 2 5 1-3 0-5-1-8Z"/>',
+  clinic:'<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6V3Z"/>',
+  hospital:'<path d="M5 3h14v18H5V3Zm4 4h6m-3-3v6M8 21v-5h8v5"/>'
 };
 
 /* ---------- seasons ---------- */

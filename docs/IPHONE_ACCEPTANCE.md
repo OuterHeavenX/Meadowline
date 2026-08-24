@@ -859,3 +859,61 @@ Recreation 2.0 may only be merged after:
 - [ ] existing Housing/Education/City Growth/City Hall/Roads/Rail behavior shows no major regression;
 - [ ] 100+ citizen + vehicles + Rail + Recreation performance is acceptable;
 - [ ] owner explicitly approves the Recreation merge.
+# LIVING CITY 3.0 / AAA MUNICIPAL PASS — PHYSICAL ACCEPTANCE
+
+These checks are owner/device work. CI must not check them.
+
+## Tutorial
+
+- [ ] New player understands Road placement, Houses, income and Recreation
+- [ ] Tutorial fits iPhone portrait and never traps the player
+- [ ] Skip and resume work
+
+## Graphics and performance
+
+- [ ] City looks substantially more polished than Recreation 2.0
+- [ ] Buildings feel grounded; Roads, sidewalks, trees and water remain clear
+- [ ] Night, windows and rain look attractive at phone zoom
+- [ ] Early and 100+ population cities remain smooth
+- [ ] Heavy rain, night and emergency response remain smooth
+- [ ] No long-session degradation or unreasonable phone heat
+
+## Feedback and upgrades
+
+- [ ] Payment and mood popups are readable, restrained and expire cleanly
+- [ ] House, School and City Hall upgrades feel satisfying once implemented in play
+- [ ] City stage advancement feels meaningful
+
+## Water
+
+- [ ] Water tool is obvious and paints intentionally
+- [ ] Pan and pinch never paint water
+- [ ] Buildings cannot be flooded accidentally
+- [ ] Player pond looks natural and persists after reload
+
+## Police, Fire and Healthcare
+
+- [ ] Each facility and vehicle is recognizable
+- [ ] Crime, Fire and sickness events are understandable and charming
+- [ ] Road routes and response outcomes are believable
+- [ ] Emergency lights are tasteful
+- [ ] Ordinary incidents do not punish the city unfairly
+
+## Employment and City Hall
+
+- [ ] Jobs, unemployment and Prosperity explanations are understandable
+- [ ] Education, Recreation, Mobility, Safety, Fire, Healthcare and Employment are truthful
+- [ ] No fake future metrics appear; City Hall remains usable on iPhone
+
+## Device layouts
+
+- [ ] 390–430 CSS px: Build tray, tutorial, popups and scrolling panels are comfortable; no horizontal overflow
+- [ ] iPad portrait: city, water, parks, coverage and City Hall remain legible
+- [ ] iPad landscape: city feels map-dominant, alive and visually deep
+- [ ] Desktop: mouse, keyboard, wheel zoom, high DPI and large canvas remain functional
+
+## Save
+
+- [ ] Existing city loads with Roads, Rail, crossings, Housing, Education, Recreation, City Hall, parcels and money intact
+- [ ] No Police, Fire or Healthcare facility is auto-placed or auto-charged
+- [ ] Player-created water persists

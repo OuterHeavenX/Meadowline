@@ -1,5 +1,9 @@
 # Meadowline Roadmap
 
+## Current development — Living City 3.0 / Municipal Integration
+
+The integration candidate is stacked on the validated but unmerged Recreation 2.0 branch. It adds the beginner tutorial, safe pond terrain painting, Employment/Prosperity, bounded Crime/Police, Fire response, Healthcare, a shared emergency-vehicle layer, truthful City Hall summaries, transient world feedback and renderer capability/quality boundaries. It is **not Production** until review, automatic validation and owner physical acceptance are complete. See `docs/LIVING_CITY_3.md`.
+
 Meadowline is evolving from a calm small city builder into a deeper living-city simulation while preserving its static browser architecture, native ES modules, isometric Canvas 2D presentation, mobile-first interaction, and low-stress character.
 
 Status labels remain deliberate: **production**, **historical implementation**, **automatically validated**, **physically validated**, **current development**, and **roadmap only** are not interchangeable.

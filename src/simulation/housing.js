@@ -5,6 +5,7 @@ import { S } from '../core/state.js';
 import { educationAssignment, getEducationLevel, invalidateServices } from './civic-services.js';
 import { recreationStatus } from './recreation.js';
 import { idx, inBounds, isType } from '../world/tiles.js';
+import { emitFeedback } from './feedback.js';
 
 const HOUSE_DEF=BUILDINGS.house;
 export const RESIDENTIAL_TIERS=Object.freeze((HOUSE_DEF.housing&&HOUSE_DEF.housing.tiers)||[]);
@@ -171,6 +172,7 @@ export function advanceHousing(dt){
     if(S.diagnostics) S.diagnostics.housingUpgrades=(S.diagnostics.housingUpgrades||0)+1;
     services.puff(h.x,h.y);
     services.hearts(h.x,h.y);
+    emitFeedback(h.x,h.y,'upgrade','★ '+housingTier(h).name);
     services.toast("A home grew into a "+housingTier(h).name,"gold");
   }
 }

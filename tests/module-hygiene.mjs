@@ -5,9 +5,10 @@
 import { readFileSync } from 'node:fs';
 import { globSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
-const files = globSync('src/**/*.js', { cwd: ROOT }).sort();
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const files = globSync('src/**/*.js', { cwd: ROOT }).map(f=>f.replace(/\\/g,'/')).sort();
 let failures = 0;
 const fail = (msg) => { console.log('  FAIL  ' + msg); failures++; };
 const pass = (msg) => console.log('  PASS  ' + msg);

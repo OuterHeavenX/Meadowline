@@ -67,6 +67,7 @@ export function renderCityHall(){
   const level=Math.max(1,Math.min(4,Math.floor(Number(b.state?.level)||1)));
   const name=getUpgradeDefinition('cityHall',level)?.name||'Town Office';
   const o=summary.overview, ed=summary.services.education, rec=summary.services.recreation, mob=summary.mobility;
+  const safe=summary.services.safety,fire=summary.services.fire,health=summary.services.healthcare,work=summary.employment;
   elLookBody.innerHTML='<h3>MEADOWLINE</h3><div class="kind">'+name+' · Level '+level+' · '+o.stage+'</div>'+
     '<h4>Overview</h4><dl class="service">'+row('Population',o.population)+row('Occupied homes',o.occupiedHomes+' / '+o.homes)+row('Cottages',o.cottages)+row('Town Homes',o.townHomes)+row('Established Homes',o.establishedHomes)+row('Mood',o.mood)+row('Education',o.education)+row('Desirability',o.desirability)+'</dl>'+
     '<h4>Town Goals</h4>'+goalRows(summary.goals)+
@@ -76,6 +77,10 @@ export function renderCityHall(){
     '<h4>Services</h4><h5>Education</h5><dl class="service">'+row('Schools',ed.schools)+row('Expanded Schools',ed.level2)+row('Students served',ed.served+' / '+ed.demand)+row('Waiting',ed.waiting)+row('Average Education',o.education)+'</dl>'+
     '<h5>Recreation</h5><dl class="service">'+row('Facilities',rec.facilities)+row('Residents served',rec.served+' / '+rec.demand)+row('Available capacity',rec.capacity)+row('Underserved',rec.underserved,rec.underserved?'dn':'up')+row('Visitors now',rec.activeVisitors)+'</dl><p class="muted">Recreation reports real connected capacity and household demand. There is no invented Recreation Health score.</p>'+
     '<h4>Mobility</h4><dl class="service">'+row('Road tiles',mob.roadTiles)+row('Road components',mob.components)+row('Rail crossings',mob.crossings)+row('Vehicles active',mob.vehicles)+'</dl><p class="muted">Vehicles are representative town life, not a congestion score.</p>'+
+    '<h4>Employment & Prosperity</h4><dl class="service">'+row('Workers employed',work.employed+' / '+work.workers)+row('Available jobs',work.jobs)+row('Unemployed',work.unemployed,work.unemployed?'dn':'up')+row('Prosperity',work.prosperity+' / 100')+'</dl>'+
+    '<h4>Safety</h4><dl class="service">'+row('Police response capacity',safe.capacity)+row('Active incidents',safe.active,safe.active?'dn':'up')+row('Crime pressure',safe.pressure===0?'Low':safe.pressure<35?'Limited':'Elevated')+'</dl>'+
+    '<h4>Fire</h4><dl class="service">'+row('Response capacity',fire.capacity)+row('Active fires',fire.active,fire.active?'dn':'up')+row('Fire risk',fire.risk===0?'Low':fire.risk<30?'Limited':'Elevated')+'</dl>'+
+    '<h4>Healthcare</h4><dl class="service">'+row('Treatment capacity',health.capacity)+row('Current demand',health.demand)+row('Waiting',health.patients,health.patients?'dn':'up')+'</dl>'+
     upgradeBlock(b);
   return true;
 }
