@@ -15,7 +15,7 @@ export const BUILDINGS={
       {id:2,name:"Town Home",capacity:6,taxMultiplier:1.25,upgradeSeconds:50,requirements:{road:true,mood:65,education:15,desirability:45}},
       {id:3,name:"Established Home",capacity:8,taxMultiplier:1.55,upgradeSeconds:85,requirements:{road:true,mood:78,education:35,desirability:62}}
     ]},
-    saveDefaults:{education:0,housingTier:1,upgradeProgress:0,desirability:0}
+    saveDefaults:{education:0,housingTier:1,upgradeProgress:0,desirability:0,recreationSatisfaction:0}
   },
   school:{
     id:"school",name:"School",category:"homes",cost:145,key:"c",unlockStage:2,
@@ -43,7 +43,18 @@ export const BUILDINGS={
   market:{id:"market",name:"Market",category:"trade",cost:130,key:"r",unlockStage:2,description:"A hub for trade — lifts what every café and bakery nearby takes.",renderKey:"market",placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
   bakery:{id:"bakery",name:"Bakery",category:"trade",cost:80,key:"k",unlockStage:2,description:"Bakes what the windmills grind. Wants a mill within four tiles.",renderKey:"bakery",placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
   mill:{id:"mill",name:"Windmill",category:"trade",cost:95,key:"9",unlockStage:3,description:"Grinds coin every day — most of all at harvest. Wants open ground.",renderKey:"mill",placement:{footprint:[1,1]},destination:{work:true},saveDefaults:{}},
-  park:{id:"park",name:"Park",category:"green",cost:40,key:"6",unlockStage:1,description:"The strongest mood lift, out to four tiles.",renderKey:"park",placement:{footprint:[1,1]},destination:{visit:true},saveDefaults:{}},
+
+  // The production `park` ID stays 1×1 forever so old V3 cities remain intact.
+  // Recreation 2.0 treats it as a generous legacy small green rather than
+  // expanding it into neighboring player property.
+  park:{id:"park",name:"Pocket Green",category:"green",cost:40,key:"6",unlockStage:1,description:"A classic 1×1 neighborhood green. Existing parks remain exactly where they were.",renderKey:"park",placement:{footprint:[1,1]},service:{type:"recreation",radius:4,capacity:8,quality:1},destination:{visit:true,recreation:true},saveDefaults:{}},
+
+  pocketPark:{id:"pocketPark",name:"Pocket Park",category:"recreation",cost:70,key:"p",unlockStage:1,description:"2×2 · A real little public park for a small neighborhood.",renderKey:"pocketPark",placement:{footprint:[2,2]},service:{type:"recreation",radius:5,capacity:12,quality:1.15},destination:{visit:true,recreation:true},saveDefaults:{}},
+  playground:{id:"playground",name:"Playground",category:"recreation",cost:95,key:"g",unlockStage:2,description:"2×2 · Family recreation with a compact neighborhood reach.",renderKey:"playground",placement:{footprint:[2,2]},service:{type:"recreation",radius:5,capacity:18,quality:1.2},destination:{visit:true,recreation:true},saveDefaults:{}},
+  picnicGreen:{id:"picnicGreen",name:"Picnic Green",category:"recreation",cost:150,key:"q",unlockStage:2,description:"3×3 · Lawn, shade and gathering room for a busier neighborhood.",renderKey:"picnicGreen",placement:{footprint:[3,3]},service:{type:"recreation",radius:6,capacity:24,quality:1.25},destination:{visit:true,recreation:true},saveDefaults:{}},
+  sportsCourt:{id:"sportsCourt",name:"Sports Court",category:"recreation",cost:190,key:"u",unlockStage:3,description:"2×3 · A compact multi-use court with meaningful Recreation capacity.",renderKey:"sportsCourt",placement:{footprint:[2,3]},service:{type:"recreation",radius:6,capacity:28,quality:1.3},destination:{visit:true,recreation:true},saveDefaults:{}},
+  townPark:{id:"townPark",name:"Town Park",category:"recreation",cost:340,key:"y",unlockStage:4,description:"4×4 · A major public-space anchor for a Growing Town.",renderKey:"townPark",placement:{footprint:[4,4]},service:{type:"recreation",radius:8,capacity:55,quality:1.5},destination:{visit:true,recreation:true},saveDefaults:{}},
+
   tree:{id:"tree",name:"Trees",category:"green",cost:2,key:"7",unlockStage:1,description:"A small, cheap lift. Nice along a road.",renderKey:"tree",placement:{footprint:[1,1]},destination:{},saveDefaults:{}},
   lamp:{id:"lamp",name:"Lamp",category:"green",cost:9,key:"8",unlockStage:1,description:"A small lift that doubles after dark. Line them along a street.",renderKey:"lamp",placement:{footprint:[1,1]},destination:{},saveDefaults:{}}
 };
