@@ -1,6 +1,7 @@
 import { getBuildingDefinition, getUpgradeDefinition } from '../buildings/registry.js';
 import { S } from '../core/state.js';
 import { invalidateServices, recomputeServices } from '../simulation/civic-services.js';
+import { invalidateCitySummary } from '../simulation/city-summary.js';
 
 export function civicUpgradeStatus(building){
   if(!building) return {available:false,reason:'No civic building selected.'};
@@ -22,6 +23,10 @@ export function upgradeCivic(building){
   building.state.level=st.next.level;
   invalidateServices();
   recomputeServices(true);
-  if(S.diagnostics) S.diagnostics.schoolUpgrades=(S.diagnostics.schoolUpgrades||0)+(building.type==='school'?1:0);
+  invalidateCitySummary();
+  if(S.diagnostics){
+    if(building.type==='school') S.diagnostics.schoolUpgrades=(S.diagnostics.schoolUpgrades||0)+1;
+    if(building.type==='cityHall') S.diagnostics.cityHallUpgrades=(S.diagnostics.cityHallUpgrades||0)+1;
+  }
   return {ok:true,upgrade:st.next};
 }

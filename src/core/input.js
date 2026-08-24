@@ -9,6 +9,7 @@ import { recompute } from '../simulation/mood.js';
 import { checkWishes } from '../simulation/wishes.js';
 import { hint } from '../ui/notify.js';
 import { closeLook, inspect } from '../ui/panels.js';
+import { inspectCityHall } from '../ui/city-hall.js';
 import { toggleLedgerChip, toggleSound, toggleSpeed } from '../ui/hud.js';
 import { postcard } from '../ui/postcard.js';
 import { pickTool, paintActiveTool } from '../ui/toolbar.js';
@@ -37,14 +38,15 @@ export function applyTool(gp,{touch=false,paint=false}={}){
   if(painted.has(key)) return false;
   painted.add(key);
   let changed=false;
-  if(S.tool==='look'){ inspect(gp.x,gp.y); return true; }
+  if(S.tool==='look'){
+    if(!inspectCityHall(gp.x,gp.y)) inspect(gp.x,gp.y);
+    return true;
+  }
   if(S.tool==='erase') changed=erase(gp.x,gp.y);
   else if(BUILDABLE[S.tool]) changed=place(S.tool,gp.x,gp.y);
   if(changed){
     recompute();
     checkWishes();
-    // Repetitive building stays fast. The safe drag-to-pan rule still applies
-    // while the selected building remains armed.
     if(touch&&!paint) paintActiveTool();
   }
   return changed;
@@ -101,7 +103,6 @@ cv.addEventListener('pointermove',e=>{
     return;
   }
 
-  // Mouse/pen retain fast desktop interaction.
   if(S.tool==='move'||e.buttons===4){ dragged=moved||dragged; S.cam.x+=dx; S.cam.y+=dy; return; }
   if(e.buttons&&moved&&isPaintTool(S.tool)){
     dragged=true;

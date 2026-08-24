@@ -20,6 +20,7 @@ import { checkMiles, checkWishes, rollWishes } from '../simulation/wishes.js';
 import { paintHud } from '../ui/hud.js';
 import { hint, tickHint, toast } from '../ui/notify.js';
 import { closeLook, refreshLook } from '../ui/panels.js';
+import { cityHallSelected, renderCityHall } from '../ui/city-hall.js';
 import { bMap, bSound } from '../ui/hud.js';
 import { paintTools } from '../ui/toolbar.js';
 import { paintWishes } from '../ui/wishes.js';
@@ -87,7 +88,7 @@ export function frame(now){
   if(S.diagnostics.enabled) recordSimulationMs(performance.now()-simStart);
 
   uiClock+=dt; if(uiClock>0.2){ uiClock=0; paintHud(); paintTools(); paintWishes(); }
-  lookClock+=dt; if(lookClock>0.7){ lookClock=0; refreshLook(); }
+  lookClock+=dt; if(lookClock>0.7){ lookClock=0; if(cityHallSelected()) renderCityHall(); else refreshLook(); }
   miniClock+=dt; if(miniClock>0.45){ miniClock=0; drawMini(); }
   ledgerClock+=dt; if(ledgerClock>1.1){ ledgerClock=0; paintLedger(); }
   tickHint(dt);

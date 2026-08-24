@@ -27,6 +27,18 @@ export const BUILDINGS={
     ],
     saveDefaults:{level:1}
   },
+  cityHall:{
+    id:"cityHall",name:"Town Office",category:"civic",cost:90,key:"h",unlockStage:1,unique:true,
+    description:"Meadowline's civic center. Inspect it for citywide goals, growth, land, finances and services.",
+    renderKey:"cityHall",placement:{footprint:[1,1]},destination:{work:true,visit:true},
+    upgrades:[
+      {level:1,name:"Town Office",requiresStage:1,renderVariant:"city-hall-1"},
+      {level:2,name:"Village Hall",cost:280,requiresStage:2,renderVariant:"city-hall-2",description:"A proper hall for a growing Village."},
+      {level:3,name:"Town Hall",cost:520,requiresStage:3,renderVariant:"city-hall-3",description:"A larger civic building with a recognizable cupola."},
+      {level:4,name:"Meadowline City Hall",cost:850,requiresStage:4,renderVariant:"city-hall-4",description:"The mature civic heart of Meadowline."}
+    ],
+    saveDefaults:{level:1}
+  },
   cafe:{id:"cafe",name:"Café",category:"trade",cost:55,key:"5",unlockStage:1,description:"Earns coins every day and cheers up the street.",renderKey:"cafe",placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
   market:{id:"market",name:"Market",category:"trade",cost:130,key:"r",unlockStage:2,description:"A hub for trade — lifts what every café and bakery nearby takes.",renderKey:"market",placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
   bakery:{id:"bakery",name:"Bakery",category:"trade",cost:80,key:"k",unlockStage:2,description:"Bakes what the windmills grind. Wants a mill within four tiles.",renderKey:"bakery",placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},

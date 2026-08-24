@@ -2,6 +2,7 @@ import { canPlace } from '../buildings/buildings.js';
 import { H, W, clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { drawBakery, drawCafe, drawDock, drawLamp, drawMarket, drawPark, drawSchool, drawStation, drawWindmill } from './buildings.js';
+import { drawCityHall } from './city-hall.js';
 import { drawHousingHouse } from './housing.js';
 import { drawCivicPlacementPreview } from './service-overlays.js';
 import { drawLandAccess } from './land-overlays.js';
@@ -76,7 +77,7 @@ export function render(){
   for(const it of items){
     if(it.k===0){
       const p=proj(it.b.x,it.b.y);
-      if(p.x<-120||p.x>innerWidth+120||p.y<-160||p.y>innerHeight+120) continue;
+      if(p.x<-120||p.x>innerWidth+120||p.y<-180||p.y>innerHeight+120) continue;
       const t=it.b.type;
       if(t==="house") drawHousingHouse(it.b,p,dark);
       else if(t==="park") drawPark(it.b,p);
@@ -87,6 +88,7 @@ export function render(){
       else if(t==="market") drawMarket(it.b,p,dark);
       else if(t==="bakery") drawBakery(it.b,p,dark);
       else if(t==="school"){ drawSchool(it.b,p,dark); drawSchoolUpgradeDetails(it.b,p,dark); }
+      else if(t==="cityHall") drawCityHall(it.b,p,dark);
       else if(t==="dock") drawDock(it.b,p,dark);
       else if(t==="tree") drawTree(p.x,p.y,it.b.seed,1);
     } else if(it.k===1){

@@ -3,6 +3,7 @@ import { DIRS } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { invalidateServices } from '../simulation/civic-services.js';
+import { invalidateCitySummary } from '../simulation/city-summary.js';
 import { BUILDABLE, BUILDING_COST, defaultBuildingState, getBuildingDefinition } from './registry.js';
 import { SPANS } from '../transport/bridges.js';
 import { idx, inBounds, isType, isWater } from '../world/tiles.js';
@@ -21,6 +22,9 @@ export function canPlace(kind,x,y){
     return {ok:false,why:(def?.name||'This building')+' unlocks as Meadowline grows beyond '+cityStage().name+'.'};
   }
   const def=getBuildingDefinition(kind);
+  if(def?.unique&&(S.grid||[]).some(b=>b?.type===kind)){
+    return {ok:false,why:kind==='cityHall'?'Meadowline already has a civic center.':'Only one of these may be active.'};
+  }
   const fp=def?.placement?.footprint||[1,1];
   if(!isFootprintUnlocked(x,y,fp[0],fp[1])){
     const parcel=parcelAt(x,y);
@@ -56,7 +60,7 @@ const NOTED={};
 const NOTE_NAMES={cafe:"The first café opened",park:"The first park was laid out",
   station:"The first station opened",mill:"The first windmill turned",
   market:"The first market day",bakery:"The first bakery lit its oven",
-  school:"The first school took pupils",dock:"The first dock was built",
+  school:"The first school took pupils",cityHall:"Meadowline established its civic center",dock:"The first dock was built",
   rail:"The first rail was laid",house:"The first house went up"};
 
 export function place(kind,x,y){
@@ -66,7 +70,7 @@ export function place(kind,x,y){
   S.coins-=costOf(kind,x,y);
   S.natTree[i]=0;
   S.grid[i]={type:kind,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:0,grow:0,mood:50,linked:false,state:defaultBuildingState(kind)};
-  invalidateServices();
+  invalidateServices(); invalidateCitySummary();
   if(NOTE_NAMES[kind]&&!NOTED[kind]){ NOTED[kind]=1; note(NOTE_NAMES[kind]); }
   services.puff(x,y);
   services.blip(kind==="house"?520:kind==="park"?400:kind==="mill"?300:340);
@@ -82,9 +86,10 @@ export function erase(x,y){
     if(S.natTree[i]){ S.natTree[i]=0; services.puff(x,y); services.blip(240); return true; }
     return false;
   }
+  if(b.type==='cityHall'&&!confirm('Remove Meadowline’s civic center? City Growth, Town Goals and opened land will remain.')) return false;
   S.coins+=Math.floor(costOf(b.type,x,y)/2);
   S.grid[i]=null;
-  invalidateServices();
+  invalidateServices(); invalidateCitySummary();
   services.puff(x,y);
   services.blip(220);
   return true;

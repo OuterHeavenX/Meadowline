@@ -1,7 +1,7 @@
 export const TOUCH_DRAG_THRESHOLD=7;
 export const TOUCH_PAINT_HOLD_MS=300;
 export const PAINT_TOOLS=new Set(['road','rail','tree','erase']);
-export const ONE_SHOT_TOOLS=new Set(['house','cafe','park','lamp','school','market','bakery','station','mill','dock']);
+export const ONE_SHOT_TOOLS=new Set(['house','cafe','park','lamp','school','cityHall','market','bakery','station','mill','dock']);
 
 export function isPaintTool(tool){ return PAINT_TOOLS.has(tool); }
 export function isOneShotTool(tool){ return ONE_SHOT_TOOLS.has(tool); }
