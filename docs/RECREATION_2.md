@@ -335,8 +335,10 @@ Historical failures during this branch are intentionally preserved:
 
 - first Recreation-integrated run exposed Road/Rail water-span placement regression because the new occupancy restorer rejected all water tiles; fixed by retaining the existing span exception;
 - next run then isolated historical V2 single-tile save-position compatibility; fixed by preserving authoritative old single-tile placement while keeping new multi-tile reconstruction strict.
+- exact head `7942cdeab5798c88452933d25e66a27be0124611` then exposed a regression-fixture geometry error: both test homes sat outside the Pocket Park's real reach while the assertion expected finite service. The fixture moved the homes inside documented reach without changing Recreation capacity, reach, assignment code, or assertions.
+- corrected candidate `f736c55e81f98f946d4a4ac0a1107706b54ae526` passed Living City Validation run `32781951871`, including every pre-existing suite and Recreation 2.0.
 
-Final exact-head automated validation must be recorded here before device handoff.
+Physical owner acceptance remains pending and this branch must remain draft/unmerged until that separate gate is satisfied.
 
 ## Physical validation
 
