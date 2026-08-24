@@ -27,7 +27,7 @@ export function getCitySummary(){
   const last=S.lastPay||{};
   cache={
     hall:{exists:!!h,level:h?Math.max(1,Math.min(4,Math.floor(Number(h.state?.level)||1))):0,count:count('cityHall')},
-    overview:{stage:cityStage().name,population:S.pop||0,homes:dev.homes,occupiedHomes:dev.occupiedHomes,cottages:Math.max(0,dev.homes-dev.townHomes),townHomes:dev.townHomes,establishedHomes:dev.establishedHomes,mood:S.mood||0,education:dev.averageEducation,desirability:dev.averageDesirability,coins:Math.floor(S.coins||0)},
+    overview:{stage:cityStage().name,population:S.pop||0,homes:dev.homes,occupiedHomes:dev.occupiedHomes,cottages:Math.max(0,dev.homes-dev.townHomes),townHomes:Math.max(0,dev.townHomes-dev.establishedHomes),establishedHomes:dev.establishedHomes,mood:S.mood||0,education:dev.averageEducation,desirability:dev.averageDesirability,coins:Math.floor(S.coins||0)},
     goals:(S.wishes||[]).map(w=>({id:w.k,slot:w.slot,label:w.t,current:goalAt(w),target:w.g,reward:w.r})),
     growth:{stage:cityStage().name,next:nextStageProgress()},
     land:{opened,total:LAND_PARCELS.length,available:available.map(x=>({id:x.parcel.id,name:x.parcel.name,cost:x.parcel.cost,canUnlock:x.canUnlock})),parcels},
