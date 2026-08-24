@@ -4,16 +4,19 @@ import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { invalidateServices } from '../simulation/civic-services.js';
 import { invalidateCitySummary } from '../simulation/city-summary.js';
+import { invalidateMobility } from '../simulation/mobility.js';
 import { BUILDABLE, BUILDING_COST, defaultBuildingState, getBuildingDefinition } from './registry.js';
 import { SPANS } from '../transport/bridges.js';
-import { idx, inBounds, isType, isWater } from '../world/tiles.js';
+import { idx, inBounds, isType, isWater, isRoadRailCrossing } from '../world/tiles.js';
 import { cityStage, isBuildingUnlocked, isFootprintUnlocked, parcelAt } from '../progression/city-growth.js';
 
 export { BUILDABLE } from './registry.js';
 
 /* ---------- building placement ---------- */
 export function costOf(kind,x,y){ return BUILDING_COST[kind]*(SPANS[kind]&&isWater(x,y)?3:1); }
-
+function canMakeRoadRailCrossing(kind,cur){
+  return !!cur&&!isRoadRailCrossing(cur)&&((kind==='road'&&cur.type==='rail')||(kind==='rail'&&cur.type==='road'));
+}
 export function canPlace(kind,x,y){
   if(!BUILDABLE[kind]) return {ok:false};
   if(!inBounds(x,y)) return {ok:false};
@@ -34,7 +37,13 @@ export function canPlace(kind,x,y){
   if(S.terr[i]===1&&!SPANS[kind]) return {ok:false,why:"Only roads and rails can cross the water."};
   const cur=S.grid[i];
   if(cur){
-    if(cur.type===kind) return {ok:false};
+    if(canMakeRoadRailCrossing(kind,cur)){
+      if(S.terr[i]===1) return {ok:false,why:'Road and Rail crossings must be built on land.'};
+      const c=costOf(kind,x,y);
+      if(S.coins<c) return {ok:false,why:'Not enough coins yet — wait for the next payday.'};
+      return {ok:true,crossing:true};
+    }
+    if(cur.type===kind||isType(x,y,kind)) return {ok:false};
     return {ok:false,why:"Something's already there — remove it first."};
   }
   if(kind==="station"){
@@ -67,10 +76,20 @@ export function place(kind,x,y){
   const r=canPlace(kind,x,y);
   if(!r.ok){ if(r.why) services.hint(r.why,true); return false; }
   const i=idx(x,y);
+  if(r.crossing){
+    const cur=S.grid[i];
+    S.coins-=costOf(kind,x,y);
+    cur.state={...(cur.state||{}),roadRailCrossing:true,crossingBase:cur.type};
+    invalidateServices(); invalidateCitySummary(); invalidateMobility();
+    services.puff(x,y); services.blip(360);
+    if(S.diagnostics) S.diagnostics.railCrossings=(S.diagnostics.railCrossings||0)+1;
+    return true;
+  }
   S.coins-=costOf(kind,x,y);
   S.natTree[i]=0;
   S.grid[i]={type:kind,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:0,grow:0,mood:50,linked:false,state:defaultBuildingState(kind)};
   invalidateServices(); invalidateCitySummary();
+  if(kind==='road'||kind==='rail') invalidateMobility();
   if(NOTE_NAMES[kind]&&!NOTED[kind]){ NOTED[kind]=1; note(NOTE_NAMES[kind]); }
   services.puff(x,y);
   services.blip(kind==="house"?520:kind==="park"?400:kind==="mill"?300:340);
@@ -87,9 +106,18 @@ export function erase(x,y){
     return false;
   }
   if(b.type==='cityHall'&&!confirm('Remove Meadowline’s civic center? City Growth, Town Goals and opened land will remain.')) return false;
+  if(isRoadRailCrossing(b)){
+    const overlay=b.type==='rail'?'road':'rail';
+    S.coins+=Math.floor((BUILDING_COST[overlay]||0)/2);
+    b.state={...(b.state||{})}; delete b.state.roadRailCrossing; delete b.state.crossingBase;
+    invalidateServices(); invalidateCitySummary(); invalidateMobility();
+    services.puff(x,y); services.blip(230);
+    return true;
+  }
   S.coins+=Math.floor(costOf(b.type,x,y)/2);
   S.grid[i]=null;
   invalidateServices(); invalidateCitySummary();
+  if(b.type==='road'||b.type==='rail') invalidateMobility();
   services.puff(x,y);
   services.blip(220);
   return true;

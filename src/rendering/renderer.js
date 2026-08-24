@@ -9,6 +9,7 @@ import { drawLandAccess } from './land-overlays.js';
 import { drawSchoolUpgradeDetails } from './school-upgrades.js';
 import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
 import { drawBoat, drawCitizen, drawTrain } from './entities.js';
+import { drawVehicle } from './vehicles.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
 import { SPANS } from '../transport/bridges.js';
 import { proj } from '../world/map.js';
@@ -69,6 +70,7 @@ export function render(){
   }
   for(let y=0;y<H;y++)for(let x=0;x<W;x++) if(S.natTree[idx(x,y)]) items.push({d:x+y,k:1,x,y});
   for(const c of S.citizens) items.push({d:lerp(c.x,c.nx,c.p)+lerp(c.y,c.ny,c.p)+0.05,k:2,c});
+  for(const v of S.vehicles||[]) items.push({d:lerp(v.x,v.nx,v.p)+lerp(v.y,v.ny,v.p)+0.075,k:7,v});
   for(const t of S.trains) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.1,k:3,t});
   for(const t of S.boats) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.08,k:6,t});
   for(const p of S.puffs) items.push({d:p.x+p.y+0.2,k:4,p});
@@ -98,6 +100,7 @@ export function render(){
     } else if(it.k===2) drawCitizen(it.c);
     else if(it.k===3) drawTrain(it.t);
     else if(it.k===6) drawBoat(it.t);
+    else if(it.k===7) drawVehicle(it.v);
     else if(it.k===5){
       const p=proj(it.b.x,it.b.y);
       if(p.x<-120||p.x>innerWidth+120||p.y<-160||p.y>innerHeight+120) continue;

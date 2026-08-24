@@ -2,6 +2,7 @@ import { FIRSTS } from '../buildings/houses.js';
 import { TAU, clamp } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { educationProvider } from './civic-services.js';
+import { crossingBlockedByTrain } from './mobility.js';
 import { findPath, stepFrom } from '../transport/pathfinding.js';
 import { roadNear } from '../transport/roads.js';
 import { idx, isType } from '../world/tiles.js';
@@ -97,7 +98,8 @@ export function spawnCitizen(){
     bob:Math.random()*TAU, happy:h.mood,
     home:{x:h.x,y:h.y}, homeRoad:{x:r.x,y:r.y},
     name:FIRSTS[(Math.random()*FIRSTS.length)|0],
-    path:null, pi:0, linger:0, carry:0, doing:"home", at:null
+    side:Math.random()<0.5?-1:1,
+    path:null, pi:0, linger:0, carry:0, doing:"home", at:null, waitingTrain:0
   });
 }
 
@@ -126,6 +128,11 @@ export function updateCitizens(dt){
   for(let i=S.citizens.length-1;i>=0;i--){
     const c=S.citizens[i];
     if(c.linger>0){ c.linger-=dt; continue; }
+    if(crossingBlockedByTrain(c.nx,c.ny)){
+      c.waitingTrain=Math.min(5,(c.waitingTrain||0)+dt);
+      continue;
+    }
+    c.waitingTrain=0;
     c.p+=dt*c.sp;
     while(c.p>=1){
       c.p-=1;

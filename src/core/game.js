@@ -11,6 +11,7 @@ import { resize } from '../rendering/terrain.js';
 import { advanceEducation, recomputeServices } from '../simulation/civic-services.js';
 import { advanceHousing } from '../simulation/housing.js';
 import { updateCitizens } from '../simulation/citizens.js';
+import { updateMobility } from '../simulation/mobility.js';
 import { payday } from '../simulation/economy.js';
 import { recompute } from '../simulation/mood.js';
 import { hearts, puff, updatePuffs } from '../simulation/particles.js';
@@ -75,6 +76,7 @@ export function frame(now){
     }
     growth(sdt);
     updateCitizens(sdt);
+    updateMobility(sdt);
     updateTrains(sdt);
     updateBoats(sdt);
     updateWeather(sdt);
