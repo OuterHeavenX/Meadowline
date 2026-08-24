@@ -149,6 +149,14 @@ function recreationCard(b){
   return card(def?.name||'Public Space','Recreation · '+fp[0]+'×'+fp[1],
     '<dl class="service"><dt>Capacity</dt><dd>'+served+' / '+capacity+' served</dd><dt>Nearby demand</dt><dd>'+demand+'</dd><dt>Visitors now</dt><dd>'+visitors+'</dd><dt>Street access</dt><dd class="'+(connected?'up':'dn')+'">'+(connected?'Connected at '+entrance:'Not connected')+'</dd><dt>Status</dt><dd class="'+(demand>served?'dn':'up')+'">'+status+'</dd></dl>'+legacy);
 }
+function municipalCard(b){
+  const def=getBuildingDefinition(b.type),type=def?.service?.type,vehicles=(S.serviceVehicles||[]).filter(v=>v.home===b),calls=vehicles.filter(v=>!v.done).length,cap=def?.service?.capacity||0;
+  const label=type==='safety'?'Police service':type==='fire'?'Fire response':'Healthcare';
+  const city=type==='safety'?S.municipal.safety:type==='fire'?S.municipal.fire:S.municipal.healthcare;
+  const demand=type==='safety'?city.active:type==='fire'?city.active:city.demand;
+  return card(def.name,label+' · '+(def.placement?.footprint||[1,1]).join('×'),'<dl class="service"><dt>Capacity</dt><dd>'+cap+'</dd><dt>City demand</dt><dd>'+demand+'</dd><dt>Vehicles active</dt><dd>'+calls+'</dd><dt>Jobs</dt><dd>'+(def.jobs||0)+'</dd><dt>Status</dt><dd class="'+(calls>=cap?'dn':'up')+'">'+(calls>=cap?'Busy':'Ready')+'</dd></dl>');
+}
+function businessCard(b){const def=getBuildingDefinition(b.type),work=S.municipal.employment,jobs=def?.jobs||0,share=work.jobs?Math.min(jobs,Math.round(work.employed*jobs/work.jobs)):0;return card(def?.name||'Business','Business','<dl class="service"><dt>Jobs filled</dt><dd>'+share+' / '+jobs+'</dd><dt>Road access</dt><dd class="'+(b.linked===false?'dn':'up')+'">'+(b.linked===false?'Disconnected':'Connected')+'</dd><dt>City prosperity</dt><dd>'+work.prosperity+' / 100</dd></dl>');}
 
 export function describe(x,y){
   const root=facilityRootAt(x,y),rx=root?.x??x,ry=root?.y??y;
@@ -175,6 +183,8 @@ export function describe(x,y){
   }
   if(b){
     if(getBuildingDefinition(b.type)?.service?.type==='recreation') return recreationCard(b);
+    if(['safety','fire','healthcare'].includes(getBuildingDefinition(b.type)?.service?.type)) return municipalCard(b);
+    if(['cafe','market','bakery','mill'].includes(b.type)&&getBuildingDefinition(b.type)?.jobs) return businessCard(b);
     switch(b.type){
       case "cafe": return card("The Corner Café","Café",'<p>Trades for <b>9 coins</b> a day and lifts every home within <b>5 tiles</b>.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,5)+'</dd></dl>');
       case "station": return card("Meadowline Halt","Station",'<p>Worth <b>16</b> to every home within <b>6 tiles</b>, whether or not a train has come yet.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,6)+'</dd><dt>Trains running</dt><dd>'+S.trains.length+'</dd></dl>');

@@ -1,4 +1,4 @@
-import { ambientTick, blip } from '../audio/audio.js';
+import { ambientTick, blip, siren } from '../audio/audio.js';
 import { growth } from '../buildings/houses.js';
 import { DAY } from './constants.js';
 import { load, save } from './save.js';
@@ -41,7 +41,7 @@ import { tickTutorial } from '../ui/tutorial.js';
    MAIN LOOP
    ============================================================ */
 export let last=performance.now();
-configureServices({blip,puff,hearts,hint,toast,paintTools,paintWishes,closeLook});
+configureServices({blip,siren,puff,hearts,hint,toast,paintTools,paintWishes,closeLook});
 let simClock=0, uiClock=0, lookClock=0, miniClock=0, saveClock=0, ledgerClock=0;
 export function frame(now){
   diagnosticFrameStart(now);

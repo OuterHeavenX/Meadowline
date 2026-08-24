@@ -20,6 +20,7 @@ import { facilityFootprint, footprintCells, idx, inBounds, isFacilityPart } from
 import { darkness } from '../world/time.js';
 import { drawIncident, drawMunicipalBuilding } from './municipal.js';
 import { drawFeedback } from './feedback.js';
+import { presentFrame } from './backend.js';
 
 export let hover={x:-1,y:-1,on:false};
 export function drawGhost(){
@@ -146,4 +147,5 @@ export function render(){
   drawFireflies(dark); drawLanterns(dark); drawMotes(); drawWeather();
   for(const inc of S.incidents||[]) drawIncident(inc);
   drawFeedback();
+  presentFrame();
 }

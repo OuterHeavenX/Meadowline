@@ -4,8 +4,8 @@
 export const BUILDINGS={
   road:{id:"road",name:"Road",category:"ways",cost:3,key:"2",unlockStage:1,description:"Homes need a road alongside them. Drag to draw — water becomes a bridge.",renderKey:"road",placement:{waterSpan:true,footprint:[1,1]},destination:{walk:true},saveDefaults:{}},
   rail:{id:"rail",name:"Rail",category:"ways",cost:8,key:"3",unlockStage:3,description:"Draw a loop and trains will run it on their own. Crosses water too.",renderKey:"rail",placement:{waterSpan:true,footprint:[1,1]},destination:{rail:true},saveDefaults:{}},
-  station:{id:"station",name:"Station",category:"ways",cost:110,key:"0",unlockStage:3,description:"Must touch a rail tile. Lifts homes for six tiles.",renderKey:"station",placement:{requiresAdjacent:"rail",footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
-  dock:{id:"dock",name:"Dock",category:"ways",cost:70,key:"d",unlockStage:4,description:"Must touch water. Boats put out from here and sail the lake.",renderKey:"dock",placement:{requiresAdjacentWater:true,footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
+  station:{id:"station",name:"Station",category:"ways",cost:110,key:"0",unlockStage:3,description:"Must touch a rail tile. Lifts homes for six tiles.",renderKey:"station",jobs:4,placement:{requiresAdjacent:"rail",footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
+  dock:{id:"dock",name:"Dock",category:"ways",cost:70,key:"d",unlockStage:4,description:"Must touch water. Boats put out from here and sail the lake.",renderKey:"dock",jobs:4,placement:{requiresAdjacentWater:true,footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
   house:{
     id:"house",name:"House",category:"homes",cost:24,key:"4",unlockStage:1,
     description:"A starter home that can gradually grow with a strong neighborhood.",
@@ -20,7 +20,7 @@ export const BUILDINGS={
   school:{
     id:"school",name:"School",category:"homes",cost:145,key:"c",unlockStage:2,
     description:"Provides gradual education across a neighborhood, with room for 28 students.",
-    renderKey:"school",placement:{footprint:[1,1]},service:{type:"education",radius:7,capacity:28,visual:{boundary:"green"}},destination:{work:true,visit:true},
+    renderKey:"school",jobs:7,placement:{footprint:[1,1]},service:{type:"education",radius:7,capacity:28,visual:{boundary:"green"}},destination:{work:true,visit:true},
     upgrades:[
       {level:1,name:"Schoolhouse",capacity:28,radius:7,renderVariant:"school-1"},
       {level:2,name:"Expanded School",cost:650,requiresStage:3,capacity:44,radius:7,renderVariant:"school-2",description:"Adds classroom space without stretching neighborhood coverage."}
@@ -30,7 +30,7 @@ export const BUILDINGS={
   cityHall:{
     id:"cityHall",name:"Town Office",category:"civic",cost:90,key:"h",unlockStage:1,unique:true,
     description:"Meadowline's civic center. Inspect it for citywide goals, growth, land, finances and services.",
-    renderKey:"cityHall",placement:{footprint:[1,1]},destination:{work:true,visit:true},
+    renderKey:"cityHall",jobs:6,placement:{footprint:[1,1]},destination:{work:true,visit:true},
     upgrades:[
       {level:1,name:"Town Office",requiresStage:1,renderVariant:"city-hall-1"},
       {level:2,name:"Village Hall",cost:280,requiresStage:2,renderVariant:"city-hall-2",description:"A proper hall for a growing Village."},
@@ -44,9 +44,9 @@ export const BUILDINGS={
   clinic:{id:"clinic",name:"Clinic",category:"health",cost:460,key:"v",unlockStage:3,description:"2×2 · Treats seasonal illness and dispatches an ambulance.",renderKey:"clinic",placement:{footprint:[2,2]},service:{type:"healthcare",radius:9,capacity:18},jobs:9,destination:{work:true,service:true},saveDefaults:{}},
   hospital:{id:"hospital",name:"Hospital",category:"health",cost:780,key:"x",unlockStage:4,description:"3×3 · A larger healthcare facility for a Growing Town.",renderKey:"hospital",placement:{footprint:[3,3]},service:{type:"healthcare",radius:12,capacity:42},jobs:18,destination:{work:true,service:true},saveDefaults:{}},
   cafe:{id:"cafe",name:"Café",category:"trade",cost:55,key:"5",unlockStage:1,description:"Earns coins every day and cheers up the street.",renderKey:"cafe",placement:{footprint:[1,1]},jobs:5,destination:{work:true,visit:true},saveDefaults:{}},
-  market:{id:"market",name:"Market",category:"trade",cost:130,key:"r",unlockStage:2,description:"A hub for trade — lifts what every café and bakery nearby takes.",renderKey:"market",placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
-  bakery:{id:"bakery",name:"Bakery",category:"trade",cost:80,key:"k",unlockStage:2,description:"Bakes what the windmills grind. Wants a mill within four tiles.",renderKey:"bakery",placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
-  mill:{id:"mill",name:"Windmill",category:"trade",cost:95,key:"9",unlockStage:3,description:"Grinds coin every day — most of all at harvest. Wants open ground.",renderKey:"mill",placement:{footprint:[1,1]},destination:{work:true},saveDefaults:{}},
+  market:{id:"market",name:"Market",category:"trade",cost:130,key:"r",unlockStage:2,description:"A hub for trade — lifts what every café and bakery nearby takes.",renderKey:"market",jobs:8,placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
+  bakery:{id:"bakery",name:"Bakery",category:"trade",cost:80,key:"k",unlockStage:2,description:"Bakes what the windmills grind. Wants a mill within four tiles.",renderKey:"bakery",jobs:6,placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
+  mill:{id:"mill",name:"Windmill",category:"trade",cost:95,key:"9",unlockStage:3,description:"Grinds coin every day — most of all at harvest. Wants open ground.",renderKey:"mill",jobs:5,placement:{footprint:[1,1]},destination:{work:true},saveDefaults:{}},
 
   // The production `park` ID stays 1×1 forever so old V3 cities remain intact.
   // Recreation 2.0 treats it as a generous legacy small green rather than

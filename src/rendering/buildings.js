@@ -7,8 +7,9 @@ import { activeFestival, festivalGlow } from '../world/festivals.js';
 
 // a soft contact shadow so a building sits on the ground instead of floating
 export function groundShadow(sx,sy,rx,ry,alpha){
-  g.fillStyle="rgba(30,50,40,"+(alpha||0.16)+")";
-  g.beginPath(); g.ellipse(sx,sy+1*S.cam.z,rx,ry,0,0,TAU); g.fill();
+  const sun=Math.sin((S.dayT||0)*TAU),z=S.cam.z,off=Math.max(-5,Math.min(5,sun*4))*z;
+  g.fillStyle="rgba(25,40,34,"+(alpha||0.18)+")";
+  g.beginPath(); g.ellipse(sx+off,sy+2*z,rx*1.08,ry,off*.025,0,TAU); g.fill();
 }
 
 export function drawHouse(b,p,dark){

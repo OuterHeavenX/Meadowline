@@ -5,6 +5,7 @@ import { proj } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
 import { birds, clouds, drops, motes } from '../world/weather.js';
 import { activeFestival, festivalGlow } from '../world/festivals.js';
+import { graphicsProfile } from './capabilities.js';
 
 export function drawPuff(p){
   const z=S.cam.z, s=proj(p.x,p.y);
@@ -56,14 +57,15 @@ export function drawBirds(dark){
 
 export function drawWeather(){
   if(S.wx.amt<=0.02) return;
+  const stride=graphicsProfile().rain<.5?3:graphicsProfile().rain<.8?2:1;
   if(S.wx.k==="snow"){
     g.fillStyle="rgba(255,255,255,"+(0.8*S.wx.amt).toFixed(3)+")";
-    for(const d of drops){ g.beginPath(); g.arc(d.x,d.y,1+d.r*1.7,0,TAU); g.fill(); }
+    for(let i=0;i<drops.length;i+=stride){const d=drops[i]; g.beginPath(); g.arc(d.x,d.y,1+d.r*1.7,0,TAU); g.fill(); }
   } else {
     g.strokeStyle="rgba(198,226,236,"+(0.4*S.wx.amt).toFixed(3)+")";
     g.lineWidth=1.1; g.lineCap="round";
     g.beginPath();
-    for(const d of drops){ g.moveTo(d.x,d.y); g.lineTo(d.x-d.l*0.22,d.y-d.l); }
+    for(let i=0;i<drops.length;i+=stride){const d=drops[i]; g.moveTo(d.x,d.y); g.lineTo(d.x-d.l*0.22,d.y-d.l); }
     g.stroke();
   }
 }

@@ -26,7 +26,7 @@ export function blip(freq,vol,type){
 }
 
 /* ---------- an ambient bed: one slow chord per season, plus small events ---------- */
-export const amb={on:false,g:null,f:null,voices:[],next:5,bird:7};
+export const amb={on:false,g:null,f:null,voices:[],rain:null,rainGain:null,next:5,bird:7};
 export const CHORDS=[[110,164.81,220],[123.47,164.81,246.94],[98,146.83,196],[103.83,155.56,207.65]];
 export const PENTA=[440,493.88,587.33,659.25,880];
 
@@ -45,6 +45,7 @@ export function ambientStart(){
       o.connect(gg); gg.connect(amb.f); o.start();
       return o;
     });
+    const seconds=2,buf=a.createBuffer(1,a.sampleRate*seconds,a.sampleRate),data=buf.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.34;amb.rain=a.createBufferSource();amb.rain.buffer=buf;amb.rain.loop=true;const rf=a.createBiquadFilter();rf.type='lowpass';rf.frequency.value=2200;amb.rainGain=a.createGain();amb.rainGain.gain.value=0;amb.rain.connect(rf);rf.connect(amb.rainGain);amb.rainGain.connect(a.destination);amb.rain.start();
     amb.g.gain.linearRampToValueAtTime(0.075,a.currentTime+4);
     amb.on=true;
   }catch(e){}
@@ -52,12 +53,12 @@ export function ambientStart(){
 export function ambientStop(){
   if(!amb.on||!AC) return;
   amb.on=false;
-  const a=AC, gn=amb.g, vs=amb.voices;
+  const a=AC, gn=amb.g, vs=amb.voices, rain=amb.rain, rainGain=amb.rainGain;
   try{
     gn.gain.cancelScheduledValues(a.currentTime);
     gn.gain.setValueAtTime(gn.gain.value,a.currentTime);
     gn.gain.linearRampToValueAtTime(0,a.currentTime+1.2);
-    setTimeout(()=>{ try{ vs.forEach(o=>o.stop()); gn.disconnect(); }catch(e){} },1600);
+    if(rainGain)rainGain.gain.setTargetAtTime(0,a.currentTime,.25);setTimeout(()=>{ try{ vs.forEach(o=>o.stop());if(rain)rain.stop();gn.disconnect(); }catch(e){} },1600);
   }catch(e){}
   amb.voices=[];
 }
@@ -97,6 +98,7 @@ export function ambientTick(dt){
   try{
     amb.voices.forEach((o,i)=>o.frequency.setTargetAtTime(ch[i]*(1+(i-1)*0.0016),now,3));
     amb.f.frequency.setTargetAtTime(420+1150*(1-clamp(darkness()/0.62,0,1)),now,2);
+    if(amb.rainGain)amb.rainGain.gain.setTargetAtTime(S.wx.k==='rain'?(S.wx.amt||0)*.055:0,now,.8);
   }catch(e){}
   amb.next-=dt;
   if(amb.next<=0){
@@ -108,4 +110,7 @@ export function ambientTick(dt){
     amb.bird=9+Math.random()*16;
     if(darkness()<0.2&&S.wx.amt<0.3) chirp();
   }
+}
+export function siren(kind='police'){
+  if(S.muted)return;const a=ac();if(!a)return;try{if(a.state==='suspended')a.resume();const o=a.createOscillator(),gg=a.createGain(),n=a.currentTime;o.type='triangle';const base=kind==='fire'?360:kind==='medical'?520:440;o.frequency.setValueAtTime(base,n);o.frequency.linearRampToValueAtTime(base*1.28,n+.22);o.frequency.linearRampToValueAtTime(base,n+.44);gg.gain.setValueAtTime(.0001,n);gg.gain.linearRampToValueAtTime(.035,n+.03);gg.gain.exponentialRampToValueAtTime(.0001,n+.48);o.connect(gg);gg.connect(a.destination);o.start(n);o.stop(n+.5);}catch(e){}
 }
