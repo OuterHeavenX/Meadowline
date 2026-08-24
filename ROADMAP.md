@@ -80,13 +80,15 @@ The first owner iPad pass proved the need for refinement before merge:
 - selected build/paint tools made an intended pan capable of accidental construction;
 - the permanent tool dock did not communicate build intent clearly enough.
 
-City Growth 1.1 therefore focuses on coherence rather than adding new simulation systems.
+The first revised UI then proved that auto-cancelling normal building tools after one placement was too cumbersome and that a floating Look strip could obstruct the build catalog. The current UI keeps normal building tools armed until explicitly cancelled/replaced, preserves safe drag-to-pan, uses in-dock active build controls, and avoids an obstructive Look strip.
+
+A later owner iPad session reports the refined build as **“Everything is looking great!”** and physically shows a Day 14, 92-citizen **Growing Town** with coherent parcel-expansion/Trees Town Goals, readable dense development, and the compact command bar while the map remains dominant. This is strong positive device evidence, but PR #4 still awaits the remaining explicit gesture/save/School checks and owner merge approval.
 
 #### Guided Development / Town Goals
 
 City Milestones remain permanent progression. Town Goals remain shorter contextual goals with modest rewards.
 
-Each stage now favors one primary **Next Step** plus one optional goal selected only after eligibility filtering.
+Each stage favors one primary **Next Step** plus one optional goal selected only after eligibility filtering.
 
 Town Goals use real state:
 
@@ -108,25 +110,70 @@ On touch devices:
 - immediate drag means **navigate**;
 - tap means **act/place**;
 - two fingers mean **pinch/zoom**, cancelling construction intent;
-- repeated paint/destructive actions require an intentional short hold before drag.
+- repeated paint/destructive actions require an intentional short hold before drag;
+- normal building tools may remain armed for repeated placement without sacrificing safe drag-to-pan.
 
 Future features must not reintroduce a hidden requirement to switch to a Move tool before safely touching the map.
 
 #### Mobile UI philosophy
 
-The bottom UI becomes a command surface rather than an always-expanded catalog:
+The bottom UI is a command surface rather than an always-expanded catalog:
 
 - Build button
 - collapsible build categories
 - clear Move / Look / Remove modes
-- active-tool pill
+- in-dock active build controls
 - visible gesture instruction
-- explicit cancel
+- `✓` keep tool / close tray
+- `×` cancel tool
 - stage-aware locked labels
 
 The map remains visually dominant.
 
-## Future system graph — roadmap only
+# Recommended next milestone after City Growth merge
+
+## Milestone 4 — Recreation 2.0 / Town Life
+
+**Roadmap only until City Growth is physically accepted and merged.**
+
+This is the recommended next major simulation milestone because it deepens systems already present without introducing punitive city-failure loops prematurely.
+
+Core relationship:
+
+Population / Density
+→ Recreation Demand / Boredom Pressure
+→ Park + future Recreation access
+→ Leisure satisfaction
+→ Mood
+→ Desirability
+→ Housing stability/evolution
+→ healthier neighborhood growth.
+
+Why this comes next:
+
+- Parks already exist visually and economically but do not yet function as a true bounded civic service.
+- Living City Foundation already provides the reusable service-provider architecture.
+- Housing 2.0 already consumes Mood and Desirability.
+- City Growth now creates denser neighborhoods and stronger civic demand.
+- Recreation gives the player a positive reason to preserve green space as land becomes valuable.
+- It remains calm, observable and non-punitive, matching Meadowline's identity.
+
+A future Recreation 2.0 implementation should likely include:
+
+- persistent household Recreation / boredom state or a carefully bounded derived equivalent;
+- Park as the first Recreation provider;
+- finite service radius/capacity where appropriate rather than map-wide magic;
+- Look explanations such as `Recreation nearby`, `Needs a place to unwind`, or `Park is crowded`;
+- green placement preview derived from real service geometry;
+- Town Goals that suggest Parks only when real Recreation demand exists;
+- progression-aware Park upgrades or a second recreation building only if the registry architecture supports it cleanly;
+- measurable effects on Mood and Desirability without catastrophic penalties;
+- Save V3-compatible optional metadata if possible;
+- physical iPhone/iPad acceptance and performance diagnostics.
+
+Do not automatically begin this milestone before PR #4 is approved/merged and a fresh branch is created from the then-current validated `main`.
+
+## Other future system graph — roadmap only
 
 ### Waterworks / Landscaping
 
@@ -152,15 +199,6 @@ Potential future tools:
 - Waterfront landscaping
 
 This deserves its own terrain/save/placement milestone after City Growth is physically stable.
-
-### Recreation 2.0
-
-Parks / future recreation providers
-→ recreation access
-→ less boredom
-→ better Mood
-→ better Desirability
-→ stronger Housing.
 
 ### Safety / Police / Crime / Jail
 
@@ -220,12 +258,15 @@ Do not introduce premium currencies, energy systems, monetization pacing, arbitr
 
 PR #4 may only move toward merge after:
 
-- current branch automation passes;
-- inappropriate early transport goals are physically confirmed fixed;
+- current branch automation passes at the final candidate SHA;
+- inappropriate early transport goals are physically confirmed fixed across appropriate stages;
 - drag-to-pan is safe with build tools selected;
+- repeated normal-building placement is comfortable;
 - intentional paint/removal remains comfortable;
-- new mobile build UI is comfortable on iPhone and iPad;
+- new mobile build UI remains comfortable on iPhone and iPad;
+- critical legacy-save checks pass;
+- School Level 2 is physically verified;
 - City Growth/Housing/Education/save regressions pass;
 - owner explicitly approves the merge.
 
-After that physical gate, stop and recommend the next milestone based on what play reveals. Do not automatically start Police, Recreation, Fire, Employment, Waterworks, or another branch.
+After that physical gate, merge only with explicit owner approval, then create the next milestone branch from the newly validated `main` rather than stacking Recreation work onto PR #4.
