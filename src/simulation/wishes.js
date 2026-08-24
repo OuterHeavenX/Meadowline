@@ -3,6 +3,7 @@ import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { isBuildingUnlocked, isTileUnlocked } from '../progression/city-growth.js';
 import { schoolStats } from './civic-services.js';
+import { recreationFacilities, recreationSnapshot } from './recreation.js';
 import { note } from './chronicle.js';
 import { countBridges } from '../transport/bridges.js';
 import { countType, inBounds, isWater, idx } from '../world/tiles.js';
@@ -21,6 +22,8 @@ const openedParcels=()=>S.cityProgress?.mode==='legacy-open'?9:(S.cityProgress?.
 const schoolL2=()=>S.ctx?.schools?.filter(s=>(s.state?.level||1)>=2).length||0;
 const cityHall=()=> (S.grid||[]).find(b=>b?.type==='cityHall')||null;
 const cityHallLevel=()=>Math.max(0,Math.floor(Number(cityHall()?.state?.level)||0));
+const recreation=()=>recreationSnapshot();
+const recreationCount=()=>recreationFacilities().length;
 
 export function hasUsableUnlockedWaterfront(){
   if(!isBuildingUnlocked('dock')) return false;
@@ -48,7 +51,20 @@ export const GOAL_TYPES={
   pop:dynamic('pop',slot=>{ const steps=stage()===1?[8,16]:stage()===2?[24,30]:stage()===3?[40,48]:[64,92,130]; const n=ladder(S.pop,steps); return {t:'Grow to <b>'+n+'</b> residents',g:n,r:Math.min(150,28+n*2),at:()=>S.pop}; }),
   mood:dynamic('mood',()=>{ const n=Math.min(ladder(S.mood,[52,68,82]),82); return {t:'Lift the valley to <b>'+(n>=82?'Blissful':n>=68?'Content':'Settled')+'</b>',g:n,r:70,at:()=>S.mood}; },()=>occupied()>=3&&S.mood<82),
   cafe:fixed('cafe','Open your first <b>café</b>',()=>count('cafe'),()=>1,48,()=>isBuildingUnlocked('cafe')&&count('cafe')<1),
+
+  // Historical `park` is retained only so old saved goals sanitize cleanly.
   park:fixed('park','Lay out your first <b>park</b>',()=>count('park'),()=>1,48,()=>isBuildingUnlocked('park')&&count('park')<1),
+  recreationStart:fixed('recreationStart','Establish a <b>neighborhood Park</b>',recreationCount,()=>1,55,()=>occupied()>=3&&recreationCount()<1&&isBuildingUnlocked('pocketPark')),
+  recreationAccess:dynamic('recreationAccess',()=>{
+    const r=recreation(),gain=Math.min(12,Math.max(6,r.underserved||0)),target=Math.min(r.demand||0,(r.served||0)+gain);
+    return {t:'Give more residents <b>Recreation access</b>',g:Math.max(1,target),r:95,at:()=>recreation().served||0};
+  },()=>stage()>=2&&(recreation().demand||0)>=12&&(recreation().underserved||0)>=6),
+  recreationCapacity:dynamic('recreationCapacity',()=>{
+    const r=recreation(),target=(r.capacity||0)+Math.min(28,Math.max(12,r.underserved||0));
+    return {t:'Expand <b>Recreation capacity</b>',g:target,r:115,at:()=>recreation().capacity||0};
+  },()=>stage()>=3&&(recreation().demand||0)>=24&&(recreation().underserved||0)>=10),
+  townPark:fixed('townPark','Establish a <b>Town Park</b>',()=>count('townPark'),()=>1,155,()=>stage()>=4&&isBuildingUnlocked('townPark')&&count('townPark')<1&&(recreation().demand||0)>=45&&(recreation().underserved||0)>=12),
+
   school:fixed('school','Open your first <b>School</b>',()=>count('school'),()=>1,95,()=>stage()>=2&&isBuildingUnlocked('school')&&count('school')<1),
   students:fixed('students','Serve <b>6</b> students',studentsServed,()=>6,95,()=>stage()>=2&&count('school')>0&&studentsServed()<6),
   education:dynamic('education',()=>{ const n=stage()===2?8:stage()===3?18:25; return {t:'Raise average Education to <b>'+n+'</b>',g:n,r:110,at:avgEducation}; },()=>stage()>=2&&count('school')>0),
@@ -72,16 +88,16 @@ export const GOAL_TYPES={
 export const WISH_TYPES=GOAL_TYPES;
 
 const PRIMARY_BY_STAGE={
-  1:['roads','homes','cityhall','pop','park','cafe'],
-  2:['school','students','cityhall2','townhome','education','desirability','expansion','pop'],
-  3:['school2','cityhall3','townhome','established','rail','station','train','expansion','pop'],
-  4:['cityhall4','dock','boats','expansion','education','desirability','pop']
+  1:['roads','homes','cityhall','pop','recreationStart','cafe'],
+  2:['school','students','cityhall2','townhome','recreationAccess','education','desirability','expansion','pop'],
+  3:['school2','cityhall3','townhome','established','recreationCapacity','rail','station','train','expansion','pop'],
+  4:['cityhall4','townPark','recreationAccess','dock','boats','expansion','education','desirability','pop']
 };
 const OPTIONAL_BY_STAGE={
-  1:['park','cafe','tree','mood'],
-  2:['market','bakery','park','tree','lamp','mood','purse'],
-  3:['mill','market','bakery','park','tree','lamp','mood','purse'],
-  4:['dock','boats','park','tree','lamp','mood','purse']
+  1:['recreationStart','cafe','tree','mood'],
+  2:['recreationAccess','market','bakery','tree','lamp','mood','purse'],
+  3:['recreationCapacity','mill','market','bakery','tree','lamp','mood','purse'],
+  4:['townPark','recreationAccess','dock','boats','tree','lamp','mood','purse']
 };
 
 function buildGoal(id,slot){ const def=GOAL_TYPES[id]; if(!def||!def.eligible()) return null; const made=def.make?def.make(slot):{t:def.label,g:def.target(),r:def.reward,at:def.at}; if(!made||!(made.g>0)) return null; return {k:id,slot,t:made.t,g:made.g,r:made.r|0}; }
