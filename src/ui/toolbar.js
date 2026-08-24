@@ -14,6 +14,7 @@ const buildToggle=document.getElementById('b-build');
 const active=document.getElementById('active-tool');
 const activeName=document.getElementById('active-tool-name');
 const activeMeta=document.getElementById('active-tool-meta');
+const activeConfirm=document.getElementById('active-tool-confirm');
 const activeCancel=document.getElementById('active-tool-cancel');
 export let category=CATEGORIES[0].id;
 
@@ -33,21 +34,29 @@ export function showCategory(id){ category=id; renderCats(); if(elTools) elTools
 export function pickTool(id){
   const t=toolDef(id); if(!t)return;
   if(t.cat!=='mode'&&!isBuildingUnlocked(id)){ hint(t.name+' unlocks at '+CITY_STAGES[buildingUnlockStage(id)-1].name+'.',true); return; }
-  if(id!=='look'&&S.tool==='look') services.closeLook(); S.tool=id;
+  if(id!=='look'&&S.tool==='look') services.closeLook();
+  S.tool=id;
   if(t.cat!=='mode'&&t.cat!==category) showCategory(t.cat);
-  if(t.cat!=='mode'&&matchMedia('(pointer: coarse)').matches) toggleBuildTray(false);
+  // Selecting a building no longer closes the tray. The player explicitly
+  // chooses ✓ to keep the tool and return map focus, or × to cancel it.
   paintTools(); hint(t.desc); services.blip(430,.05,'triangle');
 }
 export function paintActiveTool(){
-  if(!active)return; const t=toolDef(S.tool); const neutral=!t||S.tool==='move'; active.classList.toggle('show',!neutral); active.classList.toggle('danger',S.tool==='erase');
-  if(neutral)return;
+  if(!active)return;
+  const t=toolDef(S.tool);
+  // Look is a lightweight inspection mode and should never obscure the build catalog.
+  const show=!!t&&S.tool!=='move'&&S.tool!=='look';
+  active.classList.toggle('show',show); active.classList.toggle('danger',S.tool==='erase');
+  if(!show)return;
   if(activeName)activeName.textContent=t.name+(t.cost?' · '+t.cost+' coins':'');
-  if(activeMeta)activeMeta.textContent=S.tool==='look'?'Tap to inspect · Drag to move':isPaintTool(S.tool)?'Tap once · Hold + drag to paint':'Tap to place · Drag to move';
+  if(activeMeta)activeMeta.textContent=isPaintTool(S.tool)?'Tap once · Hold + drag to paint':'Tap to place · Drag to move';
 }
 export function paintTools(){
   if(elTools){ const expected=TOOLS.filter(t=>t.cat===category); const ids=[...elTools.children].map(b=>b.dataset.id); if(ids.join('|')!==expected.map(t=>t.id).join('|')) elTools.replaceChildren(...expected.map(t=>button(t,false))); }
   for(const b of [...(elTools?.children||[]),...(elModes?.children||[])]){ const c=COST[b.dataset.id]; b.classList.toggle('broke',!b.disabled&&c>0&&S.coins<c); b.classList.toggle('on',b.dataset.id===S.tool); b.setAttribute('aria-pressed',b.dataset.id===S.tool?'true':'false'); }
   elDock?.classList.toggle('building',toolDef(S.tool)?.cat!=='mode'); paintActiveTool();
 }
-buildToggle?.addEventListener('click',()=>toggleBuildTray()); activeCancel?.addEventListener('click',()=>pickTool('move'));
+buildToggle?.addEventListener('click',()=>toggleBuildTray());
+activeConfirm?.addEventListener('click',()=>{ toggleBuildTray(false); paintActiveTool(); });
+activeCancel?.addEventListener('click',()=>{ pickTool('move'); toggleBuildTray(false); });
 renderCats(); renderModes(); showCategory(category); addEventListener('resize',paintTools);
