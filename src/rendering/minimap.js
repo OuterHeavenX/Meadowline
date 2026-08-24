@@ -1,6 +1,7 @@
 import { H, W, clamp, hash2 } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { SPANS } from '../transport/bridges.js';
+import { isLegacyOpen, isTileUnlocked, parcelAt, parcelStatus } from '../progression/city-growth.js';
 import { screen2world, world2screen } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
 import { idx } from '../world/tiles.js';
@@ -24,9 +25,13 @@ export function drawMini(){
     else c=PAL.grass[(hash2(x,y,17)*4)|0];
     mg.fillStyle=c;
     mg.fillRect(x*MS,y*MS,MS,MS);
+    if(!isLegacyOpen()&&!isTileUnlocked(x,y)){
+      const parcel=parcelAt(x,y), st=parcel&&parcelStatus(parcel.id);
+      mg.fillStyle=st?.state==="available"?"rgba(119,163,101,.16)":"rgba(28,37,33,.25)";
+      mg.fillRect(x*MS,y*MS,MS,MS);
+    }
   }
-  const cs=[screen2world(0,0),screen2world(innerWidth,0),
-            screen2world(innerWidth,innerHeight),screen2world(0,innerHeight)];
+  const cs=[screen2world(0,0),screen2world(innerWidth,0),screen2world(innerWidth,innerHeight),screen2world(0,innerHeight)];
   mg.strokeStyle="rgba(244,240,226,.9)"; mg.lineWidth=1.4;
   mg.beginPath();
   cs.forEach((c,i)=>{

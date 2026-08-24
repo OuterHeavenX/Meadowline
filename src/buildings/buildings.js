@@ -3,19 +3,29 @@ import { DIRS } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { invalidateServices } from '../simulation/civic-services.js';
-import { BUILDABLE, BUILDING_COST, defaultBuildingState } from './registry.js';
+import { BUILDABLE, BUILDING_COST, defaultBuildingState, getBuildingDefinition } from './registry.js';
 import { SPANS } from '../transport/bridges.js';
 import { idx, inBounds, isType, isWater } from '../world/tiles.js';
+import { cityStage, isBuildingUnlocked, isFootprintUnlocked, parcelAt } from '../progression/city-growth.js';
 
 export { BUILDABLE } from './registry.js';
 
 /* ---------- building placement ---------- */
-// A span over water costs three times what it does on dry ground.
 export function costOf(kind,x,y){ return BUILDING_COST[kind]*(SPANS[kind]&&isWater(x,y)?3:1); }
 
 export function canPlace(kind,x,y){
   if(!BUILDABLE[kind]) return {ok:false};
   if(!inBounds(x,y)) return {ok:false};
+  if(!isBuildingUnlocked(kind)){
+    const def=getBuildingDefinition(kind);
+    return {ok:false,why:(def?.name||'This building')+' unlocks as Meadowline grows beyond '+cityStage().name+'.'};
+  }
+  const def=getBuildingDefinition(kind);
+  const fp=def?.placement?.footprint||[1,1];
+  if(!isFootprintUnlocked(x,y,fp[0],fp[1])){
+    const parcel=parcelAt(x,y);
+    return {ok:false,why:parcel?'This land has not been opened yet.':'This land is outside the development area.'};
+  }
   const i=idx(x,y);
   if(S.terr[i]===1&&!SPANS[kind]) return {ok:false,why:"Only roads and rails can cross the water."};
   const cur=S.grid[i];
@@ -42,7 +52,6 @@ export function canPlace(kind,x,y){
   return {ok:true};
 }
 
-// the first of each kind is worth writing down
 const NOTED={};
 const NOTE_NAMES={cafe:"The first café opened",park:"The first park was laid out",
   station:"The first station opened",mill:"The first windmill turned",
@@ -66,6 +75,7 @@ export function place(kind,x,y){
 
 export function erase(x,y){
   if(!inBounds(x,y)) return false;
+  if(!isFootprintUnlocked(x,y,1,1)){ services.hint("Open this land before developing it.",true); return false; }
   const i=idx(x,y);
   const b=S.grid[i];
   if(!b){

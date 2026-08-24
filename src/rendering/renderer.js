@@ -4,6 +4,8 @@ import { S } from '../core/state.js';
 import { drawBakery, drawCafe, drawDock, drawLamp, drawMarket, drawPark, drawSchool, drawStation, drawWindmill } from './buildings.js';
 import { drawHousingHouse } from './housing.js';
 import { drawCivicPlacementPreview } from './service-overlays.js';
+import { drawLandAccess } from './land-overlays.js';
+import { drawSchoolUpgradeDetails } from './school-upgrades.js';
 import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
 import { drawBoat, drawCitizen, drawTrain } from './entities.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
@@ -13,7 +15,6 @@ import { PAL } from '../world/seasons.js';
 import { idx, inBounds } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 
-/* ---------- hover ghost ---------- */
 export let hover={x:-1,y:-1,on:false};
 export function drawGhost(){
   if(!hover.on||S.tool==="move"||S.tool==="look") return;
@@ -21,28 +22,17 @@ export function drawGhost(){
   if(!inBounds(x,y)) return;
   const p=proj(x,y);
   const ok=S.tool==="erase"?(!!S.grid[idx(x,y)]||!!S.natTree[idx(x,y)]):canPlace(S.tool,x,y).ok;
-
-  // Civic service reach is useful planning information even when the exact tile
-  // under the pointer is invalid. Keep the service field visible while the
-  // placement ghost itself stays red to explain that this tile cannot be built on.
   const servicePreview=drawCivicPlacementPreview(S.tool,x,y);
-
   diamond(p.x,p.y,1.02);
-  g.fillStyle=ok?"rgba(244,240,226,.34)":"rgba(214,96,80,.34)";
-  g.fill();
+  g.fillStyle=ok?"rgba(244,240,226,.34)":"rgba(214,96,80,.34)"; g.fill();
   g.strokeStyle=ok?"rgba(244,240,226,.85)":"rgba(214,96,80,.9)";
   g.lineWidth=1.6*S.cam.z; g.stroke();
-
-  // Legacy mood/amenity previews remain restrained. Service buildings use the
-  // green boundary above instead of a second competing outline.
   const RADII={park:4,cafe:5,station:6,lamp:2,mill:3,market:5,bakery:4,dock:4};
   const rad=servicePreview?0:(RADII[S.tool]||0);
   if(rad){
     g.strokeStyle="rgba(244,240,226,.22)"; g.lineWidth=1.2*S.cam.z;
     const c=[[-rad,-rad],[rad+1,-rad],[rad+1,rad+1],[-rad,rad+1]].map(o=>proj(x+o[0]-0.5,y+o[1]-0.5));
-    g.beginPath(); g.moveTo(c[0].x,c[0].y);
-    for(let i=1;i<4;i++) g.lineTo(c[i].x,c[i].y);
-    g.closePath(); g.stroke();
+    g.beginPath(); g.moveTo(c[0].x,c[0].y); for(let i=1;i<4;i++) g.lineTo(c[i].x,c[i].y); g.closePath(); g.stroke();
   }
 }
 
@@ -55,26 +45,24 @@ export function drawPick(){
   g.lineWidth=2.2*z; g.stroke();
 }
 
-/* ---------- frame ---------- */
 export function render(){
   const dark=darkness();
   const sky=g.createLinearGradient(0,0,0,innerHeight);
   const k=clamp(dark/0.62,0,1);
-  const topC=mix(PAL.skyTop,PAL.nightTop,k);
-  const botC=mix(PAL.skyBot,PAL.nightBot,k);
+  const topC=mix(PAL.skyTop,PAL.nightTop,k), botC=mix(PAL.skyBot,PAL.nightBot,k);
   sky.addColorStop(0,topC); sky.addColorStop(1,botC);
   g.fillStyle=sky; g.fillRect(0,0,innerWidth,innerHeight);
 
   lights.length=0;
   drawGround();
+  drawLandAccess();
   drawCloudShadows();
   drawPick();
   drawGhost();
 
   const items=[];
   for(let i=0;i<S.grid.length;i++){
-    const b=S.grid[i];
-    if(!b) continue;
+    const b=S.grid[i]; if(!b) continue;
     if(S.terr[i]===1&&SPANS[b.type]) items.push({d:b.x+b.y-0.05,k:5,b});
     else if(b.type!=="road"&&b.type!=="rail") items.push({d:b.x+b.y,k:0,b});
   }
@@ -98,7 +86,7 @@ export function render(){
       else if(t==="mill") drawWindmill(it.b,p,dark);
       else if(t==="market") drawMarket(it.b,p,dark);
       else if(t==="bakery") drawBakery(it.b,p,dark);
-      else if(t==="school") drawSchool(it.b,p,dark);
+      else if(t==="school"){ drawSchool(it.b,p,dark); drawSchoolUpgradeDetails(it.b,p,dark); }
       else if(t==="dock") drawDock(it.b,p,dark);
       else if(t==="tree") drawTree(p.x,p.y,it.b.seed,1);
     } else if(it.k===1){
@@ -112,33 +100,24 @@ export function render(){
       const p=proj(it.b.x,it.b.y);
       if(p.x<-120||p.x>innerWidth+120||p.y<-160||p.y>innerHeight+120) continue;
       drawSpan(it.b,p);
-    }
-    else drawPuff(it.p);
+    } else drawPuff(it.p);
   }
 
   drawBirds(dark);
   if(S.wx.amt>0.02&&S.wx.k==="rain"){
-    g.fillStyle="rgba(58,76,86,"+(0.17*S.wx.amt).toFixed(3)+")";
-    g.fillRect(0,0,innerWidth,innerHeight);
+    g.fillStyle="rgba(58,76,86,"+(0.17*S.wx.amt).toFixed(3)+")"; g.fillRect(0,0,innerWidth,innerHeight);
   }
   if(dark>0.02){
-    g.fillStyle="rgba(26,38,64,"+dark+")";
-    g.fillRect(0,0,innerWidth,innerHeight);
+    g.fillStyle="rgba(26,38,64,"+dark+")"; g.fillRect(0,0,innerWidth,innerHeight);
     g.globalCompositeOperation="lighter";
     for(const L of lights){
       const a=clamp(dark*1.5,0,1);
       const rg=g.createRadialGradient(L.x+L.w/2,L.y+L.h/2,0,L.x+L.w/2,L.y+L.h/2,(L.big?16:11)*S.cam.z);
-      rg.addColorStop(0,"rgba(255,204,130,"+(0.75*a)+")");
-      rg.addColorStop(1,"rgba(255,190,120,0)");
-      g.fillStyle=rg;
-      g.fillRect(L.x-16*S.cam.z,L.y-16*S.cam.z,(L.w+32*S.cam.z),(L.h+32*S.cam.z));
-      g.fillStyle="rgba(255,214,150,"+(0.85*a)+")";
-      g.fillRect(L.x,L.y,L.w,L.h);
+      rg.addColorStop(0,"rgba(255,204,130,"+(0.75*a)+")"); rg.addColorStop(1,"rgba(255,190,120,0)");
+      g.fillStyle=rg; g.fillRect(L.x-16*S.cam.z,L.y-16*S.cam.z,(L.w+32*S.cam.z),(L.h+32*S.cam.z));
+      g.fillStyle="rgba(255,214,150,"+(0.85*a)+")"; g.fillRect(L.x,L.y,L.w,L.h);
     }
     g.globalCompositeOperation="source-over";
   }
-  drawFireflies(dark);
-  drawLanterns(dark);
-  drawMotes();
-  drawWeather();
+  drawFireflies(dark); drawLanterns(dark); drawMotes(); drawWeather();
 }

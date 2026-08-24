@@ -1,380 +1,86 @@
 # Meadowline Living City Foundation
 
-Foundation implementation branch: `feature/living-city-foundation`
+## Status
 
-Current child milestone branch: `feature/housing-2`
+**Production on `main`.** Historical implementation branch: `feature/living-city-foundation`. Architectural source: `agent/architecture-refactor`. Living City / School 2.0 was included with Housing 2.0 in merged PR #3; historical PR #1 was superseded and closed without separate merge.
 
-Architectural source: `agent/architecture-refactor`
+This document records permanent architecture that City Growth and future civic systems must preserve.
 
-This document records the architectural foundation Meadowline now uses for deeper living-city systems and how Housing 2.0 consumes it.
+## Static-browser architecture
 
-The game remains a lightweight static browser game using native ES modules and the existing canvas/isometric renderer. React, a server runtime and a gameplay build step are not required.
+Meadowline remains native ES modules + Canvas 2D/isometric rendering. No React/Vue application, server runtime, or gameplay build process is required during normal play.
 
-## Foundation status
+## Authoritative building registry
 
-Living City Foundation / School 2.0 is implemented on `feature/living-city-foundation` and remains intentionally unmerged in draft PR #1.
+`src/buildings/registry.js` is the shared source for building identity, category, cost, shortcuts, placement metadata, service metadata, save defaults, progression unlock metadata, and civic upgrade metadata wherever practical.
 
-Core School behavior has been physically demonstrated on the owner's iPhone, including finite capacity, real overload, household Education, 7-tile reach and pinch safety.
+Future systems should query the registry instead of creating parallel School/toolbar/save/unlock tables.
 
-Housing 2.0 is being developed from that exact foundation on `feature/housing-2`; it does not replace or rewrite the civic-service architecture.
+## Reusable civic providers
 
-## Building registry
+Education is the first real service provider.
 
-`src/buildings/registry.js` is the authoritative shared definition source for buildable metadata wherever practical.
+Level 1 School:
 
-It supports:
+- radius 7
+- capacity 28
+- persistent `state.level`
 
-- building ID/name/category/cost
-- shortcut and description
-- placement metadata
-- render key
-- destination roles
-- civic-service type/radius/capacity
-- provider upgrade definitions
-- default persistent state
-- Housing 2.0 residential tier metadata
+Households generate demand from real population. Assignment is deterministic and capacity-bounded. A household can be geographically covered but waiting for space. Household Education is persistent 0–100; service loss pauses gain rather than deleting learned Education.
 
-Housing 2.0 extends the House definition with three first-pass residential tiers while leaving the toolbar as a single House tool.
+The provider layer is designed to support future Safety, Fire, Healthcare, Recreation, Employment, Transit, Sanitation, and similar services without implying those systems already exist.
 
-## Civic-service framework
+## Cached recomputation
 
-`src/simulation/civic-services.js` provides the reusable provider/coverage/capacity/assignment layer.
-
-Reserved service IDs include:
-
-- `education`
-- `safety`
-- `healthcare`
-- `fireProtection`
-- `recreation`
-- `employment`
-- `transit`
-- `sanitation`
-
-Only Education is currently a real player-facing civic service.
-
-The framework answers:
-
-- which buildings provide a service
-- which households are in geographic reach
-- total demand
-- total/provider capacity
-- served demand
-- overload state
-- assigned provider
-
-Service relationships are cached and invalidated by meaningful events rather than recomputed every render frame.
-
-## School 2.0
-
-Current Education-service values:
-
-- cost: 145 coins
-- Education radius: 7 tiles
-- capacity: 28 student-demand units
-- household demand: roughly half household population, rounded up
-- Education scale: 0–100
-- deterministic nearest/capacity-aware assignment
-- gradual Education progression
-- Education already earned remains if coverage is lost
-- School level state begins at 1
-
-The School's older mood influence remains local at 5 tiles.
-
-### Housing-capacity legacy rule
-
-The Living City Foundation originally preserved the historical +2 resident-capacity School proximity bonus for compatibility.
-
-Housing 2.0 audits and retires that rule as a source of **future growth** because residential tier now owns residential density and Education is the School's real civic outcome.
-
-The Housing 2.0 migration rule is deliberately safe:
-
-- existing residents are not evicted
-- a home already above its tier's new base capacity is grandfathered at its current population
-- no new residents arrive above the tier base until the home evolves to a tier whose capacity supports them
-
-This removes an architectural conflict without silently deleting residents from older saves.
-
-## Household Education model
-
-Education remains household/building state rather than converting every visible pedestrian into a persistent citizen record.
-
-Key APIs include:
-
-- `getEducationLevel(house)`
-- `getEducationFactor(house)`
-- `getCityEducationAverage()`
-- `educationAssignment(house)`
-- `educationProvider(house)`
-
-Housing 2.0 consumes Education through its own residential readiness layer rather than adding Housing rules to the School module.
-
-## Housing 2.0 consumer architecture
-
-`src/simulation/housing.js` is the focused residential simulation module.
-
-It owns:
-
-- residential tier lookup
-- base/legacy-safe capacity
-- residential tax multiplier
-- Neighborhood Desirability
-- upgrade readiness
-- automatic upgrade progress
-- upgrade timing
-- housing metrics
-
-It does not own UI rendering or School service calculations.
-
-### Residential tiers
-
-Current values:
-
-| Tier | Name | Base capacity | Tax multiplier | Requirements for entry |
-|---|---|---:|---:|---|
-| 1 | Cottage | 4 | 1.00× | starting tier |
-| 2 | Town Home | 6 | 1.25× | road, Mood 65+, Education 15+, Desirability 45+ |
-| 3 | Established Home | 8 | 1.55× | road, Mood 78+, Education 35+, Desirability 62+ |
-
-Upgrade time is gradual and slightly offset per house using deterministic seed variation so neighborhoods do not transform on the same frame.
-
-When a requirement drops below threshold, earned upgrade progress pauses rather than resetting.
-
-No downgrade system exists.
-
-## Neighborhood Desirability
-
-Desirability is a separate 0–100 residential-development metric.
-
-It is not a replacement for Mood.
-
-Current real inputs:
-
-- road access
-- current Mood
-- Education-service status
-- household Education
-- parks
-- cafés
-- station access
-- lamps
-- trees/water
-- local crowding
-
-Current labels:
-
-- Quiet Start
-- Developing
-- Pleasant
-- Desirable
-- Highly Desirable
-
-The model is intentionally extensible so real future Safety, Healthcare, Employment and Prosperity can contribute later.
-
-Normal UI does not show those nonexistent systems today.
-
-## Cross-system feedback loop
-
-Housing 2.0 deliberately proves that service outcomes can feed growth and growth can feed service pressure:
-
-Education + neighborhood conditions
-→ residential qualification
-→ housing tier upgrade
-→ higher resident capacity
-→ population growth
-→ generic School demand increases
-→ School utilization / overload changes
-
-Housing never directly edits School demand. Population change invalidates the existing civic-service cache and the Education service recalculates naturally.
-
-This is the first full circular Living City relationship.
-
-## Civic-service coverage visualization
-
-Housing 2.0 adds `src/rendering/service-overlays.js` as a reusable civic placement layer.
-
-For a School placement preview it renders:
-
-- light green service-area fill
-- green geographic perimeter
-- green household benefit markers
-- amber/yellow capacity-pressure markers
-
-The geographic boundary reads radius metadata from the building registry.
-
-### Exact geometry rule
-
-Current civic service distance is Chebyshev distance:
-
-`max(abs(dx), abs(dy)) <= radius`
-
-For School `radius: 7`, every tile center within seven steps in either axis is eligible for geographic coverage. The visual perimeter follows that exact region and clips at the world boundary.
-
-The overlay therefore represents real service reach rather than a decorative circle or an unrelated hard-coded square.
-
-The same renderer API is prepared for future civic providers; only School uses it today.
-
-## Housing visual evolution
-
-`src/rendering/housing.js` provides tier-aware home rendering without changing tile footprint.
-
-The visual language is deliberately phone-readable:
-
-- Tier 1 Cottage: smallest silhouette
-- Tier 2 Town Home: wider/taller silhouette, dormer and additional upper window
-- Tier 3 Established Home: larger silhouette, more upper windows and small garden/fence treatment
-
-Wall/roof variation remains seed-based.
-
-Active upgrade progress can display a restrained growth chevron.
-
-## Player-facing explanation
-
-House Look now combines:
-
-### Household
-
-- resident names
-- current residents / capacity
-- Mood and Mood reasons
-
-### Education
-
-- Education value/tier
-- serving School
-- School capacity
-- coverage state
-- plain-language service status
-
-### Neighborhood
-
-- Desirability value/label
-- strongest current positive influences
-
-### Residential growth
-
-- current tier
-- next tier
-- upgrade progress
-- road/Mood/Education/Desirability requirements
-- `Growing toward…` or `Not ready yet`
-
-The panel is already scrollable on mobile so added explanation does not require shrinking text.
-
-## Residential economy
-
-The original residential tax calculation is preserved for Tier 1.
-
-Daily residential tax now uses a weighted resident total:
-
-- Cottage residents: 1.00×
-- Town Home residents: 1.25×
-- Established Home residents: 1.55×
-
-Trade, mills, festivals and other economy paths remain separate.
+Service data is cached and invalidated on relevant state changes. It is not rebuilt every render frame. Housing density therefore pressures Education through the generic service path rather than a Housing-only shortcut.
 
 ## Save Schema V3
 
-Current key remains:
+Current key: `meadowline.v3`.
 
-`meadowline.v3`
+V1/V2 migration and defensive optional building state remain permanent compatibility requirements. City Growth and Town Goals continue using V3; missing City Growth metadata must never retroactively lock an established city.
 
-Housing 2.0 does not require Save V4.
+## Mobile input evolution
 
-House state now supports:
+The original Living City repair changed placement from immediate pointer-down commitment to a pending tap that a second finger could cancel, proving that pinch/zoom must never place a building accidentally.
 
-```json
-{
-  "education": 42,
-  "housingTier": 2,
-  "upgradeProgress": 0.36,
-  "desirability": 61
-}
-```
+City Growth 1.1 strengthens that permanent rule after physical iPad testing exposed another failure mode: with a paint tool selected, an intended one-finger pan could begin construction.
 
-V1, V2 and earlier V3 saves receive safe Housing defaults.
+The current touch contract is now:
 
-Validation clamps:
+- tap = one intentional action;
+- immediate one-finger drag = camera navigation regardless of selected build tool;
+- second finger = pinch/zoom, cancelling pending build/paint intent;
+- Road/Rail/Tree/Remove drag painting requires a deliberate short hold before movement;
+- pointer cancellation and UI input shielding remain required.
 
-- Education to 0–100
-- housing tier to an available tier
-- upgrade progress to 0–1
-- Desirability to 0–100
+This newer contract supersedes the earlier assumption that paint tools begin painting immediately after a drag threshold, while preserving the earlier pinch safety reasoning.
 
-Unknown bounded JSON-safe optional metadata remains preserved.
+Desktop mouse controls may remain faster and separate from coarse-pointer behavior.
 
-## Performance model
+## Inspection and service visualization
 
-Housing evolution runs on the existing low-frequency Living City simulation tick.
+Look cards expose player-facing service state. Civic placement boundaries read provider metadata from the registry and match the actual service geometry rather than a decorative approximation.
 
-It is not tied to 60 FPS rendering.
+## Diagnostics and tests
 
-Diagnostics now include:
+Developer-only `?debug=1`, browser regressions, and module-hygiene checks remain required. City Growth 1.1 adds input-state and Town Goal diagnostics without replacing existing performance/service/Housing checks.
 
-- housing evaluations
-- housing upgrades
-- Desirability recomputes
-- existing service rebuilds
-- path searches
-- save size
-- frame/simulation/render timing
+## Physical validation record
 
-The 44×44 world remains unchanged for this milestone.
+Previously physically demonstrated before the production merge:
 
-## Automated coverage
+- mobile load/render
+- School Look readability
+- 28/28 finite capacity and overload
+- waiting-for-space language
+- household Education gain
+- radius 7 service reach
+- two-finger pinch with School selected does not build
+- representative pedestrian count repair
 
-Housing 2.0 regression coverage now includes or prepares checks for:
+Those facts do not automatically validate later City Growth UI. Current City Growth 1.1 device checks remain in `docs/IPHONE_ACCEPTANCE.md`.
 
-- three residential definitions
-- Tier 1/2/3 capacities
-- invalid tier repair
-- grandfathered population safety
-- road/Mood/Education/Desirability readiness
-- gradual upgrade progress
-- paused progress retention
-- eventual upgrade
-- Desirability bounds
-- tier tax multipliers
-- housing-density → School-demand feedback
-- exact 7-tile civic-boundary geometry
-- provider-preview coverage not exceeding real radius
-- V3 housing tier persistence
-- V3 upgrade-progress persistence
-- V1/V2 housing defaults
-- malformed housing-state defense
+## Current consumer
 
-Existing School, input, citizen, bridge, train, season/weather and save tests remain in the suite.
-
-## Physical validation boundary
-
-The new Housing 2.0 code must not be described as physically proven until the owner tests the branch on iPhone.
-
-Required checks are maintained in `docs/IPHONE_ACCEPTANCE.md`.
-
-## Still roadmap-only
-
-Not implemented in Housing 2.0:
-
-- land unlocks
-- Police / Crime / Jail
-- Fire Department / fires
-- Hospital / healthcare
-- illness / medicine
-- medical research / evolving viruses
-- employment / unemployment
-- household wages / prosperity
-- full neighborhood identity system
-- advanced traffic
-- road-over-rail crossing behavior
-- enlarged map
-- chunks
-- A* rewrite
-- giant persistent citizen population
-
-## Architectural rule going forward
-
-School 2.0 is the reference **provider** implementation.
-
-Housing 2.0 is the reference **consumer of service outcomes**.
-
-Future Meadowline systems should continue connecting through explicit state and reusable APIs rather than hidden one-off bonuses.
+`feature/city-growth-progression` reuses this foundation. School Level 2 remains a registry-driven generic civic upgrade: 44 capacity at radius 7. Future Police/Fire/Hospital work should use the same architecture only after their milestones are approved.

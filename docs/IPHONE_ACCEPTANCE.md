@@ -1,239 +1,272 @@
-# Meadowline Housing 2.0 — Physical iPhone Acceptance
+# Meadowline — Physical iPhone / iPad Acceptance
 
-Branch: `feature/housing-2`
+This is Meadowline's canonical owner-device acceptance record. CI/browser tests are **not** physical acceptance.
 
-Parent branch: `feature/living-city-foundation`
+## Previously physically proven — Living City / School 2.0
 
-This checklist separates behavior already physically demonstrated in the Living City / School 2.0 pass from new Housing 2.0 behavior that still requires deliberate device testing.
+Observed on an owner iPhone before production merge:
 
-Automated/browser validation does **not** replace physical-device approval.
+- [x] Meadowline loads/renders on mobile.
+- [x] School Look is readable.
+- [x] Level 1 School capacity remains bounded at 28/28.
+- [x] Demand can exceed capacity without served count exceeding it.
+- [x] `At capacity` and `Waiting for school space` states are understandable.
+- [x] Household Education increases while served.
+- [x] School service radius is 7 tiles.
+- [x] Two-finger pinch with School selected does not accidentally build.
+- [x] observed representative-pedestrian over-count was repaired.
 
----
+## Production Housing 2.0 regression surface
 
-# Previously confirmed on the owner's iPhone
+Housing 2.0 is already on `main`; these remain regression checks during City Growth testing:
 
-These items were physically observed on the Living City Foundation branch and must not regress:
+- [ ] Cottage / Town Home / Established Home silhouettes remain readable.
+- [ ] House Look remains scrollable/readable.
+- [ ] resident capacity matches tier.
+- [ ] Mood / Education / Desirability explanations remain intact.
+- [ ] residential progress advances under good conditions and pauses rather than resets.
+- [ ] grandfathered residents are not evicted.
+- [ ] denser Housing increases School demand.
+- [ ] green School coverage still matches the real service region.
 
-- [x] Meadowline loads successfully in the live mobile build.
-- [x] Core city renders in portrait orientation.
-- [x] School inspection is readable.
-- [x] School reports served / capacity, demand, utilization and homes served.
-- [x] School capacity remains bounded at 28 / 28.
-- [x] Demand may exceed 28 without served count exceeding capacity.
-- [x] Overloaded School reports `At capacity`.
-- [x] Household inspection shows Education and serving School.
-- [x] Household can report `In range · full` and `Waiting for school space`.
-- [x] Household Education visibly increases while served.
-- [x] School Education-service radius displays as 7 tiles.
-- [x] Two-finger pinch with School selected does not accidentally place a School.
-- [x] The observed visible-pedestrian household over-count was repaired.
+# City Growth 1.0 first physical pass — NEEDS REFINEMENT
 
-These checks remain regression requirements on `feature/housing-2` even though they were proven on the parent branch.
+Owner iPad test on August 23, 2026 produced useful but non-accepting evidence.
 
----
+Physically observed:
 
-# Housing 2.0 — required physical checks
+- [x] City Growth branch loads and renders on iPad.
+- [x] locked land remains visible.
+- [x] locked-land build feedback can report `This land has not been opened yet.`
+- [x] stage-based toolbar locking is visible.
+- [x] city can grow population/Housing in the new progression build.
 
-## 1. Boot and migration safety
+Acceptance problems physically observed:
 
-- [ ] Open the Housing 2.0 branch build with an existing Living City save.
-- [ ] No white page or startup exception appears.
-- [ ] Existing roads, rails, buildings, Schools and landscape remain.
-- [ ] Existing population remains.
-- [ ] Existing coins remain.
-- [ ] Existing household Education remains.
-- [ ] Existing School demand/capacity recomputes sensibly.
-- [ ] Existing households are not evicted because Housing 2.0 retired the old School +2 growth-capacity rule.
-- [ ] A grandfathered household above its tier base remains intact after load.
+- [x] **FAIL / NEEDS REFINEMENT:** early goal requested a Boat based on random world water even though maritime development was not a sensible current step.
+- [x] **FAIL / NEEDS REFINEMENT:** Train goal appeared too early relative to meaningful city/transit progression.
+- [x] **FAIL / NEEDS REFINEMENT:** with a build/paint tool selected, an intended map drag could accidentally build.
+- [x] **FAIL / NEEDS REFINEMENT:** active build mode / bottom toolbar state was not clear enough for comfortable iPad play.
 
-## 2. Cottage / Town Home / Established Home visuals
+Those findings prevent City Growth 1.0 from being called physically accepted.
 
-- [ ] A Tier 1 **Cottage** is clearly recognizable at a practical phone zoom.
-- [ ] A Tier 2 **Town Home** is visibly larger/taller than a Cottage.
-- [ ] Town Home dormer / upper-window treatment reads without requiring extreme zoom.
-- [ ] A Tier 3 **Established Home** has a clearly larger silhouette than Tier 2.
-- [ ] Tier 3 extra windows / garden or fence treatment remain clean rather than cluttered.
-- [ ] Seeded roof/wall color variety still exists across homes.
-- [ ] Snow/night/festival rendering still looks correct on upgraded houses.
-- [ ] No tier creates obvious overlap with roads, adjacent buildings or Look selection markers.
+# City Growth 1.1 first physical UI retest — NEEDS REFINEMENT
 
-## 3. House Look 3.0
+Owner iPad retest on August 23, 2026 confirmed the new Town Goals presentation and safe-touch UI were loading, but exposed a second interaction problem:
 
-Inspect several homes at different stages.
+- [x] **FAIL / NEEDS REFINEMENT:** after placing one normal structure, the build tool auto-cancelled to navigation, forcing repeated Build → category → structure selection for each additional House/School/etc.
+- [x] **FAIL / NEEDS REFINEMENT:** selecting a structure collapsed the Build tray automatically instead of allowing the player to explicitly finish choosing.
+- [x] **FAIL / NEEDS REFINEMENT:** the floating active `Look` strip overlapped and visually obstructed the open build catalog.
 
-- [ ] Panel remains readable around 390–430 CSS px wide.
-- [ ] Panel scrolls vertically rather than shrinking text when content is long.
-- [ ] Household residents / capacity are shown correctly.
-- [ ] Mood and existing Mood explanations remain understandable.
-- [ ] Education and School status remain present.
-- [ ] Neighborhood Desirability value is shown.
-- [ ] Desirability label is understandable (`Quiet Start`, `Developing`, `Pleasant`, `Desirable`, or `Highly Desirable`).
-- [ ] Current housing tier is shown.
-- [ ] Next tier is shown when one exists.
-- [ ] Upgrade progress is shown.
-- [ ] Road requirement is shown accurately.
-- [ ] Mood requirement is shown accurately.
-- [ ] Education requirement is shown accurately.
-- [ ] Desirability requirement is shown accurately.
-- [ ] No fake Crime, Healthcare, Fire, Employment or Prosperity requirements are shown.
-- [ ] The panel gives a simple `Growing toward…` or `Not ready yet` explanation.
+The follow-up refinement changed the intended behavior to:
 
-## 4. Neighborhood Desirability
+- normal structure tools remain armed after successful placement;
+- one-finger drag remains safe camera pan even while that structure tool stays armed;
+- selecting a structure leaves the Build tray open;
+- `✓` explicitly keeps the selected tool and closes the tray for map focus;
+- `×` explicitly cancels the selected tool and returns to navigation;
+- Look does not show an active-tool strip over the build menu;
+- active build controls live inside the dock flow rather than floating over tool rows.
 
-Use Look on homes in meaningfully different locations.
+# City Growth 1.1 latest physical iPad evidence — POSITIVE
 
-- [ ] A road-connected, pleasant serviced home has better Desirability than an isolated weak location.
-- [ ] Nearby Park influence makes intuitive sense.
-- [ ] School / Education access makes intuitive sense.
-- [ ] Station proximity contributes where applicable.
-- [ ] Greenery/water contribution feels plausible.
-- [ ] Heavy local crowding can reduce Desirability without destroying the neighborhood.
-- [ ] Desirability remains stable enough that it does not visibly oscillate every frame.
-- [ ] Desirability is clearly different in purpose from Mood.
+A later owner iPad session on August 23, 2026 reported the current refinement as **“Everything is looking great!”**
 
-## 5. Gradual residential evolution
+Directly visible in the supplied physical-device screenshot:
 
-Choose a Cottage that can satisfy Tier 2 requirements.
+- [x] City Growth 1.1 still loads/renders during a developed Day 14 city.
+- [x] the city has progressed to **Growing Town** on physical iPad.
+- [x] the city is supporting 92 citizens in a visibly dense residential layout.
+- [x] `Town Goals` shows a coherent primary `NEXT STEP` (`Open another development parcel`).
+- [x] the optional goal shown (`Plant 38 trees`) is stage-appropriate and not premature Train/Boat noise.
+- [x] the compact bottom command bar is visible without an obvious floating `Look` strip covering it.
+- [x] the map remains visually dominant despite Town Goals, minimap, HUD, corner controls, parcel boundaries and the command bar.
+- [x] roads, lamps, pedestrians, homes, natural trees and parcel boundaries remain readable together at practical iPad zoom.
 
-- [ ] Cottage does not upgrade instantly when thresholds are first met.
-- [ ] Upgrade progress begins increasing gradually.
-- [ ] A restrained growth chevron appears while meaningful progress is active.
-- [ ] Progress remains understandable in Look.
-- [ ] Temporarily losing a requirement pauses progress rather than erasing it.
-- [ ] Restoring the requirement resumes progress.
-- [ ] Cottage eventually becomes a Town Home automatically.
-- [ ] Household identity/location remains the same through the upgrade.
-- [ ] Education is preserved through the upgrade.
-- [ ] Existing population is preserved through the upgrade.
-- [ ] Town Home can later progress toward Established Home under stronger conditions.
-- [ ] Housing does not downgrade when conditions later weaken.
+This is strong positive physical evidence for presentation, progression coherence and the latest UI direction. It is **not** a substitute for directly exercising every gesture, Save V3 migration, School Level 2, iPhone portrait, or long-session checklist item below.
 
-## 6. Capacity and population feedback
+# City Growth 1.1 physical retest — REMAINING CHECKS
 
-- [ ] Cottage base capacity behaves as 4 for new growth.
-- [ ] Town Home base capacity behaves as 6.
-- [ ] Established Home base capacity behaves as 8.
-- [ ] A grandfathered older household can remain above a lower tier base without eviction.
-- [ ] New residents move into newly available capacity naturally rather than appearing all at once.
-- [ ] Population growth remains governed by the existing Mood/road rules.
+Branch: `feature/city-growth-progression`
 
-## 7. Education → Housing → School demand feedback loop
+PR #4 must remain unmerged until the checks below are satisfactory and the owner explicitly approves the merge.
 
-This is the key cross-system proof.
+## 1. Guided Development / Town Goals
 
-- [ ] Education contributes to Housing upgrade eligibility.
-- [ ] A qualifying home upgrades.
-- [ ] Upgraded housing allows more residents.
-- [ ] As additional residents arrive, that household's student demand rises through the existing Education service logic.
-- [ ] School utilization responds without manually rebuilding the School.
-- [ ] An already-busy School can become capacity constrained as the neighborhood becomes denser.
-- [ ] Household explanation continues to distinguish served vs waiting-for-space states.
+Start a genuinely new progression city.
 
-## 8. Civic placement green service boundary
+- [x] panel is now clearly labeled `Town Goals`.
+- [x] one primary `NEXT STEP` is easy to distinguish from one `OPTIONAL` goal in the latest iPad screenshot.
+- [ ] Settlement goals sensibly begin with roads/homes/population/neighborhood quality across multiple starts.
+- [ ] Settlement never requests Train.
+- [ ] Settlement never requests Boat.
+- [ ] Settlement does not request locked School/Rail/Station/Dock tools.
+- [ ] Village may begin guiding School/Education/Housing.
+- [ ] Village still does not request Train/Boat.
+- [ ] Township introduces Rail/Station only after they actually unlock.
+- [ ] Train goal appears only after meaningful rail readiness.
+- [ ] Growing Town Dock goal appears only when usable unlocked waterfront actually exists.
+- [ ] Boat goal appears only after a Dock exists.
+- [ ] landlocked/awkward random seeds use sensible fallback goals instead of impossible maritime goals.
+- [ ] optional-goal randomness feels varied without feeling random/nonsensical over longer play.
+- [ ] rewards help development but do not dominate the economy.
 
-Select **School** and move the placement ghost around the map.
+## 2. Safe touch navigation — critical
 
-- [ ] A green service boundary appears before placement.
-- [ ] A very light green service-area tint is visible but does not obscure streets/buildings.
-- [ ] Boundary moves smoothly with the School ghost.
-- [ ] Boundary represents the actual School service region, not the old 5-tile mood influence.
-- [ ] A home inside actual Education reach can receive the appropriate benefit marker.
-- [ ] A home outside actual Education reach is not falsely marked as served.
-- [ ] Green home markers remain distinguishable from the geographic boundary.
-- [ ] Amber/yellow capacity-pressure markers remain distinguishable from green.
-- [ ] Invalid School placement still has the existing red invalid presentation.
-- [ ] Boundary remains readable when zoomed reasonably close.
-- [ ] Boundary remains readable when zoomed reasonably far out.
-- [ ] Boundary clips cleanly at world edges.
-- [ ] Overlay does not cover critical mobile controls.
+With House selected:
 
-### Important geometry note
+- [ ] single tap places exactly one House.
+- [ ] House remains selected after successful placement so several homes can be placed without reopening Build.
+- [ ] immediate one-finger drag pans the map and places nothing even while House remains selected.
+- [ ] explicit `×` cancels House and returns to neutral navigation.
 
-School uses a **radius of 7** with the current Chebyshev service calculation:
+With School selected:
 
-`max(abs(dx), abs(dy)) <= 7`
+- [ ] single tap places exactly one School when legal.
+- [ ] School remains selected after successful placement until cancelled/replaced.
+- [ ] drag pans and never places a School.
+- [ ] pinch never places a School.
 
-That means the full center-tile service field extends seven tiles in each direction from the School. The visual preview must match this real simulation region exactly; it should not be judged against an unrelated literal 7×7 decorative square.
+With Road selected:
 
-## 9. Touch regression with the new boundary visible
+- [ ] single tap places one road tile.
+- [ ] immediate drag pans with no road painted.
+- [ ] press/hold briefly then drag clearly enters Road paint mode.
+- [ ] release stops painting.
+- [ ] hold threshold feels responsive rather than sluggish.
 
-- [ ] With School selected and green boundary visible, start a two-finger pinch: no School is placed accidentally.
-- [ ] Two-finger pan/zoom remains responsive with the overlay active.
-- [ ] A normal single tap still places exactly one School.
-- [ ] Moving the School ghost does not create sticky or stale boundaries.
-- [ ] Road paint-drag still begins on the intended tile.
-- [ ] Rail paint-drag still works.
-- [ ] Tree paint-drag still works.
-- [ ] Remove paint-drag still works.
+Repeat equivalent checks for:
 
-## 10. Ledger
+- [ ] Rail after Township.
+- [ ] Tree.
+- [ ] Remove.
 
-- [ ] Living City Education metrics still display correctly.
-- [ ] Housing section displays average Desirability.
-- [ ] Cottage / Town Home / Established Home counts look correct.
-- [ ] `homes ready to grow` count looks plausible.
-- [ ] Ledger remains usable on portrait iPhone without awkward horizontal clipping.
+Destructive safety:
 
-## 11. Residential tax behavior
+- [ ] immediate drag with Remove selected pans and erases nothing.
+- [ ] intentional hold + drag removes tiles.
 
-This does not need exact spreadsheet verification on phone, but the direction should be believable.
+Pinch:
 
-- [ ] Tier 1 city income remains familiar rather than suddenly exploding.
-- [ ] Upgraded occupied homes produce a modestly stronger residential tax contribution.
-- [ ] Trade/mill/festival income still behaves normally.
-- [ ] Residential development does not create an obvious runaway coin spiral during normal testing.
+- [ ] second finger always cancels pending tap/paint intent.
+- [ ] pinch + two-finger pan remain smooth.
 
-## 12. Save V3 physical verification
+## 3. Active-tool / Build UI re-haul
 
-After at least one home has meaningful Housing state:
+- [x] bottom UI reads as a compact command bar rather than a permanently expanded catalog.
+- [x] Build button is obvious in the latest iPad screenshot.
+- [ ] Build opens/closes the category tray reliably during repeated use.
+- [ ] Ways/Homes/Trade/Green categories remain understandable.
+- [ ] locked tool labels show the appropriate city stage without overwhelming the tray.
+- [ ] Move / Look / Remove remain easy to reach.
+- [ ] selecting House does **not** auto-close the Build tray.
+- [ ] selected tool is unmistakable.
+- [ ] active build strip shows tool name and cost.
+- [ ] active build strip explains `Tap to place · Drag to move` for normal buildings.
+- [ ] active build strip explains `Tap once · Hold + drag to paint` for paint/removal tools.
+- [ ] `✓` closes the tray while keeping the selected build tool armed.
+- [ ] `×` cancels the tool and returns to navigation.
+- [ ] Look does not display an obstructive active-tool strip.
+- [ ] active build controls stay inside the dock layout and do not cover category/tool rows.
+- [ ] UI taps/drags do not leak through and build on the map underneath.
 
-- [ ] Note its tier.
-- [ ] Note its Education.
-- [ ] Note its approximate upgrade progress if mid-upgrade.
-- [ ] Close/reload the game or page.
-- [ ] Housing tier persists.
-- [ ] Education persists.
-- [ ] Upgrade progress persists closely enough to be clearly retained.
-- [ ] Household population persists.
-- [ ] Desirability recomputes into a sensible value.
-- [ ] School assignments/capacity recompute sensibly after reload.
+## 4. iPad layouts
 
-## 13. Performance / stability
+### Landscape
 
-- [ ] Normal pan/zoom remains smooth in a neighborhood containing mixed housing tiers.
-- [ ] Multiple homes progressing simultaneously do not create obvious frame hitching.
-- [ ] A housing upgrade transition does not freeze the game.
-- [ ] Opening/scrolling Look remains responsive.
-- [ ] School placement boundary does not visibly tank frame rate while moving the ghost.
-- [ ] Dense housing plus School overload remains usable.
-- [ ] No obvious steadily worsening performance appears during a deliberate 10+ minute session.
-- [ ] `?debug=1` appears only when explicitly requested.
-- [ ] Debug values for Housing evaluations/upgrades/Desirability are present.
+- [x] latest screenshot shows HUD, Town Goals, corner controls, minimap and compact command bar coexisting without obvious severe collision.
+- [x] extra width is used without making controls comically large.
+- [x] map remains dominant.
 
----
+### Portrait
 
-# Existing-game regression still worth checking
+- [ ] Build tray stays within safe width.
+- [ ] active build strip remains readable.
+- [ ] panels remain scrollable.
+- [ ] no important control sits under the home gesture area.
 
-- [ ] Roads still place and bridge water.
-- [ ] Rails still place and bridge water.
-- [ ] Trains still route.
-- [ ] Boats still work where applicable.
-- [ ] Seasons still change.
-- [ ] Weather still works.
-- [ ] Festivals still work.
-- [ ] Wishes still progress.
-- [ ] Remove/refund still works.
-- [ ] Citizens still route without obvious stuck crowds.
-- [ ] Household visible citizen count never visibly exceeds household population.
+## 5. iPhone portrait
 
----
+Around 390–430 CSS px:
 
-# Acceptance result
+- [ ] no horizontal page overflow.
+- [ ] Build / mode controls remain ≥ comfortable touch size.
+- [ ] build categories can be reached without tiny text.
+- [ ] active build controls do not obscure critical city area.
+- [ ] Town Goals remain readable.
+- [ ] Growth/Look panels remain usable and scrollable.
 
-Previously proven School 2.0 behavior remains the baseline.
+## 6. City Growth 1.0 regression
 
-Housing 2.0 is only fully accepted when the new Housing / Desirability / tier visuals / civic-boundary / persistence feedback loop is physically demonstrated on the target phone.
+- [ ] new city begins with Meadowline Center only.
+- [x] locked terrain / parcel boundaries remain attractive and readable in latest iPad play.
+- [ ] camera can freely pan across future land.
+- [ ] locked normal building placement is rejected clearly.
+- [ ] Road/Rail painting respects locked land.
+- [ ] City Growth panel stage requirements update correctly.
+- [ ] Settlement → Village requirements still function.
+- [ ] Village → Township `any 2 of 3` still functions.
+- [x] physical iPad play has reached Growing Town, providing positive end-to-end evidence that stage progression can advance through the ladder.
+- [ ] parcel purchase requires explicit confirmation.
+- [ ] unlocked parcel becomes immediately buildable.
+- [ ] terrain is not regenerated when opening land.
+- [ ] parcel state persists after reload.
 
-- [ ] **FULL HOUSING 2.0 PHYSICAL IPHONE ACCEPTANCE COMPLETE**
+## 7. School Level 2
 
-Do not merge solely because automated tests pass.
+- [ ] Level 1 remains 28 capacity / radius 7.
+- [ ] upgrade unavailable before Township.
+- [ ] Township + 650 coins allows Level 2.
+- [ ] confirmation deducts exactly 650 once.
+- [ ] capacity becomes 44.
+- [ ] radius remains exactly 7.
+- [ ] service assignments recompute.
+- [ ] upgraded silhouette is visible at practical zoom.
+- [ ] level survives reload.
+- [ ] no Level 3 exists in this milestone.
+
+## 8. Legacy-save safety — critical
+
+Open a city created before City Growth:
+
+- [ ] city loads without white page.
+- [ ] entire map remains developable.
+- [ ] roads/rails/stations/trains remain.
+- [ ] houses/population remain.
+- [ ] Schools/Education remain.
+- [ ] Housing tiers/progress remain.
+- [ ] trade/Green buildings remain.
+- [ ] all previously available tools remain available.
+- [ ] reload keeps `legacy-open` behavior.
+- [ ] an old early Train/Boat Wish is safely replaced rather than crashing or persisting nonsensically.
+
+## 9. Performance
+
+- [ ] immediate drag/pan remains smooth.
+- [ ] hold-to-paint does not cause obvious frame hitch.
+- [ ] Town Goal updates do not stutter.
+- [x] latest developed-city screenshot shows the locked/parcel visualization still functioning at 92 citizens without a visible rendering failure.
+- [ ] parcel unlock does not freeze.
+- [ ] School Level 2 recomputation does not hitch badly.
+- [ ] `?debug=1` remains usable.
+
+# Automated validation — record separately
+
+Current branch workflow runs syntax, module hygiene, original Living City/Housing browser regression, City Growth 1.0 regression, and City Growth 1.1 goal/touch-policy regression.
+
+Do **not** check physical boxes merely because CI passes.
+
+# Merge gate
+
+PR #4 is eligible for a merge decision only after:
+
+- [ ] current branch automation is green at the final candidate SHA;
+- [ ] early Boat/Train goal failures are physically confirmed repaired across appropriate stages;
+- [ ] one-finger drag is safe with build tools selected;
+- [ ] repeated House/School placement is comfortable without repeated menu navigation;
+- [ ] hold-to-paint/remove is comfortable on real touch hardware;
+- [x] latest iPad presentation/UI direction is owner-approved as looking great;
+- [ ] critical legacy-save checks pass;
+- [ ] School Level 2 is physically verified;
+- [ ] no major Housing/Education/parcel regression appears;
+- [ ] owner explicitly approves merge.
