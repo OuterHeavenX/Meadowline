@@ -1,7 +1,9 @@
 import { canPlace } from '../buildings/buildings.js';
+import { getBuildingDefinition } from '../buildings/registry.js';
 import { H, W, clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { drawBakery, drawCafe, drawDock, drawLamp, drawMarket, drawPark, drawSchool, drawStation, drawWindmill } from './buildings.js';
+import { drawRecreationFacility } from './recreation.js';
 import { drawCityHall } from './city-hall.js';
 import { drawHousingHouse } from './housing.js';
 import { drawCivicPlacementPreview } from './service-overlays.js';
@@ -14,7 +16,7 @@ import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js
 import { SPANS } from '../transport/bridges.js';
 import { proj } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
-import { idx, inBounds } from '../world/tiles.js';
+import { facilityFootprint, footprintCells, idx, inBounds, isFacilityPart } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 
 export let hover={x:-1,y:-1,on:false};
@@ -22,18 +24,24 @@ export function drawGhost(){
   if(!hover.on||S.tool==="move"||S.tool==="look") return;
   const{x,y}=hover;
   if(!inBounds(x,y)) return;
-  const p=proj(x,y);
-  const ok=S.tool==="erase"?(!!S.grid[idx(x,y)]||!!S.natTree[idx(x,y)]):canPlace(S.tool,x,y).ok;
-  const servicePreview=drawCivicPlacementPreview(S.tool,x,y);
-  diamond(p.x,p.y,1.02);
-  g.fillStyle=ok?"rgba(244,240,226,.34)":"rgba(214,96,80,.34)"; g.fill();
-  g.strokeStyle=ok?"rgba(244,240,226,.85)":"rgba(214,96,80,.9)";
-  g.lineWidth=1.6*S.cam.z; g.stroke();
-  const RADII={park:4,cafe:5,station:6,lamp:2,mill:3,market:5,bakery:4,dock:4};
-  const rad=servicePreview?0:(RADII[S.tool]||0);
+  const result=S.tool==="erase"?null:canPlace(S.tool,x,y);
+  const ok=S.tool==="erase"?(!!S.grid[idx(x,y)]||!!S.natTree[idx(x,y)]):result.ok;
+  const servicePreview=S.tool==='erase'?false:drawCivicPlacementPreview(S.tool,x,y);
+  const def=getBuildingDefinition(S.tool),cells=def?footprintCells(S.tool,x,y):[{x,y}];
+  for(const c of cells){
+    if(!inBounds(c.x,c.y)) continue;
+    const p=proj(c.x,c.y);
+    diamond(p.x,p.y,1.02);
+    g.fillStyle=ok?"rgba(244,240,226,.30)":"rgba(214,96,80,.34)"; g.fill();
+    g.strokeStyle=ok?"rgba(244,240,226,.88)":"rgba(214,96,80,.92)";
+    g.lineWidth=1.5*S.cam.z; g.stroke();
+  }
+  const fallback={park:4,cafe:5,station:6,lamp:2,mill:3,market:5,bakery:4,dock:4};
+  const rad=servicePreview?0:(def?.service?.type==='recreation'?(def.service.radius||0):(fallback[S.tool]||0));
   if(rad){
-    g.strokeStyle="rgba(244,240,226,.22)"; g.lineWidth=1.2*S.cam.z;
-    const c=[[-rad,-rad],[rad+1,-rad],[rad+1,rad+1],[-rad,rad+1]].map(o=>proj(x+o[0]-0.5,y+o[1]-0.5));
+    const fp=def?.placement?.footprint||[1,1],cx=x+(fp[0]-1)/2,cy=y+(fp[1]-1)/2;
+    g.strokeStyle="rgba(244,240,226,.24)"; g.lineWidth=1.2*S.cam.z;
+    const c=[[-rad,-rad],[rad+1,-rad],[rad+1,rad+1],[-rad,rad+1]].map(o=>proj(cx+o[0]-0.5,cy+o[1]-0.5));
     g.beginPath(); g.moveTo(c[0].x,c[0].y); for(let i=1;i<4;i++) g.lineTo(c[i].x,c[i].y); g.closePath(); g.stroke();
   }
 }
@@ -64,12 +72,18 @@ export function render(){
 
   const items=[];
   for(let i=0;i<S.grid.length;i++){
-    const b=S.grid[i]; if(!b) continue;
+    const b=S.grid[i]; if(!b||isFacilityPart(b)) continue;
     if(S.terr[i]===1&&SPANS[b.type]) items.push({d:b.x+b.y-0.05,k:5,b});
-    else if(b.type!=="road"&&b.type!=="rail") items.push({d:b.x+b.y,k:0,b});
+    else if(b.type!=="road"&&b.type!=="rail"){
+      const fp=facilityFootprint(b);
+      items.push({d:b.x+b.y+(fp[0]+fp[1]-2)*0.48,k:0,b});
+    }
   }
   for(let y=0;y<H;y++)for(let x=0;x<W;x++) if(S.natTree[idx(x,y)]) items.push({d:x+y,k:1,x,y});
-  for(const c of S.citizens) items.push({d:lerp(c.x,c.nx,c.p)+lerp(c.y,c.ny,c.p)+0.05,k:2,c});
+  for(const c of S.citizens){
+    const fx=c.facilityLocal?.x??lerp(c.x,c.nx,c.p),fy=c.facilityLocal?.y??lerp(c.y,c.ny,c.p);
+    items.push({d:fx+fy+0.05,k:2,c});
+  }
   for(const v of S.vehicles||[]) items.push({d:lerp(v.x,v.nx,v.p)+lerp(v.y,v.ny,v.p)+0.075,k:7,v});
   for(const t of S.trains) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.1,k:3,t});
   for(const t of S.boats) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.08,k:6,t});
@@ -79,10 +93,11 @@ export function render(){
   for(const it of items){
     if(it.k===0){
       const p=proj(it.b.x,it.b.y);
-      if(p.x<-120||p.x>innerWidth+120||p.y<-180||p.y>innerHeight+120) continue;
+      if(p.x<-220||p.x>innerWidth+220||p.y<-260||p.y>innerHeight+180) continue;
       const t=it.b.type;
       if(t==="house") drawHousingHouse(it.b,p,dark);
       else if(t==="park") drawPark(it.b,p);
+      else if(getBuildingDefinition(t)?.service?.type==='recreation') drawRecreationFacility(it.b,dark);
       else if(t==="cafe") drawCafe(it.b,p,dark);
       else if(t==="station") drawStation(it.b,p,dark);
       else if(t==="lamp") drawLamp(it.b,p,dark);
