@@ -1,6 +1,6 @@
 # Meadowline
 
-Meadowline is a calm, mobile-first isometric living-city builder. It remains a lightweight static browser game built with native ES modules and Canvas 2D. Normal play requires no React/Vue application, Node process, server runtime, backend dependency or mandatory online service.
+Meadowline is a calm, mobile-first isometric living-city builder. It remains a lightweight static browser game built with native ES modules, a Canvas 2D world renderer and an optional WebGL2 presentation pass. Normal play requires no React/Vue application, Node process, server runtime, backend dependency or mandatory online service.
 
 ## Production status
 
@@ -184,6 +184,6 @@ Living City / School → Housing 2.0 → City Growth 1.0 / 1.1 → City Hall 1.0
 
 Current development:
 
-**Recreation 2.0 / Town Life prerequisite → Living City 3.0 / Municipal Integration candidate**
+**Recreation 2.0 / Town Life prerequisite → Living City 3.0 / Municipal Integration candidate → Living City 3.1 / AAA Visual Completion candidate**
 
-See `docs/RECREATION_2.md` and `docs/LIVING_CITY_3.md` for the canonical development records.
+See `docs/RECREATION_2.md`, `docs/LIVING_CITY_3.md` and `docs/RENDERING_2.md` for the canonical development records.
