@@ -63,5 +63,4 @@ Quality settings alter presentation only. Population, economy, routes, incident 
 
 ## Benchmark record
 
-Exact automated measurements will be copied here from the final candidate workflow. They must be labeled as headless Linux/ANGLE observations, never as iPhone or iPad results.
-
+The first successful harness execution was GitHub Actions run `32790036151`, using Headless Chrome 151 on Linux through ANGLE/SwiftShader at DPR 1 and 640×420. All three 40-frame samples reported a 60 FPS ceiling, one draw call for each GPU option, and a 1,480,433-byte exposed JS heap. The headless virtual clock rounded CPU submission/init samples to 0 ms, so those timing values are **not decision-grade** and are not represented as measured zero-cost work. This run proves capability, deterministic scene completion, bounded draw calls and comparable initialization only. Real frame time, GPU time, memory pressure and thermals remain physical-device work.
