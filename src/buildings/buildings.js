@@ -113,7 +113,8 @@ export function restoreFacilityOccupancy(root){
   if(!root||!BUILDABLE[root.type]||!Number.isInteger(root.x)||!Number.isInteger(root.y)) return false;
   const cells=footprintCells(root.type,root.x,root.y);
   for(const c of cells){
-    if(!inBounds(c.x,c.y)||S.terr[idx(c.x,c.y)]===1) return false;
+    if(!inBounds(c.x,c.y)) return false;
+    if(S.terr[idx(c.x,c.y)]===1&&!SPANS[root.type]) return false;
     const cur=S.grid[idx(c.x,c.y)];
     if(cur&&cur!==root) return false;
   }
@@ -194,7 +195,7 @@ export function erase(x,y){
   // Visitors hold only soft references and Recreation invalidation causes them
   // to choose a new normal destination safely on their next route decision.
   for(const c of S.citizens||[]){
-    if(c.recreationRoot&&c.recreationRoot.x===b.x&&c.recreationRoot.y===b.y){ c.recreationRoot=null; c.path=null; c.linger=0; c.at=null; }
+    if(c.recreationRoot&&c.recreationRoot.x===b.x&&c.recreationRoot.y===b.y){ c.recreationRoot=null; c.recreationEntry=null; c.facilityLocal=null; c.path=null; c.linger=0; c.at=null; }
   }
   invalidateServices(); invalidateCitySummary(); invalidateRecreation();
   if(b.type==='road'||b.type==='rail') invalidateMobility();
