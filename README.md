@@ -23,6 +23,8 @@ The City Growth feature branch is historical implementation context, not the cur
 
 Branch: `feature/city-hall-civic-center`
 
+Draft PR: **#5 — City Hall 1.0 — Civic Center Foundation**
+
 Current milestone: **City Hall 1.0 / Civic Center Foundation**.
 
 City Hall work is not production. It must remain on its feature branch and draft PR until the owner completes physical iPhone/iPad acceptance and explicitly approves a merge.
