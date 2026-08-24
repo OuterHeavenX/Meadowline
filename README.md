@@ -167,6 +167,8 @@ Current workflow covers:
 - City Growth 1.0 regression
 - City Growth 1.1 Town Goal / touch-policy regression
 
+The latest documentation reconciliation commit was validated successfully by Living City Validation run #80. This remains automated proof only.
+
 Only the owner can complete the physical iPhone/iPad acceptance checklist in `docs/IPHONE_ACCEPTANCE.md`.
 
 ## Running locally
@@ -205,4 +207,4 @@ Not implemented by City Growth 1.1:
 - giant persistent NPC populations
 - full Waterworks terrain sculpting
 
-Waterworks / Landscaping is explicitly planned as a future system; it is not used as a workaround for badly gated Boat goals.
+The current roadmap recommendation for the **next major milestone after City Growth is physically accepted and merged** is **Recreation 2.0 / Town Life**. Waterworks / Landscaping remains a separate future system and is not used as a workaround for badly gated Boat goals.
