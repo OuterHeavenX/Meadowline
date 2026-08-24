@@ -1,3 +1,8 @@
 <!doctype html><meta charset="utf-8"><title>Meadowline regression</title>
 <div class="dock"><div id="tools"></div></div><div id="hint"></div><div id="toasts"></div>
-<pre id="results">Running…</pre><script type="module" src="regression.js"></script>
+<pre id="results">Running…</pre>
+<script>
+addEventListener('error',e=>{document.getElementById('results').textContent='Runtime error: '+(e.message||'unknown')+' @ '+(e.filename||'')+':'+(e.lineno||0);document.documentElement.dataset.result='fail';});
+addEventListener('unhandledrejection',e=>{document.getElementById('results').textContent='Unhandled rejection: '+String(e.reason?.stack||e.reason||'unknown');document.documentElement.dataset.result='fail';});
+</script>
+<script type="module" src="regression.js"></script>
