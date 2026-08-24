@@ -7,6 +7,7 @@ on:
       - feature/city-growth-progression
       - feature/city-hall-civic-center
       - feature/roads-mobility-2
+      - feature/recreation-2-town-life
   pull_request:
     branches:
       - feature/living-city-foundation
@@ -51,3 +52,8 @@ jobs:
           google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 --dump-dom http://127.0.0.1:8000/tests/roads-mobility-regression.html >/tmp/meadowline-roads-mobility.html
           cat /tmp/meadowline-roads-mobility.html
           grep -q 'data-result="pass"' /tmp/meadowline-roads-mobility.html
+      - name: Recreation 2.0 and Town Life regression
+        run: |
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=10000 --dump-dom http://127.0.0.1:8000/tests/recreation-regression.html >/tmp/meadowline-recreation.html
+          cat /tmp/meadowline-recreation.html
+          grep -q 'data-result="pass"' /tmp/meadowline-recreation.html
