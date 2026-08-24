@@ -1,37 +1,49 @@
 # Meadowline
 
-Meadowline is a calm, mobile-first isometric living-city builder. It remains a lightweight static browser game built with native ES modules and Canvas 2D. Normal play requires no React/Vue application, Node process, server runtime, or backend dependency.
+Meadowline is a calm, mobile-first isometric living-city builder. It remains a lightweight static browser game built with native ES modules and Canvas 2D. Normal play requires no React/Vue application, Node process, server runtime, backend dependency or mandatory online service.
 
 ## Production status
 
-Verified production `main` at the start of City Hall 1.0:
+Verified production `main` at the start of Roads & Mobility 2.0:
 
-`1d9e7e9c110fad465b332ef85503d102ed5af6e0`
+`fcf7f8c02291c7cd1bc2a164522353b7476e81ef`
 
-City Growth PR #4 was explicitly approved by the owner and merged into `main`. City Growth 1.0 / 1.1, progressive land parcels, four city stages, progression-aware Town Goals, safe-touch navigation, the mobile Build UI re-haul and School Level 2 are therefore production systems.
+That production commit includes:
 
-Historical implementation branches remain preserved:
+- Living City Foundation / School 2.0
+- Save V3
+- Housing 2.0 / Neighborhood Desirability / Residential Evolution
+- City Growth 1.0 / 1.1
+- progressive land parcels
+- Settlement → Village → Township → Growing Town
+- Town Goals
+- safe-touch navigation and mobile Build UI refinement
+- School Level 2
+- City Hall 1.0 / Civic Center Foundation through merged PR #5
+
+Historical implementation branches remain preserved, including:
 
 - `agent/architecture-refactor`
 - `feature/living-city-foundation`
 - `feature/housing-2`
 - `feature/city-growth-progression`
-
-The City Growth feature branch is historical implementation context, not the current production branch.
+- `feature/city-hall-civic-center`
 
 ## Current development
 
-Branch: `feature/city-hall-civic-center`
+Branch: `feature/roads-mobility-2`
 
-Draft PR: **#5 — City Hall 1.0 — Civic Center Foundation**
+Draft PR: **#6 — Roads & Mobility 2.0 — Streets, Sidewalks, Vehicles & Rail Crossings**
 
-Current milestone: **City Hall 1.0 / Civic Center Foundation**.
+Current milestone: **Roads & Mobility 2.0**.
 
-City Hall work is not production. It must remain on its feature branch and draft PR until the owner completes physical iPhone/iPad acceptance and explicitly approves a merge.
+This milestone evolves the existing Road tool into Meadowline's permanent shared street infrastructure. It does not create a second Road database or replace the existing 44×44 world/pathfinding architecture.
 
-## Production foundation
+## Permanent product architecture
 
-The world remains **44×44**. Progression cities begin in the 20×20 Meadowline Center and can open eight additional parcels without regenerating terrain.
+World: **44×44**.
+
+Progression cities begin in the 20×20 Meadowline Center and can open eight additional parcels without regenerating terrain.
 
 City stages remain exactly:
 
@@ -40,79 +52,79 @@ City stages remain exactly:
 3. Township
 4. Growing Town
 
-City Growth requirements and parcel rules are authoritative in `src/progression/city-growth.js` and are not rewritten by City Hall.
+Current living-city relationships remain:
 
-Production living-city relationships remain:
-
-Road + Mood + Education + Neighborhood Desirability
+Road Access + Mood + Education + Neighborhood Desirability
 → residential evolution
 → higher household capacity
 → more residents
-→ greater School demand
-→ stronger civic pressure.
+→ greater School/civic pressure.
 
-Residential tiers remain Cottage, Town Home and Established Home. Education remains the first reusable civic service. School Level 2 remains Township + 650 coins, 44 capacity, radius 7.
-
-## City Hall 1.0
-
-City Hall establishes Meadowline's first true civic center and formalizes a permanent UI rule:
+City Hall preserves the UI rule:
 
 **Local buildings explain local conditions. City Hall explains citywide conditions.**
 
-Registry ID: `cityHall`.
+## Roads & Mobility 2.0
 
-Civic progression:
+The existing Road tile remains the authoritative Road object for:
 
-- Level 1 — Town Office — Settlement — placement 90 coins
-- Level 2 — Village Hall — Village — 280 coins
-- Level 3 — Town Hall — Township — 520 coins
-- Level 4 — Meadowline City Hall — Growing Town — 850 coins
+- placement/economy;
+- building access;
+- Housing requirements;
+- City Growth Road counts;
+- saves;
+- safe-touch painting.
 
-The building is unique, uses the existing safe-touch placement path, persists through generic `state.level`, and is deliberately one tile in City Hall 1.0 so the milestone does not introduce a risky multi-tile placement/save subsystem.
+One Road tile now visually reads as a complete small-town street with a darker vehicle carriageway and lighter sidewalk/curb space.
 
-City Hall upgrades are optional. City stage unlocks civic improvement; civic improvement does not hard-lock the next city stage.
+Pedestrians retain the existing Road graph but render on stable side-of-street offsets instead of visibly occupying the vehicle centerline.
 
-City Hall Look summarizes only real city data:
+A lightweight mobility layer adds bounded representative:
 
-- city stage and next-stage requirements
-- population and occupied homes
-- exact Cottage / Town Home / Established Home counts
-- average Mood, Education and Desirability
-- existing Town Goals and progress
-- opened/available land parcels with explicit purchase confirmation
-- treasury and real last-payday residential tax / Trade / milling / grant totals
-- current Education service totals
+- compact cars;
+- pickups;
+- delivery/service vans.
 
-Housing, Education, Town Goals, City Growth, parcels and the economy remain owned by their existing simulation systems. City Hall does not duplicate their state.
+Ambient vehicles reuse the existing 44×44 breadth-first route search, cache routes by network version, reroute/despawn safely when Roads change, and are regenerated rather than persisted.
 
-No fake Recreation, Police, Fire, Healthcare, Employment or policy meters are displayed.
+No traffic congestion/parking/commute simulator is introduced.
 
-## Town Goals and City Hall
+## Road / Rail crossing foundation
 
-The existing Town Goal engine remains authoritative. Contextual civic goals may suggest:
+Road and Rail can now intentionally share a clean perpendicular land tile without deleting either network.
 
-- establishing a Town Office after basic settlement activity;
-- Village Hall after Village;
-- Town Hall after Township;
-- Meadowline City Hall after Growing Town.
+The existing one-object-per-tile save architecture is retained through generic V3 state. A crossing is semantically both Road and Rail, so vehicles and trains can traverse it while Road/Rail counts remain coherent.
 
-The goal system still guides Housing, Education, land, Trade, environment and transport. City Hall does not become the whole game.
+Train priority is absolute at crossings. Representative road vehicles and pedestrians wait while a train occupies the protected crossing zone.
 
-The earlier City Growth physical findings remain historical architectural memory: premature Boat/Train goals, unsafe drag/build behavior, first toolbar friction, one-off placement friction and Look/build overlap were real device findings that led to City Growth 1.1. The later owner iPad session supplied strong positive evidence and the owner explicitly approved the final PR #4 merge. Unchecked physical items were not retroactively marked as tested.
+Existing water bridges remain separate and continue using the production span/bridge architecture.
+
+## City Hall Mobility summary
+
+City Hall now exposes only real Mobility values:
+
+- Road tiles;
+- connected Road components;
+- Rail crossings;
+- active representative vehicles.
+
+There is no fake Traffic Health score.
 
 ## Save system
 
 Current key: `meadowline.v3`.
 
-City Hall requires no Save V4. Normal building existence/position and `state.level` persist. Citywide summaries are derived rather than saved.
+Roads 2.0 does not require Save V4.
 
-Malformed City Hall levels clamp to 1–4. Duplicate saved civic centers are repaired safely by retaining the first valid City Hall. Existing pre-City-Hall cities are not charged, reset, relocked or force-edited.
+Existing Roads automatically load with upgraded street rendering and mobility semantics. No Road rebuilding or upgrade charge occurs.
+
+Crossing metadata uses ordinary generic building `state`. Active vehicles, routes and lane geometry are transient/derived and are not saved.
 
 ## Performance and diagnostics
 
-Education, Housing, City Growth, Town Goals and City Hall summary work use low-frequency or cached aggregate queries rather than per-frame citywide reconstruction.
+Mobility uses event/network-version route generation rather than one path search per vehicle per frame.
 
-`?debug=1` now includes City Hall count/level, City Hall panel opens, city-summary recomputes/invalidations, occupied homes, average Education and average Desirability alongside existing diagnostics.
+`?debug=1` includes Road components, active vehicles/routes, Rail crossings, route searches/failures/reroutes/despawns, crossing waits and network invalidations alongside existing diagnostics.
 
 ## Validation policy
 
@@ -124,8 +136,11 @@ The workflow covers:
 - module hygiene/import cycles
 - Living City + Housing regression
 - City Growth 1.0 regression
-- City Growth 1.1 Town Goal / touch-policy regression
+- City Growth 1.1 Town Goal/touch regression
 - City Hall 1.0 regression
+- Roads & Mobility 2.0 regression
+
+Validation history is preserved in the PR and `docs/ROADS_MOBILITY_2.md`. Physical owner-device acceptance remains pending.
 
 Only the owner can complete physical acceptance in `docs/IPHONE_ACCEPTANCE.md`.
 
@@ -137,12 +152,13 @@ python3 -m http.server 8000
 
 Open `http://localhost:8000/`.
 
-Regression pages:
+Regression pages include:
 
 - `/tests/regression.html`
 - `/tests/city-growth-regression.html`
 - `/tests/city-growth-1-1-regression.html`
 - `/tests/city-hall-regression.html`
+- `/tests/roads-mobility-regression.html`
 
 Module hygiene:
 
@@ -154,14 +170,16 @@ node tests/module-hygiene.mjs
 
 Production:
 
-Living City / School → Housing 2.0 → City Growth 1.0 / 1.1
+Living City / School → Housing 2.0 → City Growth 1.0 / 1.1 → City Hall 1.0
 
 Current development:
 
-**City Hall / Civic Center Foundation**
+**Roads & Mobility 2.0**
 
-Next planned major simulation milestone after City Hall is physically accepted and explicitly merged:
+Next:
 
 **Recreation 2.0 / Town Life**
 
-Later municipal systems may include Employment / Prosperity, Safety / Police, Fire / Emergency, Healthcare, Waterworks / Landscaping and transport evolution. Their exact order after Recreation remains a future playtesting decision.
+Later systems may include Safety / Police / Crime, Employment / Prosperity, Fire / Emergency, Healthcare, Waterworks / Landscaping and further transport evolution. Their exact post-Recreation order remains playtest-sensitive.
+
+See `docs/ROADS_MOBILITY_2.md` for the canonical technical record.

@@ -3,7 +3,7 @@ import { S } from '../core/state.js';
 import { isBridge } from '../transport/bridges.js';
 import { proj, screen2world } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
-import { idx, inBounds, isType } from '../world/tiles.js';
+import { idx, inBounds, isRoadRailCrossing, isType } from '../world/tiles.js';
 
 /* ============================================================
    RENDERING
@@ -25,7 +25,6 @@ export function diamond(sx,sy,f){
   g.closePath();
 }
 
-// draws an iso box; returns the screen y of the top face centre
 export function box(sx,sy,f,hgt,top,left,right){
   const z=S.cam.z, hw=TW/2*f*z, hh=TH/2*f*z, h=hgt*z;
   g.fillStyle=left;
@@ -43,7 +42,6 @@ export function box(sx,sy,f,hgt,top,left,right){
   return sy-h;
 }
 
-// a fresh diamond of snow, laid on any flat top face
 export function snowCap(sx,topY,f){
   if(PAL.snow<0.03) return;
   diamond(sx,topY,f);
@@ -51,11 +49,10 @@ export function snowCap(sx,topY,f){
   g.fill();
 }
 
-export const lights=[];   // window glow positions, drawn after the night tint
+export const lights=[];
 
 export function drawGround(){
   const z=S.cam.z;
-  // visible band of the grid
   const c0=screen2world(0,0), c1=screen2world(innerWidth,0), c2=screen2world(0,innerHeight), c3=screen2world(innerWidth,innerHeight);
   const minX=Math.floor(Math.min(c0.x,c1.x,c2.x,c3.x))-1, maxX=Math.ceil(Math.max(c0.x,c1.x,c2.x,c3.x))+1;
   const minY=Math.floor(Math.min(c0.y,c1.y,c2.y,c3.y))-1, maxY=Math.ceil(Math.max(c0.y,c1.y,c2.y,c3.y))+1;
@@ -73,19 +70,19 @@ export function drawGround(){
           g.moveTo(p.x-10*z,p.y+2*z); g.lineTo(p.x-2*z,p.y-1*z); g.lineTo(p.x+7*z,p.y+2*z);
           g.stroke(); g.restore();
         }
-        // pale foam where the water meets the bank, on the edges that face land
         const EDGES=[[[1,0],[1,0,0,1]],[[-1,0],[-1,0,0,-1]],[[0,1],[0,1,-1,0]],[[0,-1],[0,-1,1,0]]];
         g.strokeStyle=PAL.waterEdge; g.lineWidth=1.5*z; g.lineCap="round";
         for(const[[dx,dy]] of EDGES){
           const nx=x+dx, ny=y+dy;
-          if(inBounds(nx,ny)&&S.terr[idx(nx,ny)]===1) continue;   // still water
+          if(inBounds(nx,ny)&&S.terr[idx(nx,ny)]===1) continue;
           const hw=TW/2*z, hh=TH/2*z;
           const cs={ '1,0':[[p.x+hw,p.y],[p.x,p.y+hh]], '-1,0':[[p.x-hw,p.y],[p.x,p.y-hh]],
                      '0,1':[[p.x,p.y+hh],[p.x-hw,p.y]], '0,-1':[[p.x,p.y-hh],[p.x+hw,p.y]] }[dx+','+dy];
           g.beginPath(); g.moveTo(cs[0][0],cs[0][1]); g.lineTo(cs[1][0],cs[1][1]); g.stroke();
         }
-        continue;                       // any span over it is drawn in the sorted pass
+        continue;
       }
+      if(b&&isRoadRailCrossing(b)){ drawRoadRailCrossing(x,y,p); continue; }
       if(b&&b.type==="road"){ drawRoad(x,y,p); continue; }
       if(b&&b.type==="rail"){ drawRail(x,y,p); continue; }
       const tint=PAL.grass[(hash2(x,y,17)*4)|0];
@@ -106,42 +103,67 @@ export function drawGround(){
   }
 }
 
-export const BRIDGE_LIFT=8;                 // deck height above the water, in tile pixels
+export const BRIDGE_LIFT=8;
 export function tileLift(x,y){ return isBridge(x,y)?BRIDGE_LIFT:0; }
+
+function roadConnections(x,y){
+  const out=[];
+  for(const[dx,dy] of DIRS) if(isType(x+dx,y+dy,'road')) out.push([dx,dy]);
+  return out;
+}
+function drawCrosswalk(p,e,z,py,eY){
+  let dx=e.x-p.x,dy=eY-py,len=Math.hypot(dx,dy)||1; dx/=len;dy/=len;
+  const nx=-dy,ny=dx;
+  for(const t of [0.26,0.34,0.42]){
+    const cx=p.x+(e.x-p.x)*t,cy=py+(eY-py)*t;
+    g.strokeStyle='rgba(242,235,214,.78)'; g.lineWidth=1.15*z;
+    g.beginPath(); g.moveTo(cx-nx*4.7*z,cy-ny*4.7*z); g.lineTo(cx+nx*4.7*z,cy+ny*4.7*z); g.stroke();
+  }
+}
 
 export function drawRoad(x,y,p){
   const z=S.cam.z, L=tileLift(x,y)*z, py=p.y-L;
-  diamond(p.x,py,1.02); g.fillStyle=P.roadEdge; g.fill();
-  diamond(p.x,py,0.86); g.fillStyle=P.road; g.fill();
-  if(PAL.snow>0.25&&!L){
-    diamond(p.x,py,0.86);
-    g.fillStyle="rgba(250,252,255,"+(PAL.snow*0.38)+")"; g.fill();
-  }
-  g.strokeStyle=P.roadLine; g.lineWidth=1.5*z; g.lineCap="round";
-  g.setLineDash([3.2*z,3.4*z]);
-  for(const[dx,dy]of DIRS){
-    if(!isType(x+dx,y+dy,"road")) continue;
+  const cons=roadConnections(x,y);
+  diamond(p.x,py,1.02); g.fillStyle='#cfc5ad'; g.fill();
+  diamond(p.x,py,0.58); g.fillStyle='#6f756f'; g.fill();
+  g.lineCap='round';
+  for(const[dx,dy] of cons){
     const e=proj(x+dx*0.5,y+dy*0.5);
-    const eL=(L+tileLift(x+dx,y+dy)*z)/2;        // ramp gently onto the bank
-    g.beginPath(); g.moveTo(p.x,py); g.lineTo(e.x,e.y-eL); g.stroke();
+    const eL=(L+tileLift(x+dx,y+dy)*z)/2, ey=e.y-eL;
+    g.strokeStyle='#cfc5ad'; g.lineWidth=17*z;
+    g.beginPath(); g.moveTo(p.x,py); g.lineTo(e.x,ey); g.stroke();
+    g.strokeStyle='#6f756f'; g.lineWidth=11.5*z;
+    g.beginPath(); g.moveTo(p.x,py); g.lineTo(e.x,ey); g.stroke();
+    if(cons.length<=2){
+      g.strokeStyle='rgba(222,205,151,.68)'; g.lineWidth=0.9*z; g.setLineDash([3*z,4*z]);
+      g.beginPath(); g.moveTo(p.x,py); g.lineTo(e.x,ey); g.stroke(); g.setLineDash([]);
+    }
+    if(cons.length>=3&&!L) drawCrosswalk(p,e,z,py,ey);
   }
-  g.setLineDash([]);
+  diamond(p.x,py,0.54); g.fillStyle='#6f756f'; g.fill();
+  if(PAL.snow>0.25&&!L){
+    diamond(p.x,py,0.54);
+    g.fillStyle="rgba(250,252,255,"+(PAL.snow*0.20)+")"; g.fill();
+  }
+  g.strokeStyle='rgba(116,104,86,.55)'; g.lineWidth=0.9*z;
+  diamond(p.x,py,0.62); g.stroke();
 }
 
-export function drawRail(x,y,p){
-  const z=S.cam.z, L=tileLift(x,y)*z, py=p.y-L;
-  diamond(p.x,py,1.02); g.fillStyle=P.railBed; g.fill();
+function railConnections(x,y){
   const cons=[];
   for(const[dx,dy]of DIRS) if(isType(x+dx,y+dy,"rail")) cons.push([dx,dy]);
-  const list=cons.length?cons:[[1,0],[-1,0]];
+  return cons.length?cons:[[1,0],[-1,0]];
+}
+function drawRailTracks(x,y,p,withBed=true){
+  const z=S.cam.z, L=tileLift(x,y)*z, py=p.y-L;
+  if(withBed){ diamond(p.x,py,1.02); g.fillStyle=P.railBed; g.fill(); }
+  const list=railConnections(x,y);
   for(const[dx,dy]of list){
     const e=proj(x+dx*0.52,y+dy*0.52);
     const ey=e.y-(L+tileLift(x+dx,y+dy)*z)/2;
-    // ties
     g.strokeStyle=P.railTie; g.lineWidth=1.4*z; g.setLineDash([2*z,3.2*z]);
     g.beginPath(); g.moveTo(p.x,py); g.lineTo(e.x,ey); g.stroke();
     g.setLineDash([]);
-    // two rails, offset perpendicular in screen space
     const nx=-(ey-py), ny=(e.x-p.x);
     const len=Math.hypot(nx,ny)||1, ox=nx/len*3.1*z, oy=ny/len*3.1*z;
     g.strokeStyle=P.railMetal; g.lineWidth=1.1*z;
@@ -150,8 +172,22 @@ export function drawRail(x,y,p){
   }
 }
 
-// A road or rail carried over water: piers, deck, and railings on the
-// open sides only, so a run of spans reads as one continuous bridge.
+export function drawRail(x,y,p){ drawRailTracks(x,y,p,true); }
+
+export function drawRoadRailCrossing(x,y,p){
+  const z=S.cam.z;
+  drawRoad(x,y,p);
+  drawRailTracks(x,y,p,false);
+  const py=p.y-tileLift(x,y)*z;
+  for(const s of [-1,1]){
+    const px=p.x+s*12*z;
+    g.strokeStyle='#ede6d5'; g.lineWidth=1.4*z;
+    g.beginPath(); g.moveTo(px,py+2*z); g.lineTo(px,py-8*z); g.stroke();
+    g.strokeStyle='#b95b53'; g.lineWidth=1.2*z;
+    g.beginPath(); g.moveTo(px-3*z,py-7*z); g.lineTo(px+3*z,py-3*z); g.moveTo(px+3*z,py-7*z); g.lineTo(px-3*z,py-3*z); g.stroke();
+  }
+}
+
 export function drawSpan(b,p){
   const z=S.cam.z, L=BRIDGE_LIFT*z;
   const hw=TW/2*z, hh=TH/2*z, py=p.y-L;
@@ -162,16 +198,12 @@ export function drawSpan(b,p){
   g.fillRect(p.x+6.6*z,py+4*z,2.4*z,L);
   g.fillStyle="#9c8968";
   diamond(p.x,py+2.4*z,1.0); g.fill();
-
   if(b.type==="road") drawRoad(b.x,b.y,p); else drawRail(b.x,b.y,p);
-
-  const corner={
-    t:[p.x,py-hh], r:[p.x+hw,py], b:[p.x,py+hh], l:[p.x-hw,py]
-  };
+  const corner={t:[p.x,py-hh],r:[p.x+hw,py],b:[p.x,py+hh],l:[p.x-hw,py]};
   const edges=[[[1,0],"r","b"],[[-1,0],"l","t"],[[0,1],"b","l"],[[0,-1],"t","r"]];
   g.strokeStyle="rgba(244,240,226,.88)"; g.lineWidth=1.2*z; g.lineCap="round";
   for(const[d,c1,c2] of edges){
-    if(isType(b.x+d[0],b.y+d[1],b.type)) continue;   // the way carries on, leave it open
+    if(isType(b.x+d[0],b.y+d[1],b.type)) continue;
     const a=corner[c1], c=corner[c2];
     g.beginPath(); g.moveTo(a[0],a[1]-5*z); g.lineTo(c[0],c[1]-5*z); g.stroke();
     g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(a[0],a[1]-5*z); g.stroke();
@@ -193,7 +225,7 @@ export function drawTree(sx,sy,seed,scale){
   g.beginPath(); g.ellipse(sx,sy+1*z,7*z,3.4*z,0,0,TAU); g.fill();
   g.fillStyle=P.trunk;
   g.fillRect(sx-1.3*z,sy-9*z,2.6*z,9*z);
-  const rr=(6.2+r*2.4)*z*(1-PAL.snow*0.28);       // winter thins the canopy
+  const rr=(6.2+r*2.4)*z*(1-PAL.snow*0.28);
   blob(sx,sy-13*z,rr,PAL.leaf,PAL.leafHi);
   blob(sx-rr*0.55,sy-9*z,rr*0.62,PAL.leaf,PAL.leafHi);
   blob(sx+rr*0.55,sy-9.5*z,rr*0.6,PAL.leaf,PAL.leafHi);

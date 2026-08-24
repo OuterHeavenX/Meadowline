@@ -6,6 +6,7 @@ on:
       - feature/housing-2
       - feature/city-growth-progression
       - feature/city-hall-civic-center
+      - feature/roads-mobility-2
   pull_request:
     branches:
       - feature/living-city-foundation
@@ -45,3 +46,8 @@ jobs:
           google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 --dump-dom http://127.0.0.1:8000/tests/city-hall-regression.html >/tmp/meadowline-city-hall.html
           cat /tmp/meadowline-city-hall.html
           grep -q 'data-result="pass"' /tmp/meadowline-city-hall.html
+      - name: Roads and Mobility 2.0 regression
+        run: |
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=8000 --dump-dom http://127.0.0.1:8000/tests/roads-mobility-regression.html >/tmp/meadowline-roads-mobility.html
+          cat /tmp/meadowline-roads-mobility.html
+          grep -q 'data-result="pass"' /tmp/meadowline-roads-mobility.html

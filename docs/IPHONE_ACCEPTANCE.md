@@ -230,7 +230,7 @@ That merge decision is release history. It does not convert the unchecked histor
 
 Branch: `feature/city-hall-civic-center`
 
-**Current status: not physically accepted. Do not check any item below from CI/browser tests.**
+**Historical device-check status: the boxes below were not individually proven before the later owner-authorized production merge. Do not check them from CI/browser tests.**
 
 ## Building
 
@@ -395,24 +395,201 @@ Around 390–430 CSS px:
 - [ ] live summary refresh is inexpensive.
 - [ ] `?debug=1` City Hall counters remain usable.
 
-# Automated validation — separate record
+# Automated validation — City Hall separate record
 
-The City Hall branch workflow includes syntax, module hygiene, Living City/Housing regression, City Growth 1.0 regression, City Growth 1.1 Town Goal/touch regression, and City Hall 1.0 regression.
+The City Hall branch workflow included syntax, module hygiene, Living City/Housing regression, City Growth 1.0 regression, City Growth 1.1 Town Goal/touch regression, and City Hall 1.0 regression.
 
-A green workflow may be recorded as **automatically validated** only. It must never check the City Hall physical boxes above.
+A green workflow is automated proof only and does not check the City Hall physical boxes above.
 
-# Current City Hall merge gate
+# City Hall release record
 
-City Hall may only be merged after:
+City Hall PR #5 was later explicitly approved by the owner and merged to production at:
+
+`fcf7f8c02291c7cd1bc2a164522353b7476e81ef`
+
+Final City Hall candidate `283f3a174a9d0a0fbf226d10fb7d4bcabb76afdc` had Living City Validation #109 green before merge.
+
+This release decision supersedes the old merge gate as a source-control state, but **does not convert any unchecked device box above into physical proof**.
+
+# ROADS & MOBILITY 2.0 — PHYSICAL ACCEPTANCE
+
+Branch: `feature/roads-mobility-2`
+
+**Current status: pending physical acceptance. Do not check any item below from CI/browser tests.**
+
+## Visual Roads
+
+- [ ] Roads clearly look like streets rather than pedestrian paths.
+- [ ] vehicle carriageway is obvious.
+- [ ] sidewalks/edges are readable.
+- [ ] corners look natural.
+- [ ] T-junctions look natural.
+- [ ] four-way intersections look natural.
+- [ ] bridges remain attractive.
+- [ ] dense Roads do not become visual noise.
+
+## Pedestrians
+
+- [ ] pedestrians visually favor sidewalks.
+- [ ] pedestrians no longer constantly march through the vehicle lane.
+- [ ] sidewalk movement looks stable.
+- [ ] pedestrians turn naturally.
+- [ ] crossings look understandable.
+- [ ] pedestrians do not visibly run through vehicles.
+
+## Vehicles
+
+- [ ] cars are readable at practical zoom.
+- [ ] pickups are readable at practical zoom.
+- [ ] delivery/service vans are readable at practical zoom.
+- [ ] direction is obvious.
+- [ ] motion is smooth.
+- [ ] vehicles stay on Roads.
+- [ ] vehicles do not drive through buildings.
+- [ ] vehicles do not drive through water.
+- [ ] vehicles do not visibly stack badly.
+- [ ] vehicle density feels alive but calm.
+- [ ] vehicles do not dominate the city.
+
+## Intersections
+
+- [ ] straight movement looks natural.
+- [ ] left/right turns look believable.
+- [ ] T-junction movement remains understandable.
+- [ ] four-way intersections do not produce obvious chaos.
+- [ ] dead ends do not trap cars forever.
+- [ ] crosswalk markings remain readable without visual clutter.
+
+## Rail Crossings
+
+- [ ] Road can intentionally cross Rail.
+- [ ] only clean crossing geometry converts automatically.
+- [ ] invalid/parallel geometry fails safely.
+- [ ] crossing appears automatically when expected.
+- [ ] train remains functional.
+- [ ] Road remains functional.
+- [ ] car waits for train.
+- [ ] car continues after train.
+- [ ] pedestrians behave safely enough around the train.
+- [ ] crossing visual is understandable.
+- [ ] first Remove on crossing leaves the original base network.
+- [ ] second Remove can remove that base normally.
+
+## Safe Touch
+
+With Road selected:
+
+- [ ] quick tap places one Road tile.
+- [ ] immediate drag pans and places no Road.
+- [ ] hold + drag paints Road.
+- [ ] release stops painting.
+- [ ] pinch paints nothing.
+
+Road/Rail crossing creation:
+
+- [ ] intentional held Road paint across Rail creates a crossing.
+- [ ] camera pan across Rail does not create a crossing.
+- [ ] pinch across Rail does not create a crossing.
+- [ ] locked parcel prevents crossing creation.
+
+Repeat relevant checks with Rail selected after Township.
+
+## iPhone portrait
+
+Around 390–430 CSS px:
+
+- [ ] street details remain readable.
+- [ ] carriageway/sidewalk distinction remains clear.
+- [ ] controls remain comfortable.
+- [ ] no horizontal overflow.
+- [ ] map remains dominant.
+- [ ] vehicles remain readable without being oversized.
+- [ ] crossing symbols remain readable.
+- [ ] performance remains smooth.
+
+## iPad portrait
+
+- [ ] streets read clearly.
+- [ ] sidewalks are visible.
+- [ ] vehicles feel appropriately scaled.
+- [ ] dense districts remain legible.
+- [ ] Build UI remains comfortable.
+- [ ] City Hall Mobility summary remains readable.
+
+## iPad landscape
+
+- [ ] developed city looks like a connected street network.
+- [ ] map remains dominant.
+- [ ] vehicles enhance rather than clutter.
+- [ ] Rail crossings are easy to identify.
+- [ ] City Hall still reads as civic centerpiece.
+
+## Save / migration
+
+- [ ] existing production city loads unchanged structurally.
+- [ ] old Roads remain in their original positions.
+- [ ] no money is deducted for visual Road evolution.
+- [ ] Rail remains.
+- [ ] crossing state survives reload.
+- [ ] Housing remains.
+- [ ] Education remains.
+- [ ] City Growth stage/parcels remain.
+- [ ] Town Goals remain coherent.
+- [ ] City Hall remains and keeps its level.
+- [ ] legacy-open V3 remains usable.
+- [ ] V2 migration remains usable.
+- [ ] V1 migration remains usable.
+- [ ] active ambient vehicle positions are safely regenerated rather than required from save.
+
+## Housing / City Growth regression
+
+- [ ] House linked state behaves the same.
+- [ ] Cottage/Town Home/Established Home requirements behave the same.
+- [ ] population is not lost because Road visuals changed.
+- [ ] residential upgrade progress is not reset by loading Roads 2.0.
+- [ ] Settlement → Village still recognizes one Road tile as one Road.
+- [ ] sidewalk/carriageway visual sub-elements do not inflate Road count.
+- [ ] a Road/Rail crossing counts exactly once as a Road for progression.
+
+## City Hall
+
+- [ ] City Hall placement/upgrades still work.
+- [ ] Overview/Goals/Growth/Land/Finances/Education remain usable.
+- [ ] Mobility shows real Road tile count.
+- [ ] Mobility shows real Road component count.
+- [ ] Mobility shows real Rail crossing count.
+- [ ] Mobility shows real active representative vehicle count.
+- [ ] no fake Traffic Health/congestion meter appears.
+
+## Performance
+
+- [ ] 100+ citizen city remains smooth.
+- [ ] representative vehicles do not cause visible hitching.
+- [ ] roughly 10–12 visible vehicles remain comfortable when the cap allows them.
+- [ ] road painting remains responsive.
+- [ ] removing Road does not freeze.
+- [ ] creating a Rail crossing does not freeze.
+- [ ] train + vehicles together remain smooth.
+- [ ] long session does not continuously accumulate vehicles.
+- [ ] `?debug=1` remains usable with Mobility counters.
+
+# Roads & Mobility automated validation — separate record
+
+The feature workflow includes syntax, module hygiene, Living City/Housing regression, City Growth 1.0 regression, City Growth 1.1 Town Goal/touch regression, City Hall 1.0 regression and Roads & Mobility 2.0 regression.
+
+A green workflow may be recorded as **automatically validated** only. It must never check Roads & Mobility physical boxes above.
+
+# Roads & Mobility merge gate
+
+Roads & Mobility 2.0 may only be merged after:
 
 - [ ] final candidate automation is green;
-- [ ] City Hall building/uniqueness/removal are physically satisfactory;
-- [ ] all four visual levels are physically understandable;
-- [ ] City Hall citywide data matches real game state;
-- [ ] parcel confirmation remains safe;
-- [ ] finances are truthful;
-- [ ] iPhone portrait is comfortable;
-- [ ] iPad portrait/landscape are comfortable;
-- [ ] current production/legacy Save V3 behavior is safe;
-- [ ] no major Housing/Education/City Growth/safe-touch regression appears;
-- [ ] owner explicitly approves the City Hall merge.
+- [ ] Roads visually read as streets on owner hardware;
+- [ ] pedestrians visually favor sidewalks;
+- [ ] representative vehicles feel calm/readable;
+- [ ] Road/Rail crossing is understandable and safe;
+- [ ] train priority/wait-resume is physically satisfactory;
+- [ ] Road safe-touch behavior remains trustworthy;
+- [ ] existing city/save/Housing/Education/City Growth/City Hall/Rail behavior shows no major regression;
+- [ ] 100+ citizen performance is acceptable;
+- [ ] owner explicitly approves the Roads & Mobility merge.
