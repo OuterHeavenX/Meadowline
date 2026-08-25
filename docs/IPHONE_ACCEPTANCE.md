@@ -917,3 +917,116 @@ These checks are owner/device work. CI must not check them.
 - [ ] Existing city loads with Roads, Rail, crossings, Housing, Education, Recreation, City Hall, parcels and money intact
 - [ ] No Police, Fire or Healthcare facility is auto-placed or auto-charged
 - [ ] Player-created water persists
+
+# LIVING CITY 3.1 / AAA VISUAL COMPLETION — PHYSICAL ACCEPTANCE
+
+These checks are owner/device work. CI must not check them.
+
+## Renderer
+
+- [ ] GPU renderer initializes on iPhone
+- [ ] Fallback works if forced
+- [ ] Renderer switch does not lose city
+- [ ] No black canvas or severe texture corruption
+- [ ] Orientation change is safe
+
+## Visual quality
+
+- [ ] City looks substantially more premium
+- [ ] Buildings have depth; Roads look polished; water looks natural
+- [ ] Shadows improve the scene and trees feel dimensional
+- [ ] Town Park looks excellent and municipal facilities are recognizable
+- [ ] Night and rain are visually impressive
+- [ ] Visual clutter remains controlled
+
+## Upgrades and feedback
+
+- [ ] Cottage → Town Home is satisfying
+- [ ] Town Home → Established Home is satisfying
+- [ ] School and City Hall upgrades are satisfying
+- [ ] Effects are not spammy
+- [ ] Tax/coin, happy and sad feedback is readable and fades correctly
+- [ ] No popup accumulation
+
+## Police
+
+- [ ] Robber is visible
+- [ ] Cruiser dispatch, arrival, arrest and return are clear
+- [ ] Emergency lights are tasteful
+
+## Fire
+
+- [ ] Fire and smoke are readable
+- [ ] Engine route and arrival are believable
+- [ ] Water spray is readable; extinguish feels complete; engine returns
+
+## Healthcare
+
+- [ ] Sick state is understandable
+- [ ] Ambulance dispatch and patient interaction are clear
+- [ ] Treatment/recovery is understandable; ambulance returns
+
+## Audio
+
+- [ ] Ambience and rain sound pleasant
+- [ ] Sirens are restrained
+- [ ] Upgrade sound is pleasant
+- [ ] Mute works and no audio continues incorrectly
+
+## Performance
+
+- [ ] Early and 100+ population cities are smooth
+- [ ] Rain, night and simultaneous incidents are smooth
+- [ ] No obvious thermal runaway or long-session degradation
+
+## Safe touch
+
+- [ ] Road and Water painting are safe
+- [ ] Pan, pinch and Build tray interaction are safe
+
+## iPhone portrait
+
+- [ ] Map remains dominant; text and popups are correctly scaled
+- [ ] Renderer is crisp; no overflow; City Hall remains usable
+
+## iPad portrait
+
+- [ ] Visual depth is strong; water is attractive
+- [ ] Large facilities are impressive; performance is stable
+
+## iPad landscape
+
+- [ ] City has a premium diorama feel
+- [ ] Long Roads and citywide emergency response read clearly
+- [ ] Lighting feels commercial-quality and the developed city feels alive
+
+# THREE.JS LOW-POLY RENDERER — PHYSICAL ACCEPTANCE
+
+These items were added after the owner supplied low-poly miniature-city visual references. They are deliberately unchecked; headless Chrome evidence is not physical-device evidence.
+
+## Renderer and identity
+
+- [ ] Low-poly 3D initializes on iPhone and iPad without a black canvas
+- [ ] Classic Canvas can be forced and preserves the same city
+- [ ] Orthographic selection/placement remains aligned with rendered tiles
+- [ ] Pan, pinch, Road paint and Water paint remain safe in Low-poly 3D
+- [ ] Context loss or renderer failure falls back without save or simulation damage
+- [ ] Meadowline still reads as Meadowline rather than a generic 3D demo
+
+## Visual target
+
+- [ ] Buildings have convincing modeled mass, roofs, windows and distinct tiers
+- [ ] Roads, sidewalks, intersections and Rail read clearly at normal phone zoom
+- [ ] Trees, vehicles and citizens feel like a coherent low-poly miniature set
+- [ ] Directional shadows add depth without obscuring placement
+- [ ] Ponds read as water and shoreline treatment avoids a square-hole appearance
+- [ ] Police, Fire, Clinic and Hospital silhouettes are immediately distinct
+- [ ] Developed iPad landscape city approaches the supplied premium low-poly reference quality
+
+## Device cost
+
+- [ ] Auto selects a stable renderer and quality on the device
+- [ ] High, Balanced and Battery Saver make visible cost/quality tradeoffs
+- [ ] 100+ population, rain, night and concurrent incidents remain playable
+- [ ] Rotation/resize remains sharp and correctly framed
+- [ ] No unreasonable heat, memory growth or long-session degradation is observed

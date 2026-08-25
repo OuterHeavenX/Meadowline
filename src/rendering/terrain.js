@@ -4,6 +4,7 @@ import { isBridge } from '../transport/bridges.js';
 import { proj, screen2world } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
 import { idx, inBounds, isRoadRailCrossing, isType } from '../world/tiles.js';
+import { graphicsProfile } from './capabilities.js';
 
 /* ============================================================
    RENDERING
@@ -11,7 +12,7 @@ import { idx, inBounds, isRoadRailCrossing, isType } from '../world/tiles.js';
 export const cv=document.getElementById("c"),g=cv.getContext("2d",{alpha:false});
 export let DPR=1;
 export function resize(){
-  DPR=Math.min(devicePixelRatio||1,2);
+  DPR=Math.min(devicePixelRatio||1,graphicsProfile().dpr);
   cv.width=Math.floor(innerWidth*DPR);
   cv.height=Math.floor(innerHeight*DPR);
   g.setTransform(DPR,0,0,DPR,0,0);
@@ -52,7 +53,7 @@ export function snowCap(sx,topY,f){
 export const lights=[];
 
 export function drawGround(){
-  const z=S.cam.z;
+  const z=S.cam.z,profile=graphicsProfile(),rain=S.wx.k==='rain'?S.wx.amt:0;
   const c0=screen2world(0,0), c1=screen2world(innerWidth,0), c2=screen2world(0,innerHeight), c3=screen2world(innerWidth,innerHeight);
   const minX=Math.floor(Math.min(c0.x,c1.x,c2.x,c3.x))-1, maxX=Math.ceil(Math.max(c0.x,c1.x,c2.x,c3.x))+1;
   const minY=Math.floor(Math.min(c0.y,c1.y,c2.y,c3.y))-1, maxY=Math.ceil(Math.max(c0.y,c1.y,c2.y,c3.y))+1;
@@ -61,7 +62,9 @@ export function drawGround(){
       const i=idx(x,y), p=proj(x,y);
       const b=S.grid[i];
       if(S.terr[i]===1){
-        diamond(p.x,p.y,1.02); g.fillStyle=PAL.water; g.fill();
+        let neighbors=0;for(const[dx,dy]of DIRS)if(inBounds(x+dx,y+dy)&&S.terr[idx(x+dx,y+dy)]===1)neighbors++;
+        diamond(p.x,p.y,1.02);g.fillStyle=neighbors===4?P.waterDeep:PAL.water;g.fill();
+        if(profile.reflections){g.save();diamond(p.x,p.y,.96);g.clip();const rg=g.createLinearGradient(p.x-20*z,p.y-10*z,p.x+20*z,p.y+10*z);rg.addColorStop(0,'rgba(255,255,255,0)');rg.addColorStop(.48,`rgba(226,242,242,${.06+.07*profile.reflections})`);rg.addColorStop(.58,'rgba(255,255,255,0)');g.fillStyle=rg;g.fillRect(p.x-32*z,p.y-16*z,64*z,32*z);g.restore();}
         const w=Math.sin(S.t*1.3+x*0.7+y*0.5);
         if(w>0.55){
           g.save(); diamond(p.x,p.y,1.02); g.clip();
@@ -80,6 +83,8 @@ export function drawGround(){
                      '0,1':[[p.x,p.y+hh],[p.x-hw,p.y]], '0,-1':[[p.x,p.y-hh],[p.x+hw,p.y]] }[dx+','+dy];
           g.beginPath(); g.moveTo(cs[0][0],cs[0][1]); g.lineTo(cs[1][0],cs[1][1]); g.stroke();
         }
+        if(neighbors<4&&hash2(x,y,909)>.62){g.strokeStyle='rgba(88,112,70,.72)';g.lineWidth=z;for(let k=0;k<3;k++){const ox=(hash2(x,y,k+910)-.5)*22*z;g.beginPath();g.moveTo(p.x+ox,p.y+5*z);g.lineTo(p.x+ox+(k-1)*z,p.y-4*z);g.stroke();}}
+        if(rain>.08&&profile.rain){const phase=(S.t*2.2+hash2(x,y,912)*4)%1;if(phase<.28){g.strokeStyle=`rgba(210,235,241,${(1-phase/.28)*rain*.38})`;g.lineWidth=z;g.beginPath();g.ellipse(p.x+(hash2(x,y,913)-.5)*24*z,p.y+(hash2(x,y,914)-.5)*8*z,(2+phase*12)*z,(1+phase*5)*z,0,0,TAU);g.stroke();}}
         continue;
       }
       if(b&&isRoadRailCrossing(b)){ drawRoadRailCrossing(x,y,p); continue; }
@@ -126,6 +131,7 @@ export function drawRoad(x,y,p){
   const cons=roadConnections(x,y);
   diamond(p.x,py,1.02); g.fillStyle='#cfc5ad'; g.fill();
   diamond(p.x,py,0.58); g.fillStyle='#6f756f'; g.fill();
+  if(S.wx.k==='rain'&&S.wx.amt>.05){diamond(p.x,py,.54);g.fillStyle=`rgba(40,55,61,${S.wx.amt*.23})`;g.fill();g.strokeStyle=`rgba(205,225,224,${S.wx.amt*.18})`;g.lineWidth=.8*z;g.beginPath();g.moveTo(p.x-11*z,py-2*z);g.lineTo(p.x+9*z,py+2*z);g.stroke();}
   g.lineCap='round';
   for(const[dx,dy] of cons){
     const e=proj(x+dx*0.5,y+dy*0.5);
@@ -221,6 +227,7 @@ export function blob(sx,sy,r,col,hi){
 export function drawTree(sx,sy,seed,scale){
   const z=S.cam.z*(scale||1);
   const r=hash2(seed,3,5);
+  const sway=Math.sin(S.t*.8+seed*.17)*.7*z*graphicsProfile().detail;sx+=sway;
   g.fillStyle="rgba(30,50,30,.16)";
   g.beginPath(); g.ellipse(sx,sy+1*z,7*z,3.4*z,0,0,TAU); g.fill();
   g.fillStyle=P.trunk;

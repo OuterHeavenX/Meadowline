@@ -9,6 +9,7 @@ on:
       - feature/roads-mobility-2
       - feature/recreation-2-town-life
       - feature/living-city-3-aaa-municipal
+      - feature/living-city-3-1-aaa-visual
   pull_request:
     branches:
       - feature/living-city-foundation
@@ -63,3 +64,24 @@ jobs:
           google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=10000 --dump-dom http://127.0.0.1:8000/tests/living-city-3-regression.html >/tmp/meadowline-living-city-3.html
           cat /tmp/meadowline-living-city-3.html
           grep -q 'data-result="pass"' /tmp/meadowline-living-city-3.html
+      - name: Living City 3.1 renderer and incident regression
+        run: |
+          google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --enable-webgl --virtual-time-budget=12000 --dump-dom http://127.0.0.1:8000/tests/living-city-3-1-regression.html >/tmp/meadowline-living-city-3-1.html
+          cat /tmp/meadowline-living-city-3-1.html
+          grep -q 'data-result="pass"' /tmp/meadowline-living-city-3-1.html
+      - name: Controlled renderer benchmark
+        run: |
+          google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --enable-webgl --virtual-time-budget=15000 --dump-dom http://127.0.0.1:8000/tests/renderer-benchmark.html >/tmp/meadowline-renderer-benchmark.html
+          cat /tmp/meadowline-renderer-benchmark.html
+          grep -q 'data-result="pass"' /tmp/meadowline-renderer-benchmark.html
+      - name: Game boot smoke test
+        run: |
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=4000 --dump-dom http://127.0.0.1:8000/?debug=1 >/tmp/meadowline-game.html
+          grep -q 'data-boot="pass"' /tmp/meadowline-game.html
+          grep -q 'graphics-settings' /tmp/meadowline-game.html
+      - name: Capture deterministic Three.js scene
+        run: google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --enable-webgl --window-size=1280,720 --virtual-time-budget=8000 --screenshot=/tmp/meadowline-three.png http://127.0.0.1:8000/tests/three-visual.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meadowline-three-preview
+          path: /tmp/meadowline-three.png

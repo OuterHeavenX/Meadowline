@@ -20,6 +20,8 @@ import { facilityFootprint, footprintCells, idx, inBounds, isFacilityPart } from
 import { darkness } from '../world/time.js';
 import { drawIncident, drawMunicipalBuilding } from './municipal.js';
 import { drawFeedback } from './feedback.js';
+import { presentFrame } from './backend.js';
+import { renderThreeScene } from './three-renderer.js';
 
 export let hover={x:-1,y:-1,on:false};
 export function drawGhost(){
@@ -58,6 +60,7 @@ export function drawPick(){
 }
 
 export function render(){
+  if(renderThreeScene()) return;
   const dark=darkness();
   const sky=g.createLinearGradient(0,0,0,innerHeight);
   const k=clamp(dark/0.62,0,1);
@@ -146,4 +149,5 @@ export function render(){
   drawFireflies(dark); drawLanterns(dark); drawMotes(); drawWeather();
   for(const inc of S.incidents||[]) drawIncident(inc);
   drawFeedback();
+  presentFrame();
 }

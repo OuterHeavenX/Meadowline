@@ -24,6 +24,7 @@ const cityHall=()=> (S.grid||[]).find(b=>b?.type==='cityHall')||null;
 const cityHallLevel=()=>Math.max(0,Math.floor(Number(cityHall()?.state?.level)||0));
 const recreation=()=>recreationSnapshot();
 const recreationCount=()=>recreationFacilities().length;
+const employment=()=>S.municipal?.employment||{workers:0,jobs:0,employed:0,unemployed:0};
 
 export function hasUsableUnlockedWaterfront(){
   if(!isBuildingUnlocked('dock')) return false;
@@ -64,6 +65,10 @@ export const GOAL_TYPES={
     return {t:'Expand <b>Recreation capacity</b>',g:target,r:115,at:()=>recreation().capacity||0};
   },()=>stage()>=3&&(recreation().demand||0)>=24&&(recreation().underserved||0)>=10),
   townPark:fixed('townPark','Establish a <b>Town Park</b>',()=>count('townPark'),()=>1,155,()=>stage()>=4&&isBuildingUnlocked('townPark')&&count('townPark')<1&&(recreation().demand||0)>=45&&(recreation().underserved||0)>=12),
+  police:fixed('police','Build a <b>Police Station</b>',()=>count('policeStation'),()=>1,150,()=>stage()>=2&&isBuildingUnlocked('policeStation')&&count('policeStation')<1&&(S.municipal?.safety?.pressure||0)>=8),
+  fireService:fixed('fireService','Establish <b>Fire coverage</b>',()=>count('fireStation'),()=>1,175,()=>stage()>=3&&isBuildingUnlocked('fireStation')&&count('fireStation')<1&&(S.municipal?.fire?.risk||0)>=8),
+  healthcare:fixed('healthcare','Open a <b>Clinic</b>',()=>count('clinic')+count('hospital'),()=>1,165,()=>stage()>=3&&isBuildingUnlocked('clinic')&&count('clinic')+count('hospital')<1&&(S.municipal?.healthcare?.demand||0)>=4),
+  jobs:dynamic('jobs',()=>{const e=employment(),target=Math.max(e.jobs+4,Math.ceil(e.workers*.8));return{t:'Create <b>'+target+'</b> local jobs',g:target,r:125,at:()=>employment().jobs||0};},()=>stage()>=2&&employment().workers>=8&&employment().jobs<employment().workers*.7),
 
   school:fixed('school','Open your first <b>School</b>',()=>count('school'),()=>1,95,()=>stage()>=2&&isBuildingUnlocked('school')&&count('school')<1),
   students:fixed('students','Serve <b>6</b> students',studentsServed,()=>6,95,()=>stage()>=2&&count('school')>0&&studentsServed()<6),
@@ -89,15 +94,15 @@ export const WISH_TYPES=GOAL_TYPES;
 
 const PRIMARY_BY_STAGE={
   1:['roads','homes','cityhall','pop','recreationStart','cafe'],
-  2:['school','students','cityhall2','townhome','recreationAccess','education','desirability','expansion','pop'],
-  3:['school2','cityhall3','townhome','established','recreationCapacity','rail','station','train','expansion','pop'],
-  4:['cityhall4','townPark','recreationAccess','dock','boats','expansion','education','desirability','pop']
+  2:['school','students','cityhall2','police','jobs','townhome','recreationAccess','education','desirability','expansion','pop'],
+  3:['school2','cityhall3','fireService','healthcare','jobs','townhome','established','recreationCapacity','rail','station','train','expansion','pop'],
+  4:['cityhall4','townPark','police','fireService','healthcare','jobs','recreationAccess','dock','boats','expansion','education','desirability','pop']
 };
 const OPTIONAL_BY_STAGE={
   1:['recreationStart','cafe','tree','mood'],
-  2:['recreationAccess','market','bakery','tree','lamp','mood','purse'],
-  3:['recreationCapacity','mill','market','bakery','tree','lamp','mood','purse'],
-  4:['townPark','recreationAccess','dock','boats','tree','lamp','mood','purse']
+  2:['police','jobs','recreationAccess','market','bakery','tree','lamp','mood','purse'],
+  3:['fireService','healthcare','jobs','recreationCapacity','mill','market','bakery','tree','lamp','mood','purse'],
+  4:['police','fireService','healthcare','jobs','townPark','recreationAccess','dock','boats','tree','lamp','mood','purse']
 };
 
 function buildGoal(id,slot){ const def=GOAL_TYPES[id]; if(!def||!def.eligible()) return null; const made=def.make?def.make(slot):{t:def.label,g:def.target(),r:def.reward,at:def.at}; if(!made||!(made.g>0)) return null; return {k:id,slot,t:made.t,g:made.g,r:made.r|0}; }

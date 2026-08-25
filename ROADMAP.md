@@ -1,10 +1,10 @@
 # Meadowline Roadmap
 
-## Current development — Living City 3.0 / Municipal Integration
+## Current development — Living City 3.1 / AAA Visual Completion
 
-The integration candidate is stacked on the validated but unmerged Recreation 2.0 branch. It adds the beginner tutorial, safe pond terrain painting, Employment/Prosperity, bounded Crime/Police, Fire response, Healthcare, a shared emergency-vehicle layer, truthful City Hall summaries, transient world feedback and renderer capability/quality boundaries. It is **not Production** until review, automatic validation and owner physical acceptance are complete. See `docs/LIVING_CITY_3.md`.
+The visual candidate is stacked on the validated but unmerged Living City 3.0 candidate, which is itself stacked on Recreation 2.0. The parent adds the beginner tutorial, safe pond terrain painting, Employment/Prosperity, bounded Crime/Police, Fire response, Healthcare, a shared emergency-vehicle layer, truthful City Hall summaries and transient feedback. Living City 3.1 adds a true orthographic Three.js low-poly world, complete Canvas fallback and release-candidate polish. It is **not Production** until review, automatic validation and owner physical acceptance are complete. See `docs/LIVING_CITY_3.md` and `docs/RENDERING_2.md`.
 
-Meadowline is evolving from a calm small city builder into a deeper living-city simulation while preserving its static browser architecture, native ES modules, isometric Canvas 2D presentation, mobile-first interaction, and low-stress character.
+Meadowline is evolving from a calm small city builder into a deeper living-city simulation while preserving its static browser architecture, native ES modules, isometric identity, complete Canvas compatibility path, mobile-first interaction, and low-stress character.
 
 Status labels remain deliberate: **production**, **historical implementation**, **automatically validated**, **physically validated**, **current development**, and **roadmap only** are not interchangeable.
 
@@ -205,3 +205,13 @@ Recreation 2.0 may only move toward merge after:
 - owner explicitly approves the Recreation merge.
 
 Physical acceptance remains separate from CI.
+
+## Living City 3.1 — AAA Visual / Release-Candidate Development
+
+**Current development; not Production.**
+
+Branch: `feature/living-city-3-1-aaa-visual`, based on the exact unmerged Living City 3 candidate.
+
+This focused pass productionizes the renderer boundary with a stable WebGL2 presentation layer and continuous Canvas fallback, graphics presets, richer terrain/Road/water/night/weather treatment, municipal incident arrival/working/return presentation, restrained procedural audio, truthful municipal Look/Town Goal completion, and measurable diagnostics. WebGPU remains optional future research rather than a runtime requirement. It does not add another simulation layer, save version, map expansion or progression stage.
+
+See `docs/RENDERING_2.md`. Merge still requires exact-head automation, owner physical acceptance of the stacked prerequisites and explicit approval.
