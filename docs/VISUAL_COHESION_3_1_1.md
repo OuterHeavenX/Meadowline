@@ -49,7 +49,7 @@ The build grid is now carried primarily by restrained terrain variation and auth
 
 ## Composition
 
-Natural trees are presentation-thinned deterministically, reduced beside development, capped at 230 near and 110 far, and rendered from one coherent broadleaf/conifer family. Saved natural-tree and player-tree state is never deleted. Housing roof tendencies share a cheap district hash, creating neighborhood rhythm without a style simulation.
+Natural trees are presentation-thinned deterministically, reduced beside development, capped at 230 near and 110 far, and use a compact one-mesh broadleaf/conifer silhouette; authored lot and Recreation trees retain richer layered forms. Saved natural-tree and player-tree state is never deleted. Housing roof tendencies share a cheap district hash, creating neighborhood rhythm without a style simulation.
 
 The camera remains the proven isometric mapping. Static detail changes only at a coarse near/far zoom band, preventing per-frame churn and reducing far tree density.
 
