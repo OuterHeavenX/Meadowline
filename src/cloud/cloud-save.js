@@ -25,6 +25,17 @@ export async function getCloudSaveSummary(){
   return {signedIn:true,user,save:data||null};
 }
 
+export async function getCloudHistory(){
+  const user=await getCloudAccount();
+  if(!user) return [];
+  const {data,error}=await supabase.from('city_save_history')
+    .select('id,slot,city_name,save_version,revision,client_saved_at,archived_at,payload')
+    .eq('user_id',user.id).eq('slot',1)
+    .order('revision',{ascending:false}).limit(5);
+  if(error) throw error;
+  return Array.isArray(data)?data:[];
+}
+
 export async function uploadLocalSave(){
   const user=await getCloudAccount();
   if(!user) throw new Error('Sign in before using cloud saves.');
@@ -65,6 +76,27 @@ export async function downloadCloudSave(){
   store.set(KEY,JSON.stringify(data.payload));
   writeRevision(Number(data.revision)||0);
   return {status:'downloaded',revision:Number(data.revision)||0,updatedAt:data.updated_at||null};
+}
+
+export async function restoreCloudHistory(historyId){
+  const user=await getCloudAccount();
+  if(!user) throw new Error('Sign in before restoring cloud history.');
+  if(!historyId) throw new Error('Choose a cloud revision to restore.');
+  const expected=readRevision();
+  if(expected<1) throw new Error('Refresh the cloud save before restoring history.');
+  const {data,error}=await supabase.rpc('restore_city_save',{
+    p_history_id:historyId,
+    p_expected_revision:expected
+  });
+  if(error) throw error;
+  const result=Array.isArray(data)?data[0]:data;
+  if(!result) throw new Error('Cloud restore returned no result.');
+  if(result.status==='conflict'){
+    if(Number.isFinite(Number(result.revision))) writeRevision(Number(result.revision));
+    return {status:'conflict',revision:Number(result.revision)||0,restoredFrom:Number(result.restored_from_revision)||0};
+  }
+  writeRevision(Number(result.revision)||expected+1);
+  return {status:'restored',revision:Number(result.revision)||expected+1,restoredFrom:Number(result.restored_from_revision)||0};
 }
 
 export function clearCloudRevision(){ localStorage.removeItem(REVISION_KEY); }
