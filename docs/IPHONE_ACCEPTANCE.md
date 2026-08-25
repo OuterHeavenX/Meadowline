@@ -1030,3 +1030,70 @@ These items were added after the owner supplied low-poly miniature-city visual r
 - [ ] 100+ population, rain, night and concurrent incidents remain playable
 - [ ] Rotation/resize remains sharp and correctly framed
 - [ ] No unreasonable heat, memory growth or long-session degradation is observed
+
+# VISUAL COHESION 3.1.1 — PHYSICAL ACCEPTANCE
+
+These are owner/device checks. Automated screenshots and CI must not check them.
+
+## Buildings
+
+- [ ] Cottage reads as a low, cozy starter home
+- [ ] Town Home is clearly upgraded
+- [ ] Established Home is clearly mature
+- [ ] Housing tiers are distinct without labels and variation feels coherent
+- [ ] Café, Market and Bakery are distinct
+- [ ] School and City Hall are recognizable landmarks
+- [ ] Police Station and Fire Station are recognizable
+- [ ] Clinic and Hospital are distinct
+- [ ] Multi-tile facilities use their footprint well
+
+## Roads
+
+- [ ] Straights, corners, T-junctions and four-way intersections join cleanly
+- [ ] Dead ends look intentional
+- [ ] Sidewalks remain continuous and crosswalks are restrained
+- [ ] Facility entrances look believable
+- [ ] Road/Rail crossings remain clear
+- [ ] Bridges read as bridges
+- [ ] No obvious seams or z-fighting
+
+## Terrain
+
+- [ ] Grass no longer resembles graph paper during ordinary play
+- [ ] Grid remains readable while building and recedes during normal play
+- [ ] Locked parcels belong to the same world and remain understandable
+- [ ] World edge looks intentional
+- [ ] Pond edges look natural and water remains readable at phone zoom
+
+## Composition
+
+- [ ] Forests frame rather than bury the city
+- [ ] Tree scale feels believable
+- [ ] Neighborhoods have breathing room
+- [ ] Civic buildings remain visible
+- [ ] Town Park anchors its neighborhood
+- [ ] New-game framing focuses on playable land
+- [ ] Developed city has a coherent skyline and controlled visual clutter
+
+## iPhone
+
+- [ ] Buildings remain readable at normal portrait zoom
+- [ ] Selection and placement align with geometry
+- [ ] Road and Water painting remain safe
+- [ ] Pan, pinch and Build tray remain safe
+- [ ] Performance remains stable
+
+## iPad portrait
+
+- [ ] Neighborhood composition feels intentional
+- [ ] Civic landmarks read clearly
+- [ ] Terrain and parcel treatment look polished
+- [ ] Performance remains stable
+
+## iPad landscape
+
+- [ ] City achieves a premium miniature-diorama feeling
+- [ ] Roads create a coherent city structure
+- [ ] Forest, terrain and buildings feel art-directed
+- [ ] Developed city approaches the supplied references
+- [ ] No obvious prototype-quality visual element dominates the scene
