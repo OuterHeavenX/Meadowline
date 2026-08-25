@@ -3,17 +3,18 @@ import { TAU, clamp } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { educationProvider } from './civic-services.js';
 import { crossingBlockedByTrain } from './mobility.js';
+import { recreationDestinationForCitizen, recreationLocalPoint } from './recreation.js';
 import { findPath, stepFrom } from '../transport/pathfinding.js';
 import { roadNear } from '../transport/roads.js';
-import { idx, isType } from '../world/tiles.js';
+import { facilityRootAt, idx, isType } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 
 export const SHIRTS=["#e8735f","#5d8fc4","#e0b451","#6fae7c","#c273a8","#e9e2cf","#7a6fb5"];
 const walkable=(x,y)=>isType(x,y,"road");
 
 /* ---------- where someone is headed, and why ----------
-   The day has a shape: out to work/school in the morning, out to the café or
-   park in the afternoon, home at dusk, indoors overnight. */
+   The day has a shape: out to work/school in the morning, out to cafés and
+   real recreation in the afternoon, home at dusk, indoors overnight. */
 export function errand(){
   const t=S.dayT;
   if(t<0.16||t>0.80) return "home";
@@ -25,7 +26,7 @@ export function errand(){
 function pool(kind){
   const c=S.ctx;
   if(kind==="work")    return [...c.mills,...c.bakeries,...c.markets,...c.schools,...c.stations,...c.cafes];
-  if(kind==="leisure") return [...c.cafes,...c.parks,...c.markets,...c.docks];
+  if(kind==="leisure") return [...c.cafes,...c.markets,...c.docks];
   return [];
 }
 
@@ -37,7 +38,14 @@ function schoolDestination(c){
   return p&&p.provider?p.provider:null;
 }
 
+function clearRecreationState(c){
+  c.recreationRoot=null;
+  c.recreationEntry=null;
+  c.facilityLocal=null;
+}
+
 function chooseDest(c){
+  if(c.facilityLocal) clearRecreationState(c);
   const kind=errand();
   c.doing=kind;
   let b=null;
@@ -45,6 +53,20 @@ function chooseDest(c){
     b=schoolDestination(c);
     if(b) c.doing="school";
   }
+
+  // Recreation is not constant. During the leisure window a representative
+  // pedestrian sometimes chooses a real assigned public-space provider; other
+  // trips still support cafés, markets and waterfront town life.
+  if(!b&&kind==="leisure"&&Math.random()<0.68){
+    const rec=recreationDestinationForCitizen(c);
+    if(rec?.root&&rec.entry){
+      c.recreationRoot={x:rec.root.x,y:rec.root.y};
+      c.recreationEntry={x:rec.entry.x,y:rec.entry.y};
+      c.carry=0; c.at=rec.root.type; c.doing="recreation";
+      return {x:rec.entry.x,y:rec.entry.y};
+    }
+  }
+
   const options=pool(kind);
   if(!b&&options.length) b=options[(Math.random()*options.length)|0];
   if(!b){
@@ -60,17 +82,34 @@ function chooseDest(c){
   return r;
 }
 
+function beginFacilityLeisure(c){
+  if(!c.recreationRoot) return false;
+  const root=facilityRootAt(c.recreationRoot.x,c.recreationRoot.y);
+  if(!root||root.x!==c.recreationRoot.x||root.y!==c.recreationRoot.y){ clearRecreationState(c); return false; }
+  const serial=((c.home?.x||0)*31+(c.home?.y||0)*17+(c.bob*100)|0);
+  c.facilityLocal=recreationLocalPoint(root,serial);
+  c.doing="recreation";
+  c.linger=3.5+Math.random()*7.5;
+  return true;
+}
+
 function nextStep(c){
   if(c.path&&c.pi<c.path.length){
     const n=c.path[c.pi++];
     if(Math.abs(n[0]-c.x)+Math.abs(n[1]-c.y)===1&&walkable(n[0],n[1])) return n;
     c.path=null;
   }
-  if(c.path){ c.path=null; c.linger=1.5+Math.random()*4; }
+  if(c.path){
+    c.path=null;
+    if(beginFacilityLeisure(c)) return [c.x,c.y];
+    c.linger=1.5+Math.random()*4;
+  }
   const dest=chooseDest(c);
   if(dest){
     const path=findPath(c.x,c.y,dest.x,dest.y,walkable);
     if(path&&path.length){ c.path=path; c.pi=0; return c.path[c.pi++]; }
+    if(dest.x===c.x&&dest.y===c.y&&beginFacilityLeisure(c)) return [c.x,c.y];
+    clearRecreationState(c);
   }
   if(!c.linger) c.linger=1+Math.random()*3;
   const wander=stepFrom(c.x,c.y,c.px,c.py,"road");
@@ -99,7 +138,8 @@ export function spawnCitizen(){
     home:{x:h.x,y:h.y}, homeRoad:{x:r.x,y:r.y},
     name:FIRSTS[(Math.random()*FIRSTS.length)|0],
     side:Math.random()<0.5?-1:1,
-    path:null, pi:0, linger:0, carry:0, doing:"home", at:null, waitingTrain:0
+    path:null, pi:0, linger:0, carry:0, doing:"home", at:null, waitingTrain:0,
+    recreationRoot:null,recreationEntry:null,facilityLocal:null
   });
 }
 
@@ -127,7 +167,15 @@ export function updateCitizens(dt){
 
   for(let i=S.citizens.length-1;i>=0;i--){
     const c=S.citizens[i];
-    if(c.linger>0){ c.linger-=dt; continue; }
+    if(c.facilityLocal&&c.recreationRoot){
+      const root=facilityRootAt(c.recreationRoot.x,c.recreationRoot.y);
+      if(!root||root.x!==c.recreationRoot.x||root.y!==c.recreationRoot.y){ clearRecreationState(c); c.linger=0; }
+    }
+    if(c.linger>0){
+      c.linger-=dt;
+      if(c.linger<=0&&c.facilityLocal){ clearRecreationState(c); c.at=null; }
+      continue;
+    }
     if(crossingBlockedByTrain(c.nx,c.ny)){
       c.waitingTrain=Math.min(5,(c.waitingTrain||0)+dt);
       continue;

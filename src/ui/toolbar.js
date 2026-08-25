@@ -1,4 +1,5 @@
 import { CATEGORIES,COST,ICONS,TOOLS } from '../core/constants.js';
+import { getBuildingDefinition } from '../buildings/registry.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { isPaintTool } from '../core/input-policy.js';
@@ -19,12 +20,18 @@ const activeCancel=document.getElementById('active-tool-cancel');
 export let category=CATEGORIES[0].id;
 
 function toolDef(id){return TOOLS.find(t=>t.id===id);}
+function footprintLabel(id){
+  const fp=getBuildingDefinition(id)?.placement?.footprint;
+  return fp?fp[0]+'×'+fp[1]:'';
+}
 function button(t,compact){
   const locked=t.cat!=='mode'&&!isBuildingUnlocked(t.id); const b=document.createElement('button');
   b.className='tool'+(t.id===S.tool?' on':'')+(locked?' locked':''); b.dataset.id=t.id; b.disabled=locked;
   const unlock=locked?' · unlocks at '+CITY_STAGES[buildingUnlockStage(t.id)-1].name:'';
-  b.title=t.name+(t.cost?' · '+t.cost:'')+unlock+' ('+t.key.toUpperCase()+')'; b.setAttribute('aria-label',b.title); b.setAttribute('aria-pressed',t.id===S.tool?'true':'false');
-  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[t.id]+'</svg>'+(compact?'':'<i>'+t.name+'</i><u>'+(locked?'At '+CITY_STAGES[buildingUnlockStage(t.id)-1].name:(t.cost?t.cost:'Free'))+'</u>');
+  const fp=t.cat==='mode'?'':footprintLabel(t.id);
+  b.title=t.name+(fp?' · '+fp:'')+(t.cost?' · '+t.cost:'')+unlock+' ('+t.key.toUpperCase()+')'; b.setAttribute('aria-label',b.title); b.setAttribute('aria-pressed',t.id===S.tool?'true':'false');
+  const meta=locked?'At '+CITY_STAGES[buildingUnlockStage(t.id)-1].name:((fp&&fp!=='1×1'?fp+' · ':'')+(t.cost?t.cost:'Free'));
+  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[t.id]+'</svg>'+(compact?'':'<i>'+t.name+'</i><u>'+meta+'</u>');
   b.addEventListener('click',()=>pickTool(t.id)); return b;
 }
 function renderCats(){ if(!elCats)return; elCats.replaceChildren(); CATEGORIES.forEach(c=>{const b=document.createElement('button');b.className='cat'+(c.id===category?' on':'');b.dataset.cat=c.id;b.textContent=c.name;b.addEventListener('click',()=>showCategory(c.id));elCats.appendChild(b);}); }
@@ -37,19 +44,17 @@ export function pickTool(id){
   if(id!=='look'&&S.tool==='look') services.closeLook();
   S.tool=id;
   if(t.cat!=='mode'&&t.cat!==category) showCategory(t.cat);
-  // Selecting a building no longer closes the tray. The player explicitly
-  // chooses ✓ to keep the tool and return map focus, or × to cancel it.
   paintTools(); hint(t.desc); services.blip(430,.05,'triangle');
 }
 export function paintActiveTool(){
   if(!active)return;
   const t=toolDef(S.tool);
-  // Look is a lightweight inspection mode and should never obscure the build catalog.
   const show=!!t&&S.tool!=='move'&&S.tool!=='look';
   active.classList.toggle('show',show); active.classList.toggle('danger',S.tool==='erase');
   if(!show)return;
-  if(activeName)activeName.textContent=t.name+(t.cost?' · '+t.cost+' coins':'');
-  if(activeMeta)activeMeta.textContent=isPaintTool(S.tool)?'Tap once · Hold + drag to paint':'Tap to place · Drag to move';
+  const fp=footprintLabel(S.tool);
+  if(activeName)activeName.textContent=t.name+(fp&&fp!=='1×1'?' · '+fp:'')+(t.cost?' · '+t.cost+' coins':'');
+  if(activeMeta)activeMeta.textContent=isPaintTool(S.tool)?'Tap once · Hold + drag to paint':(fp&&fp!=='1×1'?'Tap anchor to place full footprint · Drag to move':'Tap to place · Drag to move');
 }
 export function paintTools(){
   if(elTools){ const expected=TOOLS.filter(t=>t.cat===category); const ids=[...elTools.children].map(b=>b.dataset.id); if(ids.join('|')!==expected.map(t=>t.id).join('|')) elTools.replaceChildren(...expected.map(t=>button(t,false))); }

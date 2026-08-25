@@ -1,15 +1,16 @@
-import { BUILDABLE } from '../buildings/buildings.js';
-import { BUILDINGS, defaultBuildingState } from '../buildings/registry.js';
+import { BUILDABLE, restoreFacilityOccupancy } from '../buildings/buildings.js';
+import { BUILDINGS, defaultBuildingState, getBuildingDefinition } from '../buildings/registry.js';
 import { S } from './state.js';
 import { recompute } from '../simulation/mood.js';
 import { invalidateServices, recomputeServices } from '../simulation/civic-services.js';
 import { invalidateCitySummary } from '../simulation/city-summary.js';
+import { invalidateRecreation, recomputeRecreation } from '../simulation/recreation.js';
 import { mileHit, rollWishes, sanitizeGoals, setMileHit } from '../simulation/wishes.js';
 import { toast } from '../ui/notify.js';
 import { genWorld } from '../world/map.js';
 import { refreshPalette } from '../world/seasons.js';
-import { idx, inBounds } from '../world/tiles.js';
-import { sanitizeProgression } from '../progression/city-growth.js';
+import { idx, inBounds, isFacilityPart } from '../world/tiles.js';
+import { isFootprintUnlocked, sanitizeProgression } from '../progression/city-growth.js';
 
 export const KEY='meadowline.v3', KEY_V2='meadowline.v2', KEY_OLD='meadowline.v1';
 export const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
@@ -29,6 +30,7 @@ function cleanState(type,state){
     out.housingTier=Number.isFinite(state.housingTier)?Math.max(1,Math.min(tierCount,Math.floor(state.housingTier))):1;
     out.upgradeProgress=Number.isFinite(state.upgradeProgress)?Math.max(0,Math.min(1,state.upgradeProgress)):0;
     out.desirability=Number.isFinite(state.desirability)?Math.max(0,Math.min(100,state.desirability)):0;
+    out.recreationSatisfaction=Number.isFinite(state.recreationSatisfaction)?Math.max(0,Math.min(100,state.recreationSatisfaction)):0;
   }
   if(type==='school') out.level=Number.isFinite(state.level)?Math.max(1,Math.min(2,Math.floor(state.level))):1;
   if(type==='cityHall') out.level=Number.isFinite(state.level)?Math.max(1,Math.min(4,Math.floor(state.level))):1;
@@ -36,7 +38,9 @@ function cleanState(type,state){
 }
 function packBuilding(x){ const out={type:x.type,x:x.x,y:x.y}; if(x.type==='house') out.pop=Math.max(0,Math.floor(Number(x.pop)||0)); const state=cleanState(x.type,x.state); if(Object.keys(state).length) out.state=state; return out; }
 export function save(){
-  const b=[]; for(const x of S.grid||[]) if(x) b.push(packBuilding(x));
+  // Footprint markers are derived occupancy. Only authoritative facility roots
+  // enter Save V3, so a 4×4 Town Park is still one saved building.
+  const b=[]; for(const x of S.grid||[]) if(x&&!isFacilityPart(x)&&BUILDABLE[x.type]) b.push(packBuilding(x));
   let woods=''; for(let i=0;i<S.natTree.length;i++) woods+=S.natTree[i]?'1':'0';
   const payload=JSON.stringify({v:3,seed:S.seed,coins:Math.floor(S.coins),day:S.day,dayT:S.dayT,b,woods,cityProgress:sanitizeProgression(S.cityProgress,false),mile:mileHit,granted:S.granted||0,wishes:S.wishes.map(w=>({k:w.k,slot:w.slot,t:w.t,g:w.g,r:w.r})),log:S.log.slice(0,40),history:S.history.slice(-40)});
   if(S.diagnostics) S.diagnostics.saveBytes=payload.length; store.set(KEY,payload);
@@ -52,10 +56,24 @@ export function applySave(d){
     const e=unpackEntry(raw); if(!e) continue; const{type,x,y}=e;
     if(typeof type!=='string'||!Number.isInteger(x)||!Number.isInteger(y)||!inBounds(x,y)||!BUILDABLE[type]) continue;
     if(type==='cityHall'){ if(cityHallSeen) continue; cityHallSeen=true; }
-    const i=idx(x,y); if(S.grid[i]) continue;
-    S.natTree[i]=0; S.grid[i]={type,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:Math.max(0,Math.floor(Number(e.pop)||0)),grow:0,mood:50,linked:false,state:cleanState(type,e.state)};
+    const def=getBuildingDefinition(type),fp=def?.placement?.footprint||[1,1];
+    if(!isFootprintUnlocked(x,y,fp[0],fp[1])){ if(S.diagnostics) S.diagnostics.invalidFacilityCleanup=(S.diagnostics.invalidFacilityCleanup||0)+1; continue; }
+    const root={type,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:Math.max(0,Math.floor(Number(e.pop)||0)),grow:0,mood:50,linked:false,state:cleanState(type,e.state)};
+    if(fp[0]===1&&fp[1]===1){
+      // Historical V1/V2/V3 single-tile saves were authoritative about the
+      // building position even when regenerated terrain classifications were
+      // awkward. Keep that compatibility rule exactly: first saved object wins,
+      // no charge, no relocation, and no forced rebuild.
+      const i=idx(x,y);
+      if(S.grid[i]){ if(S.diagnostics) S.diagnostics.invalidFacilityCleanup=(S.diagnostics.invalidFacilityCleanup||0)+1; continue; }
+      S.grid[i]=root; S.natTree[i]=0;
+      continue;
+    }
+    // New multi-tile facilities are stricter: the complete derived footprint
+    // must reconstruct safely on valid terrain without overlap.
+    if(!restoreFacilityOccupancy(root)){ if(S.diagnostics) S.diagnostics.invalidFacilityCleanup=(S.diagnostics.invalidFacilityCleanup||0)+1; continue; }
   }
-  refreshPalette(); recompute(); invalidateServices(); recomputeServices(true); invalidateCitySummary();
+  refreshPalette(); invalidateRecreation(); recompute(); recomputeRecreation(true); invalidateServices(); recomputeServices(true); invalidateCitySummary();
   // Old sandbox Wishes are treated as untrusted hints. Stage/geography-ineligible
   // Train/Boat/etc goals are discarded and replaced by coherent Town Goals.
   S.wishes=sanitizeGoals(d.wishes||[]); rollWishes();

@@ -6,11 +6,11 @@ Status labels remain deliberate: **production**, **historical implementation**, 
 
 ## Production baseline
 
-Verified `main` at the start of Roads & Mobility 2.0:
+Verified `main` at the start of Recreation 2.0:
 
-`fcf7f8c02291c7cd1bc2a164522353b7476e81ef`
+`6ed2225ba008a91610715c63aca44e4cd02486bb`
 
-City Hall PR #5 was explicitly approved by the owner in the Roads milestone kickoff and merged to production. The merge does not retroactively check any previously unchecked physical item in `docs/IPHONE_ACCEPTANCE.md`.
+Roads & Mobility PR #6 was explicitly approved by the owner and merged to production before the Recreation branch was created. That release decision does not retroactively turn every unchecked historical Roads device item into physical test evidence; `docs/IPHONE_ACCEPTANCE.md` remains canonical.
 
 Historical implementation branches remain preserved:
 
@@ -19,6 +19,7 @@ Historical implementation branches remain preserved:
 - `feature/housing-2`
 - `feature/city-growth-progression`
 - `feature/city-hall-civic-center`
+- `feature/roads-mobility-2`
 
 ## Milestone 1 — Living City Foundation / School 2.0
 
@@ -54,9 +55,7 @@ City Hall summarizes real Housing, Town Goals, City Growth, land, finances and E
 
 ## Milestone 5 — Roads & Mobility 2.0
 
-**Current development.**
-
-Branch: `feature/roads-mobility-2`.
+**Production through owner-approved merged PR #6.**
 
 Core relationship:
 
@@ -65,7 +64,7 @@ existing Road network
 → sidewalk-biased pedestrians
 → lightweight vehicle routes
 → safe Road/Rail crossings
-→ shared mobility infrastructure for future municipal vehicles.
+→ shared mobility infrastructure for future municipal vehicles and public destinations.
 
 Permanent decisions:
 
@@ -77,53 +76,90 @@ Permanent decisions:
 - ambient cars/pickups/vans are representative, transient and capped;
 - clean Road/Rail crossings preserve both networks through one V3 grid object;
 - trains have crossing priority;
-- no traffic-congestion/parking/commute simulator;
-- no Police/Fire/Healthcare gameplay yet.
+- no traffic-congestion/parking/commute simulator.
 
 See `docs/ROADS_MOBILITY_2.md`.
 
 ## Milestone 6 — Recreation 2.0 / Town Life
 
-**Next planned major simulation milestone after Roads & Mobility 2.0 is physically accepted and explicitly merged.**
+**Current development.**
 
-Likely relationship:
+Branch: `feature/recreation-2-town-life`.
 
-Population + Density
+Draft PR: #7.
+
+Core relationship:
+
+Population + Housing density
 → Recreation demand
-→ Parks / Recreation access
-→ leisure satisfaction
+→ connected public-space capacity/access
+→ Recreation satisfaction
 → Mood
 → Desirability
-→ Housing.
+→ Housing quality.
 
-Roads 2.0 should let citizens visibly approach recreation from sidewalks while vehicle lanes remain distinct from leisure space.
+Permanent design direction established in this milestone:
 
-Do not begin Recreation automatically as part of Roads 2.0.
+- old saved `park` remains a compatible 1×1 Pocket Green;
+- new Recreation facilities consume visibly more land than individual Houses;
+- registry footprints become reusable multi-tile facility architecture;
+- one facility owns many occupied world tiles through a root + derived occupancy model;
+- full-footprint placement/removal is atomic;
+- Save V3 persists roots and reconstructs child occupancy;
+- Recreation demand comes from real household population, never representative actor count;
+- Recreation capacity is finite;
+- access requires local reach plus a real Road route to a perimeter facility entrance;
+- one valid street/sidewalk entrance is enough; facilities do not require Roads on every side;
+- representative pedestrians reuse the Roads movement architecture, then transition into bounded facility-local leisure states;
+- public-space Mood/Desirability effects are bounded and do not rewrite Housing thresholds;
+- City Hall reports truthful Recreation aggregates;
+- Town Goals only suggest Recreation when real demand warrants it;
+- no Police/Crime/Fire/Healthcare/Employment gameplay is implemented here.
+
+Initial facility family:
+
+- Pocket Park — 2×2 — Settlement
+- Playground — 2×2 — Village
+- Picnic Green — 3×3 — Village
+- Sports Court — 2×3 — Township
+- Town Park — 4×4 — Growing Town
+
+A separate Civic Park was deliberately not added; the milestone stays focused on five distinct public-space types plus legacy Pocket Greens.
+
+See `docs/RECREATION_2.md`.
+
+## Likely next milestone — Safety / Police / Crime
+
+**Roadmap only. Do not begin automatically.**
+
+Recreation establishes reusable multi-tile municipal-facility architecture while Roads already provides representative route infrastructure. Together they make Police a natural likely next milestone, but its exact scope remains a separate owner decision after Recreation physical acceptance.
+
+Potential future relationship:
+
+Education + neighborhood quality + future safety pressure
+→ Police coverage/response
+→ Safety
+→ Desirability.
+
+Future Police Stations should reuse multi-tile facility placement/save/Look architecture rather than inventing a Police-specific footprint system.
 
 ## Later systems — order intentionally not fully locked
 
-Roads & Mobility now provides the shared foundation for later municipal response systems. Likely later systems include:
+Likely later systems include:
 
-- Safety / Police / Crime
 - Employment / Prosperity
 - Fire / Emergency
 - Healthcare
 - Waterworks / Landscaping
 - further transport evolution
 
-Potential relationships:
-
-Education → qualification → Employment / Prosperity → household stability / tax base.
-
-Density + future safety pressure → Police coverage → Safety → Desirability.
-
 Police Station → incident → cruiser dispatch → Road route → response.
 
-Density → fire risk → Fire Station → engine dispatch → Road route → response/recovery.
+Density → future fire risk → Fire Station → engine dispatch → Road route → response/recovery.
 
 Healthcare emergency → ambulance → Road route → response.
 
-The exact sequence after Recreation remains a future playtesting decision. The critical owner decision is permanent: **Roads & Mobility 2.0 comes before Police/Fire/Healthcare because those systems need trustworthy streets.**
+The exact sequence after Recreation remains playtest-sensitive.
 
 ## Explicitly deferred architecture changes
 
@@ -145,20 +181,21 @@ Meadowline should remain:
 
 Do not introduce premium currencies, energy systems, monetization pacing, arbitrary waiting gates, repetitive busywork, full traffic management or violent citizen injury simulation.
 
-## Current gate
+## Current Recreation merge gate
 
-Roads & Mobility 2.0 may only move toward merge after:
+Recreation 2.0 may only move toward merge after:
 
-- final branch automation is green;
-- existing Road saves load without forced rebuilding or coin loss;
-- streets clearly read as streets on iPhone/iPad;
-- pedestrian sidewalk positioning is visually stable;
-- representative vehicles stay on Roads and remain bounded;
-- clean Road/Rail crossing works without deleting either network;
-- train priority/wait-resume behavior is physically understandable;
-- safe-touch Road painting/crossing creation remains trustworthy;
-- Housing, City Growth, City Hall and Rail regressions remain green;
-- dense 100+ citizen performance is physically acceptable;
-- owner explicitly approves the merge.
+- final exact-head automation is green;
+- old 1×1 Parks survive existing saves without forced expansion or coin loss;
+- multi-tile placement/removal/Look/save behavior is physically understandable;
+- Pocket Park, Playground, Picnic Green, Sports Court and Town Park are visually distinct on owner hardware;
+- facility entrances visibly connect to Roads/sidewalks;
+- representative citizens visibly reach and use Recreation without route chaos;
+- demand/capacity/underserved values remain understandable;
+- House Look and City Hall Recreation summaries remain readable;
+- safe touch remains trustworthy with large footprints;
+- Housing, Education, City Growth, City Hall, Roads/Rail and Save regressions remain green;
+- developed 100+ citizen performance is physically acceptable;
+- owner explicitly approves the Recreation merge.
 
 Physical acceptance remains separate from CI.

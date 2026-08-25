@@ -1,15 +1,18 @@
 import { S } from '../core/state.js';
 import { cityStage, developmentStats, LAND_PARCELS, nextStageProgress, parcelStatus } from '../progression/city-growth.js';
 import { mobilitySnapshot } from './mobility.js';
+import { recreationSnapshot } from './recreation.js';
 import { goalAt } from './wishes.js';
+import { isFacilityPart } from '../world/tiles.js';
 
 let cache=null, signature='';
 function sig(){
   const last=S.lastPay||{};
   const mobility=mobilitySnapshot();
-  return [S.pop,S.homes,S.mood,S.coins,S.day,S.cityProgress?.stage,S.cityProgress?.mode,(S.cityProgress?.unlockedParcels||[]).join(','),S.wishes?.map(w=>w.k+':'+goalAt(w)+':'+w.g).join('|'),S.services?.education?.metrics?.served,S.services?.education?.metrics?.demand,last.tax,last.trade,last.milled,mobility.roadTiles,mobility.crossings,mobility.vehicles].join(';');
+  const recreation=recreationSnapshot();
+  return [S.pop,S.homes,S.mood,S.coins,S.day,S.cityProgress?.stage,S.cityProgress?.mode,(S.cityProgress?.unlockedParcels||[]).join(','),S.wishes?.map(w=>w.k+':'+goalAt(w)+':'+w.g).join('|'),S.services?.education?.metrics?.served,S.services?.education?.metrics?.demand,last.tax,last.trade,last.milled,mobility.roadTiles,mobility.crossings,mobility.vehicles,recreation.facilities,recreation.demand,recreation.served,recreation.capacity,recreation.activeVisitors].join(';');
 }
-function count(type){ let n=0; for(const b of S.grid||[]) if(b?.type===type) n++; return n; }
+function count(type){ let n=0; for(const b of S.grid||[]) if(b&&!isFacilityPart(b)&&b.type===type) n++; return n; }
 function hall(){ return (S.grid||[]).find(b=>b?.type==='cityHall')||null; }
 function education(){
   const schools=(S.grid||[]).filter(b=>b?.type==='school');
@@ -34,7 +37,7 @@ export function getCitySummary(){
     growth:{stage:cityStage().name,next:nextStageProgress()},
     land:{opened,total:LAND_PARCELS.length,available:available.map(x=>({id:x.parcel.id,name:x.parcel.name,cost:x.parcel.cost,canUnlock:x.canUnlock})),parcels},
     finances:{treasury:Math.floor(S.coins||0),residentialTax:last.tax??null,trade:last.trade??null,milling:last.milled??null,grant:last.grant??null,total:last.total??null},
-    services:{education:education()},
+    services:{education:education(),recreation:recreationSnapshot()},
     mobility:mobilitySnapshot()
   };
   if(S.diagnostics) S.diagnostics.citySummaryRecomputes=(S.diagnostics.citySummaryRecomputes||0)+1;
