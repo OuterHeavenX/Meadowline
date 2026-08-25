@@ -1,6 +1,6 @@
 # Meadowline
 
-Meadowline is a calm, mobile-first isometric living-city builder. It remains a lightweight static browser game built with native ES modules, a Canvas 2D world renderer and an optional WebGL2 presentation pass. Normal play requires no React/Vue application, Node process, server runtime, backend dependency or mandatory online service.
+Meadowline is a calm, mobile-first isometric living-city builder. It remains a lightweight static browser game built with native ES modules, a production Three.js low-poly WebGL scene and the complete original Canvas 2D compatibility renderer. Normal play requires no React/Vue application, Node process, server runtime, backend dependency or mandatory online service.
 
 ## Production status
 
@@ -43,7 +43,7 @@ Visual release-candidate child branch: `feature/living-city-3-1-aaa-visual`
 
 Current milestone: **Living City 3.1 / AAA Visual Completion**, stacked transparently on the validated, unmerged Living City 3 candidate. Recreation, Living City 3.0 and 3.1 remain draft development; none is Production or physically accepted.
 
-Living City 3.1 adds an optional one-pass WebGL2 presentation layer with a continuously available Canvas fallback, Auto/GPU/Compatibility renderer selection, four graphics presets, richer terrain/water/Road/weather treatment, stronger municipal incident presentation, and lightweight procedural audio. WebGPU remains diagnostic-only. See `docs/RENDERING_2.md`.
+Living City 3.1 now adds a true orthographic Three.js low-poly world with real geometry, lighting, shadows, terrain, water, Roads, buildings, trees, citizens and vehicles. Auto/Low-poly 3D/Classic Canvas selection keeps a continuously available compatibility renderer; four graphics presets remain presentation-only. WebGPU remains diagnostic-only. See `docs/RENDERING_2.md`.
 
 The milestone makes public space a real resident need and introduces reusable multi-tile facility architecture without enlarging the 44×44 world or replacing Meadowline's lightweight pathfinding/rendering stack.
 

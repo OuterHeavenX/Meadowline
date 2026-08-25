@@ -999,3 +999,34 @@ These checks are owner/device work. CI must not check them.
 - [ ] City has a premium diorama feel
 - [ ] Long Roads and citywide emergency response read clearly
 - [ ] Lighting feels commercial-quality and the developed city feels alive
+
+# THREE.JS LOW-POLY RENDERER — PHYSICAL ACCEPTANCE
+
+These items were added after the owner supplied low-poly miniature-city visual references. They are deliberately unchecked; headless Chrome evidence is not physical-device evidence.
+
+## Renderer and identity
+
+- [ ] Low-poly 3D initializes on iPhone and iPad without a black canvas
+- [ ] Classic Canvas can be forced and preserves the same city
+- [ ] Orthographic selection/placement remains aligned with rendered tiles
+- [ ] Pan, pinch, Road paint and Water paint remain safe in Low-poly 3D
+- [ ] Context loss or renderer failure falls back without save or simulation damage
+- [ ] Meadowline still reads as Meadowline rather than a generic 3D demo
+
+## Visual target
+
+- [ ] Buildings have convincing modeled mass, roofs, windows and distinct tiers
+- [ ] Roads, sidewalks, intersections and Rail read clearly at normal phone zoom
+- [ ] Trees, vehicles and citizens feel like a coherent low-poly miniature set
+- [ ] Directional shadows add depth without obscuring placement
+- [ ] Ponds read as water and shoreline treatment avoids a square-hole appearance
+- [ ] Police, Fire, Clinic and Hospital silhouettes are immediately distinct
+- [ ] Developed iPad landscape city approaches the supplied premium low-poly reference quality
+
+## Device cost
+
+- [ ] Auto selects a stable renderer and quality on the device
+- [ ] High, Balanced and Battery Saver make visible cost/quality tradeoffs
+- [ ] 100+ population, rain, night and concurrent incidents remain playable
+- [ ] Rotation/resize remains sharp and correctly framed
+- [ ] No unreasonable heat, memory growth or long-session degradation is observed

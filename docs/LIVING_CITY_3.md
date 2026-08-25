@@ -40,6 +40,6 @@ Physical iPhone/iPad acceptance remains explicitly outstanding in `IPHONE_ACCEPT
 
 ## Living City 3.1 visual completion child
 
-Living City 3.1 continues from this exact municipal candidate without changing Save V3 or simulation authority. The child branch adds a shared `DISPATCHED → EN_ROUTE → ARRIVED → WORKING → RETURNING` service lifecycle, full-footprint facility entrance discovery, bounded response VFX, municipal/business Look summaries, need-based Police/Fire/Healthcare/Employment Town Goals, procedural service/weather audio, and the optional hybrid WebGL2 presentation path documented in `RENDERING_2.md`.
+Living City 3.1 continues from this exact municipal candidate without changing Save V3 or simulation authority. The child branch adds a shared `DISPATCHED → EN_ROUTE → ARRIVED → WORKING → RETURNING` service lifecycle, full-footprint facility entrance discovery, bounded response VFX, municipal/business Look summaries, need-based Police/Fire/Healthcare/Employment Town Goals, procedural service/weather audio, and the orthographic Three.js low-poly presentation path documented in `RENDERING_2.md`.
 
-The Canvas scene remains the safe fallback and authoritative postcard source. Graphics modes and quality presets are presentation-only. Physical visual, thermal, audio and device acceptance remains outstanding.
+The complete Canvas scene remains the safe fallback and authoritative postcard source. Three.js consumes existing state without owning it; graphics modes and quality presets are presentation-only. Physical visual, thermal, audio and device acceptance remains outstanding.
