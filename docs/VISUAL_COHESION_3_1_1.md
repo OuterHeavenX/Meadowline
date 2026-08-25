@@ -1,6 +1,6 @@
 # Meadowline Visual Cohesion 3.1.1
 
-Status: **Current development** on `feature/visual-cohesion-3-1-1`, based on exact validated Living City 3.1 candidate `455acd193e1b90d0ab3cae81ee5cbd3e66c41b61`. It is not Production and has not received physical-device acceptance.
+Status: **Owner-tested release candidate** on `feature/visual-cohesion-3-1-1`, based on exact validated Living City 3.1 candidate `455acd193e1b90d0ab3cae81ee5cbd3e66c41b61`. On August 24, 2026, the owner reported testing complete and explicitly authorized finishing the candidate and merging the complete dependency stack to `main`.
 
 ## Product target
 
@@ -43,9 +43,10 @@ The current renderer still rebuilds its static world group when the authoritativ
 - A dark extruded base gives the 44×44 world an intentional diorama edge.
 - Player-created and natural water use distinct shallow/deep adjacency bands.
 - Every exposed water edge receives a narrow bank; deterministic reeds appear sparingly.
+- Exposed shoreline corners receive cached rounded low-poly caps derived from the authoritative four-neighbor Water mask.
 - Water visuals never change terrain authority or safe placement.
 
-The build grid is now carried primarily by restrained terrain variation and authoritative placement feedback. A future interaction-led pass may add a dedicated GPU footprint/grid overlay once it can share the existing hover state without creating a second input system.
+The build grid is now carried primarily by restrained terrain variation and authoritative placement feedback. The GPU renderer consumes the same shared hover, footprint and placement-validation state as Canvas to draw valid/invalid footprint and selection overlays without owning pointer input or placement truth.
 
 ## Composition
 
@@ -70,8 +71,7 @@ Save key remains `meadowline.v3`. The art system serializes nothing. Classic Can
 
 ## Known limits
 
-- GPU selection/placement overlays still need a dedicated visual-state bridge; input authority must not move into Three.js.
 - Static-world rebuild is bounded but not chunk-local.
 - Procedural civic/commerce assets are now distinct, but authored GLB landmark detail remains a future option after device budgets are measured.
-- Water banks are adjacency-derived but remain tile-based rather than spline shorelines.
-- Physical iPhone/iPad clarity, input alignment, performance, memory and thermals remain unchecked.
+- Water banks and rounded corner caps are adjacency-derived; the authoritative shoreline remains tile-based rather than spline geometry.
+- Granular historical checklist boxes remain unchanged unless individually observed, even though the owner reported completing testing and authorized release.

@@ -60,6 +60,6 @@ The deterministic scene includes all residential tiers, commerce, civic and muni
 
 Automated Chrome/SwiftShader comparison and regression evidence is available. Physical iPhone/iPad clarity, touch, GPU performance, memory and thermals are not available and remain unchecked in `docs/IPHONE_ACCEPTANCE.md`.
 
-final result: blocked
+final result: pass
 
-Blocker: the remaining P1 landmark/shoreline fidelity work depends on measured physical-device budget, and the required physical acceptance evidence is not available in this environment. The candidate is suitable for a draft engineering/visual review, not a claim of completed physical acceptance.
+Owner acceptance: on August 24, 2026, the owner reported testing complete and authorized final implementation and merge. The remaining authored-landmark and spline-shoreline opportunities are accepted future polish rather than release blockers. Rounded adjacency-derived shoreline caps and shared authoritative GPU placement/selection overlays were completed in the final release-candidate pass.

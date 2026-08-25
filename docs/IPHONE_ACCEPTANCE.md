@@ -1035,6 +1035,8 @@ These items were added after the owner supplied low-poly miniature-city visual r
 
 These are owner/device checks. Automated screenshots and CI must not check them.
 
+Owner release record: on August 24, 2026, the owner reported the candidate tested and explicitly authorized completion and merge of the full stacked series. This is sufficient release authorization; granular boxes below remain an honest observation checklist and are not retroactively checked without item-specific evidence.
+
 ## Buildings
 
 - [ ] Cottage reads as a low, cozy starter home

@@ -43,7 +43,7 @@ Visual release-candidate child branch: `feature/living-city-3-1-aaa-visual`
 
 Visual-cohesion child branch: `feature/visual-cohesion-3-1-1`
 
-Current milestone: **Visual Cohesion 3.1.1**, stacked transparently on the validated, unmerged Living City 3.1 candidate. Recreation, Living City 3.0, 3.1 and 3.1.1 remain draft development; none is Production or physically accepted.
+Current release candidate: **Visual Cohesion 3.1.1**, stacked transparently on the validated Living City 3.1 candidate. The owner reported testing complete and authorized merging Recreation, Living City 3.0, 3.1 and 3.1.1 to Production on August 24, 2026.
 
 Living City 3.1 now adds a true orthographic Three.js low-poly world with real geometry, lighting, shadows, terrain, water, Roads, buildings, trees, citizens and vehicles. Auto/Low-poly 3D/Classic Canvas selection keeps a continuously available compatibility renderer; four graphics presets remain presentation-only. WebGPU remains diagnostic-only. See `docs/RENDERING_2.md`.
 

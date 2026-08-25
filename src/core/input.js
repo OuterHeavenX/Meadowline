@@ -3,7 +3,7 @@ import { TOOLS, clamp } from './constants.js';
 import { S } from './state.js';
 import { isPaintTool, TOUCH_DRAG_THRESHOLD, TOUCH_PAINT_HOLD_MS } from './input-policy.js';
 import { toggleMap } from '../rendering/minimap.js';
-import { hover } from '../rendering/renderer.js';
+import { hover } from '../rendering/interaction-state.js';
 import { cv } from '../rendering/terrain.js';
 import { recompute } from '../simulation/mood.js';
 import { checkWishes } from '../simulation/wishes.js';

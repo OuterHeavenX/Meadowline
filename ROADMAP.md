@@ -2,7 +2,7 @@
 
 ## Current development — Visual Cohesion 3.1.1
 
-The cohesion candidate is stacked on validated but unmerged Living City 3.1, which is stacked on Living City 3.0 and Recreation 2.0. It adds a modular procedural building kit, topology-derived premium streets, natural terrain/locked-parcel/water presentation and composition-aware vegetation. It changes no simulation, cost, save or input truth. It is **not Production** until review, exact-head automation and owner physical acceptance are complete. See `docs/VISUAL_COHESION_3_1_1.md`.
+The cohesion candidate is stacked on validated Living City 3.1, which is stacked on Living City 3.0 and Recreation 2.0. It adds a modular procedural building kit, topology-derived premium streets, natural terrain/locked-parcel/water presentation and composition-aware vegetation. It changes no simulation, cost, save or input truth. The owner reported testing complete and authorized the full stack for Production on August 24, 2026; exact-head automation and dependency-order merges remain the final release operation. See `docs/VISUAL_COHESION_3_1_1.md`.
 
 Meadowline is evolving from a calm small city builder into a deeper living-city simulation while preserving its static browser architecture, native ES modules, isometric identity, complete Canvas compatibility path, mobile-first interaction, and low-stress character.
 
