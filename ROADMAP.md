@@ -1,8 +1,14 @@
 # Meadowline Roadmap
 
-## Current development — Visual Cohesion 3.1.1
+## Current development — UI / HUD 2.0
 
-The cohesion candidate is stacked on validated Living City 3.1, which is stacked on Living City 3.0 and Recreation 2.0. It adds a modular procedural building kit, topology-derived premium streets, natural terrain/locked-parcel/water presentation and composition-aware vegetation. It changes no simulation, cost, save or input truth. The owner reported testing complete and authorized the full stack for Production on August 24, 2026; exact-head automation and dependency-order merges remain the final release operation. See `docs/VISUAL_COHESION_3_1_1.md`.
+Branch: `feature/ui-hud-2-premium-interface`, based on production `main` at `daee74c246d9c4c3cecca942a367c18e002bced7`.
+
+This presentation milestone rebuilds the normal map HUD, Town Goals, minimap frame, five-action command dock, Build catalog, City Hall management view, title screen and graphics/settings presentation. It adds no simulation, economy, stage, map, renderer or save-system expansion. Real registry and city-summary values remain authoritative. See `docs/UI_HUD_2.md`.
+
+## Production — Visual Cohesion 3.1.1
+
+Visual Cohesion and its Recreation/Living City dependencies are merged to production through PR #10 at `daee74c246d9c4c3cecca942a367c18e002bced7`. It adds a modular procedural building kit, topology-derived premium streets, natural terrain/locked-parcel/water presentation and composition-aware vegetation. See `docs/VISUAL_COHESION_3_1_1.md`.
 
 Meadowline is evolving from a calm small city builder into a deeper living-city simulation while preserving its static browser architecture, native ES modules, isometric identity, complete Canvas compatibility path, mobile-first interaction, and low-stress character.
 
@@ -86,7 +92,7 @@ See `docs/ROADS_MOBILITY_2.md`.
 
 ## Milestone 6 — Recreation 2.0 / Town Life
 
-**Current development.**
+**Production through merged PR #7.**
 
 Branch: `feature/recreation-2-town-life`.
 
@@ -187,7 +193,7 @@ Meadowline should remain:
 
 Do not introduce premium currencies, energy systems, monetization pacing, arbitrary waiting gates, repetitive busywork, full traffic management or violent citizen injury simulation.
 
-## Current Recreation merge gate
+## Historical Recreation merge gate
 
 Recreation 2.0 may only move toward merge after:
 
@@ -206,9 +212,9 @@ Recreation 2.0 may only move toward merge after:
 
 Physical acceptance remains separate from CI.
 
-## Living City 3.1 — AAA Visual / Release-Candidate Development
+## Living City 3.1 — AAA Visual / Release
 
-**Current development; not Production.**
+**Production through merged PR #9.**
 
 Branch: `feature/living-city-3-1-aaa-visual`, based on the exact unmerged Living City 3 candidate.
 
@@ -216,9 +222,9 @@ This focused pass productionizes the renderer boundary with a stable WebGL2 pres
 
 See `docs/RENDERING_2.md`. Merge still requires exact-head automation, owner physical acceptance of the stacked prerequisites and explicit approval.
 
-## Visual Cohesion 3.1.1 — art-direction development
+## Visual Cohesion 3.1.1 — art-direction release
 
-**Current development; not Production.**
+**Production through merged PR #10.**
 
 Branch: `feature/visual-cohesion-3-1-1`, based on exact Living City 3.1 candidate `455acd193e1b90d0ab3cae81ee5cbd3e66c41b61`.
 

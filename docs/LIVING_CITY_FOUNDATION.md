@@ -4,7 +4,7 @@
 
 **Production on `main`.** Historical implementation branch: `feature/living-city-foundation`. Architectural source: `agent/architecture-refactor`.
 
-Production consumers now include Housing 2.0, City Growth 1.0 / 1.1, City Hall 1.0 and Roads & Mobility 2.0. Recreation 2.0 / Town Life is the current development consumer on `feature/recreation-2-town-life`.
+Production consumers now include Housing 2.0, City Growth 1.0 / 1.1, City Hall 1.0, Roads & Mobility 2.0, Recreation 2.0 and Living City 3.x. UI / HUD 2.0 is the current presentation consumer.
 
 Verified Recreation starting production SHA: `6ed2225ba008a91610715c63aca44e4cd02486bb`.
 
@@ -126,10 +126,10 @@ Previously physically demonstrated Living City / School behavior, City Growth ev
 
 City Hall and Roads were explicitly owner-approved for production merges. Release approval is recorded as source-control history and does not retroactively check every individual historical device box.
 
-Recreation 2.0 physical validation remains pending owner iPhone/iPad testing.
+Recreation 2.0 received owner release authorization and is merged; granular historical device boxes remain intentionally unchecked.
 
 ## Current consumer / next handoff
 
-Current development consumer: `feature/recreation-2-town-life`.
+Current development consumer: `feature/ui-hud-2-premium-interface`.
 
 Likely next major system after Recreation acceptance is Safety / Police / Crime, but that remains roadmap-only and must not start automatically. Future Police/Fire/Healthcare facilities should reuse the multi-tile occupancy foundation and Roads route infrastructure without owning or duplicating those systems.

@@ -20,7 +20,7 @@ import { paintGrowthPanel } from './growth.js';
 
 /* ---------- the Look card ---------- */
 export const elLook=document.getElementById("look"), elLookBody=document.getElementById("look-body");
-export function closeLook(){ elLook.classList.remove("show"); S.pick=null; }
+export function closeLook(){ elLook.classList.remove("show","cityhall-open"); S.pick=null; }
 document.getElementById("look-x").addEventListener("click",closeLook);
 
 export function listOut(a){
@@ -228,6 +228,7 @@ elLookBody.addEventListener('click',e=>{
 
 export function inspect(x,y){
   if(!inBounds(x,y)){ closeLook(); return; }
+  elLook.classList.remove('cityhall-open');
   const root=facilityRootAt(x,y);
   S.pick={x:root?.x??x,y:root?.y??y};
   elLookBody.innerHTML=describe(S.pick.x,S.pick.y);

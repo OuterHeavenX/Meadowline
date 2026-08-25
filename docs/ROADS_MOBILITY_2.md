@@ -195,7 +195,7 @@ Living City / School → Housing 2.0 → City Growth 1.0 / 1.1 → City Hall 1.0
 
 Current development:
 
-**Recreation 2.0 / Town Life.**
+**UI / HUD 2.0.** Recreation and Living City 3.x are Production.
 
 Likely later:
 

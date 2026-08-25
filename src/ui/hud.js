@@ -8,7 +8,7 @@ import { genWorld } from '../world/map.js';
 import { refreshPalette, seasonName } from '../world/seasons.js';
 import { shortTime, timeName } from '../world/time.js';
 import { weatherName } from '../world/weather.js';
-import { resetProgression } from '../progression/city-growth.js';
+import { cityStage, nextStageProgress, resetProgression } from '../progression/city-growth.js';
 import { toast } from './notify.js';
 import { closeLook } from './panels.js';
 import { postcard } from './postcard.js';
@@ -19,15 +19,30 @@ import { paintGrowthPanel } from './growth.js';
 export const S_day=document.getElementById("s-day"), S_time=document.getElementById("s-time"),
       S_coins=document.getElementById("s-coins"), S_pop=document.getElementById("s-pop"),
       S_mood=document.getElementById("s-mood");
+const S_stage=document.getElementById('s-stage'),S_stageProgress=document.getElementById('s-stage-progress'),
+  S_dateSub=document.getElementById('s-date-sub'),S_weather=document.getElementById('s-weather');
 export let uiT=0;
 export function paintHud(){
   S_day.textContent="Day "+S.day;
   const tight=innerWidth<=430;
-  S_time.textContent=seasonName()+" \u00b7 "+
-    (S.wx.amt>0.3 ? weatherName() : (tight?shortTime():timeName()));
+  S_time.textContent=tight?shortTime():timeName();
+  S_dateSub.textContent=seasonName();
+  S_weather.textContent=S.wx.amt>0.3?weatherName():'Clear';
   S_coins.textContent=Math.floor(S.coins);
   S_pop.textContent=S.pop;
   S_mood.textContent=moodName();
+  const stage=cityStage(),next=nextStageProgress();
+  S_stage.textContent=stage.name;
+  let pct=100;
+  if(next){
+    const rows=[...next.progress.required,...next.progress.any.flatMap(g=>g.items)];
+    pct=rows.length?Math.round(rows.filter(r=>r.met).length/rows.length*100):0;
+  }
+  S_stageProgress?.style.setProperty('--stage-progress',pct+'%');
+  document.getElementById('menu-pop').textContent=S.pop;
+  document.getElementById('menu-stage').textContent=stage.name;
+  document.getElementById('menu-residents').textContent=S.pop;
+  document.getElementById('menu-day').textContent=S.day;
 }
 
 export const bSpeed=document.getElementById("b-speed"), bSound=document.getElementById("b-sound"),
@@ -56,5 +71,28 @@ bNew.addEventListener("click",()=>{
 });
 document.getElementById("b-start").addEventListener("click",()=>{
   document.getElementById("veil").classList.add("hide");
-  pickTool("road");
+  document.body.classList.remove('menu-open');
+  pickTool("move");
 });
+document.getElementById('b-stage')?.addEventListener('click',()=>document.getElementById('b-growth')?.click());
+document.getElementById('menu-new')?.addEventListener('click',()=>bNew.click());
+document.getElementById('menu-save')?.addEventListener('click',()=>{save();toast('City saved','gold');});
+document.getElementById('menu-settings')?.addEventListener('click',()=>document.querySelector('.settings-toggle')?.click());
+const credits=document.getElementById('credits-dialog');
+document.getElementById('menu-credits')?.addEventListener('click',()=>credits?.showModal());
+credits?.querySelector('button')?.addEventListener('click',()=>credits.close());
+
+function paintMenuPresentation(){
+  document.querySelectorAll('[data-menu-renderer]').forEach(b=>b.classList.toggle('on',b.dataset.menuRenderer===(S.rendererMode||'auto')));
+  document.querySelectorAll('[data-menu-quality]').forEach(b=>b.classList.toggle('on',b.dataset.menuQuality===(S.quality||'auto')));
+}
+document.querySelectorAll('[data-menu-renderer]').forEach(b=>b.addEventListener('click',()=>{
+  const select=document.querySelector('[data-renderer]'); if(!select)return;
+  select.value=b.dataset.menuRenderer;select.dispatchEvent(new Event('change'));paintMenuPresentation();
+}));
+document.querySelectorAll('[data-menu-quality]').forEach(b=>b.addEventListener('click',()=>{
+  const select=document.querySelector('[data-quality]'); if(!select)return;
+  select.value=b.dataset.menuQuality;select.dispatchEvent(new Event('change'));paintMenuPresentation();
+}));
+paintMenuPresentation();
+document.body.classList.add('menu-open');

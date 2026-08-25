@@ -10,6 +10,7 @@ on:
       - feature/recreation-2-town-life
       - feature/living-city-3-aaa-municipal
       - feature/living-city-3-1-aaa-visual
+      - feature/ui-hud-2-premium-interface
   pull_request:
     branches:
       - feature/living-city-foundation
@@ -80,6 +81,11 @@ jobs:
           google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --enable-webgl --virtual-time-budget=15000 --dump-dom http://127.0.0.1:8000/tests/visual-cohesion-regression.html >/tmp/meadowline-visual-cohesion.html
           cat /tmp/meadowline-visual-cohesion.html
           grep -q 'data-result="pass"' /tmp/meadowline-visual-cohesion.html
+      - name: UI and HUD 2.0 regression
+        run: |
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=12000 --dump-dom http://127.0.0.1:8000/tests/ui-hud-2-regression.html >/tmp/meadowline-ui-hud-2.html
+          cat /tmp/meadowline-ui-hud-2.html
+          grep -q 'data-result="pass"' /tmp/meadowline-ui-hud-2.html
       - name: Game boot smoke test
         run: |
           google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=4000 --dump-dom http://127.0.0.1:8000/?debug=1 >/tmp/meadowline-game.html

@@ -1099,3 +1099,85 @@ Owner release record: on August 24, 2026, the owner reported the candidate teste
 - [ ] Forest, terrain and buildings feel art-directed
 - [ ] Developed city approaches the supplied references
 - [ ] No obvious prototype-quality visual element dominates the scene
+
+# UI / HUD 2.0 — PHYSICAL ACCEPTANCE
+
+These are owner-device checks. CI and deterministic screenshots must not check them.
+
+## Normal HUD
+
+- [ ] HUD matches the approved cream-and-green mockup direction
+- [ ] City remains dominant
+- [ ] Coins, population and city stage are readable
+- [ ] Town Goals are readable and collapse/expand comfortably
+- [ ] Minimap is truthful and readable
+- [ ] Date/weather area is readable
+- [ ] No notch, Dynamic Island or home-indicator collision
+- [ ] No horizontal overflow
+
+## Command dock
+
+- [ ] Build, Look, Move, Remove and Road are easy to tap
+- [ ] Active state is unmistakable and pressed states feel responsive
+- [ ] Dock does not cover important map interactions
+- [ ] Safe-area spacing feels natural
+
+## Build catalog
+
+- [ ] Bottom sheet opens and closes smoothly
+- [ ] Cards and category browsing remain legible and natural
+- [ ] Selected building is obvious
+- [ ] Real cost, footprint and stage requirement are readable
+- [ ] Scrolling never places a building underneath
+- [ ] Closing restores safe pan and pinch
+- [ ] Multi-tile facilities remain understandable
+
+## City Hall
+
+- [ ] Sections are easy to navigate and scroll does not move the map
+- [ ] Real values are readable and no fake meters appear
+- [ ] Level 4 correctly appears as maximum
+- [ ] Parcel actions remain deliberate and safe
+- [ ] Buttons never leak map input
+
+## Main menu and settings
+
+- [ ] Title screen feels consistent with the in-game HUD
+- [ ] Continue and New City are clear and safe
+- [ ] Save action is truthful
+- [ ] Renderer and graphics quality choices are understandable
+- [ ] Live background performance is acceptable
+
+## iPhone performance
+
+- [ ] Normal HUD remains smooth
+- [ ] Build catalog scrolling remains smooth
+- [ ] Repeated open/close does not progressively slow
+- [ ] City Hall scrolling remains smooth
+- [ ] Developed Low-poly 3D city remains playable
+- [ ] Battery Saver meaningfully reduces presentation cost
+- [ ] Device temperature remains acceptable
+
+## iPad portrait
+
+- [ ] Build sheet uses width well
+- [ ] HUD scale feels intentional rather than phone-sized
+- [ ] Town Goals and command dock remain appropriately sized
+- [ ] City Hall uses the screen effectively
+- [ ] Map remains dominant outside management views
+
+## iPad landscape
+
+- [ ] City Hall closely matches the approved tablet direction
+- [ ] Side navigation is comfortable and city remains visible
+- [ ] Content cards do not stretch excessively
+- [ ] Build catalog shows more items without crowding
+- [ ] HUD corners and minimap remain balanced
+
+## Desktop
+
+- [ ] Mouse, keyboard shortcuts and wheel zoom remain intact
+- [ ] Cards use sensible maximum widths
+- [ ] Build catalog and City Hall remain usable
+- [ ] Title screen scales elegantly
+- [ ] Classic Canvas and Low-poly 3D both work

@@ -8,7 +8,7 @@ Historical implementation branch: `feature/city-growth-progression`.
 
 Verified City Growth merge commit: `1d9e7e9c110fad465b332ef85503d102ed5af6e0`.
 
-City Hall 1.0 and Roads & Mobility 2.0 subsequently reached production. Recreation 2.0 / Town Life is current development and must preserve every authoritative City Growth requirement below.
+City Hall 1.0, Roads & Mobility 2.0 and Recreation 2.0 subsequently reached production. UI / HUD 2.0 is current development and must preserve every authoritative City Growth requirement below.
 
 The owner explicitly approved the final City Growth 1.1 merge after positive physical iPad evidence. That approval did not retroactively mark every unchecked physical item as tested. `docs/IPHONE_ACCEPTANCE.md` remains canonical.
 
