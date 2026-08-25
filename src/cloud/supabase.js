@@ -19,6 +19,17 @@ export async function getSession(){
   return data.session||null;
 }
 
+export function friendlyAuthError(error){
+  const message=String(error?.message||error||'').toLowerCase();
+  const status=Number(error?.status||error?.statusCode||0);
+  if(status===429||message.includes('rate limit')||message.includes('too many requests')){
+    return 'Too many sign-in emails were requested. Please wait a while before trying again.';
+  }
+  if(message.includes('invalid')&&message.includes('email')) return 'Enter a valid email address.';
+  if(message.includes('network')||message.includes('fetch')) return 'Could not reach Meadowline cloud services. Your local city is unaffected.';
+  return 'Could not send the sign-in email. Please try again later.';
+}
+
 export async function sendSignInLink(email){
   const clean=String(email||'').trim();
   if(!clean) throw new Error('Enter an email address.');
@@ -26,7 +37,12 @@ export async function sendSignInLink(email){
     email:clean,
     options:{emailRedirectTo:`${location.origin}${location.pathname}`}
   });
-  if(error) throw error;
+  if(error){
+    const wrapped=new Error(friendlyAuthError(error));
+    wrapped.cause=error;
+    wrapped.status=error?.status||0;
+    throw wrapped;
+  }
 }
 
 export async function signOut(){
