@@ -2,6 +2,9 @@ import { sendSignInLink, signOut, supabase } from '../cloud/supabase.js';
 import { clearCloudRevision, downloadCloudSave, getCloudHistory, getCloudSaveSummary, restoreCloudHistory, uploadLocalSave } from '../cloud/cloud-save.js';
 import { toast } from './notify.js';
 
+const AUTH_COOLDOWN_KEY='meadowline.auth.emailCooldownUntil';
+const AUTH_COOLDOWN_MS=60_000;
+
 const style=document.createElement('style');
 style.textContent=`
 .cloud-account{position:fixed;left:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:35}
@@ -18,7 +21,7 @@ document.body.appendChild(wrap);
 const panel=wrap.querySelector('section'),body=wrap.querySelector('[data-body]');
 wrap.querySelector('.cloud-toggle').onclick=()=>{panel.hidden=!panel.hidden;if(!panel.hidden) render();};
 wrap.querySelector('.x').onclick=()=>panel.hidden=true;
-let busy=false;
+let busy=false,cooldownTimer=0;
 
 function setBusy(value){busy=value;for(const b of body.querySelectorAll('button')) b.disabled=value;}
 function stamp(value){if(!value)return 'Never';try{return new Date(value).toLocaleString();}catch{return String(value);}}
@@ -28,18 +31,31 @@ function historyMeta(entry){
   const day=Number(p.day)||1,coins=Math.max(0,Math.floor(Number(p.coins)||0)),buildings=Array.isArray(p.b)?p.b.length:0;
   return `Day ${day} · ${coins} coins · ${buildings} buildings`;
 }
+function cooldownUntil(){return Math.max(0,Number(localStorage.getItem(AUTH_COOLDOWN_KEY))||0);}
+function startCooldown(){localStorage.setItem(AUTH_COOLDOWN_KEY,String(Date.now()+AUTH_COOLDOWN_MS));updateCooldownButton();}
+function updateCooldownButton(){
+  clearTimeout(cooldownTimer);
+  const button=body.querySelector('[data-link]');
+  if(!button)return;
+  const seconds=Math.ceil((cooldownUntil()-Date.now())/1000);
+  if(seconds>0){button.disabled=true;button.textContent=`Email sent · ${seconds}s`;cooldownTimer=setTimeout(updateCooldownButton,1000);}
+  else{button.disabled=busy;button.textContent='Send sign-in link';}
+}
 
 async function render(){
   if(busy)return;
+  clearTimeout(cooldownTimer);
   body.textContent='Checking account…';
   try{
     const info=await getCloudSaveSummary();
     if(!info.signedIn){
-      body.innerHTML=`<p>Play locally without an account, or sign in to enable protected cloud saves.</p><input data-email type="email" inputmode="email" autocomplete="email" placeholder="Email address"><div class="row"><button class="action" data-link>Send sign-in link</button></div><small>Supabase will email a secure one-time sign-in link. Local Save V3 remains the normal offline save.</small>`;
-      body.querySelector('[data-link]').onclick=async()=>{
+      body.innerHTML=`<p>Play locally without an account, or sign in to enable protected cloud saves.</p><input data-email type="email" inputmode="email" autocomplete="email" placeholder="Email address"><div class="row"><button class="action" data-link>Send sign-in link</button></div><small>We send one secure sign-in email at a time. Your local Save V3 keeps working even if email or cloud services are temporarily unavailable.</small>`;
+      const button=body.querySelector('[data-link]');
+      button.onclick=async()=>{
         const email=body.querySelector('[data-email]').value;
-        setBusy(true);try{await sendSignInLink(email);toast('Check your email for the Meadowline sign-in link');}catch(e){toast(e?.message||'Could not send sign-in link');}finally{setBusy(false);}
+        setBusy(true);try{await sendSignInLink(email);startCooldown();toast('Sign-in email sent · check your inbox');}catch(e){toast(e?.message||'Could not send the sign-in email');}finally{setBusy(false);updateCooldownButton();}
       };
+      updateCooldownButton();
       return;
     }
     const email=info.user?.email||'Signed in';
