@@ -33,6 +33,9 @@ import { paintLedger } from '../ui/ledger.js';
 import { seedBirds, seedClouds, updateBirds, updateClouds, updateDrops, updateMotes, updateWeather } from '../world/weather.js';
 import { cityStage, evaluateCityGrowth, resetProgression } from '../progression/city-growth.js';
 import { paintGrowthPanel } from '../ui/growth.js';
+import { updateMunicipal } from '../simulation/municipal.js';
+import { updateFeedback } from '../simulation/feedback.js';
+import { tickTutorial } from '../ui/tutorial.js';
 
 /* ============================================================
    MAIN LOOP
@@ -77,6 +80,7 @@ export function frame(now){
     growth(sdt);
     updateCitizens(sdt);
     updateMobility(sdt);
+    updateMunicipal(sdt);
     updateTrains(sdt);
     updateBoats(sdt);
     updateWeather(sdt);
@@ -86,10 +90,12 @@ export function frame(now){
   updateMotes(dt);
   updateBirds(dt);
   updatePuffs(dt);
+  updateFeedback(dt);
   ambientTick(dt);
   if(S.diagnostics.enabled) recordSimulationMs(performance.now()-simStart);
 
   uiClock+=dt; if(uiClock>0.2){ uiClock=0; paintHud(); paintTools(); paintWishes(); }
+  tickTutorial();
   lookClock+=dt; if(lookClock>0.7){ lookClock=0; if(cityHallSelected()) renderCityHall(); else refreshLook(); }
   miniClock+=dt; if(miniClock>0.45){ miniClock=0; drawMini(); }
   ledgerClock+=dt; if(ledgerClock>1.1){ ledgerClock=0; paintLedger(); }

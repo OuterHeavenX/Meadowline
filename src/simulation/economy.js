@@ -7,6 +7,7 @@ import { S } from '../core/state.js';
 import { housingTaxMultiplier } from './housing.js';
 import { PAL } from '../world/seasons.js';
 import { activeFestival } from '../world/festivals.js';
+import { emitFeedback } from './feedback.js';
 
 /* ---------- economy & clock ---------- */
 export function payday(){
@@ -35,6 +36,7 @@ export function payday(){
   const total=tax+trade+milled+grant+feast;
   S.coins+=total;
   S.lastPay={tax,trade,milled,grant,feast,total};
+  const homes=(S.ctx.houses||[]).filter(h=>h.pop>0); if(homes.length&&tax) { const h=homes[S.day%homes.length]; emitFeedback(h.x,h.y,'coin',Math.max(1,Math.round(tax/homes.length))); }
   services.toast("Day "+S.day+" · +"+total+" coins","gold");
   services.blip(660,0.2,"triangle");
   if(mills&&(PAL.yield||0)>=MILL_BASE) services.toast("A good harvest at the mill");

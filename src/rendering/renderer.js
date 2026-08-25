@@ -18,14 +18,16 @@ import { proj } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
 import { facilityFootprint, footprintCells, idx, inBounds, isFacilityPart } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
+import { drawIncident, drawMunicipalBuilding } from './municipal.js';
+import { drawFeedback } from './feedback.js';
 
 export let hover={x:-1,y:-1,on:false};
 export function drawGhost(){
   if(!hover.on||S.tool==="move"||S.tool==="look") return;
   const{x,y}=hover;
   if(!inBounds(x,y)) return;
-  const result=S.tool==="erase"?null:canPlace(S.tool,x,y);
-  const ok=S.tool==="erase"?(!!S.grid[idx(x,y)]||!!S.natTree[idx(x,y)]):result.ok;
+  const result=S.tool==="erase"||S.tool==='water'?null:canPlace(S.tool,x,y);
+  const ok=S.tool==="erase"?(!!S.grid[idx(x,y)]||!!S.natTree[idx(x,y)]):S.tool==='water'?(!S.grid[idx(x,y)]&&S.terr[idx(x,y)]!==1):result.ok;
   const servicePreview=S.tool==='erase'?false:drawCivicPlacementPreview(S.tool,x,y);
   const def=getBuildingDefinition(S.tool),cells=def?footprintCells(S.tool,x,y):[{x,y}];
   for(const c of cells){
@@ -85,6 +87,7 @@ export function render(){
     items.push({d:fx+fy+0.05,k:2,c});
   }
   for(const v of S.vehicles||[]) items.push({d:lerp(v.x,v.nx,v.p)+lerp(v.y,v.ny,v.p)+0.075,k:7,v});
+  for(const v of S.serviceVehicles||[]) items.push({d:lerp(v.x,v.nx,v.p)+lerp(v.y,v.ny,v.p)+0.08,k:7,v});
   for(const t of S.trains) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.1,k:3,t});
   for(const t of S.boats) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.08,k:6,t});
   for(const p of S.puffs) items.push({d:p.x+p.y+0.2,k:4,p});
@@ -107,6 +110,7 @@ export function render(){
       else if(t==="school"){ drawSchool(it.b,p,dark); drawSchoolUpgradeDetails(it.b,p,dark); }
       else if(t==="cityHall") drawCityHall(it.b,p,dark);
       else if(t==="dock") drawDock(it.b,p,dark);
+      else if(['policeStation','fireStation','clinic','hospital'].includes(t)) drawMunicipalBuilding(it.b,dark);
       else if(t==="tree") drawTree(p.x,p.y,it.b.seed,1);
     } else if(it.k===1){
       const p=proj(it.x,it.y);
@@ -140,4 +144,6 @@ export function render(){
     g.globalCompositeOperation="source-over";
   }
   drawFireflies(dark); drawLanterns(dark); drawMotes(); drawWeather();
+  for(const inc of S.incidents||[]) drawIncident(inc);
+  drawFeedback();
 }

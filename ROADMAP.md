@@ -1,5 +1,9 @@
 # Meadowline Roadmap
 
+## Current development — Living City 3.0 / Municipal Integration
+
+The integration candidate is stacked on the validated but unmerged Recreation 2.0 branch. It adds the beginner tutorial, safe pond terrain painting, Employment/Prosperity, bounded Crime/Police, Fire response, Healthcare, a shared emergency-vehicle layer, truthful City Hall summaries, transient world feedback and renderer capability/quality boundaries. It is **not Production** until review, automatic validation and owner physical acceptance are complete. See `docs/LIVING_CITY_3.md`.
+
 Meadowline is evolving from a calm small city builder into a deeper living-city simulation while preserving its static browser architecture, native ES modules, isometric Canvas 2D presentation, mobile-first interaction, and low-stress character.
 
 Status labels remain deliberate: **production**, **historical implementation**, **automatically validated**, **physically validated**, **current development**, and **roadmap only** are not interchangeable.
@@ -130,7 +134,7 @@ See `docs/RECREATION_2.md`.
 
 ## Likely next milestone — Safety / Police / Crime
 
-**Roadmap only. Do not begin automatically.**
+**Superseded by the owner's Living City 3 integration direction.** The historical reasoning below is retained as architectural memory; the current implementation status is recorded at the top of this file and in `docs/LIVING_CITY_3.md`.
 
 Recreation establishes reusable multi-tile municipal-facility architecture while Roads already provides representative route infrastructure. Together they make Police a natural likely next milestone, but its exact scope remains a separate owner decision after Recreation physical acceptance.
 
@@ -144,6 +148,8 @@ Education + neighborhood quality + future safety pressure
 Future Police Stations should reuse multi-tile facility placement/save/Look architecture rather than inventing a Police-specific footprint system.
 
 ## Later systems — order intentionally not fully locked
+
+This section is historical pre–Living City 3 planning. Its listed systems are now part of the current integration candidate at deliberately lightweight scope; further expansion remains playtest-sensitive.
 
 Likely later systems include:
 

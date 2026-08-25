@@ -8,6 +8,7 @@ on:
       - feature/city-hall-civic-center
       - feature/roads-mobility-2
       - feature/recreation-2-town-life
+      - feature/living-city-3-aaa-municipal
   pull_request:
     branches:
       - feature/living-city-foundation
@@ -57,3 +58,8 @@ jobs:
           google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=10000 --dump-dom http://127.0.0.1:8000/tests/recreation-regression.html >/tmp/meadowline-recreation.html
           cat /tmp/meadowline-recreation.html
           grep -q 'data-result="pass"' /tmp/meadowline-recreation.html
+      - name: Living City 3 municipal regression
+        run: |
+          google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=10000 --dump-dom http://127.0.0.1:8000/tests/living-city-3-regression.html >/tmp/meadowline-living-city-3.html
+          cat /tmp/meadowline-living-city-3.html
+          grep -q 'data-result="pass"' /tmp/meadowline-living-city-3.html

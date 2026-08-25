@@ -33,11 +33,13 @@ Historical implementation branches remain preserved, including:
 
 ## Current development
 
-Branch: `feature/recreation-2-town-life`
+Recreation prerequisite branch: `feature/recreation-2-town-life`
 
 Draft PR: **#7 — Recreation 2.0 / Town Life — Multi-Tile Facilities, Recreation Demand & Living Public Spaces**
 
-Current milestone: **Recreation 2.0 / Town Life**.
+Integration branch: `feature/living-city-3-aaa-municipal`
+
+Current milestone: **Living City 3.0 / Municipal Integration**, stacked transparently on the validated, unmerged Recreation candidate. Neither milestone is Production or physically accepted.
 
 The milestone makes public space a real resident need and introduces reusable multi-tile facility architecture without enlarging the 44×44 world or replacing Meadowline's lightweight pathfinding/rendering stack.
 
@@ -140,6 +142,7 @@ The workflow covers:
 - City Hall 1.0 regression
 - Roads & Mobility 2.0 regression
 - Recreation 2.0 / Town Life regression
+- Living City 3 municipal, water, employment, dispatch and feedback regression
 
 Historical failures are preserved rather than rewritten. Physical Recreation acceptance remains owner-only in `docs/IPHONE_ACCEPTANCE.md`.
 
@@ -159,6 +162,7 @@ Regression pages include:
 - `/tests/city-hall-regression.html`
 - `/tests/roads-mobility-regression.html`
 - `/tests/recreation-regression.html`
+- `/tests/living-city-3-regression.html`
 
 Module hygiene:
 
@@ -174,12 +178,6 @@ Living City / School → Housing 2.0 → City Growth 1.0 / 1.1 → City Hall 1.0
 
 Current development:
 
-**Recreation 2.0 / Town Life**
+**Recreation 2.0 / Town Life prerequisite → Living City 3.0 / Municipal Integration candidate**
 
-Likely next major milestone after Recreation acceptance:
-
-**Safety / Police / Crime**
-
-Later systems may include Employment / Prosperity, Fire / Emergency, Healthcare, Waterworks / Landscaping and further transport evolution. Their exact post-Recreation order remains playtest-sensitive.
-
-See `docs/RECREATION_2.md` for the canonical Recreation technical record.
+See `docs/RECREATION_2.md` and `docs/LIVING_CITY_3.md` for the canonical development records.

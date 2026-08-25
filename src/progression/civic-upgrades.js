@@ -2,6 +2,7 @@ import { getBuildingDefinition, getUpgradeDefinition } from '../buildings/regist
 import { S } from '../core/state.js';
 import { invalidateServices, recomputeServices } from '../simulation/civic-services.js';
 import { invalidateCitySummary } from '../simulation/city-summary.js';
+import { emitFeedback } from '../simulation/feedback.js';
 
 export function civicUpgradeStatus(building){
   if(!building) return {available:false,reason:'No civic building selected.'};
@@ -21,6 +22,7 @@ export function upgradeCivic(building){
   S.coins-=st.next.cost;
   if(!building.state||typeof building.state!=='object') building.state={};
   building.state.level=st.next.level;
+  emitFeedback(building.x,building.y,'upgrade','★ LEVEL UP');
   invalidateServices();
   recomputeServices(true);
   invalidateCitySummary();

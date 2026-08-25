@@ -15,6 +15,7 @@ import { postcard } from '../ui/postcard.js';
 import { pickTool, paintActiveTool } from '../ui/toolbar.js';
 import { screen2world, world2screen } from '../world/map.js';
 import { facilityRootAt } from '../world/tiles.js';
+import { paintWater } from '../world/landscaping.js';
 
 /* ============================================================
    INPUT — touch navigation is always the safe default.
@@ -45,6 +46,9 @@ export function applyTool(gp,{touch=false,paint=false}={}){
     return true;
   }
   if(S.tool==='erase') changed=erase(gp.x,gp.y);
+  else if(S.tool==='water'){
+    const r=paintWater(gp.x,gp.y); changed=r.ok; if(!r.ok&&r.why) hint(r.why,true);
+  }
   else if(BUILDABLE[S.tool]) changed=place(S.tool,gp.x,gp.y);
   if(changed){
     recompute();

@@ -11,6 +11,7 @@ import { genWorld } from '../world/map.js';
 import { refreshPalette } from '../world/seasons.js';
 import { idx, inBounds, isFacilityPart } from '../world/tiles.js';
 import { isFootprintUnlocked, sanitizeProgression } from '../progression/city-growth.js';
+import { packTerrain, restoreTerrain } from '../world/landscaping.js';
 
 export const KEY='meadowline.v3', KEY_V2='meadowline.v2', KEY_OLD='meadowline.v1';
 export const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
@@ -42,12 +43,15 @@ export function save(){
   // enter Save V3, so a 4×4 Town Park is still one saved building.
   const b=[]; for(const x of S.grid||[]) if(x&&!isFacilityPart(x)&&BUILDABLE[x.type]) b.push(packBuilding(x));
   let woods=''; for(let i=0;i<S.natTree.length;i++) woods+=S.natTree[i]?'1':'0';
-  const payload=JSON.stringify({v:3,seed:S.seed,coins:Math.floor(S.coins),day:S.day,dayT:S.dayT,b,woods,cityProgress:sanitizeProgression(S.cityProgress,false),mile:mileHit,granted:S.granted||0,wishes:S.wishes.map(w=>({k:w.k,slot:w.slot,t:w.t,g:w.g,r:w.r})),log:S.log.slice(0,40),history:S.history.slice(-40)});
+  const payload=JSON.stringify({v:3,seed:S.seed,coins:Math.floor(S.coins),day:S.day,dayT:S.dayT,b,woods,terrain:packTerrain(),tutorial:S.tutorial,municipal:S.municipal,quality:S.quality,cityProgress:sanitizeProgression(S.cityProgress,false),mile:mileHit,granted:S.granted||0,wishes:S.wishes.map(w=>({k:w.k,slot:w.slot,t:w.t,g:w.g,r:w.r})),log:S.log.slice(0,40),history:S.history.slice(-40)});
   if(S.diagnostics) S.diagnostics.saveBytes=payload.length; store.set(KEY,payload);
 }
 function unpackEntry(entry){ if(Array.isArray(entry)){ const[type,x,y,pop]=entry; return {type,x,y,pop,state:defaultBuildingState(type)}; } if(!entry||typeof entry!=='object') return null; return {type:entry.type,x:entry.x,y:entry.y,pop:entry.pop,state:cleanState(entry.type,entry.state)}; }
 export function applySave(d){
   genWorld(Number.isFinite(d.seed)?d.seed:S.seed); S.coins=Number.isFinite(d.coins)?d.coins:340; S.day=Number.isFinite(d.day)?Math.max(1,Math.floor(d.day)):1; S.dayT=Number.isFinite(d.dayT)?Math.max(0,Math.min(1,d.dayT)):.24;
+  restoreTerrain(d.terrain); S.tutorial=d.tutorial&&typeof d.tutorial==='object'?{completed:!!d.tutorial.completed,skipped:!!d.tutorial.skipped,step:Math.max(0,Math.floor(d.tutorial.step||0))}:{completed:false,skipped:false,step:0};
+  if(d.municipal&&typeof d.municipal==='object') S.municipal={...S.municipal,...d.municipal};
+  if(['auto','high','balanced','battery'].includes(d.quality)) S.quality=d.quality;
   S.cityProgress=sanitizeProgression(d.cityProgress,!d.cityProgress); setMileHit(d.mile||0); S.granted=d.granted||0;
   S.log=Array.isArray(d.log)?d.log.filter(e=>e&&typeof e.text==='string').slice(0,60):[]; S.history=Array.isArray(d.history)?d.history.filter(h=>h&&typeof h.day==='number').slice(-40):[];
   if(typeof d.woods==='string'&&d.woods.length===S.natTree.length) for(let i=0;i<d.woods.length;i++) S.natTree[i]=d.woods[i]==='1'?1:0;
@@ -74,6 +78,7 @@ export function applySave(d){
     if(!restoreFacilityOccupancy(root)){ if(S.diagnostics) S.diagnostics.invalidFacilityCleanup=(S.diagnostics.invalidFacilityCleanup||0)+1; continue; }
   }
   refreshPalette(); invalidateRecreation(); recompute(); recomputeRecreation(true); invalidateServices(); recomputeServices(true); invalidateCitySummary();
+  if(!d.tutorial&&(S.grid||[]).some(Boolean)) S.tutorial={completed:false,skipped:true,step:0};
   // Old sandbox Wishes are treated as untrusted hints. Stage/geography-ineligible
   // Train/Boat/etc goals are discarded and replaced by coherent Town Goals.
   S.wishes=sanitizeGoals(d.wishes||[]); rollWishes();
