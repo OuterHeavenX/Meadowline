@@ -10,7 +10,6 @@ on:
       - feature/recreation-2-town-life
       - feature/living-city-3-aaa-municipal
       - feature/living-city-3-1-aaa-visual
-      - feature/visual-cohesion-3-1-1
   pull_request:
     branches:
       - feature/living-city-foundation
