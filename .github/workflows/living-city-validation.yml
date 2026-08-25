@@ -14,6 +14,7 @@ on:
     branches:
       - feature/living-city-foundation
       - agent/architecture-refactor
+      - feature/living-city-3-1-aaa-visual
       - main
 jobs:
   validate:
@@ -74,6 +75,11 @@ jobs:
           google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --enable-webgl --virtual-time-budget=15000 --dump-dom http://127.0.0.1:8000/tests/renderer-benchmark.html >/tmp/meadowline-renderer-benchmark.html
           cat /tmp/meadowline-renderer-benchmark.html
           grep -q 'data-result="pass"' /tmp/meadowline-renderer-benchmark.html
+      - name: Visual Cohesion 3.1.1 regression
+        run: |
+          google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --enable-webgl --virtual-time-budget=15000 --dump-dom http://127.0.0.1:8000/tests/visual-cohesion-regression.html >/tmp/meadowline-visual-cohesion.html
+          cat /tmp/meadowline-visual-cohesion.html
+          grep -q 'data-result="pass"' /tmp/meadowline-visual-cohesion.html
       - name: Game boot smoke test
         run: |
           google-chrome --headless --no-sandbox --disable-gpu --virtual-time-budget=4000 --dump-dom http://127.0.0.1:8000/?debug=1 >/tmp/meadowline-game.html
@@ -81,7 +87,14 @@ jobs:
           grep -q 'graphics-settings' /tmp/meadowline-game.html
       - name: Capture deterministic Three.js scene
         run: google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --enable-webgl --window-size=1280,720 --virtual-time-budget=8000 --screenshot=/tmp/meadowline-three.png http://127.0.0.1:8000/tests/three-visual.html
+      - name: Capture phone and iPad cohesion scenes
+        run: |
+          google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --enable-webgl --window-size=390,844 --virtual-time-budget=8000 --screenshot=/tmp/meadowline-phone.png http://127.0.0.1:8000/tests/three-visual.html
+          google-chrome --headless --no-sandbox --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --enable-webgl --window-size=1366,1024 --virtual-time-budget=8000 --screenshot=/tmp/meadowline-ipad.png http://127.0.0.1:8000/tests/three-visual.html
       - uses: actions/upload-artifact@v4
         with:
           name: meadowline-three-preview
-          path: /tmp/meadowline-three.png
+          path: |
+            /tmp/meadowline-three.png
+            /tmp/meadowline-phone.png
+            /tmp/meadowline-ipad.png

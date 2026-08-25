@@ -22,8 +22,9 @@ import { drawIncident, drawMunicipalBuilding } from './municipal.js';
 import { drawFeedback } from './feedback.js';
 import { presentFrame } from './backend.js';
 import { renderThreeScene } from './three-renderer.js';
+import { hover } from './interaction-state.js';
 
-export let hover={x:-1,y:-1,on:false};
+export { hover };
 export function drawGhost(){
   if(!hover.on||S.tool==="move"||S.tool==="look") return;
   const{x,y}=hover;

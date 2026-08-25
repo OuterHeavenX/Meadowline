@@ -1,8 +1,8 @@
 # Meadowline Roadmap
 
-## Current development — Living City 3.1 / AAA Visual Completion
+## Current development — Visual Cohesion 3.1.1
 
-The visual candidate is stacked on the validated but unmerged Living City 3.0 candidate, which is itself stacked on Recreation 2.0. The parent adds the beginner tutorial, safe pond terrain painting, Employment/Prosperity, bounded Crime/Police, Fire response, Healthcare, a shared emergency-vehicle layer, truthful City Hall summaries and transient feedback. Living City 3.1 adds a true orthographic Three.js low-poly world, complete Canvas fallback and release-candidate polish. It is **not Production** until review, automatic validation and owner physical acceptance are complete. See `docs/LIVING_CITY_3.md` and `docs/RENDERING_2.md`.
+The cohesion candidate is stacked on validated Living City 3.1, which is stacked on Living City 3.0 and Recreation 2.0. It adds a modular procedural building kit, topology-derived premium streets, natural terrain/locked-parcel/water presentation and composition-aware vegetation. It changes no simulation, cost, save or input truth. The owner reported testing complete and authorized the full stack for Production on August 24, 2026; exact-head automation and dependency-order merges remain the final release operation. See `docs/VISUAL_COHESION_3_1_1.md`.
 
 Meadowline is evolving from a calm small city builder into a deeper living-city simulation while preserving its static browser architecture, native ES modules, isometric identity, complete Canvas compatibility path, mobile-first interaction, and low-stress character.
 
@@ -215,3 +215,11 @@ Branch: `feature/living-city-3-1-aaa-visual`, based on the exact unmerged Living
 This focused pass productionizes the renderer boundary with a stable WebGL2 presentation layer and continuous Canvas fallback, graphics presets, richer terrain/Road/water/night/weather treatment, municipal incident arrival/working/return presentation, restrained procedural audio, truthful municipal Look/Town Goal completion, and measurable diagnostics. WebGPU remains optional future research rather than a runtime requirement. It does not add another simulation layer, save version, map expansion or progression stage.
 
 See `docs/RENDERING_2.md`. Merge still requires exact-head automation, owner physical acceptance of the stacked prerequisites and explicit approval.
+
+## Visual Cohesion 3.1.1 — art-direction development
+
+**Current development; not Production.**
+
+Branch: `feature/visual-cohesion-3-1-1`, based on exact Living City 3.1 candidate `455acd193e1b90d0ab3cae81ee5cbd3e66c41b61`.
+
+This focused child pass establishes distinct residential/commercial/civic silhouettes, deterministic neighborhood variation, Road adjacency masks and clean joins, contextual terrain/parcel colors, pond banks/depth, a diorama base and bounded vegetation composition. It deliberately adds no gameplay system, save version, map expansion or progression stage.

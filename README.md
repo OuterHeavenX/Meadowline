@@ -41,9 +41,13 @@ Integration branch: `feature/living-city-3-aaa-municipal`
 
 Visual release-candidate child branch: `feature/living-city-3-1-aaa-visual`
 
-Current milestone: **Living City 3.1 / AAA Visual Completion**, stacked transparently on the validated, unmerged Living City 3 candidate. Recreation, Living City 3.0 and 3.1 remain draft development; none is Production or physically accepted.
+Visual-cohesion child branch: `feature/visual-cohesion-3-1-1`
+
+Current release candidate: **Visual Cohesion 3.1.1**, stacked transparently on the validated Living City 3.1 candidate. The owner reported testing complete and authorized merging Recreation, Living City 3.0, 3.1 and 3.1.1 to Production on August 24, 2026.
 
 Living City 3.1 now adds a true orthographic Three.js low-poly world with real geometry, lighting, shadows, terrain, water, Roads, buildings, trees, citizens and vehicles. Auto/Low-poly 3D/Classic Canvas selection keeps a continuously available compatibility renderer; four graphics presets remain presentation-only. WebGPU remains diagnostic-only. See `docs/RENDERING_2.md`.
+
+Visual Cohesion 3.1.1 adds distinct registry-driven building archetypes, topology-derived streets/intersections, muted locked-land terrain, shallow/deep pond banks, a diorama world edge and composition-aware vegetation without changing gameplay truth. See `docs/VISUAL_COHESION_3_1_1.md`.
 
 The milestone makes public space a real resident need and introduces reusable multi-tile facility architecture without enlarging the 44×44 world or replacing Meadowline's lightweight pathfinding/rendering stack.
 
@@ -169,6 +173,7 @@ Regression pages include:
 - `/tests/living-city-3-regression.html`
 - `/tests/living-city-3-1-regression.html`
 - `/tests/renderer-benchmark.html`
+- `/tests/visual-cohesion-regression.html`
 
 Module hygiene:
 
@@ -184,6 +189,6 @@ Living City / School → Housing 2.0 → City Growth 1.0 / 1.1 → City Hall 1.0
 
 Current development:
 
-**Recreation 2.0 / Town Life prerequisite → Living City 3.0 / Municipal Integration candidate → Living City 3.1 / AAA Visual Completion candidate**
+**Recreation 2.0 prerequisite → Living City 3.0 candidate → Living City 3.1 candidate → Visual Cohesion 3.1.1 candidate**
 
-See `docs/RECREATION_2.md`, `docs/LIVING_CITY_3.md` and `docs/RENDERING_2.md` for the canonical development records.
+See `docs/RECREATION_2.md`, `docs/LIVING_CITY_3.md`, `docs/RENDERING_2.md` and `docs/VISUAL_COHESION_3_1_1.md` for the canonical development records.
