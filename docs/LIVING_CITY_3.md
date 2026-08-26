@@ -1,6 +1,6 @@
 # Living City 3.0 — Municipal Integration Candidate
 
-Status: **Current development**, stacked on the unmerged Recreation 2.0 candidate. It is not Production and has not received physical-device acceptance.
+Status: **Production through merged PR #8.** It was originally developed as a transparent child of Recreation 2.0. Historical physical-device checkboxes remain preserved separately.
 
 ## Renderer decision record
 

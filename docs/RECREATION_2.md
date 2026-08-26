@@ -2,17 +2,17 @@
 
 ## Status
 
-**Current development. Not merged.**
+**Production through merged PR #7.** Historical branch and pre-merge validation language below is retained as architectural history.
 
 - Repository: `OuterHeavenX/Meadowline`
 - Branch: `feature/recreation-2-town-life`
-- Draft PR: #7
+- Merged PR: #7
 - Verified production starting SHA: `6ed2225ba008a91610715c63aca44e4cd02486bb`
 - Prerequisite Roads & Mobility 2.0: owner-approved and merged through PR #6 before this branch was created
 - Save key: `meadowline.v3`
 - World: 44×44
 - Renderer: native Canvas 2D / isometric
-- Physical acceptance: pending owner iPhone/iPad testing
+- Physical release authorization: received before merge; granular historical checklist items remain unchecked
 
 This file is the canonical technical record for Recreation 2.0 / Town Life. Automated validation and owner-device validation remain separate.
 
@@ -338,7 +338,7 @@ Historical failures during this branch are intentionally preserved:
 - exact head `7942cdeab5798c88452933d25e66a27be0124611` then exposed a regression-fixture geometry error: both test homes sat outside the Pocket Park's real reach while the assertion expected finite service. The fixture moved the homes inside documented reach without changing Recreation capacity, reach, assignment code, or assertions.
 - corrected candidate `f736c55e81f98f946d4a4ac0a1107706b54ae526` passed Living City Validation run `32781951871`, including every pre-existing suite and Recreation 2.0.
 
-Physical owner acceptance remains pending and this branch must remain draft/unmerged until that separate gate is satisfied.
+Historical note: this was the pre-merge gate. The owner later authorized the release and PR #7 merged; individual unchecked device observations remain preserved.
 
 ## Physical validation
 

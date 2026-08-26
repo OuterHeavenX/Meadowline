@@ -7,6 +7,11 @@ export let wishSig='';
 export const elWishes=document.getElementById('wishes');
 const title=document.querySelector('#wish-panel h2');
 if(title) title.textContent='Town Goals';
+const panel=document.getElementById('wish-panel'),toggle=document.getElementById('wish-toggle');
+toggle?.addEventListener('click',()=>{
+  const collapsed=panel.classList.toggle('collapsed');
+  toggle.setAttribute('aria-expanded',collapsed?'false':'true');
+});
 
 function card(w){
   const primary=w.slot==='primary';

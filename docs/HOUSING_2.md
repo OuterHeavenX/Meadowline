@@ -4,7 +4,7 @@
 
 **Production on `main` through PR #3.** Historical implementation branch: `feature/housing-2`.
 
-City Growth 1.0 / 1.1, City Hall 1.0 and Roads & Mobility 2.0 are also production. Recreation 2.0 / Town Life is current development and must preserve Housing's authoritative thresholds, capacity and non-downgrade rules.
+City Growth 1.0 / 1.1, City Hall 1.0, Roads & Mobility 2.0 and Recreation 2.0 are also production. UI / HUD 2.0 is current development and preserves Housing's authoritative thresholds, capacity and non-downgrade rules.
 
 ## Core relationship
 

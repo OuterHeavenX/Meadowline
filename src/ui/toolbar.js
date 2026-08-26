@@ -17,6 +17,7 @@ const activeName=document.getElementById('active-tool-name');
 const activeMeta=document.getElementById('active-tool-meta');
 const activeConfirm=document.getElementById('active-tool-confirm');
 const activeCancel=document.getElementById('active-tool-cancel');
+const buildDetail=document.getElementById('build-detail');
 export let category=CATEGORIES[0].id;
 
 function toolDef(id){return TOOLS.find(t=>t.id===id);}
@@ -31,12 +32,12 @@ function button(t,compact){
   const fp=t.cat==='mode'?'':footprintLabel(t.id);
   b.title=t.name+(fp?' · '+fp:'')+(t.cost?' · '+t.cost:'')+unlock+' ('+t.key.toUpperCase()+')'; b.setAttribute('aria-label',b.title); b.setAttribute('aria-pressed',t.id===S.tool?'true':'false');
   const meta=locked?'At '+CITY_STAGES[buildingUnlockStage(t.id)-1].name:((fp&&fp!=='1×1'?fp+' · ':'')+(t.cost?t.cost:'Free'));
-  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[t.id]+'</svg>'+(compact?'':'<i>'+t.name+'</i><u>'+meta+'</u>');
+  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[t.id]+'</svg>'+(compact?'<i>'+t.name+'</i>':'<i>'+t.name+'</i><u>'+meta+'</u>');
   b.addEventListener('click',()=>pickTool(t.id)); return b;
 }
 function renderCats(){ if(!elCats)return; elCats.replaceChildren(); CATEGORIES.forEach(c=>{const b=document.createElement('button');b.className='cat'+(c.id===category?' on':'');b.dataset.cat=c.id;b.textContent=c.name;b.addEventListener('click',()=>showCategory(c.id));elCats.appendChild(b);}); }
-function renderModes(){ if(!elModes)return; elModes.replaceChildren(...TOOLS.filter(t=>t.cat==='mode').map(t=>button(t,true))); }
-export function toggleBuildTray(force){ if(!buildTray)return false; const open=typeof force==='boolean'?force:!buildTray.classList.contains('open'); buildTray.classList.toggle('open',open); buildToggle?.classList.toggle('on',open); buildToggle?.setAttribute('aria-expanded',open?'true':'false'); return open; }
+function renderModes(){ if(!elModes)return; elModes.replaceChildren(...['look','move','erase','road'].map(toolDef).filter(Boolean).map(t=>button(t,true))); }
+export function toggleBuildTray(force){ if(!buildTray)return false; const open=typeof force==='boolean'?force:!buildTray.classList.contains('open'); buildTray.classList.toggle('open',open); elDock?.classList.toggle('catalog-open',open); buildToggle?.classList.toggle('on',open); buildToggle?.setAttribute('aria-expanded',open?'true':'false'); return open; }
 export function showCategory(id){ category=id; renderCats(); if(elTools) elTools.replaceChildren(...TOOLS.filter(t=>t.cat===id).map(t=>button(t,false))); paintTools(); }
 export function pickTool(id){
   const t=toolDef(id); if(!t)return;
@@ -45,6 +46,13 @@ export function pickTool(id){
   S.tool=id;
   if(t.cat!=='mode'&&t.cat!==category) showCategory(t.cat);
   paintTools(); hint(t.desc); services.blip(430,.05,'triangle');
+}
+function paintBuildDetail(){
+  if(!buildDetail)return;
+  const t=toolDef(S.tool),d=t&&getBuildingDefinition(t.id);
+  if(!t||t.cat==='mode'){buildDetail.innerHTML='<b>Choose a building</b><p>Select a card to see its real cost, footprint and unlock stage.</p>';return;}
+  const fp=footprintLabel(t.id)||'1×1',stage=CITY_STAGES[buildingUnlockStage(t.id)-1]?.name||'Settlement';
+  buildDetail.innerHTML='<b>'+t.name+'</b><span>'+t.cost+' coins · '+fp+' · '+stage+'</span><p>'+(d?.description||t.desc)+'</p>';
 }
 export function paintActiveTool(){
   if(!active)return;
@@ -60,8 +68,10 @@ export function paintTools(){
   if(elTools){ const expected=TOOLS.filter(t=>t.cat===category); const ids=[...elTools.children].map(b=>b.dataset.id); if(ids.join('|')!==expected.map(t=>t.id).join('|')) elTools.replaceChildren(...expected.map(t=>button(t,false))); }
   for(const b of [...(elTools?.children||[]),...(elModes?.children||[])]){ const c=COST[b.dataset.id]; b.classList.toggle('broke',!b.disabled&&c>0&&S.coins<c); b.classList.toggle('on',b.dataset.id===S.tool); b.setAttribute('aria-pressed',b.dataset.id===S.tool?'true':'false'); }
   elDock?.classList.toggle('building',toolDef(S.tool)?.cat!=='mode'); paintActiveTool();
+  paintBuildDetail();
 }
 buildToggle?.addEventListener('click',()=>toggleBuildTray());
+document.getElementById('build-close')?.addEventListener('click',()=>toggleBuildTray(false));
 activeConfirm?.addEventListener('click',()=>{ toggleBuildTray(false); paintActiveTool(); });
 activeCancel?.addEventListener('click',()=>{ pickTool('move'); toggleBuildTray(false); });
 renderCats(); renderModes(); showCategory(category); addEventListener('resize',paintTools);

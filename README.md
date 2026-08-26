@@ -4,7 +4,11 @@ Meadowline is a calm, mobile-first isometric living-city builder. It remains a l
 
 ## Production status
 
-Verified production `main` at the start of Recreation 2.0:
+Current verified production `main`: `daee74c246d9c4c3cecca942a367c18e002bced7`. Recreation 2.0, Living City 3.0, Living City 3.1 and Visual Cohesion 3.1.1 are merged through PR #10.
+
+Current development: **UI / HUD 2.0** on `feature/ui-hud-2-premium-interface`. It rebuilds the normal HUD, Build catalog, City Hall and title screen around the owner-approved mobile/tablet mockups while preserving real registry/simulation values, Save V3, safe touch and both renderers. See `docs/UI_HUD_2.md`.
+
+Historical production `main` at the start of Recreation 2.0:
 
 `6ed2225ba008a91610715c63aca44e4cd02486bb`
 
@@ -31,11 +35,11 @@ Historical implementation branches remain preserved, including:
 - `feature/city-hall-civic-center`
 - `feature/roads-mobility-2`
 
-## Current development
+## Merged release stack
 
 Recreation prerequisite branch: `feature/recreation-2-town-life`
 
-Draft PR: **#7 — Recreation 2.0 / Town Life — Multi-Tile Facilities, Recreation Demand & Living Public Spaces**
+Merged PR: **#7 — Recreation 2.0 / Town Life — Multi-Tile Facilities, Recreation Demand & Living Public Spaces**
 
 Integration branch: `feature/living-city-3-aaa-municipal`
 
@@ -43,7 +47,7 @@ Visual release-candidate child branch: `feature/living-city-3-1-aaa-visual`
 
 Visual-cohesion child branch: `feature/visual-cohesion-3-1-1`
 
-Current release candidate: **Visual Cohesion 3.1.1**, stacked transparently on the validated Living City 3.1 candidate. The owner reported testing complete and authorized merging Recreation, Living City 3.0, 3.1 and 3.1.1 to Production on August 24, 2026.
+Production release: **Visual Cohesion 3.1.1**, merged with Recreation, Living City 3.0 and Living City 3.1 through PRs #7–#10 on August 24, 2026.
 
 Living City 3.1 now adds a true orthographic Three.js low-poly world with real geometry, lighting, shadows, terrain, water, Roads, buildings, trees, citizens and vehicles. Auto/Low-poly 3D/Classic Canvas selection keeps a continuously available compatibility renderer; four graphics presets remain presentation-only. WebGPU remains diagnostic-only. See `docs/RENDERING_2.md`.
 
@@ -189,6 +193,6 @@ Living City / School → Housing 2.0 → City Growth 1.0 / 1.1 → City Hall 1.0
 
 Current development:
 
-**Recreation 2.0 prerequisite → Living City 3.0 candidate → Living City 3.1 candidate → Visual Cohesion 3.1.1 candidate**
+**UI / HUD 2.0 premium interface candidate**
 
-See `docs/RECREATION_2.md`, `docs/LIVING_CITY_3.md`, `docs/RENDERING_2.md` and `docs/VISUAL_COHESION_3_1_1.md` for the canonical development records.
+See `docs/UI_HUD_2.md` for the current milestone and the earlier technical records for production architecture.

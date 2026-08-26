@@ -1,6 +1,6 @@
 # Meadowline Visual Cohesion 3.1.1
 
-Status: **Owner-tested release candidate** on `feature/visual-cohesion-3-1-1`, based on exact validated Living City 3.1 candidate `455acd193e1b90d0ab3cae81ee5cbd3e66c41b61`. On August 24, 2026, the owner reported testing complete and explicitly authorized finishing the candidate and merging the complete dependency stack to `main`.
+Status: **Production through merged PR #10** at `daee74c246d9c4c3cecca942a367c18e002bced7`. It was based on exact validated Living City 3.1 candidate `455acd193e1b90d0ab3cae81ee5cbd3e66c41b61`; the owner reported testing complete and authorized the dependency-stack release on August 24, 2026.
 
 ## Product target
 

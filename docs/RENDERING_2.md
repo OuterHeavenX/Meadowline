@@ -1,6 +1,6 @@
 # Rendering 2 — Living City 3.1 GPU Presentation
 
-Status: **Current development** on `feature/living-city-3-1-aaa-visual`, stacked transparently on the unmerged Living City 3 candidate. It is neither Production nor physically accepted.
+Status: **Production through merged PR #9.** Historical branch ancestry and outstanding granular device checks remain preserved.
 
 ## Starting point
 
