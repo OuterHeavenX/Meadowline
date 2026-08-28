@@ -8,6 +8,8 @@ Meadowline keeps Save V3 (`meadowline.v3`) as the authoritative local/offline sa
 
 Guest/local play remains supported with no account.
 
+The Supabase client is loaded with a dynamic `import()` the first time the player opens the Account & Cloud Saves panel, never during boot. A static import would place the entire module graph — game loop, renderer and Save V3 included — behind one CDN request, so an unreachable host would stop Meadowline from starting at all rather than merely disabling cloud saves. `tests/module-hygiene.mjs` fails the build if any module reintroduces a static off-origin import. Vendoring the client under `assets/vendor/` alongside Three.js remains the stronger follow-up and would remove the runtime dependency entirely.
+
 Signed-in play adds a protected Supabase cloud copy per save slot. The browser uses only the Supabase publishable key. No service-role or secret key is shipped to clients.
 
 ## Supabase backend

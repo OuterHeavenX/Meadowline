@@ -1,4 +1,4 @@
-import { createPasswordAccount, sendPasswordSetup, signInWithPassword, signOut, supabase, updatePassword } from '../cloud/supabase.js';
+import { createPasswordAccount, onCloudAuthChange, sendPasswordSetup, signInWithPassword, signOut, updatePassword } from '../cloud/supabase.js';
 import { clearCloudRevision, downloadCloudSave, getCloudHistory, getCloudSaveSummary, restoreCloudHistory, uploadLocalSave } from '../cloud/cloud-save.js';
 import { toast } from './notify.js';
 
@@ -16,7 +16,7 @@ wrap.className='cloud-account';
 wrap.innerHTML=`<button class="cloud-toggle" aria-label="Meadowline account and cloud saves" title="Account & Cloud Saves">☁</button><section hidden><button class="x" aria-label="Close">×</button><h3>Account & Cloud Saves</h3><div data-body>Checking account…</div></section>`;
 document.body.appendChild(wrap);
 const panel=wrap.querySelector('section'),body=wrap.querySelector('[data-body]');
-wrap.querySelector('.cloud-toggle').onclick=()=>{panel.hidden=!panel.hidden;if(!panel.hidden) render();};
+wrap.querySelector('.cloud-toggle').onclick=()=>{panel.hidden=!panel.hidden;if(!panel.hidden){ subscribeAuth(); render(); }};
 wrap.querySelector('.x').onclick=()=>panel.hidden=true;
 let busy=false;
 
@@ -60,4 +60,12 @@ async function render(){
   }catch(e){body.innerHTML=`<p>Cloud services are unavailable right now. Your local city is unaffected.</p><small>${safeText(e?.message||e)}</small>`;}
 }
 
-supabase.auth.onAuthStateChange(()=>{if(!panel.hidden)setTimeout(render,0);});
+// Subscribed the first time the player opens the panel, so a guest session
+// never loads the cloud client or reaches the network at all.
+let authSubscribed=false;
+async function subscribeAuth(){
+  if(authSubscribed) return;
+  authSubscribed=true;
+  const ok=await onCloudAuthChange(()=>{if(!panel.hidden)setTimeout(render,0);});
+  if(!ok) authSubscribed=false;
+}

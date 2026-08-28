@@ -2,6 +2,7 @@
 //   1. no module assigns to an imported binding (throws in strict mode)
 //   2. no pure re-export shim modules (main.js is the entry point, exempt)
 //   3. no import cycles
+//   4. no static import from an off-origin URL
 import { readFileSync } from 'node:fs';
 import { globSync } from 'node:fs';
 import path from 'node:path';
@@ -60,6 +61,27 @@ const seen = new Map();
   for (const f of files) visit(f, []);
 })();
 cycles.length ? cycles.forEach((c) => fail('import cycle: ' + c)) : pass('no import cycles');
+
+// 4. off-origin static imports
+// A static import resolves for the whole module graph before any module runs,
+// so one CDN import puts the game loop, renderer and save system behind a
+// network request and Meadowline will not start when that host is unreachable.
+// Clients that genuinely need the network belong behind a dynamic import().
+// A line-comment strip must not treat the "//" inside "https://" as a comment,
+// which is exactly the specifier this check exists to catch.
+const stripBlockComments = (t) => t.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(?<![:'"\w])\/\/[^\n]*/g, ' ');
+const staticSpecifiers = (t) => [...stripBlockComments(t)
+  .matchAll(/(?:^|[\s;}])import\s(?:[^'"();]*?\sfrom\s)?['"]([^'"]+)['"]/g)].map((m) => m[1]);
+let remoteBad = 0;
+for (const f of files) {
+  for (const spec of staticSpecifiers(read(f))) {
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(spec) || spec.startsWith('//')) {
+      fail(`${f} statically imports off-origin "${spec}" — boot would block on that host`);
+      remoteBad++;
+    }
+  }
+}
+if (!remoteBad) pass('no static import from an off-origin URL');
 
 console.log(`\n${failures ? failures + ' hygiene failure(s)' : 'module hygiene clean'} across ${files.length} modules`);
 process.exit(failures ? 1 : 0);
