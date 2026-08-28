@@ -11,7 +11,7 @@ Findings marked **verified** were reproduced by serving this branch over a local
 
 Nothing in this document requires Save V4, a larger world, a renderer change or a fifth City Growth stage.
 
-**Fix status.** B1 through B6, B8 and B15 are fixed on this branch. Each behavioural fix carries a regression test confirmed to fail without it. B7, B9 through B14 remain open. See section 7 for the order the rest is meant to land in.
+**Fix status.** B1 through B6, B8, B9, B10, B14 and B15 are fixed on this branch. Each behavioural fix carries a regression test confirmed to fail without it. B7, B11, B12 and B13 remain open. See section 7 for the order the rest is meant to land in.
 
 ---
 
@@ -121,21 +121,21 @@ The loop runs simulation, UI painting, autosave and render, then re-queues itsel
 
 **Fixed.** `frame()` is now a guard around `step()`, with the re-queue in `finally`. Errors increment `loopErrors`, store `lastLoopError`, and log once per distinct message so a per-frame fault cannot drown the console. Both counters and an always-on `frameCount` appear under `?debug=1`. Verified by nulling the weather object in a booted app: the throw is caught and frames keep advancing.
 
-#### B9 — Painted water can never be removed · read
+#### B9 — Painted water can never be removed · read · **FIXED**
 
 `src/world/landscaping.js` · `src/buildings/buildings.js` — `erase()`
 
 Remove handles buildings and natural trees. It has no terrain case, so a water tile is permanent. Water is a hold-and-drag paint tool, so one slipped gesture floods a run of opened land at six coins a tile with no undo — on land the player may have paid several hundred coins to open.
 
-**Fix.** Let Remove restore a painted water tile to land. Track player-painted water separately from generated ponds so natural terrain stays authoritative.
+**Fixed.** `genWorld()` snapshots the seed's own water as `S.natWater`, so `playerWaterAt()` can tell a painted pond from the valley's. Remove takes a painted tile back to land and refunds half. Generated water stays authoritative and cannot be drained. No save field was needed: the seed regenerates the same natural terrain on load and `restoreTerrain()` replays the player's edits over it.
 
-#### B10 — Expensive facilities delete on a single tap · read
+#### B10 — Expensive facilities delete on a single tap · read · **FIXED**
 
 `src/buildings/buildings.js` — `erase()`
 
 The confirmation gate is footprint area ≥ 9 cells. That covers Picnic Green, Town Park and Hospital. It misses the 520-coin Fire Station (2×3), the 460-coin Clinic (2×2), the 420-coin Police Station and the 190-coin Sports Court, all of which vanish on one tap for a half refund.
 
-**Fix.** Gate on refund value rather than area. Anything above roughly 100 coins deserves the question.
+**Fixed.** The gate is now cost, not footprint: `CONFIRM_REMOVAL_COST` is 90 coins. `removalIntent()` reports whether a removal needs confirmation without touching the world, so simulation code stays synchronous and UI-free while the input layer raises the dialog. Remove is a paint tool, so a hold-and-drag sweep skips anything valuable and says so once instead of interrupting the drag.
 
 ### Medium
 
@@ -163,13 +163,13 @@ The set lists the pre-Recreation buildings and none of `pocketPark`, `playground
 
 **Fix.** Derive both sets from the registry rather than maintaining a second hand-written list.
 
-#### B14 — Native `confirm()` dialogs in a premium touch shell · read
+#### B14 — Native `confirm()` dialogs in a premium touch shell · read · **FIXED**
 
 `src/buildings/buildings.js` — `erase()` · `src/ui/hud.js` — New City
 
 Removing City Hall, removing a large facility and starting a new valley all use the browser's `confirm()`. UI / HUD 2.0 rebuilt every other surface around warm paper, safe-area insets and a five-action dock; these three moments drop to a system alert. On an installed iOS app it reads as a page error rather than a game decision.
 
-**Fix.** One in-shell confirmation component styled from the existing tokens, reused by all three.
+**Fixed.** `src/ui/confirm.js` is one `askConfirm()` built on `<dialog>`, styled from the UI 2.0 tokens, with Escape and the backdrop both cancelling and Cancel holding focus. It replaces all eight native dialogs, not the three this finding named: facility removal, City Hall removal, New City, two parcel purchases, the civic and School upgrades, and the two cloud-save replacements.
 
 #### B15 — `paintHud` assumes four menu elements exist · read · **FIXED**
 
@@ -274,7 +274,7 @@ Grouped so each block is one focused, testable change.
 1. ~~**Unblock the boot.** B1 alone.~~ **Done.** The Supabase client is loaded on demand and a hygiene rule blocks any static off-origin import.
 2. ~~**The three silent gameplay breaks.** B2, B3, B4.~~ **Done.** Each with a regression assertion confirmed to fail against the unfixed code.
 3. ~~**Shell and input correctness.** B5, B6 plus a startup assertion, B8, B15.~~ **Done.** The text-entry guard, the reserved-key rule and Pocket Park's rekey, the frame-loop guard with a diagnostics failure surface, and the optional element writes in `paintHud`.
-4. **Destructive-action safety.** B9, B10, B14. These three share one component and are best done together.
+4. ~~**Destructive-action safety.** B9, B10, B14.~~ **Done.** Removable painted water, a cost-based removal gate, and one in-shell confirmation replacing all eight native dialogs.
 5. **Recreation balance.** Quality reaches mood; Pocket Green repriced. Play it before deciding whether the third option is needed. Update `docs/RECREATION_2.md` in the same change.
 6. **Performance, ahead of the next system.** Desirability caching, spatial crowding buckets, cheap summary signature, tutorial gating. Do this before Police and Fire grow, not after: both add per-building passes over the same lists.
 7. **Documentation and CI.** Promote UI / HUD 2.0 to production, rewrite the cloud auth doc around password sign-in, correct the CDN claim, widen the CI push triggers, add dated status lines.

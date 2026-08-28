@@ -26,7 +26,14 @@ jobs:
         with:
           node-version: '24'
       - name: Check JavaScript syntax
-        run: find src tests -name '*.js' -o -name '*.mjs' | xargs -n1 node --check
+        # Parsed as ES modules, which is what the browser loads. Plain
+        # `node --check` treats a .js file as CommonJS and accepts things the
+        # browser rejects, such as `await` inside a non-async function.
+        run: |
+          for f in $(find src tests -name '*.js'); do
+            node --input-type=module --check < "$f" || { echo "module parse failed: $f"; exit 1; }
+          done
+          find src tests -name '*.mjs' | xargs -n1 node --check
       - name: Module hygiene
         run: node tests/module-hygiene.mjs
       - name: Browser regression

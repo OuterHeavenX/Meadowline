@@ -1,3 +1,4 @@
+import { askConfirm } from '../src/ui/confirm.js';
 const checks=[];const check=(name,pass,detail='')=>checks.push({name,pass:!!pass,detail});
 const frame=document.getElementById('game');
 await new Promise(resolve=>frame.addEventListener('load',()=>setTimeout(resolve,1300),{once:true}));
@@ -42,6 +43,34 @@ st.wx=weather;
 // Recovery after the fault clears is deliberately not asserted here: headless
 // rAF stops ticking once the harness settles, so it would measure the browser
 // rather than the loop. The two checks above are the behaviour that matters.
+
+// The in-shell confirmation replaces eight native confirm() dialogs, so it has
+// to hold up as a real UI surface: centred, inside the viewport, thumb-sized,
+// and cancelling by default rather than committing. askConfirm() opens the
+// dialog synchronously, so nothing here waits on a timer.
+const pending=askConfirm({title:'Remove the Fire Station?',body:'You get 260 coins back of the 520 it cost.',confirmLabel:'Remove',tone:'danger'});
+const dlg=document.querySelector('.ml-confirm');
+check('the confirmation opens as a modal',!!dlg?.open&&dlg.matches(':modal'));
+if(dlg?.open){
+  const r=dlg.getBoundingClientRect();
+  // clientWidth, not innerWidth: innerWidth includes the scrollbar, which
+  // would read a correctly centred dialog as off-centre.
+  const vw=document.documentElement.clientWidth;
+  check('the confirmation stays inside the viewport',r.left>=-0.5&&r.right<=vw+0.5,Math.round(r.left)+'..'+Math.round(r.right)+' of '+vw);
+  check('the confirmation is centred',Math.abs(r.left-(vw-r.right))<2,Math.round(r.left)+' vs '+Math.round(vw-r.right));
+  check('its actions are thumb-sized',[...dlg.querySelectorAll('button')].every(b=>b.getBoundingClientRect().height>=44));
+  check('cancel holds focus, not the destructive action',document.activeElement===dlg.querySelector('.ml-confirm-cancel'));
+  check('the destructive action is marked',dlg.querySelector('.ml-confirm-go').classList.contains('danger'));
+  check('it reads as a question, not an alert',dlg.textContent.includes('Remove the Fire Station?')&&dlg.textContent.includes('260 coins back'));
+}
+// Awaiting is safe only because the dialog exists and is being closed here; a
+// missing dialog would strand the promise, so that case reports and moves on.
+if(dlg){
+  dlg.close('cancel');
+  check('dismissing resolves as a refusal',(await pending)===false);
+}else{
+  check('dismissing resolves as a refusal',false,'no dialog element to close');
+}
 
 frame.src='../?uitest=cityhall';
 await new Promise(resolve=>frame.addEventListener('load',()=>setTimeout(resolve,900),{once:true}));

@@ -9,6 +9,7 @@ import { refreshPalette, seasonName } from '../world/seasons.js';
 import { shortTime, timeName } from '../world/time.js';
 import { weatherName } from '../world/weather.js';
 import { cityStage, nextStageProgress, resetProgression } from '../progression/city-growth.js';
+import { askConfirm } from './confirm.js';
 import { toast } from './notify.js';
 import { closeLook } from './panels.js';
 import { postcard } from './postcard.js';
@@ -66,8 +67,11 @@ bSpeed.addEventListener("click",toggleSpeed);
 bSound.addEventListener("click",toggleSound);
 bSound.classList.add("off");
 bLedger.classList.add("off");
-bNew.addEventListener("click",()=>{
-  if(confirm("Start a brand new valley? This clears the town you've built.")){
+bNew.addEventListener("click",async()=>{
+  const ok=await askConfirm({title:'Start a brand new valley?',
+    body:"The town you've built is cleared and replaced with fresh land. This cannot be undone.",
+    confirmLabel:'New valley',tone:'danger'});
+  if(ok){
     resetProgression('parcel');
     genWorld((Math.random()*1e9)|0); setMileHit(0); S.granted=0; refreshPalette(); recompute(); rollWishes(); closeLook(); save(); paintGrowthPanel(); toast("A fresh valley");
   }

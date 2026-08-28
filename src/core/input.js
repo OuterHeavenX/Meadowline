@@ -1,5 +1,6 @@
-import { BUILDABLE, erase, place } from '../buildings/buildings.js';
+import { BUILDABLE, erase, place, removalIntent } from '../buildings/buildings.js';
 import { TOOLS, clamp } from './constants.js';
+import { getBuildingDefinition } from '../buildings/registry.js';
 import { S } from './state.js';
 import { isPaintTool, isTextEntryTarget, RESERVED_SHORTCUT_KEYS, TOUCH_DRAG_THRESHOLD, TOUCH_PAINT_HOLD_MS } from './input-policy.js';
 import { toggleMap } from '../rendering/minimap.js';
@@ -7,6 +8,7 @@ import { hover } from '../rendering/interaction-state.js';
 import { cv } from '../rendering/terrain.js';
 import { recompute } from '../simulation/mood.js';
 import { checkWishes } from '../simulation/wishes.js';
+import { askConfirm } from '../ui/confirm.js';
 import { hint } from '../ui/notify.js';
 import { closeLook, inspect } from '../ui/panels.js';
 import { inspectCityHall } from '../ui/city-hall.js';
@@ -25,6 +27,7 @@ import { paintWater } from '../world/landscaping.js';
    ============================================================ */
 export const ptrs=new Map();
 export let dragged=false, lastPinch=0, painted=new Set();
+let paintSkipNoticed=false;
 let pendingTap=null, pinchActive=false, paintActive=false, holdTimer=0;
 
 function diagnostic(name){ if(S.diagnostics) S.diagnostics[name]=(S.diagnostics[name]||0)+1; }
@@ -35,6 +38,17 @@ export function toGrid(e){
   const w=screen2world(e.clientX,e.clientY);
   return {x:Math.floor(w.x+0.5),y:Math.floor(w.y+0.5)};
 }
+function buildingName(type){ return getBuildingDefinition(type)?.name||'facility'; }
+
+// The confirmation is asynchronous, so the removal runs after the answer
+// instead of blocking the pointer path. Simulation code stays synchronous and
+// never learns that a dialog exists.
+async function askRemoval(gp,intent){
+  const ok=await askConfirm({title:intent.title,body:intent.body,confirmLabel:intent.confirmLabel,tone:'danger'});
+  if(!ok) return;
+  if(erase(gp.x,gp.y,{confirmed:true})){ recompute(); checkWishes(); paintActiveTool(); }
+}
+
 export function applyTool(gp,{touch=false,paint=false}={}){
   const key=gp.x+','+gp.y;
   if(painted.has(key)) return false;
@@ -45,7 +59,20 @@ export function applyTool(gp,{touch=false,paint=false}={}){
     if(!inspectCityHall(x,y)) inspect(x,y);
     return true;
   }
-  if(S.tool==='erase') changed=erase(gp.x,gp.y);
+  if(S.tool==='erase'){
+    const intent=removalIntent(gp.x,gp.y);
+    if(intent.ok&&intent.needsConfirm){
+      // Remove is a paint tool: a dialog mid-drag would be worse than the bug.
+      // A hold-and-drag sweep skips anything valuable and says so once.
+      if(paint){
+        if(!paintSkipNoticed){ paintSkipNoticed=true; hint('Tap it on its own to remove the '+(intent.root?.type?buildingName(intent.root.type):'facility')+'.',true); }
+        return false;
+      }
+      askRemoval(gp,intent);
+      return false;
+    }
+    changed=erase(gp.x,gp.y);
+  }
   else if(S.tool==='water'){
     const r=paintWater(gp.x,gp.y); changed=r.ok; if(!r.ok&&r.why) hint(r.why,true);
   }
@@ -62,7 +89,7 @@ cv.addEventListener('pointerdown',e=>{
   cv.setPointerCapture(e.pointerId);
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,down:performance.now(),type:e.pointerType});
   if(ptrs.size===1){
-    dragged=false; pinchActive=false; paintActive=false; painted.clear(); clearHold();
+    dragged=false; pinchActive=false; paintActive=false; painted.clear(); paintSkipNoticed=false; clearHold();
     pendingTap=(S.tool!=='move'&&e.button!==1)?{pointerId:e.pointerId,gp:toGrid(e),type:e.pointerType}:null;
     setInputState(S.tool==='move'?'NAVIGATING':(isPaintTool(S.tool)?'PAINT_HOLD_PENDING':'TAP_BUILD_ARMED'));
     if(e.pointerType==='touch'&&isPaintTool(S.tool)){

@@ -27,6 +27,10 @@ export function genWorld(seed){
   // Load, New City or Cloud restore inherited the previous city's traffic and
   // an incident that could never be dispatched — which permanently blocked
   // its whole service, because new ones are gated on none being active.
+  // The seed's own water, kept so a player-painted pond can be told apart
+  // from the valley's and undone. restoreTerrain() replays player edits on
+  // top of this baseline, so it survives a load without a save field.
+  S.natWater=S.terr.slice();
   S.citizens.length=0; S.trains.length=0; S.boats.length=0; S.puffs.length=0;
   S.vehicles.length=0; S.serviceVehicles.length=0; S.incidents.length=0; S.feedback.length=0;
   invalidateMobility(); invalidateRecreation();

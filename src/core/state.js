@@ -1,6 +1,6 @@
 /* ---------- state ---------- */
 export const S={
-  seed:(Math.random()*1e9)|0, terr:null,natTree:null,grid:null,
+  seed:(Math.random()*1e9)|0, terr:null,natWater:null,natTree:null,grid:null,
   coins:340,day:1,dayT:.24,t:0,speed:1,muted:true,running:true,tool:'move',
   citizens:[],vehicles:[],serviceVehicles:[],trains:[],boats:[],puffs:[],feedback:[],incidents:[],pop:0,mood:0,homes:0,vehicleSerial:0,incidentSerial:0,
   ctx:{parks:[],recreation:[],cafes:[],stations:[],houses:[],lamps:[],mills:[],markets:[],bakeries:[],schools:[],docks:[]},

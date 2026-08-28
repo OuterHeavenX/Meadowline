@@ -25,6 +25,33 @@ export function paintWater(x,y){
   return {ok:true,cost:WATER_COST};
 }
 
+/* ---------- undoing a pond ----------
+   Water was a one-way mutation: paint is a hold-and-drag tool, so one slipped
+   gesture flooded a run of opened land permanently, on ground the player may
+   have paid hundreds of coins to open. Generated ponds stay authoritative
+   terrain; only what the player added is theirs to take back.
+
+   `S.natWater` is the seed's own water, snapshotted by genWorld. It needs no
+   save field because the seed regenerates the same natural terrain on load,
+   and restoreTerrain then replays the player's edits over the top. */
+export function playerWaterAt(x,y){
+  if(!inBounds(x,y)) return false;
+  const i=idx(x,y);
+  if(S.terr?.[i]!==1) return false;
+  if(!S.natWater||S.natWater.length!==S.terr.length) return false;
+  return !S.natWater[i];
+}
+
+export function removePlayerWater(x,y){
+  if(!playerWaterAt(x,y)) return {ok:false,why:'This water is part of the valley itself.'};
+  if(!isFootprintUnlocked(x,y,1,1)) return {ok:false,why:'Open this land before reshaping it.'};
+  const i=idx(x,y);
+  S.terr[i]=0;
+  S.coins+=Math.floor(WATER_COST/2);
+  invalidateMobility(); invalidateRecreation(); invalidateCitySummary();
+  return {ok:true,refund:Math.floor(WATER_COST/2)};
+}
+
 export function packTerrain(){ let out=''; for(const v of S.terr||[]) out+=v?'1':'0'; return out; }
 export function restoreTerrain(value){
   if(typeof value!=='string'||value.length!==S.terr?.length) return false;

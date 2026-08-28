@@ -1,5 +1,5 @@
 import { BUILDINGS, getUpgradeDefinition } from '../src/buildings/registry.js';
-import { canPlace, erase } from '../src/buildings/buildings.js';
+import { canPlace, erase, removalIntent } from '../src/buildings/buildings.js';
 import { touchIntent, isOneShotTool } from '../src/core/input-policy.js';
 import { applySave, KEY, KEY_OLD, KEY_V2, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
@@ -69,12 +69,15 @@ const r4 = upgradeCivic(hall);
 check('level 4 is Meadowline City Hall', r4.ok && hall.state.level === 4 && r4.upgrade.name === 'Meadowline City Hall');
 check('no fake level 5', civicUpgradeStatus(hall).maxed === true);
 
-const oldConfirm = globalThis.confirm;
-globalThis.confirm = () => true;
-const removed = erase(16, 16);
+// Removing the civic centre is a deliberate decision, asked in-shell rather
+// than through a native dialog, so the test states the intent directly.
+const hallIntent = removalIntent(16, 16);
+check('City Hall removal asks first', hallIntent.needsConfirm === true);
+check('the question explains what survives', /City Growth/.test(hallIntent.body || ''));
+check('an unconfirmed City Hall removal changes nothing', !erase(16, 16) && cityHalls().length === 1);
+const removed = erase(16, 16, { confirmed: true });
 check('confirmed City Hall removal succeeds', removed && cityHalls().length === 0);
 check('removal allows a legal rebuild', canPlace('cityHall', 16, 16).ok);
-globalThis.confirm = oldConfirm;
 const rebuiltHall = put('cityHall', 16, 16, { level: 4 });
 
 const h1 = put('house', 17, 17, { housingTier: 1, education: 10, desirability: 45 }, 4);
