@@ -43,7 +43,26 @@ import { tickTutorial } from '../ui/tutorial.js';
 export let last=performance.now();
 configureServices({blip,siren,puff,hearts,hint,toast,paintTools,paintWishes,closeLook});
 let simClock=0, uiClock=0, lookClock=0, miniClock=0, saveClock=0, ledgerClock=0;
+// One thrown error used to end the session: frame() re-queued itself on the
+// last line, so an exception anywhere stopped simulation, the HUD and the
+// six-second autosave permanently behind a screen that still looked normal.
+// A crash now costs one frame and is recorded where ?debug=1 can show it.
+let loopErrorMessage='';
+function recordLoopError(e){
+  const message=String(e?.message||e);
+  S.diagnostics.loopErrors=(S.diagnostics.loopErrors||0)+1;
+  S.diagnostics.lastLoopError=message;
+  // Repeats are counted but logged once, so a per-frame fault cannot drown
+  // the console it needs to be diagnosed from.
+  if(message!==loopErrorMessage){ loopErrorMessage=message; console.error('Meadowline frame error:',e); }
+}
 export function frame(now){
+  try{ step(now); }
+  catch(e){ recordLoopError(e); }
+  finally{ requestAnimationFrame(frame); }
+}
+function step(now){
+  S.diagnostics.frameCount=(S.diagnostics.frameCount||0)+1;
   diagnosticFrameStart(now);
   let dt=(now-last)/1000; last=now;
   dt=Math.min(dt,0.05);
@@ -105,7 +124,6 @@ export function frame(now){
   const renderStart=S.diagnostics.enabled?performance.now():0;
   render();
   if(S.diagnostics.enabled) recordRenderMs(performance.now()-renderStart);
-  requestAnimationFrame(frame);
 }
 
 /* ---------- boot ---------- */

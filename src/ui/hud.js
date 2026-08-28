@@ -39,10 +39,13 @@ export function paintHud(){
     pct=rows.length?Math.round(rows.filter(r=>r.met).length/rows.length*100):0;
   }
   S_stageProgress?.style.setProperty('--stage-progress',pct+'%');
-  document.getElementById('menu-pop').textContent=S.pop;
-  document.getElementById('menu-stage').textContent=stage.name;
-  document.getElementById('menu-residents').textContent=S.pop;
-  document.getElementById('menu-day').textContent=S.day;
+  // paintHud runs five times a second; a missing element must skip a label,
+  // not throw and take the whole frame loop down with it.
+  const setText=(id,value)=>{ const el=document.getElementById(id); if(el) el.textContent=value; };
+  setText('menu-pop',S.pop);
+  setText('menu-stage',stage.name);
+  setText('menu-residents',S.pop);
+  setText('menu-day',S.day);
 }
 
 export const bSpeed=document.getElementById("b-speed"), bSound=document.getElementById("b-sound"),

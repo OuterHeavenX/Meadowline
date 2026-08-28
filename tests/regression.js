@@ -1,6 +1,7 @@
 import { canPlace, erase, place } from '../src/buildings/buildings.js';
 import { BUILDINGS, BUILDABLE } from '../src/buildings/registry.js';
-import { COST, H, W } from '../src/core/constants.js';
+import { COST, H, TOOLS, W } from '../src/core/constants.js';
+import { conflictingToolKeys, isTextEntryTarget, RESERVED_SHORTCUT_KEYS } from '../src/core/input-policy.js';
 import { KEY, KEY_OLD, KEY_V2, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
 import { advanceEducation, educationAssignment, getEducationLevel, invalidateServices, previewEducationAt, recomputeServices, schoolStats, serviceBoundaryGeometry } from '../src/simulation/civic-services.js';
@@ -151,6 +152,25 @@ check('v1 migration',load()&&S.coins===222&&S.grid[idx(5,5)]?.type==='house'&&S.
 store.set(KEY,JSON.stringify({v:3,seed:2468,coins:111,day:2,dayT:.2,b:[{type:'house',x:8,y:8,pop:2,state:{housingTier:99,upgradeProgress:9,education:-5}},{type:'school',x:9,y:8,state:{level:'bad'}},{type:'not-real',x:10,y:8},{nonsense:true}]}));
 store.set(KEY_V2,''); store.set(KEY_OLD,'');
 check('malformed optional v3 state is defensive',load()&&S.grid[idx(8,8)]?.type==='house'&&getEducationLevel(S.grid[idx(8,8)])===0&&S.grid[idx(8,8)]?.state?.housingTier===3&&S.grid[idx(8,8)]?.state?.upgradeProgress===1&&S.grid[idx(9,8)]?.state?.level===1&&!S.grid[idx(10,8)]);
+
+// No building tool may claim a key the shell owns. The keydown handler resolves
+// tools before shell shortcuts, so a collision silently kills the shortcut:
+// Pocket Park took 'p' and the postcard button went on advertising it.
+const clashes=conflictingToolKeys(TOOLS);
+check('no tool key shadows a shell shortcut',clashes.length===0,clashes.join(','));
+check('the postcard key stays reserved',RESERVED_SHORTCUT_KEYS.has('p')&&!TOOLS.some(t=>t.key==='p'));
+check('every tool still has a key',TOOLS.every(t=>typeof t.key==='string'&&t.key.length>0));
+const keys=TOOLS.map(t=>t.key);
+check('tool keys remain unique',new Set(keys).size===keys.length);
+
+// Typing into a field must not reach the map. Without this the account panel's
+// email and password inputs retyped the build tool letter by letter.
+check('text inputs own their keystrokes',isTextEntryTarget({tagName:'INPUT'}));
+check('textareas own their keystrokes',isTextEntryTarget({tagName:'TEXTAREA'}));
+check('selects own their keystrokes',isTextEntryTarget({tagName:'SELECT'}));
+check('contenteditable owns its keystrokes',isTextEntryTarget({isContentEditable:true}));
+check('the map canvas does not swallow shortcuts',!isTextEntryTarget({tagName:'CANVAS'}));
+check('a missing target is not text entry',!isTextEntryTarget(null));
 
 const failed=checks.filter(x=>!x.pass); document.getElementById('results').textContent=JSON.stringify({pass:failed.length===0,checks},null,2);
 document.documentElement.dataset.result=failed.length?'fail':'pass';

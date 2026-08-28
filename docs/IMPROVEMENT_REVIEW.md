@@ -11,7 +11,7 @@ Findings marked **verified** were reproduced by serving this branch over a local
 
 Nothing in this document requires Save V4, a larger world, a renderer change or a fifth City Growth stage.
 
-**Fix status.** B1, B2, B3 and B4 are fixed on this branch, each with a regression test that fails without the fix. Everything from B5 down remains open. See section 7 for the order the rest is meant to land in.
+**Fix status.** B1 through B6, B8 and B15 are fixed on this branch. Each behavioural fix carries a regression test confirmed to fail without it. B7, B9 through B14 remain open. See section 7 for the order the rest is meant to land in.
 
 ---
 
@@ -85,15 +85,15 @@ This fires on Load, on New City and on Cloud restore — the three moments where
 
 ### High
 
-#### B5 — The account form cannot be typed into on a keyboard · verified
+#### B5 — The account form cannot be typed into on a keyboard · verified · **FIXED**
 
 `src/core/input.js` — global `keydown` listener
 
 No target guard. The Account & Cloud Saves panel contains email and password inputs. Every letter matching a tool key selects that tool mid-word, and the space bar toggles pause and is swallowed by `preventDefault`. The registry assigns single letters to 23 tools, including `p c d f g h j k q r u v x y e i w`.
 
-**Fix.** Return early when the event target is an input, textarea, select or contenteditable element.
+**Fixed.** `isTextEntryTarget()` lives in `input-policy.js` beside the touch policy, and the keydown handler returns early for it. Covered twice: unit assertions on the helper, and a booted-app test that types into a real field and checks the armed tool does not change while the same key still works outside one.
 
-#### B6 — The postcard shortcut is dead and the button still advertises it · verified
+#### B6 — The postcard shortcut is dead and the button still advertises it · verified · **FIXED**
 
 `src/buildings/registry.js` (`pocketPark`) · `src/core/input.js` · `index.html`
 
@@ -101,7 +101,7 @@ Recreation 2.0 gave Pocket Park the key `p`. The keydown handler checks the tool
 
 **Evidence.** Enumerated every registry key against the global shortcuts. Exactly one collision: `p`, and the tool lookup wins.
 
-**Fix.** Rekey one of the two and correct the tooltip. Add a startup assertion that no tool key shadows a global shortcut — the next building will hit this too.
+**Fixed.** Pocket Park moved from `p` to `a`, so the postcard shortcut and its tooltip agree again. `RESERVED_SHORTCUT_KEYS` in `input-policy.js` now names the keys the shell owns, the keydown handler resolves those before tools so a future collision cannot silently shadow one, and `conflictingToolKeys(TOOLS)` is asserted empty in the base suite.
 
 #### B7 — Postcard export is blank on the default renderer · verified
 
@@ -113,13 +113,13 @@ Recreation 2.0 gave Pocket Park the key `p`. The keydown handler checks the tool
 
 **Fix.** Force the Canvas path for the capture frame, or read the Three renderer's buffer with `preserveDrawingBuffer` for that one draw.
 
-#### B8 — One thrown error ends the session silently · read
+#### B8 — One thrown error ends the session silently · read · **FIXED**
 
 `src/core/game.js` — `frame()`
 
 The loop runs simulation, UI painting, autosave and render, then re-queues itself. Nothing is guarded, so a single exception stops the world, the HUD and the six-second autosave permanently, leaving a frozen but otherwise normal-looking screen. The Three.js path has its own try and falls back cleanly; the rest of the loop has nothing.
 
-**Fix.** Wrap the body in `try`/`finally` with the re-queue in the `finally` block, and record the error in diagnostics. A crash should cost one frame, not the session.
+**Fixed.** `frame()` is now a guard around `step()`, with the re-queue in `finally`. Errors increment `loopErrors`, store `lastLoopError`, and log once per distinct message so a per-frame fault cannot drown the console. Both counters and an always-on `frameCount` appear under `?debug=1`. Verified by nulling the weather object in a booted app: the throw is caught and frames keep advancing.
 
 #### B9 — Painted water can never be removed · read
 
@@ -171,13 +171,13 @@ Removing City Hall, removing a large facility and starting a new valley all use 
 
 **Fix.** One in-shell confirmation component styled from the existing tokens, reused by all three.
 
-#### B15 — `paintHud` assumes four menu elements exist · read
+#### B15 — `paintHud` assumes four menu elements exist · read · **FIXED**
 
 `src/ui/hud.js` — `paintHud()`
 
 Four `getElementById(...).textContent` assignments with no optional chaining, in a function that runs five times a second, two lines after the same file uses `?.` for the same reason. Combined with B8, a missing element in any embedding or fixture kills the loop rather than skipping a label.
 
-**Fix.** Match the optional chaining already used above it.
+**Fixed.** The four writes go through a `setText()` helper that skips a missing element. No dedicated test: the change has no observable behaviour unless an element is absent, and that failure mode is now also contained by the B8 guard.
 
 ---
 
@@ -271,9 +271,9 @@ The docs are the project's best asset, which is why these matter more here than 
 
 Grouped so each block is one focused, testable change.
 
-1. **Unblock the boot.** B1 alone. Vendor or lazily import the Supabase client so the game starts without a network. Everything else is invisible to a player who cannot reach the title screen.
-2. **The three silent gameplay breaks.** B2, B3, B4. Add the three missing regression assertions in the same commit so they cannot come back.
-3. **Shell and input correctness.** B5, B6 plus a startup assertion, B8, B15. Small and independent; B8 turns every future crash into one lost frame.
+1. ~~**Unblock the boot.** B1 alone.~~ **Done.** The Supabase client is loaded on demand and a hygiene rule blocks any static off-origin import.
+2. ~~**The three silent gameplay breaks.** B2, B3, B4.~~ **Done.** Each with a regression assertion confirmed to fail against the unfixed code.
+3. ~~**Shell and input correctness.** B5, B6 plus a startup assertion, B8, B15.~~ **Done.** The text-entry guard, the reserved-key rule and Pocket Park's rekey, the frame-loop guard with a diagnostics failure surface, and the optional element writes in `paintHud`.
 4. **Destructive-action safety.** B9, B10, B14. These three share one component and are best done together.
 5. **Recreation balance.** Quality reaches mood; Pocket Green repriced. Play it before deciding whether the third option is needed. Update `docs/RECREATION_2.md` in the same change.
 6. **Performance, ahead of the next system.** Desirability caching, spatial crowding buckets, cheap summary signature, tutorial gating. Do this before Police and Fire grow, not after: both add per-building passes over the same lists.

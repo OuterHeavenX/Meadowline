@@ -1,7 +1,7 @@
 import { BUILDABLE, erase, place } from '../buildings/buildings.js';
 import { TOOLS, clamp } from './constants.js';
 import { S } from './state.js';
-import { isPaintTool, TOUCH_DRAG_THRESHOLD, TOUCH_PAINT_HOLD_MS } from './input-policy.js';
+import { isPaintTool, isTextEntryTarget, RESERVED_SHORTCUT_KEYS, TOUCH_DRAG_THRESHOLD, TOUCH_PAINT_HOLD_MS } from './input-policy.js';
 import { toggleMap } from '../rendering/minimap.js';
 import { hover } from '../rendering/interaction-state.js';
 import { cv } from '../rendering/terrain.js';
@@ -144,7 +144,11 @@ cv.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.clientX,e.clientY,
 
 addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey) return;
-  const k=e.key.toLowerCase(); const t=TOOLS.find(t=>t.key===k);
+  if(isTextEntryTarget(e.target)) return;
+  const k=e.key.toLowerCase();
+  // Shell shortcuts are resolved first so a future tool key can never shadow
+  // one silently; conflictingToolKeys() keeps the two sets disjoint in CI.
+  const t=RESERVED_SHORTCUT_KEYS.has(k)?null:TOOLS.find(t=>t.key===k);
   if(t){ pickTool(t.id); return; }
   if(k==='m') toggleSound(); if(k==='s') toggleSpeed(); if(k==='b') toggleMap(); if(k==='p') postcard(); if(k==='l') toggleLedgerChip();
   if(k==='escape'){ closeLook(); pickTool('move'); }

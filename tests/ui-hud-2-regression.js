@@ -13,6 +13,36 @@ check('safe-area dock exists',getComputedStyle(d.querySelector('.dock')).positio
 check('no Level 5 text exists',!d.body.textContent.includes('Level 5'));
 check('main menu has real actions',!!d.getElementById('b-start')&&!!d.getElementById('menu-new')&&!!d.getElementById('menu-settings'));
 check('document has no horizontal overflow',d.documentElement.scrollWidth<=d.documentElement.clientWidth,d.documentElement.scrollWidth+' / '+d.documentElement.clientWidth);
+// Keystrokes typed into a field must not reach the map. Dispatching on a real
+// input inside the booted app covers the wiring, not just the policy helper.
+const armed=()=>[...d.querySelectorAll('#tools .tool,#modes .tool')].find(b=>b.classList.contains('on'))?.dataset.id||'';
+const key=(k,target)=>target.dispatchEvent(new w.KeyboardEvent('keydown',{key:k,bubbles:true}));
+const field=d.createElement('input');field.type='email';d.body.appendChild(field);field.focus();
+const toolBeforeTyping=armed();
+key('h',field);key('c',field);key('r',field);
+check('typing in a field does not change the build tool',armed()===toolBeforeTyping,armed());
+key('h',d.body);
+check('the same key still works outside a field',armed()==='cityHall',armed());
+field.remove();
+
+// A thrown frame must cost one frame, not the session. Breaking the weather
+// object makes the render path throw for real rather than simulating it.
+// Headless rAF ticks are sparse, so progress is polled rather than slept on.
+const waitFor=async(fn,ms=4000)=>{const t0=Date.now();while(Date.now()-t0<ms){if(fn())return true;await new Promise(r=>setTimeout(r,60));}return false;};
+const st=w.__MEADOWLINE_STATE__;
+check('the fixture exposes real state',!!st&&typeof st.diagnostics?.frameCount==='number');
+const weather=st.wx,before=st.diagnostics.frameCount,errorsBefore=st.diagnostics.loopErrors||0;
+st.wx=null;
+const threw=await waitFor(()=>(st.diagnostics.loopErrors||0)>errorsBefore);
+check('a thrown frame is caught',threw,String(st.diagnostics.lastLoopError||''));
+const kept=await waitFor(()=>st.diagnostics.frameCount>before);
+const during=st.diagnostics.frameCount;
+check('the loop keeps running through the error',kept,before+' -> '+during);
+st.wx=weather;
+// Recovery after the fault clears is deliberately not asserted here: headless
+// rAF stops ticking once the harness settles, so it would measure the browser
+// rather than the loop. The two checks above are the behaviour that matters.
+
 frame.src='../?uitest=cityhall';
 await new Promise(resolve=>frame.addEventListener('load',()=>setTimeout(resolve,900),{once:true}));
 const hall=frame.contentDocument;

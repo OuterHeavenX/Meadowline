@@ -4,6 +4,8 @@ import { inspectCityHall } from './city-hall.js';
 import { pickTool, toggleBuildTray } from './toolbar.js';
 
 export function applyUiHudFixture(mode){
+  // Test-only: reached solely through ?uitest=, never in normal play.
+  window.__MEADOWLINE_STATE__=S;
   document.body.classList.add('visual-fixture');
   document.getElementById('veil')?.classList.add('hide');
   document.body.classList.remove('menu-open');
