@@ -1,7 +1,14 @@
 import { askConfirm } from '../src/ui/confirm.js';
 const checks=[];const check=(name,pass,detail='')=>checks.push({name,pass:!!pass,detail});
-const frame=document.getElementById('game');
-await new Promise(resolve=>frame.addEventListener('load',()=>setTimeout(resolve,1300),{once:true}));
+// Polled rather than driven by load events and fixed sleeps. A load event that
+// fires before its listener attaches hangs the suite instead of failing it, and
+// headless timers are sparse enough that a fixed wait is a coin toss.
+// Bounded by iterations, not by the clock: headless pauses the virtual clock
+// when its budget runs out, so a Date.now() deadline can stop advancing and
+// spin forever. A tick count always terminates and always reports.
+const waitFor=async(fn,ticks=100)=>{for(let i=0;i<ticks;i++){try{ if(fn()) return true; }catch(e){} await new Promise(r=>setTimeout(r,50));}return false;};
+const frame=document.getElementById('game');const booted=await waitFor(()=>frame.contentDocument?.getElementById('build-tray')?.classList.contains('open'));
+check('the build fixture finishes booting',booted);
 const d=frame.contentDocument,w=frame.contentWindow;
 check('application boots',d.documentElement.dataset.boot==='pass');
 check('real coins are displayed',d.getElementById('s-coins').textContent===String(Math.floor(w.__MEADOWLINE_STATE__?.coins??Number(d.getElementById('s-coins').textContent))));
@@ -28,19 +35,17 @@ field.remove();
 
 // A thrown frame must cost one frame, not the session. Breaking the weather
 // object makes the render path throw for real rather than simulating it.
-// Headless rAF ticks are sparse, so progress is polled rather than slept on.
-const waitFor=async(fn,ms=4000)=>{const t0=Date.now();while(Date.now()-t0<ms){if(fn())return true;await new Promise(r=>setTimeout(r,60));}return false;};
 const st=w.__MEADOWLINE_STATE__;
 check('the fixture exposes real state',!!st&&typeof st.diagnostics?.frameCount==='number');
 const weather=st.wx,before=st.diagnostics.frameCount,errorsBefore=st.diagnostics.loopErrors||0;
 st.wx=null;
-const threw=await waitFor(()=>(st.diagnostics.loopErrors||0)>errorsBefore);
-check('a thrown frame is caught',threw,String(st.diagnostics.lastLoopError||''));
-const kept=await waitFor(()=>st.diagnostics.frameCount>before);
+// Both conditions are waited on together. Waiting for them in sequence doubled
+// the worst case and pushed this suite up against the CI time budget.
+await waitFor(()=>(st.diagnostics.loopErrors||0)>errorsBefore&&st.diagnostics.frameCount>before,50);
 const during=st.diagnostics.frameCount;
-check('the loop keeps running through the error',kept,before+' -> '+during);
-st.wx=weather;
-// Recovery after the fault clears is deliberately not asserted here: headless
+check('a thrown frame is caught',(st.diagnostics.loopErrors||0)>errorsBefore,String(st.diagnostics.lastLoopError||''));
+check('the loop keeps running through the error',during>before,before+' -> '+during);
+st.wx=weather;// Recovery after the fault clears is deliberately not asserted here: headless
 // rAF stops ticking once the harness settles, so it would measure the browser
 // rather than the loop. The two checks above are the behaviour that matters.
 
@@ -49,8 +54,7 @@ st.wx=weather;
 // and cancelling by default rather than committing. askConfirm() opens the
 // dialog synchronously, so nothing here waits on a timer.
 const pending=askConfirm({title:'Remove the Fire Station?',body:'You get 260 coins back of the 520 it cost.',confirmLabel:'Remove',tone:'danger'});
-const dlg=document.querySelector('.ml-confirm');
-check('the confirmation opens as a modal',!!dlg?.open&&dlg.matches(':modal'));
+const dlg=document.querySelector('.ml-confirm');check('the confirmation opens as a modal',!!dlg?.open&&dlg.matches(':modal'));
 if(dlg?.open){
   const r=dlg.getBoundingClientRect();
   // clientWidth, not innerWidth: innerWidth includes the scrollbar, which
@@ -65,15 +69,18 @@ if(dlg?.open){
 }
 // Awaiting is safe only because the dialog exists and is being closed here; a
 // missing dialog would strand the promise, so that case reports and moves on.
-if(dlg){
-  dlg.close('cancel');
+// Dismissed the way a player does it, by pressing Cancel, rather than by
+// calling close() directly: the button is the path that has to work.
+if(dlg?.open){
+  dlg.querySelector('.ml-confirm-cancel').click();
   check('dismissing resolves as a refusal',(await pending)===false);
 }else{
-  check('dismissing resolves as a refusal',false,'no dialog element to close');
+  check('dismissing resolves as a refusal',(await pending)===false,'dialog never opened');
 }
 
 frame.src='../?uitest=cityhall';
-await new Promise(resolve=>frame.addEventListener('load',()=>setTimeout(resolve,900),{once:true}));
+const hallReady=await waitFor(()=>frame.contentDocument?.querySelectorAll('[data-cityhall-nav]')?.length===7);
+check('the City Hall fixture finishes rendering',hallReady);
 const hall=frame.contentDocument;
 check('City Hall uses responsive section navigation',hall.querySelectorAll('[data-cityhall-nav]').length===7);
 check('City Hall maximum is Level 4',hall.querySelector('.cityhall-hero')?.textContent.includes('Level 4'));

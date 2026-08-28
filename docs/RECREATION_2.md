@@ -91,7 +91,7 @@ This architecture is deliberately reusable by future Police Stations, Fire Stati
 
 | Facility | ID | Footprint | Stage | Cost | Capacity | Reach |
 | --- | --- | ---: | --- | ---: | ---: | ---: |
-| Pocket Green | `park` | 1×1 | Settlement | 40 | 8 | 4 |
+| Pocket Green | `park` | 1×1 | Settlement | 65 | 8 | 4 |
 | Pocket Park | `pocketPark` | 2×2 | Settlement | 70 | 12 | 5 |
 | Playground | `playground` | 2×2 | Village | 95 | 18 | 5 |
 | Picnic Green | `picnicGreen` | 3×3 | Village | 150 | 24 | 6 |
@@ -184,23 +184,58 @@ Player-facing House Look emphasizes semantic states:
 
 The number remains simulation state; explanation remains primary UI.
 
+## Facility quality
+
+Registry `quality` existed from the first release but only ever broke ties when
+sorting candidate facilities, so it never reached the player. A resident served
+by a 1×1 Pocket Green received exactly the Mood and Desirability of one served
+by a 4×4 Town Park. That made the legacy tile strictly dominant on both coins
+and land, and left the five facilities this milestone added with no mechanical
+reason to be built.
+
+Quality now scales the bounded contributions below. It does not add to them:
+the documented ceilings are unchanged and are simply earned by better public
+space. A household drawing on more than one provider lands between them,
+weighted by the places it actually took.
+
+| Facility | Quality | Mood at full service | Desirability |
+| --- | ---: | ---: | ---: |
+| Pocket Green | 1.00 | 8 | 4 |
+| Pocket Park | 1.15 | 9 | 5 |
+| Playground | 1.20 | 10 | 5 |
+| Picnic Green | 1.25 | 10 | 5 |
+| Sports Court | 1.30 | 11 | 5 |
+| Town Park | 1.50 | 12 | 6 |
+
+Capacity, reach and access are untouched, so no existing city loses service.
+An established city served only by legacy Pocket Greens sees up to 4 less Mood
+and 2 less Desirability. Homes never downgrade and upgrade progress pauses
+rather than resets, so this can delay a pending upgrade but cannot undo one.
+
+The legacy Pocket Green also rises from 40 to 65 coins. It stays the most
+land-efficient provider at 8 residents per tile, which is what a 1×1 should be
+good at, but it is no longer the cheapest way to buy Recreation. New Pocket
+Greens cost more; existing ones are never re-charged, moved, expanded or
+rebuilt, exactly as the compatibility decision above promises.
+
 ## Mood migration
 
 The old direct Park adjacency Mood stack is retired for Recreation behavior.
 
-Recreation satisfaction contributes one bounded Mood amount:
+Recreation satisfaction contributes one bounded Mood amount, scaled by the
+quality of the public space actually serving the household:
 
-- excellent: +12
-- good: +9
-- limited: +5
-- low positive: +2
+- excellent: up to +12
+- good: up to +9
+- limited: up to +5
+- low positive: up to +2
 - no access: no direct bonus
 
 This avoids Park adjacency + Recreation + visitor double counting.
 
 ## Desirability / Housing
 
-Recreation satisfaction contributes a smaller direct Desirability value, capped effectively at +6, in addition to the bounded Mood pathway.
+Recreation satisfaction contributes a smaller direct Desirability value, capped effectively at +6 and scaled by the same quality factor, in addition to the bounded Mood pathway.
 
 Housing remains authoritative. Recreation 2.0 changes no Cottage/Town Home/Established Home:
 
@@ -325,7 +360,12 @@ Existing Mobility/City Growth/Housing/Education diagnostics remain.
 - child occupancy reconstruction
 - legacy 1×1 Park position preservation
 - no migration coin deduction
-- demand-aware first Recreation Town Goal.
+- demand-aware first Recreation Town Goal
+- quality factor bounds, monotonicity and its treatment of a missing value
+- a Town Park earning the documented Mood and Desirability ceilings
+- a Pocket Green earning visibly less than a Town Park at identical service
+- legacy Pocket Green capacity and reach left unchanged
+- Housing tier thresholds, capacities and tax multipliers left unchanged.
 
 The Living City workflow remains additive and runs all prior suites plus Recreation 2.0.
 

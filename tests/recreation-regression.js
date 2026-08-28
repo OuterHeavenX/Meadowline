@@ -4,8 +4,9 @@ import { touchIntent } from '../src/core/input-policy.js';
 import { applySave, KEY, KEY_OLD, KEY_V2, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
 import { resetProgression } from '../src/progression/city-growth.js';
-import { recompute } from '../src/simulation/mood.js';
-import { invalidateRecreation, recreationAssignment, recreationFacilityStats, recreationSnapshot, recomputeRecreation } from '../src/simulation/recreation.js';
+import { evalHouse, recompute } from '../src/simulation/mood.js';
+import { RESIDENTIAL_TIERS, desirabilityDetails } from '../src/simulation/housing.js';
+import { RECREATION_QUALITY_FLOOR, invalidateRecreation, recreationAssignment, recreationFacilityStats, recreationQualityFactor, recreationSnapshot, recreationStatus, recomputeRecreation } from '../src/simulation/recreation.js';
 import { GOAL_TYPES } from '../src/simulation/wishes.js';
 import { genWorld } from '../src/world/map.js';
 import { facilityRootAt, footprintCells, idx, isFacilityPart } from '../src/world/tiles.js';
@@ -102,6 +103,59 @@ for(let x=10;x<=17;x++) road(x,20);
 for(const [x,p] of [[11,4],[13,4],[15,4]]){ dryRect(x,19,1,1); root('house',x,19,p); }
 recompute(); invalidateRecreation(); recomputeRecreation(true);
 check('settled neighborhood may sensibly request first Recreation',GOAL_TYPES.recreationStart.eligible());
+
+/* ---------- registry quality has to reach the player ----------
+   It existed from the start but only broke ties when sorting candidates, so a
+   1x1 Pocket Green gave exactly the mood and desirability of a 4x4 Town Park
+   and the five facilities this milestone added had no mechanical reason to
+   exist. The scale earns the documented ceilings; it never exceeds them. */
+check('the quality floor is below full value',RECREATION_QUALITY_FLOOR>0&&RECREATION_QUALITY_FLOOR<1);
+check('the weakest provider sits on the floor',recreationQualityFactor(1)===RECREATION_QUALITY_FLOOR);
+check('the strongest provider reaches full value',recreationQualityFactor(1.5)===1);
+check('the factor never exceeds full value',recreationQualityFactor(9)===1);
+check('a missing quality is treated as the weakest',recreationQualityFactor(undefined)===RECREATION_QUALITY_FLOOR);
+const ladder=['park','pocketPark','playground','picnicGreen','sportsCourt','townPark']
+  .map(id=>recreationQualityFactor(BUILDINGS[id].service.quality));
+check('the factor rises with facility quality',ladder.every((v,i)=>i===0||v>=ladder[i-1]),ladder.join(' '));
+
+function servedBy(id){
+  genWorld(2468); resetProgression('legacy-open');
+  for(let x=8;x<30;x++) root('road',x,20);
+  const h=root('house',10,19,4);
+  h.pop=4;
+  // Anchored so every footprint, 1x1 to 4x4, ends its last row on y=19 and so
+  // touches the same street. Anchoring them all at one point would drop the
+  // larger facilities onto the road and silently fail to place them.
+  const fp=BUILDINGS[id].placement.footprint;
+  const facility=root(id,12,19-(fp[1]-1));
+  check(id+' fixture places its whole footprint',S.grid[idx(facility.x,facility.y)]?.type===id);
+  recompute();
+  const rows=[]; evalHouse(h,rows);
+  const mood=rows.find(r=>String(r[0]).includes('Recreation'));
+  const des=desirabilityDetails(h).rows.find(r=>String(r.label).includes('Recreation'));
+  return {status:recreationStatus(h),mood:mood?mood[1]:0,desirability:des?des.value:0};
+}
+const green=servedBy('park'), townPark=servedBy('townPark');
+check('both households are fully served',green.status.satisfaction===100&&townPark.status.satisfaction===100,
+  green.status.satisfaction+' / '+townPark.status.satisfaction);
+check('a Town Park earns the documented Mood ceiling',townPark.mood===12,String(townPark.mood));
+check('a Town Park earns the documented Desirability ceiling',townPark.desirability===6,String(townPark.desirability));
+check('a Pocket Green earns visibly less Mood',green.mood<townPark.mood,green.mood+' vs '+townPark.mood);
+check('a Pocket Green earns less Desirability',green.desirability<townPark.desirability,green.desirability+' vs '+townPark.desirability);
+check('no facility exceeds the documented Mood bound',townPark.mood<=12&&green.mood<=12);
+
+// The rebalance is priced and weighted only. Service itself is untouched, so no
+// established city loses capacity, and Housing stays authoritative.
+check('legacy Pocket Green keeps its capacity',BUILDINGS.park.service.capacity===8);
+check('legacy Pocket Green keeps its reach',BUILDINGS.park.service.radius===4);
+check('legacy Pocket Green is no longer the cheapest per resident',
+  BUILDINGS.park.cost/BUILDINGS.park.service.capacity>BUILDINGS.pocketPark.cost/BUILDINGS.pocketPark.service.capacity,
+  (BUILDINGS.park.cost/BUILDINGS.park.service.capacity).toFixed(2));
+check('Housing tier thresholds are unchanged',
+  RESIDENTIAL_TIERS[1].requirements.mood===65&&RESIDENTIAL_TIERS[1].requirements.desirability===45&&
+  RESIDENTIAL_TIERS[2].requirements.mood===78&&RESIDENTIAL_TIERS[2].requirements.desirability===62);
+check('Housing capacities and tax multipliers are unchanged',
+  RESIDENTIAL_TIERS.map(t=>t.capacity).join(',')==='4,6,8'&&RESIDENTIAL_TIERS.map(t=>t.taxMultiplier).join(',')==='1,1.25,1.55');
 
 const failed=checks.filter(c=>!c.pass);
 document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);

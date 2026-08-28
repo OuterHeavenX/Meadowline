@@ -28,6 +28,10 @@ function recreationMood(h,out){
   else if(r.satisfaction>=65) v=9;
   else if(r.satisfaction>=35) v=5;
   else if(r.satisfaction>0) v=2;
+  // The documented ceiling of +12 is unchanged; a bigger, better public space
+  // is simply what earns it. A household served only by a Pocket Green tops
+  // out lower than one served by a Town Park.
+  v=Math.round(v*(r.qualityFactor??1));
   if(v&&out) out.push([r.label,v]);
   return v;
 }

@@ -11,7 +11,7 @@ Findings marked **verified** were reproduced by serving this branch over a local
 
 Nothing in this document requires Save V4, a larger world, a renderer change or a fifth City Growth stage.
 
-**Fix status.** B1 through B6, B8, B9, B10, B14 and B15 are fixed on this branch. Each behavioural fix carries a regression test confirmed to fail without it. B7, B11, B12 and B13 remain open. See section 7 for the order the rest is meant to land in.
+**Fix status.** B1 through B6, B8, B9, B10, B14 and B15 are fixed on this branch, and the Recreation balance finding in section 4 is addressed. Each behavioural change carries a regression test confirmed to fail without it. B7, B11, B12 and B13 remain open. See section 7 for the order the rest is meant to land in.
 
 ---
 
@@ -207,7 +207,7 @@ Beyond that, `findPath()` builds string-keyed Maps and per-node arrays on a fixe
 
 ---
 
-## 4. Balance — the Recreation catalog has no reason to exist
+## 4. Balance — the Recreation catalog has no reason to exist · **ADDRESSED**
 
 Not a bug; every line behaves as written. It is the single largest design finding and the cheapest to fix.
 
@@ -233,6 +233,8 @@ Three ways out:
 3. **Give the large facilities something small ones cannot have** — a desirability radius, a visitor bonus, or a City Growth requirement met only by facility class. More design work; defer until 1 and 2 have been played.
 
 Recommendation: ship 1 and 2 together. Between them they cost a handful of numbers, preserve every existing save, and turn six interchangeable providers into an actual choice.
+
+**Done: 1 and 2 shipped.** Quality now scales the bounded Mood and Desirability contributions rather than adding to them, so the documented ceilings of +12 and +6 are unchanged and are simply earned by better public space. At full service the ladder runs 8, 9, 10, 10, 11, 12 Mood from Pocket Green to Town Park. The legacy Pocket Green rises from 40 to 65 coins; its capacity and reach are untouched, so no existing city loses service. An established city served only by Pocket Greens sees up to 4 less Mood and 2 less Desirability, which can delay a pending housing upgrade but cannot undo one, because homes never downgrade and progress pauses rather than resets. Option 3 was deliberately not taken: play the first two before deciding whether it is needed.
 
 ### Two smaller tuning notes
 
@@ -275,7 +277,7 @@ Grouped so each block is one focused, testable change.
 2. ~~**The three silent gameplay breaks.** B2, B3, B4.~~ **Done.** Each with a regression assertion confirmed to fail against the unfixed code.
 3. ~~**Shell and input correctness.** B5, B6 plus a startup assertion, B8, B15.~~ **Done.** The text-entry guard, the reserved-key rule and Pocket Park's rekey, the frame-loop guard with a diagnostics failure surface, and the optional element writes in `paintHud`.
 4. ~~**Destructive-action safety.** B9, B10, B14.~~ **Done.** Removable painted water, a cost-based removal gate, and one in-shell confirmation replacing all eight native dialogs.
-5. **Recreation balance.** Quality reaches mood; Pocket Green repriced. Play it before deciding whether the third option is needed. Update `docs/RECREATION_2.md` in the same change.
+5. ~~**Recreation balance.** Quality reaches mood; Pocket Green repriced.~~ **Done.** Both landed with `docs/RECREATION_2.md` updated. Option 3 is still open and wants a playtest first.
 6. **Performance, ahead of the next system.** Desirability caching, spatial crowding buckets, cheap summary signature, tutorial gating. Do this before Police and Fire grow, not after: both add per-building passes over the same lists.
 7. **Documentation and CI.** Promote UI / HUD 2.0 to production, rewrite the cloud auth doc around password sign-in, correct the CDN claim, widen the CI push triggers, add dated status lines.
 8. **Remaining medium findings.** B11, B12, B13. Each is genuinely small; last only because nothing else waits on them.

@@ -51,7 +51,7 @@ export const BUILDINGS={
   // The production `park` ID stays 1×1 forever so old V3 cities remain intact.
   // Recreation 2.0 treats it as a generous legacy small green rather than
   // expanding it into neighboring player property.
-  park:{id:"park",name:"Pocket Green",category:"green",cost:40,key:"6",unlockStage:1,description:"A classic 1×1 neighborhood green. Existing parks remain exactly where they were.",renderKey:"park",placement:{footprint:[1,1]},service:{type:"recreation",radius:4,capacity:8,quality:1},destination:{visit:true,recreation:true},saveDefaults:{}},
+  park:{id:"park",name:"Pocket Green",category:"green",cost:65,key:"6",unlockStage:1,description:"A classic 1×1 neighborhood green. Cheap on land, but a real park lifts a neighborhood further.",renderKey:"park",placement:{footprint:[1,1]},service:{type:"recreation",radius:4,capacity:8,quality:1},destination:{visit:true,recreation:true},saveDefaults:{}},
 
   pocketPark:{id:"pocketPark",name:"Pocket Park",category:"recreation",cost:70,key:"a",unlockStage:1,description:"2×2 · A real little public park for a small neighborhood.",renderKey:"pocketPark",placement:{footprint:[2,2]},service:{type:"recreation",radius:5,capacity:12,quality:1.15},destination:{visit:true,recreation:true},saveDefaults:{}},
   playground:{id:"playground",name:"Playground",category:"recreation",cost:95,key:"g",unlockStage:2,description:"2×2 · Family recreation with a compact neighborhood reach.",renderKey:"playground",placement:{footprint:[2,2]},service:{type:"recreation",radius:5,capacity:18,quality:1.2},destination:{visit:true,recreation:true},saveDefaults:{}},

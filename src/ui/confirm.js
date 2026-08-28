@@ -20,12 +20,19 @@ function ensure(){
     '<button value="cancel" class="ml-confirm-cancel" data-cancel></button>'+
     '<button value="confirm" class="ml-confirm-go" data-go></button>'+
     '</div></form>';
-  // Covers Escape, the backdrop and either button: whatever closed it, the
-  // waiting caller gets exactly one answer.
-  dialog.addEventListener('close',()=>{
-    const done=resolveCurrent; resolveCurrent=null;
-    if(done) done(dialog.returnValue==='confirm');
+  // One answer, whoever ends the dialog. settle() is idempotent, so the button
+  // and the close event that follows it cannot both resolve.
+  const settle=(value)=>{ const done=resolveCurrent; resolveCurrent=null; if(done) done(value); };
+  // A press answers immediately rather than waiting for the close event the
+  // form dispatches afterwards: that event is a queued task and can be delayed
+  // arbitrarily, which would leave the caller waiting on a decision already made.
+  dialog.addEventListener('click',e=>{
+    const button=e.target.closest?.('button');
+    if(button) settle(button.value==='confirm');
   });
+  // Escape and the backdrop never produce a click, so the close event still
+  // carries their answer.
+  dialog.addEventListener('close',()=>settle(dialog.returnValue==='confirm'));
   dialog.addEventListener('cancel',()=>{ dialog.returnValue='cancel'; });
   document.body.appendChild(dialog);
   return dialog;
@@ -55,8 +62,17 @@ export function askConfirm({title,body='',confirmLabel='Continue',cancelLabel='C
   el.returnValue='cancel';
   return new Promise(resolve=>{
     resolveCurrent=resolve;
-    el.showModal();
-    // Cancel holds focus so a stray keypress or double tap never commits.
-    el.querySelector('[data-cancel]').focus();
+    try{
+      el.showModal();
+      // close() fires no event on a dialog that never opened, so a failed
+      // showModal would strand this caller forever and, because resolveCurrent
+      // stays set, refuse every confirmation afterwards. Answer no instead.
+      if(!el.open) throw new Error('dialog did not open');
+      // Cancel holds focus so a stray keypress or double tap never commits.
+      el.querySelector('[data-cancel]').focus();
+    }catch(e){
+      resolveCurrent=null;
+      resolve(false);
+    }
   });
 }

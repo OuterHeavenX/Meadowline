@@ -67,10 +67,14 @@ function recreationBlock(h){
   const nearest=a.nearest;
   const facility=nearest?.name||'None within walking reach';
   const cls=status.satisfaction>=65?'up':status.satisfaction>0?'':'dn';
+  // Why a bigger park would help, in the game's own words rather than a number.
+  const room=a.demand&&a.served&&(status.qualityFactor??1)<0.98
+    ? ' A larger public space nearby would lift this neighborhood further.'
+    : '';
   return '<h4>Recreation</h4><dl class="service">'+
     '<dt>Status</dt><dd class="'+cls+'">'+status.label+'</dd>'+
     '<dt>Residents served</dt><dd>'+a.served+' / '+a.demand+'</dd>'+
-    '<dt>Nearby space</dt><dd>'+facility+'</dd></dl><p>'+status.detail+'</p>';
+    '<dt>Nearby space</dt><dd>'+facility+'</dd></dl><p>'+status.detail+room+'</p>';
 }
 
 function housingBlock(h){
