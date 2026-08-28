@@ -36,7 +36,17 @@ export function payday(){
   const total=tax+trade+milled+grant+feast;
   S.coins+=total;
   S.lastPay={tax,trade,milled,grant,feast,total};
-  const homes=(S.ctx.houses||[]).filter(h=>h.pop>0); if(homes.length&&tax) { const h=homes[S.day%homes.length]; emitFeedback(h.x,h.y,'coin',Math.max(1,Math.round(tax/homes.length))); }
+  // Payday used to raise one coin badge on one rotating house, which read as a
+  // stray blip rather than the town being paid. A handful of homes light up,
+  // and the window walks the city so a different street pays each day.
+  const homes=(S.ctx.houses||[]).filter(h=>h.pop>0);
+  if(homes.length&&tax){
+    const each=Math.max(1,Math.round(tax/homes.length)),shown=Math.min(homes.length,5);
+    for(let i=0;i<shown;i++){
+      const h=homes[(S.day*shown+i)%homes.length];
+      emitFeedback(h.x,h.y,'coin',each);
+    }
+  }
   services.toast("Day "+S.day+" · +"+total+" coins","gold");
   services.blip(660,0.2,"triangle");
   if(mills&&(PAL.yield||0)>=MILL_BASE) services.toast("A good harvest at the mill");

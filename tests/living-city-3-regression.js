@@ -7,6 +7,8 @@ import { S } from '../src/core/state.js';
 import { resetProgression } from '../src/progression/city-growth.js';
 import { genWorld } from '../src/world/map.js';
 import { recompute } from '../src/simulation/mood.js';
+import { payday } from '../src/simulation/economy.js';
+import { refreshPalette } from '../src/world/seasons.js';
 import { canPaintWater, paintWater } from '../src/world/landscaping.js';
 import { idx } from '../src/world/tiles.js';
 import { getBuildingDefinition } from '../src/buildings/registry.js';
@@ -48,5 +50,21 @@ Math.random=noRandom;
 check('an undispatchable incident times out',S.incidents.length===0);
 
 for(let i=0;i<FEEDBACK_LIMIT+12;i++)emitFeedback(i%5,i%5,'mood','☺');check('feedback pool remains bounded',S.feedback.length===FEEDBACK_LIMIT);updateFeedback(3);check('feedback expires cleanly',S.feedback.length===0);
+
+// Payday raised one coin badge on one rotating house, which read as a stray
+// blip rather than the town being paid. Nearby badges still coalesce, so a
+// dense street sums into one rather than cluttering the map.
+reset();refreshPalette();
+for(let x=8;x<26;x++)root('road',x,15);
+for(let x=8;x<26;x+=3){const h=root('house',x,14);h.pop=4;}
+recompute();
+S.feedback=[];S.day=3;payday();
+const coins=S.feedback.filter(f=>f.kind==='coin');
+check('payday lights several homes, not one',coins.length>1,String(coins.length));
+const firstDay=coins.map(f=>f.x+','+f.y).sort().join('|');
+S.feedback=[];S.day=4;payday();
+const secondDay=S.feedback.filter(f=>f.kind==='coin').map(f=>f.x+','+f.y).sort().join('|');
+check('a different street is paid the next day',firstDay!==secondDay,firstDay+' vs '+secondDay);
+check('payday feedback stays inside the pool bound',S.feedback.length<=FEEDBACK_LIMIT);
 
 const failed=checks.filter(c=>!c.pass);document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);document.documentElement.dataset.result=failed.length?'fail':'pass';store.set(KEY,'');

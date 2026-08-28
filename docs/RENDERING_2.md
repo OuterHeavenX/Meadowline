@@ -59,6 +59,21 @@ Quality settings alter presentation only. Population, economy, routes, incident 
 - municipal vehicles gain stronger identities and restrained response lights;
 - procedural rain ambience and short dispatch cues extend the existing Web Audio layer.
 
+## Feedback layer
+
+The Canvas renderer draws `S.feedback` badges and `S.puffs` particles inside the
+scene, where they sort correctly against buildings. The Three.js scene has no
+equivalent, and `render()` returns as soon as the GPU scene draws — so every
+coin payout, housing-upgrade star, municipal outcome and placement puff was
+invisible on the renderer Auto actually selects. The reward existed in state and
+no player ever saw it.
+
+`src/rendering/overlay.js` is one 2D layer above the GPU canvas, reusing the
+same drawing code and the same `proj()` mapping. It sits below the HUD, takes no
+pointer input, and clears itself when the renderer falls back to Canvas so a
+lost context cannot leave the last GPU frame's badges frozen on screen. The
+Canvas path is unchanged and keeps drawing both in-scene.
+
 ## Known limits and required proof
 
 - The Three path currently favors procedural geometry and shared materials over texture downloads. Further batching/LOD will be guided by physical iPhone/iPad profiling.

@@ -7,19 +7,19 @@ import { birds, clouds, drops, motes } from '../world/weather.js';
 import { activeFestival, festivalGlow } from '../world/festivals.js';
 import { graphicsProfile } from './capabilities.js';
 
-export function drawPuff(p){
+export function drawPuff(p,ctx=g){
   const z=S.cam.z, s=proj(p.x,p.y);
   if(p.kind===1){
-    g.fillStyle="rgba(232,118,138,"+p.life+")";
+    ctx.fillStyle="rgba(232,118,138,"+p.life+")";
     const r=2.4*z, y=s.y-p.z*z;
-    g.beginPath();
-    g.moveTo(s.x,y+r);
-    g.bezierCurveTo(s.x-r*1.6,y-r*0.4,s.x-r*0.5,y-r*1.5,s.x,y-r*0.5);
-    g.bezierCurveTo(s.x+r*0.5,y-r*1.5,s.x+r*1.6,y-r*0.4,s.x,y+r);
-    g.fill();
+    ctx.beginPath();
+    ctx.moveTo(s.x,y+r);
+    ctx.bezierCurveTo(s.x-r*1.6,y-r*0.4,s.x-r*0.5,y-r*1.5,s.x,y-r*0.5);
+    ctx.bezierCurveTo(s.x+r*0.5,y-r*1.5,s.x+r*1.6,y-r*0.4,s.x,y+r);
+    ctx.fill();
   } else {
-    g.fillStyle="rgba(244,240,226,"+(p.life*0.55)+")";
-    g.beginPath(); g.arc(s.x,s.y-p.z*z,(1.5+ (1-p.life)*3)*z,0,TAU); g.fill();
+    ctx.fillStyle="rgba(244,240,226,"+(p.life*0.55)+")";
+    ctx.beginPath(); ctx.arc(s.x,s.y-p.z*z,(1.5+ (1-p.life)*3)*z,0,TAU); ctx.fill();
   }
 }
 

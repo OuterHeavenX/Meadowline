@@ -22,6 +22,7 @@ import { drawIncident, drawMunicipalBuilding } from './municipal.js';
 import { drawFeedback } from './feedback.js';
 import { presentFrame } from './backend.js';
 import { renderThreeScene } from './three-renderer.js';
+import { clearJuiceOverlay, drawJuiceOverlay } from './overlay.js';
 import { hover } from './interaction-state.js';
 
 export { hover };
@@ -61,7 +62,11 @@ export function drawPick(){
 }
 
 export function render(){
-  if(renderThreeScene()) return;
+  // The GPU scene has no feedback or particle layer of its own, so the juice
+  // that state already carries is drawn above it. The Canvas path below keeps
+  // drawing both in-scene, where they sort correctly against buildings.
+  if(renderThreeScene()){ drawJuiceOverlay(); return; }
+  clearJuiceOverlay();
   const dark=darkness();
   const sky=g.createLinearGradient(0,0,0,innerHeight);
   const k=clamp(dark/0.62,0,1);

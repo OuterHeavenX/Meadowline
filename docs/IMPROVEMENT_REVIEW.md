@@ -11,6 +11,8 @@ Findings marked **verified** were reproduced by serving this branch over a local
 
 Nothing in this document requires Save V4, a larger world, a renderer change or a fifth City Growth stage.
 
+**Later finding.** The Canvas renderer draws the feedback and particle layer in-scene; the Three.js path never did. On the renderer Auto selects, every coin payout, upgrade star, municipal outcome and placement puff was invisible. Fixed with one overlay above the GPU canvas, reusing the same drawing code. Same family as B7, the blank postcard: work that only exists on the Canvas path.
+
 **Fix status.** B1 through B6, B8, B9, B10, B14 and B15 are fixed on this branch, and the Recreation balance finding in section 4 is addressed. Each behavioural change carries a regression test confirmed to fail without it. B7, B11, B12 and B13 remain open. See section 7 for the order the rest is meant to land in.
 
 ---

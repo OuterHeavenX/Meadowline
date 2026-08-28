@@ -4,7 +4,8 @@ import { DAY } from './constants.js';
 import { load, save } from './save.js';
 import { configureServices } from './services.js';
 import { diagnosticFrameStart, recordRenderMs, recordSimulationMs } from './diagnostics.js';
-import { S } from './state.js';
+import { S, reduceMotion } from './state.js';
+import { emitFeedback } from '../simulation/feedback.js';
 import { drawMini, elMini } from '../rendering/minimap.js';
 import { render } from '../rendering/renderer.js';
 import { resize } from '../rendering/terrain.js';
@@ -36,6 +37,29 @@ import { paintGrowthPanel } from '../ui/growth.js';
 import { updateMunicipal } from '../simulation/municipal.js';
 import { updateFeedback } from '../simulation/feedback.js';
 import { tickTutorial } from '../ui/tutorial.js';
+
+/* ---------- reaching a new stage ----------
+   Advancing a city stage is the largest thing that happens in Meadowline and it
+   passed with a toast alone. It gets a moment at the civic centre, or at the
+   middle of the settled town when there is no City Hall yet: a mark on the map,
+   a little rise of particles and two soft notes. Restrained on purpose — the
+   roadmap asks for calm, not fanfare. */
+function stageHeart(){
+  const hall=(S.grid||[]).find(b=>b?.type==='cityHall');
+  if(hall) return {x:hall.x,y:hall.y};
+  const homes=(S.ctx?.houses||[]).filter(h=>(h.pop|0)>0);
+  if(!homes.length) return null;
+  const sum=homes.reduce((a,h)=>({x:a.x+h.x,y:a.y+h.y}),{x:0,y:0});
+  return {x:Math.round(sum.x/homes.length),y:Math.round(sum.y/homes.length)};
+}
+function celebrateStage(name){
+  const at=stageHeart();
+  if(!at) return;
+  emitFeedback(at.x,at.y,'upgrade','★ '+name);
+  if(!reduceMotion){ puff(at.x,at.y); hearts(at.x,at.y); }
+  blip(587.33,0.09,'triangle');
+  setTimeout(()=>blip(880,0.08,'triangle'),150);
+}
 
 /* ============================================================
    MAIN LOOP
@@ -91,6 +115,7 @@ function step(now){
       if(growthResult.stageChanged){
         toast(cityStage().name+' established','gold');
         note(cityStage().name+' established');
+        celebrateStage(cityStage().name);
         paintTools();
         paintGrowthPanel();
       }
