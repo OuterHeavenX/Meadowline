@@ -1,15 +1,17 @@
 # Meadowline — Code and Design Review
 
-Status: **review only.** No gameplay, simulation, save, renderer or progression code is changed by this document.
+Status: **living record.** The findings below were gathered as a review; the four critical ones have since been fixed on this branch and are marked accordingly. No save format, world size, renderer or progression stage changed.
 
 - Reviewed branch: `claude/game-improvement-review-ole6s4`
 - Reviewed on: 28 August 2026
-- Scope: all 18 markdown files, all 88 source modules, all 7 browser regression suites
-- Baseline: all 7 regression suites and `tests/module-hygiene.mjs` pass against this branch, before and after the review
+- Scope: all 18 markdown files, all 88 source modules, all 9 browser regression suites
+- Baseline: all 9 regression suites and `tests/module-hygiene.mjs` pass against this branch, before and after every change recorded here
 
 Findings marked **verified** were reproduced by serving this branch over a local HTTP server and driving headless Chromium against scripted cities through the real `place()` and simulation paths. Findings marked **read** come from source analysis only and should be treated as strong leads rather than measurements.
 
 Nothing in this document requires Save V4, a larger world, a renderer change or a fifth City Growth stage.
+
+**Fix status.** B1, B2, B3 and B4 are fixed on this branch, each with a regression test that fails without the fix. Everything from B5 down remains open. See section 7 for the order the rest is meant to land in.
 
 ---
 
@@ -33,7 +35,7 @@ Every defect below is a place where the code and the documents disagree about wh
 
 ### Critical
 
-#### B1 — The game will not start when jsDelivr is unreachable · verified
+#### B1 — The game will not start when jsDelivr is unreachable · verified · **FIXED**
 
 `src/cloud/supabase.js:1` → `src/ui/account.js:1` → `src/main.js:4`
 
@@ -43,9 +45,9 @@ The Supabase client is a static ES module import from a CDN. Static imports reso
 
 This contradicts the README's opening claim that normal play needs no backend or mandatory online service, and breaks the case `docs/CLOUD_SAVES_AUTH.md` is built around: a Home Screen-installed app opened without a good connection. It also costs every player a blocking round trip on every cold start, signed in or not.
 
-**Fix.** Vendor the client beside Three.js in `assets/vendor/`, or make it a dynamic `import()` inside the account panel's open handler so guest play never touches the network.
+**Fixed.** `cloudClient()` resolves a dynamic `import()` once and memoises it; every auth and cloud-save helper awaits it, and the account panel subscribes to auth changes only when first opened. A fourth module-hygiene rule now fails the build on any static off-origin import. Vendoring under `assets/vendor/` remains the stronger follow-up.
 
-#### B2 — Town Goal rewards are never paid · verified
+#### B2 — Town Goal rewards are never paid · verified · **FIXED**
 
 `src/simulation/wishes.js` — `checkWishes()`
 
@@ -55,9 +57,9 @@ The loop removes any goal for which `isGoalEligible()` is false, and that helper
 
 Every reward in the goal table, 30 to 190 coins, is dead. `ROADMAP.md` carries an unchecked physical line reading "rewards help development but do not dominate the economy", consistent with this never having been observed working.
 
-**Fix.** Test completion before eligibility, or drop the `goalAt < g` clause from `isGoalEligible` and let the completion branch own that case.
+**Fixed.** `checkWishes()` now tests completion before eligibility. Verified end to end: completing the 6-road goal nets +12 coins across eight roads and increments `S.granted`.
 
-#### B3 — A road laid over rail stops counting toward City Growth · verified
+#### B3 — A road laid over rail stops counting toward City Growth · verified · **FIXED**
 
 `src/progression/city-growth.js:178` — `developmentStats()`
 
@@ -67,9 +69,9 @@ City Growth counts road tiles with `building.type === 'road'`. When a road is ov
 
 `docs/ROADS_MOBILITY_2.md` states the rule as permanent: one semantic Road tile is one City Growth Road tile, including when it is also a Rail crossing. A player at 10 of 10 roads who crosses rail drops to 9 and the Settlement → Village gate closes with no explanation.
 
-**Fix.** Call `countType('road')` instead of the local loop. One line, and it deletes a duplicate implementation.
+**Fixed.** `developmentStats()` calls `countType('road')`, deleting the duplicate counter. City Growth, `countType` and City Hall Mobility now agree at 8.
 
-#### B4 — Loading a city leaves the previous city's incidents running forever · verified
+#### B4 — Loading a city leaves the previous city's incidents running forever · verified · **FIXED**
 
 `src/world/map.js` — `genWorld()` · `src/simulation/municipal.js` — `updateMunicipal()`
 
@@ -79,7 +81,7 @@ City Growth counts road tiles with `building.type === 'road'`. When a road is ov
 
 This fires on Load, on New City and on Cloud restore — the three moments where a clean slate is most expected. The affected subsystem goes quiet for the rest of the session with no symptom the player can name.
 
-**Fix.** Clear every transient actor array in `genWorld()`, and give undispatchable incidents an age limit so one can never wedge its service.
+**Fixed.** `genWorld()` clears vehicles, service vehicles, incidents and feedback alongside the actors it already cleared, and invalidates the mobility and recreation caches. `updateMunicipal()` retires an undispatched incident after 90 simulated seconds and counts it in diagnostics.
 
 ### High
 

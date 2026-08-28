@@ -1,5 +1,7 @@
 import { H, TH, TW, W, fbm, hash2 } from '../core/constants.js';
 import { S } from '../core/state.js';
+import { invalidateMobility } from '../simulation/mobility.js';
+import { invalidateRecreation } from '../simulation/recreation.js';
 import { idx } from './tiles.js';
 import { drops, seedBirds, seedClouds } from './weather.js';
 
@@ -20,7 +22,14 @@ export function genWorld(seed){
     const f=fbm(x/6.5,y/6.5,s+404);
     if(!S.terr[i]&&f>0.585&&hash2(x,y,s+9)>0.45) S.natTree[i]=1;
   }
+  // Every runtime actor belongs to the world that spawned it. Vehicles,
+  // service vehicles, incidents and feedback used to survive genWorld, so a
+  // Load, New City or Cloud restore inherited the previous city's traffic and
+  // an incident that could never be dispatched — which permanently blocked
+  // its whole service, because new ones are gated on none being active.
   S.citizens.length=0; S.trains.length=0; S.boats.length=0; S.puffs.length=0;
+  S.vehicles.length=0; S.serviceVehicles.length=0; S.incidents.length=0; S.feedback.length=0;
+  invalidateMobility(); invalidateRecreation();
   S.coins=340; S.day=1; S.dayT=0.24; S.t=0;
   S.wx={k:"clear",amt:0,target:0,next:70}; drops.length=0;
   S.wishes.length=0; S.log.length=0; S.history.length=0;

@@ -3,7 +3,7 @@ import { canPlace, erase, place } from '../src/buildings/buildings.js';
 import { touchIntent } from '../src/core/input-policy.js';
 import { applySave, KEY, KEY_OLD, KEY_V2, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
-import { resetProgression } from '../src/progression/city-growth.js';
+import { developmentStats, resetProgression } from '../src/progression/city-growth.js';
 import { crossingBlockedByTrain, invalidateMobility, mobilitySnapshot, railCrossingCount, vehicleCap } from '../src/simulation/mobility.js';
 import { findPath } from '../src/transport/pathfinding.js';
 import { connectedRoadComponents, roadTiles } from '../src/transport/roads.js';
@@ -90,6 +90,17 @@ applySave({v:3,seed:13579,coins:777,day:3,dayT:.3,b:[{type:'road',x:16,y:16}],wo
 check('old Road save loads as upgraded Road semantics',isType(16,16,'road')&&S.grid[idx(16,16)].type==='road');
 check('old Road migration deducts no coins',S.coins===777);
 check('ambient vehicles are transient save state',!Object.prototype.hasOwnProperty.call(JSON.parse(store.get(KEY)||'{}'),'vehicles'));
+
+// One semantic Road tile is one City Growth Road tile, including when the same
+// tile is also a Rail crossing. City Growth counted type === 'road' and so lost
+// every Road that had been overlaid onto Rail, which could close a stage gate.
+genWorld(20406080);resetProgression('legacy-open');S.coins=100000;
+for(let y=10;y<=18;y++)place('rail',16,y);
+for(let x=13;x<21;x++)if(x!==16)place('road',x,14);
+check('road overlays rail as a clean crossing',place('road',16,14)&&isRoadRailCrossing(S.grid[idx(16,14)]));
+check('the crossing still reads as a Road',isType(16,14,'road'));
+check('City Growth counts a Road laid over Rail',developmentStats().roads===countType('road'));
+check('City Growth agrees with Mobility on Road tiles',developmentStats().roads===mobilitySnapshot().roadTiles);
 
 const failed=checks.filter(c=>!c.pass);
 document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);

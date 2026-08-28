@@ -3,7 +3,7 @@ import { touchIntent,TOUCH_PAINT_HOLD_MS } from '../src/core/input-policy.js';
 import { resetProgression } from '../src/progression/city-growth.js';
 import { genWorld } from '../src/world/map.js';
 import { recompute } from '../src/simulation/mood.js';
-import { getEligibleGoals,hasFunctionalRailRoute,rollWishes,sanitizeGoals } from '../src/simulation/wishes.js';
+import { checkWishes,getEligibleGoals,hasFunctionalRailRoute,rollWishes,sanitizeGoals } from '../src/simulation/wishes.js';
 import { idx } from '../src/world/tiles.js';
 const checks=[];const check=(name,v)=>checks.push({name,pass:!!v});
 function put(type,x,y,state={}){S.terr[idx(x,y)]=0;S.grid[idx(x,y)]={type,x,y,seed:1,pop:0,grow:0,mood:50,linked:false,state};}
@@ -20,4 +20,25 @@ check('touch building drag pans',touchIntent({tool:'house',movedPx:12,heldMs:50,
 // contradicting the new progression rules.
 S.cityProgress.stage=1;
 const bad=sanitizeGoals([{k:'boats',slot:'primary',t:'boat',g:1,r:1},{k:'train',slot:'optional',t:'train',g:1,r:1}]);check('old early transport goals are sanitized',bad.length===0);
+// A completed Town Goal must pay its reward. isGoalEligible() requires
+// goalAt < target, so a met goal is never eligible; testing eligibility before
+// completion retired every finished goal and silently paid nothing.
+genWorld(24681357);resetProgression('parcel');recompute();
+for(let x=14;x<20;x++)put('road',x,20);
+recompute();
+S.wishes=[{k:'roads',slot:'primary',t:'Lay <b>6</b> road tiles',g:6,r:36}];
+const purse=S.coins,awarded=S.granted||0;
+checkWishes();
+check('a completed Town Goal pays its reward',S.coins===purse+36);
+check('a completed Town Goal is counted as granted',(S.granted||0)===awarded+1);
+check('a completed Town Goal leaves the list',!S.wishes.some(w=>w.k==='roads'&&w.g===6));
+
+// An unmet goal that stops making sense is still retired without a payout.
+// School is stage-gated, so at Settlement it is ineligible and unmet at once.
+S.wishes=[{k:'school',slot:'primary',t:'school',g:1,r:95}];
+const beforeIneligible=S.coins;
+checkWishes();
+check('an ineligible unmet goal pays nothing',S.coins===beforeIneligible);
+check('an ineligible unmet goal is retired',!S.wishes.some(w=>w.k==='school'));
+
 const failed=checks.filter(c=>!c.pass);document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);document.documentElement.dataset.result=failed.length?'fail':'pass';
