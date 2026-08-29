@@ -55,6 +55,53 @@ if(st&&typeof runFrame==='function'){
     framesAtRestore+' -> '+st.diagnostics.frameCount);
 }
 
+// Turning the city, driven the way a player does it: a real keypress on the
+// booted app, then the real frame loop. Checking S.cam.rot after a keypress
+// alone would pass even if the easing never ran, and checking the easing
+// function alone would pass even if the key were never wired up.
+if(st&&typeof runFrame==='function'){
+  const startRot=st.cam.rot||0,startTarget=st.cam.rotTo||0;
+  key('.',d.body);
+  const targetMoved=Math.abs((st.cam.rotTo||0)-startTarget)>1e-6;
+  check('a keypress asks the city to turn',targetMoved,startTarget+' -> '+st.cam.rotTo);
+  // Explicit advancing timestamps: headless pauses the virtual clock during a
+  // synchronous loop, so performance.now() returns the same value every
+  // iteration and every frame would see zero elapsed time. Driving the clock
+  // here tests the real easing rather than 160 frames of standing still.
+  let clock=performance.now();
+  for(let i=0;i<160;i++){ clock+=16; runFrame(clock); }
+  check('the frame loop turns the city toward the target',
+    Math.abs((st.cam.rot||0)-(st.cam.rotTo||0))<1e-2&&Math.abs((st.cam.rot||0)-startRot)>1e-3,
+    'rot '+startRot.toFixed(4)+' -> '+(st.cam.rot||0).toFixed(4)+' target '+(st.cam.rotTo||0).toFixed(4));
+  // The on-screen control, clicked the way a player clicks it. The keys and
+  // the twist gesture worked before this existed, which for anyone who had not
+  // read the source was the same as the camera not turning at all.
+  const compass=d.getElementById('b-rotate');
+  check('the HUD offers a visible way to turn the city',!!compass);
+  if(compass){
+    const beforeClick=st.cam.rotTo;
+    compass.click();
+    check('the compass turns the city a quarter',Math.abs((st.cam.rotTo-beforeClick)-Math.PI/2)<1e-9,
+      beforeClick.toFixed(4)+' -> '+st.cam.rotTo.toFixed(4));
+    // Four taps come back to where you started, which is what makes a single
+    // one-way button enough.
+    compass.click();compass.click();compass.click();
+    check('four taps return the city to its start',Math.abs((st.cam.rotTo-beforeClick)-Math.PI*2)<1e-9,st.cam.rotTo);
+    let spin=performance.now();
+    for(let i=0;i<200;i++){ spin+=16; runFrame(spin); }
+    check('the needle shows which way the city faces',
+      /rotate\(/.test(compass.querySelector('svg')?.style.transform||''),
+      compass.querySelector('svg')?.style.transform||'(none)');
+  }
+
+  // The rotation keys go through the same text-entry guard as the tool keys.
+  const box=d.createElement('input');d.body.appendChild(box);box.focus();
+  const heldTarget=st.cam.rotTo;
+  key('.',box);
+  check('typing in a field does not turn the city',st.cam.rotTo===heldTarget,st.cam.rotTo);
+  box.remove();
+}
+
 // The in-shell confirmation replaces eight native confirm() dialogs, so it has
 // to hold up as a real UI surface: centred, inside the viewport, thumb-sized,
 // and cancelling by default rather than committing. askConfirm() opens the

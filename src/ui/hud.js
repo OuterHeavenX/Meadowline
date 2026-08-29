@@ -4,7 +4,7 @@ import { S } from '../core/state.js';
 import { toggleMap } from '../rendering/minimap.js';
 import { moodName, recompute } from '../simulation/mood.js';
 import { rollWishes, setMileHit } from '../simulation/wishes.js';
-import { genWorld } from '../world/map.js';
+import { genWorld, rotateView } from '../world/map.js';
 import { refreshPalette, seasonName } from '../world/seasons.js';
 import { shortTime, timeName } from '../world/time.js';
 import { weatherName } from '../world/weather.js';
@@ -23,7 +23,15 @@ export const S_day=document.getElementById("s-day"), S_time=document.getElementB
 const S_stage=document.getElementById('s-stage'),S_stageProgress=document.getElementById('s-stage-progress'),
   S_dateSub=document.getElementById('s-date-sub'),S_weather=document.getElementById('s-weather');
 export let uiT=0;
+/* Which way the city is facing. Turning the world clockwise swings the compass
+   the other way, the way a held compass does when you turn with it. */
+function paintCompass(){
+  const svg=bRotate?.querySelector("svg");
+  if(svg) svg.style.transform="rotate("+(-(S.cam.rot||0)*180/Math.PI).toFixed(1)+"deg)";
+}
+
 export function paintHud(){
+  paintCompass();
   S_day.textContent="Day "+S.day;
   const tight=innerWidth<=430;
   S_time.textContent=tight?shortTime():timeName();
@@ -51,8 +59,13 @@ export function paintHud(){
 
 export const bSpeed=document.getElementById("b-speed"), bSound=document.getElementById("b-sound"),
       bMap=document.getElementById("b-map"), bShot=document.getElementById("b-shot"),
-      bLedger=document.getElementById("b-ledger"), bNew=document.getElementById("b-new");
+      bLedger=document.getElementById("b-ledger"), bNew=document.getElementById("b-new"),
+      bRotate=document.getElementById("b-rotate");
 bMap.addEventListener("click",toggleMap);
+/* A quarter turn per tap, so four taps bring the city back where it started.
+   The keys and the twist gesture were the only way to turn the city, which is
+   the same as not having it: nothing on screen said the camera moved. */
+bRotate?.addEventListener("click",()=>rotateView(Math.PI/2));
 bShot.addEventListener("click",postcard);
 bLedger.addEventListener("click",()=>toggleLedgerChip());
 export function toggleLedgerChip(){ bLedger.classList.toggle("off",!toggleLedger()); }

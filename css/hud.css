@@ -28,5 +28,10 @@
   .chip:active{transform:scale(.93)}
   .chip.off{color:#7d8a83}
   .chip svg{width:19px;height:19px}
+  /* paintHud runs at 5Hz, which is too coarse to animate a needle through a
+     half-second turn. Letting the browser interpolate between those updates
+     costs nothing and is smooth. */
+  #b-rotate svg{transition:transform .18s linear}
+  @media(prefers-reduced-motion:reduce){#b-rotate svg{transition:none}}
 
   
