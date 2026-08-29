@@ -15,6 +15,11 @@ Future authored landmark assets use this static pipeline:
 - Export production files beneath `assets/models/`; sources live beneath `assets/source/blender/`.
 - Any third-party input requires commercial redistribution permission, source URL, license text, attribution requirements and modification notes in this file before commit.
 
+Generation tooling:
+
+- `.mcp.json` at the repository root registers the fal.ai MCP server for editor sessions that use it. It carries no credential: the `Authorization` header interpolates `FAL_KEY` from the environment, so the key stays outside the repository and each contributor supplies their own. Contributors who do not want the server can decline it when the editor asks.
+- Generated output is a third-party input, subject to the record-keeping rule above before commit.
+
 Current external dependency:
 
 - Three.js r185.1, MIT license. Vendored module/core and license are in `assets/vendor/`.

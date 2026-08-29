@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "fal-ai": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.fal.ai/mcp",
+        "--header",
+        "Authorization: Bearer ${FAL_KEY}"
+      ]
+    }
+  }
+}
