@@ -15,7 +15,7 @@ import { inspectCityHall } from '../ui/city-hall.js';
 import { toggleLedgerChip, toggleSound, toggleSpeed } from '../ui/hud.js';
 import { postcard } from '../ui/postcard.js';
 import { pickTool, paintActiveTool } from '../ui/toolbar.js';
-import { screen2world, world2screen } from '../world/map.js';
+import { rotateView, screen2world, setViewRotation, world2screen } from '../world/map.js';
 import { facilityRootAt } from '../world/tiles.js';
 import { paintWater } from '../world/landscaping.js';
 
@@ -29,6 +29,12 @@ export const ptrs=new Map();
 export let dragged=false, lastPinch=0, painted=new Set();
 let paintSkipNoticed=false;
 let pendingTap=null, pinchActive=false, paintActive=false, holdTimer=0;
+// Null until two fingers are down, so the first twist frame sets a baseline
+// instead of spinning the city by whatever the absolute finger angle is.
+let lastTwist=null;
+// A jump larger than this between frames is a finger being swapped, not a
+// wrist turning; applying it would flip the city instantly.
+const TWIST_MAX_STEP=Math.PI/4;
 
 function diagnostic(name){ if(S.diagnostics) S.diagnostics[name]=(S.diagnostics[name]||0)+1; }
 function setInputState(state){ if(S.diagnostics) S.diagnostics.inputState=state; }
@@ -122,6 +128,17 @@ cv.addEventListener('pointermove',e=>{
     const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
     const mx=(a[0].x+a[1].x)/2, my=(a[0].y+a[1].y)/2;
     if(lastPinch) zoomAt(mx,my,d/lastPinch);
+    // Twisting two fingers turns the city, alongside the pinch that zooms it.
+    // Tracked as a delta between frames rather than against the angle the
+    // gesture started at, so it survives a finger being lifted and replaced.
+    const angle=Math.atan2(a[1].y-a[0].y,a[1].x-a[0].x);
+    if(lastTwist!==null){
+      let spin=angle-lastTwist;
+      while(spin>Math.PI) spin-=Math.PI*2;
+      while(spin<-Math.PI) spin+=Math.PI*2;
+      if(Math.abs(spin)<TWIST_MAX_STEP) setViewRotation((S.cam.rot||0)+spin);
+    }
+    lastTwist=angle;
     lastPinch=d; S.cam.x+=dx/2; S.cam.y+=dy/2; return;
   }
 
@@ -154,6 +171,7 @@ export function endPtr(e){
   if(ptrs.size<2) lastPinch=0;
   if(ptrs.size===0){
     pinchActive=false; dragged=false; paintActive=false; painted.clear(); setInputState('IDLE'); paintActiveTool();
+    lastTwist=null;
     if(e.pointerType==='touch') hover.on=false;
   }
 }
@@ -180,6 +198,11 @@ addEventListener('keydown',e=>{
   if(k==='m') toggleSound(); if(k==='s') toggleSpeed(); if(k==='b') toggleMap(); if(k==='p') postcard(); if(k==='l') toggleLedgerChip();
   if(k==='escape'){ closeLook(); pickTool('move'); }
   if(k===' '){ e.preventDefault(); S.running=!S.running; hint(S.running?'Resumed':'Paused',true); }
+  // Quarter turns, which both renderers can show: the fallback snaps rotation
+  // to quarters because its tiles are drawn as fixed diamonds, so a smaller
+  // step would appear to do nothing there until it crossed the halfway point.
+  if(k===',') rotateView(-Math.PI/2);
+  if(k==='.') rotateView(Math.PI/2);
   const pan=60;
   if(k==='arrowleft') S.cam.x+=pan; if(k==='arrowright') S.cam.x-=pan; if(k==='arrowup') S.cam.y+=pan; if(k==='arrowdown') S.cam.y-=pan;
 });

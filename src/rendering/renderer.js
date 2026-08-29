@@ -14,7 +14,7 @@ import { drawBoat, drawCitizen, drawTrain } from './entities.js';
 import { drawVehicle } from './vehicles.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
 import { SPANS } from '../transport/bridges.js';
-import { proj } from '../world/map.js';
+import { proj, viewDepth } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
 import { facilityFootprint, footprintCells, idx, inBounds, isFacilityPart } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
@@ -84,22 +84,22 @@ export function render(){
   const items=[];
   for(let i=0;i<S.grid.length;i++){
     const b=S.grid[i]; if(!b||isFacilityPart(b)) continue;
-    if(S.terr[i]===1&&SPANS[b.type]) items.push({d:b.x+b.y-0.05,k:5,b});
+    if(S.terr[i]===1&&SPANS[b.type]) items.push({d:viewDepth(b.x,b.y)-0.05,k:5,b});
     else if(b.type!=="road"&&b.type!=="rail"){
       const fp=facilityFootprint(b);
-      items.push({d:b.x+b.y+(fp[0]+fp[1]-2)*0.48,k:0,b});
+      items.push({d:viewDepth(b.x,b.y)+(fp[0]+fp[1]-2)*0.48,k:0,b});
     }
   }
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++) if(S.natTree[idx(x,y)]) items.push({d:x+y,k:1,x,y});
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++) if(S.natTree[idx(x,y)]) items.push({d:viewDepth(x,y),k:1,x,y});
   for(const c of S.citizens){
     const fx=c.facilityLocal?.x??lerp(c.x,c.nx,c.p),fy=c.facilityLocal?.y??lerp(c.y,c.ny,c.p);
-    items.push({d:fx+fy+0.05,k:2,c});
+    items.push({d:viewDepth(fx,fy)+0.05,k:2,c});
   }
-  for(const v of S.vehicles||[]) items.push({d:lerp(v.x,v.nx,v.p)+lerp(v.y,v.ny,v.p)+0.075,k:7,v});
-  for(const v of S.serviceVehicles||[]) items.push({d:lerp(v.x,v.nx,v.p)+lerp(v.y,v.ny,v.p)+0.08,k:7,v});
-  for(const t of S.trains) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.1,k:3,t});
-  for(const t of S.boats) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.08,k:6,t});
-  for(const p of S.puffs) items.push({d:p.x+p.y+0.2,k:4,p});
+  for(const v of S.vehicles||[]) items.push({d:viewDepth(lerp(v.x,v.nx,v.p),lerp(v.y,v.ny,v.p))+0.075,k:7,v});
+  for(const v of S.serviceVehicles||[]) items.push({d:viewDepth(lerp(v.x,v.nx,v.p),lerp(v.y,v.ny,v.p))+0.08,k:7,v});
+  for(const t of S.trains) items.push({d:viewDepth(t.fx||t.x,t.fy||t.y)+0.1,k:3,t});
+  for(const t of S.boats) items.push({d:viewDepth(t.fx||t.x,t.fy||t.y)+0.08,k:6,t});
+  for(const p of S.puffs) items.push({d:viewDepth(p.x,p.y)+0.2,k:4,p});
   items.sort((a,b)=>a.d-b.d);
 
   for(const it of items){

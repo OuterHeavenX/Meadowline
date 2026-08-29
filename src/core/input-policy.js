@@ -2,7 +2,7 @@
 // the keydown handler resolves tools first, so a colliding tool key silently
 // kills the shell shortcut. Pocket Park took 'p' and the postcard button kept
 // advertising it. `regression.js` asserts this set stays disjoint from TOOLS.
-export const RESERVED_SHORTCUT_KEYS=new Set(['m','s','b','p','l','escape',' ','arrowleft','arrowright','arrowup','arrowdown']);
+export const RESERVED_SHORTCUT_KEYS=new Set(['m','s','b','p','l','escape',' ','arrowleft','arrowright','arrowup','arrowdown',',','.']);
 // Text fields own their own keystrokes. Without this the account panel's
 // email and password inputs retyped the build tool letter by letter and the
 // space bar paused the game mid-word.

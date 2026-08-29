@@ -94,6 +94,82 @@ preference. Leaving the tab still stops the bed, and returning now restarts it:
 previously one glance elsewhere silenced the valley for the rest of the session
 while the chip still read as on.
 
+## Turning the city
+
+The camera orbits. `S.cam.rot` is a single angle that the shared projection in
+`src/world/map.js` applies to world coordinates before the existing isometric
+transform, and that the GPU camera orbits by in step.
+
+Doing it in the projection rather than in a renderer is the point. One
+transform serves the Canvas renderer, the GPU camera and every hit test, so a
+rotation added there reaches all three at once. The alternative - orbiting the
+Three.js camera alone - would have turned the picture while every tap kept
+landing on the tile that was under the finger before the turn.
+
+The two agree exactly rather than approximately. An orthographic camera at 45
+degrees of azimuth and 30 of elevation projects to precisely this 2:1 diamond,
+because `sin 30 = TH/TW`, which is why the existing camera matched the flat
+projection before any of this. Rotating the world by `r` in the plane and the
+camera to azimuth `45 - r` keeps that identity: the flat transform sends screen
+x to `dx(cos r - sin r) - dy(cos r + sin r)`, and the camera sends it to
+`dx sin a - dz cos a`, and those are the same expression only at `a = 45 - r`.
+The regression suite checks the two projections against each other at seven
+angles rather than trusting the algebra; the sign being wrong is not a subtle
+defect, but it is an invisible one until someone taps.
+
+Two consequences fall out of the shared transform:
+
+- Painter's-algorithm depth on the Canvas path can no longer be `x + y`. That
+  is the depth order at rotation zero only; at a quarter turn the two tiles on
+  a diagonal swap which is in front. Every depth key now goes through
+  `viewDepth()`.
+- The Canvas renderer follows the same rotation snapped to quarter turns. It
+  draws every tile as a fixed axis-aligned diamond, a shape that is correct
+  only at multiples of 90 degrees; at anything between, tiles would be the
+  wrong shape rather than merely rotated. Redrawing every tile primitive from
+  projected corners is the change that would lift that, and it touches every
+  drawing call in the 2D renderer. Hit testing reads the same snapped angle, so
+  taps stay accurate on the fallback rather than the fallback merely looking
+  acceptable.
+
+Pitch is not adjustable. An orthographic camera's elevation is expressible in
+the flat projection - it is the `TH/TW` ratio - but every 2D building sprite is
+drawn with proportions that assume the current one, so changing it would need
+the same rewrite the tile shapes do.
+
+Rotation eases toward its target instead of jumping, and is view state: like
+pan and zoom it is not written to Save V3, and a reloaded city faces north.
+
+Controls are a two-finger twist on touch, which is the primary one for a
+mobile-first game and runs alongside the pinch that zooms, and `,` and `.` on a
+keyboard for quarter turns. Both are reserved in `input-policy.js` so a future
+tool key cannot silently shadow them. There is no on-screen rotate control: the
+dock is a documented five actions and the UI suite asserts that count, so
+adding a sixth is a UI decision rather than a rendering one.
+
+## Vegetation
+
+Trees are the first authored asset in the game. `tree-asset.js` supplies the
+geometry built by `assets/source/blender/tree_lowpoly.py`, and
+`buildCohesiveWorld` collects every tree in the valley and emits two instanced
+meshes - one for trunks at a fixed colour, one for canopies carrying a
+per-instance green and a vertex-colour tint that keeps the highlight lobe
+lighter than the main one.
+
+Two geometries rather than one because an `InstancedMesh` carries a single
+colour per instance across the whole mesh, so a combined tree would tint its
+trunk green along with its canopy, and the palette variety the procedural trees
+had would have to go.
+
+Measured against the same city before the change: 421 draw calls to 151, 27
+geometries to 9, and scene construction from 3.7 ms to 3.0 ms median. Triangles
+went the other way, 34k to 103k, because an authored tree is 184 triangles
+against roughly 50 for the procedural one. That is the real cost of the change
+and it is worth watching on weak hardware; a reduced-detail variant for distant
+natural trees is the obvious lever if it ever matters. The old cap of 110 to
+230 visible trees existed because each one cost its own group and meshes, and
+is now 900.
+
 ## Known limits and required proof
 
 - The Three path currently favors procedural geometry and shared materials over texture downloads. Further batching/LOD will be guided by physical iPhone/iPad profiling.

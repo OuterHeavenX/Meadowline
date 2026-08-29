@@ -26,7 +26,7 @@ import { cityHallSelected, renderCityHall } from '../ui/city-hall.js';
 import { bMap, bSound } from '../ui/hud.js';
 import { paintTools } from '../ui/toolbar.js';
 import { paintWishes } from '../ui/wishes.js';
-import { genWorld } from '../world/map.js';
+import { genWorld, stepCamera } from '../world/map.js';
 import { refreshPalette } from '../world/seasons.js';
 import { activeFestival } from '../world/festivals.js';
 import { note, recordDay } from '../simulation/chronicle.js';
@@ -94,6 +94,7 @@ function step(now){
   const simStart=S.diagnostics.enabled?performance.now():0;
 
   S.t+=dt;
+  stepCamera(dt);
   refreshPalette();
   if(sdt>0){
     S.dayT+=sdt/DAY;

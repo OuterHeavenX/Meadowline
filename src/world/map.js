@@ -48,11 +48,73 @@ export function centreCamera(){
   S.cam.y=innerHeight/2-p.y*S.cam.z;
 }
 
-/* ---------- iso transforms ---------- */
-export function world2screen(x,y){return {x:(x-y)*(TW/2), y:(x+y)*(TH/2)};}
+/* ---------- iso transforms ----------
+   One projection serves the Canvas renderer, the GPU camera and every hit
+   test, which is why turning the city is a change here rather than in a
+   renderer. World coordinates are rotated about the middle of the map and
+   then projected exactly as before, so proj() and screen2world() stay
+   inverses of each other at any angle and a tap keeps landing on the tile
+   under the finger.
+
+   The GPU camera orbits by the same angle, which is not a coincidence to be
+   maintained by hand: an orthographic camera at 45 degrees of azimuth and 30
+   of elevation projects to precisely this 2:1 diamond (sin 30 = TH/TW), so
+   adding the same rotation to both keeps them showing the same city. */
+const RX=W/2, RY=H/2;
+
+/* The Canvas renderer draws every tile as a fixed axis-aligned diamond, a
+   shape that is only correct at quarter turns; at anything between, tiles
+   would be the wrong shape rather than merely rotated. So the fallback
+   renderer follows the same rotation snapped to the nearest quarter, and
+   because hit testing reads this too, taps stay accurate on both. */
+export function viewRotation(){
+  const r=S.cam.rot||0;
+  if(S.diagnostics?.rendererBackend==='three-webgl2') return r;
+  const quarter=Math.PI/2;
+  return Math.round(r/quarter)*quarter;
+}
+
+function turn(x,y,a){
+  const c=Math.cos(a),s=Math.sin(a),dx=x-RX,dy=y-RY;
+  return {x:RX+dx*c-dy*s, y:RY+dx*s+dy*c};
+}
+
+export function world2screen(x,y){
+  const r=viewRotation(),p=r?turn(x,y,r):{x,y};
+  return {x:(p.x-p.y)*(TW/2), y:(p.x+p.y)*(TH/2)};
+}
 export function screen2world(sx,sy){
   const wx=(sx-S.cam.x)/S.cam.z, wy=(sy-S.cam.y)/S.cam.z;
   const a=wy/(TH/2), b=wx/(TW/2);
-  return {x:(a+b)/2, y:(a-b)/2};
+  const px=(a+b)/2, py=(a-b)/2, r=viewRotation();
+  return r?turn(px,py,-r):{x:px,y:py};
 }
+
+/* Painter's-algorithm depth. Was simply x+y, which is the depth order only at
+   rotation zero; the sort has to follow the view or everything draws back to
+   front in the wrong order the moment the city turns. */
+export function viewDepth(x,y){
+  const r=viewRotation(),p=r?turn(x,y,r):{x,y};
+  return p.x+p.y;
+}
+
 export function proj(x,y){const p=world2screen(x,y);return {x:p.x*S.cam.z+S.cam.x, y:p.y*S.cam.z+S.cam.y};}
+
+/* ---------- turning the city ----------
+   Rotation is about the middle of the map, which world2screen sends to the
+   same screen point at every angle, so the city turns in place instead of
+   swinging away and needing the pan corrected after it.
+
+   The angle eases rather than jumping. A quarter turn applied instantly loses
+   the player's place completely; watching it turn is what keeps the town you
+   were looking at the town you are still looking at. */
+export function rotateView(delta){ S.cam.rotTo=(S.cam.rotTo||0)+delta; }
+export function setViewRotation(a){ S.cam.rotTo=a; S.cam.rot=a; }
+
+export function stepCamera(dt){
+  const target=S.cam.rotTo||0,current=S.cam.rot||0,gap=target-current;
+  if(Math.abs(gap)<1e-4){ S.cam.rot=target; return; }
+  // Frame-rate independent ease, so the turn takes the same time on a phone
+  // at 30fps as on a desktop at 120.
+  S.cam.rot=current+gap*(1-Math.exp(-dt*9));
+}
