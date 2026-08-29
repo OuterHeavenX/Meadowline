@@ -23,7 +23,10 @@ Authored assets:
 
 Generation tooling:
 
-- `.mcp.json` at the repository root registers the fal.ai MCP server for editor sessions that use it. It carries no credential: the `Authorization` header interpolates `FAL_KEY` from the environment, so the key stays outside the repository and each contributor supplies their own. Contributors who do not want the server can decline it when the editor asks.
+- `.mcp.json` at the repository root registers the MCP servers used for asset work. It carries no credential of any kind, and none should ever be added to it: the fal.ai entry interpolates `FAL_KEY` from the environment, so keys stay outside the repository and each contributor supplies their own. Every server in it is optional — the editor asks before starting any of them, and declining costs nothing, since no part of the game, the tests or the (nonexistent) build depends on them.
+- `fal-ai` reaches fal.ai's hosted MCP endpoint over HTTPS for image and model generation. Requires `FAL_KEY` in the environment and `npx` on PATH.
+- `blender` (github.com/ahujasid/blender-mcp, MIT) drives a desktop Blender over a socket the addon opens. It needs Blender 3.0+ running locally with the addon enabled and its server started; it does nothing in a cloud session, and nothing against the `bpy` module either, which has no addon and no socket. `uvx` must be on PATH.
+- Two cautions on that server. Its `execute_blender_code` tool runs arbitrary Python inside Blender, so approve it per session rather than blanket-allowing it, and save work first. Its Sketchfab, Hyper3D Rodin and Hunyuan3D integrations download models into the scene: those are third-party inputs and most carry licenses this project cannot use unmodified. Poly Haven is CC0 and safe; Sketchfab licenses vary per model and many are non-commercial. Check before anything downloaded reaches a commit.
 - Generated output is a third-party input, subject to the record-keeping rule above before commit.
 
 Current external dependency:
