@@ -7,6 +7,7 @@ import { render } from '../src/rendering/renderer.js';
 import { resetJuiceOverlay } from '../src/rendering/overlay.js';
 import { emitFeedback, updateFeedback } from '../src/simulation/feedback.js';
 import { refreshPalette } from '../src/world/seasons.js';
+import { seedBirds, updateBirds } from '../src/world/weather.js';
 import { graphicsProfile } from '../src/rendering/capabilities.js';
 import { S } from '../src/core/state.js';
 import { AC, blip } from '../src/audio/audio.js';
@@ -47,6 +48,16 @@ if(threeOk){
   check('the feedback layer never takes pointer input',juice?.style.pointerEvents==='none');
   check('the feedback layer sits below the HUD',Number(juice?.style.zIndex||0)<5);
   check('the feedback actually reaches the screen',anyInk(juice));
+
+  // Birds, drifting motes, fireflies over public space and festival lanterns
+  // were Canvas-only too, so the GPU renderer showed a valley with no weather
+  // in it but the rain. With nothing at all pending, the layer must still be
+  // carrying ambient life.
+  S.feedback=[];S.puffs=[];
+  S.dayT=.3;seedBirds();for(let i=0;i<20;i++)updateBirds(.05);
+  render();
+  check('the GPU path draws ambient life on its own',anyInk(document.getElementById('juice-layer')),
+    'ink='+inkPx(document.getElementById('juice-layer')));
 }
 // Falling back to Canvas must not leave the last GPU frame's badges frozen on
 // screen: the Canvas path draws them in-scene and clears the overlay.

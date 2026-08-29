@@ -69,7 +69,12 @@ invisible on the renderer Auto actually selects. The reward existed in state and
 no player ever saw it.
 
 `src/rendering/overlay.js` is one 2D layer above the GPU canvas, reusing the
-same drawing code and the same `proj()` mapping. It sits below the HUD, takes no
+same drawing code and the same `proj()` mapping. It carries the ambient layer
+too — birds over the valley, seasonal motes, fireflies gathering over public
+space after dark and festival lanterns — all of which were Canvas-only, so the
+GPU renderer showed a valley with no weather in it but the rain. Cloud shadows
+stay on the Canvas path alone: they belong under the buildings, which an
+overlay cannot do. Rain is left to the GPU scene, which already draws it. It sits below the HUD, takes no
 pointer input, and clears itself when the renderer falls back to Canvas so a
 lost context cannot leave the last GPU frame's badges frozen on screen. The
 Canvas path is unchanged and keeps drawing both in-scene.

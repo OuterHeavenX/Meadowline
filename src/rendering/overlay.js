@@ -13,8 +13,9 @@
    ordering is better than an overlay can be. */
 import { S } from '../core/state.js';
 import { cv } from './terrain.js';
-import { drawPuff } from './effects.js';
+import { drawBirds, drawFireflies, drawLanterns, drawMotes, drawPuff } from './effects.js';
 import { drawFeedback } from './feedback.js';
+import { darkness } from '../world/time.js';
 
 let canvas=null,ctx=null,painted=false;
 
@@ -47,9 +48,6 @@ export function clearJuiceOverlay(){
 }
 
 export function drawJuiceOverlay(){
-  const items=(S.feedback?.length||0)+(S.puffs?.length||0);
-  // Nothing to say and nothing left over: skip the layer entirely.
-  if(!items&&!painted) return;
   if(!ensure()||!ctx) return;
   // Matches the world canvas exactly, so proj() lands in the same place. The
   // transform is reset on resize because changing width clears it.
@@ -60,9 +58,18 @@ export function drawJuiceOverlay(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   const dpr=innerWidth?cv.width/innerWidth:1;
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  // Atmosphere first, then the things the player did. Birds wheel over the
+  // valley, motes drift with the season, fireflies gather over public space
+  // after dark and festival lanterns rise — all of it Canvas-only until now,
+  // so the GPU renderer showed a valley with no weather in it but the rain.
+  const dark=darkness();
+  drawBirds(dark,ctx);
+  drawMotes(ctx);
+  drawFireflies(dark,ctx);
+  drawLanterns(dark,ctx);
   for(const p of S.puffs||[]) drawPuff(p,ctx);
   drawFeedback(ctx);
-  painted=items>0;
+  painted=true;
 }
 
 export function resetJuiceOverlay(){
