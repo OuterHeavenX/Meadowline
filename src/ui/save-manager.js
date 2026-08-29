@@ -1,6 +1,7 @@
 import { KEY, save, store } from '../core/save.js';
 import { S } from '../core/state.js';
 import { cityStage } from '../progression/city-growth.js';
+import { downloadCloudSave, getCloudSaveSummary, uploadLocalSave } from '../cloud/cloud-save.js';
 
 const META_KEY='meadowline.saveManager.meta';
 const BACKUP_PREFIX='meadowline.v3.backup.';
@@ -8,6 +9,7 @@ const BACKUP_COUNT=5;
 let root=null;
 let fileInput=null;
 let lastObservedRaw=null;
+let cloudState={loading:false,info:null,error:null};
 
 function esc(v=''){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function storageProbe(){
@@ -35,6 +37,11 @@ function summary(raw=store.get(KEY)){
   if(!d)return null;
   const pop=(d.b||[]).reduce((n,b)=>n+((b?.type==='house'?Number(b.pop):0)||0),0);
   return {day:Math.max(1,Math.floor(Number(d.day)||1)),coins:Math.floor(Number(d.coins)||0),buildings:d.b.length,pop,bytes:raw.length};
+}
+function payloadSummary(d){
+  if(!d||!Array.isArray(d.b))return null;
+  const pop=d.b.reduce((n,b)=>n+((b?.type==='house'?Number(b.pop):0)||0),0);
+  return {day:Math.max(1,Math.floor(Number(d.day)||1)),coins:Math.floor(Number(d.coins)||0),buildings:d.b.length,pop};
 }
 function writeBackup(raw,reason='manual'){
   if(!parseSave(raw))return false;
@@ -118,9 +125,62 @@ function restoreBackup(index){
     location.reload();
   }catch(e){setStatus('Restore failed.','bad');}
 }
+async function refreshCloud(){
+  cloudState={loading:true,info:cloudState.info,error:null}; render();
+  try{cloudState={loading:false,info:await getCloudSaveSummary(),error:null};}
+  catch(e){cloudState={loading:false,info:null,error:e?.message||String(e)};}
+  render();
+}
+async function backupToCloud(){
+  const local=verifiedSave({backup:true});
+  if(!local.success){setStatus(local.error,'bad');return;}
+  setStatus('Backing up city to cloud…');
+  try{
+    const r=await uploadLocalSave();
+    if(r.status==='conflict'){
+      setStatus(`Cloud has a newer revision (${r.revision}). Load the cloud city first so nothing is overwritten.`,'bad');
+      await refreshCloud();
+      return;
+    }
+    setStatus(`Cloud backup complete · revision ${r.revision}`,'good');
+    await refreshCloud();
+  }catch(e){setStatus(e?.message||'Cloud backup failed.','bad');}
+}
+async function loadFromCloud(){
+  const info=cloudState.info;
+  if(!info?.signedIn){openAccount();return;}
+  if(!info.save){setStatus('There is no cloud city to load yet.','bad');return;}
+  const cs=payloadSummary(info.save.payload);
+  const label=cs?`Day ${cs.day} · ${cs.pop} residents · ${cs.coins} coins`:`revision ${info.save.revision}`;
+  if(!globalThis.confirm(`Load the cloud city (${label}) on this device? Your current local city will be backed up first.`))return;
+  const current=store.get(KEY); if(parseSave(current))writeBackup(current,'before-cloud-load');
+  setStatus('Loading city from cloud…');
+  try{
+    const r=await downloadCloudSave();
+    if(r.status==='empty'){setStatus('No cloud city was found.','bad');return;}
+    const raw=store.get(KEY);
+    if(!parseSave(raw))throw new Error('The downloaded city did not pass local validation.');
+    setMeta({savedAt:Date.now(),bytes:raw.length,lastError:null,cloudLoadedAt:Date.now(),cloudRevision:r.revision});
+    location.reload();
+  }catch(e){setStatus(e?.message||'Cloud load failed.','bad');}
+}
+function openAccount(){
+  close();
+  const button=document.querySelector('.cloud-account .cloud-toggle');
+  if(button)button.click(); else setStatus('Open Account & Cloud Saves to sign in.','bad');
+}
 function setStatus(text,kind=''){const el=root?.querySelector('[data-save-status]'); if(el){el.textContent=text;el.dataset.kind=kind;}}
 function close(){root?.classList.remove('open');root?.setAttribute('aria-hidden','true');}
-export function openSaveManager(){render();root?.classList.add('open');root?.setAttribute('aria-hidden','false');}
+export function openSaveManager(){render();root?.classList.add('open');root?.setAttribute('aria-hidden','false');refreshCloud();}
+function cloudMarkup(){
+  if(cloudState.loading&&!cloudState.info)return `<section class="sm-card"><small>CLOUD</small><strong>Checking cloud save…</strong></section>`;
+  if(cloudState.error)return `<section class="sm-card"><small>CLOUD</small><strong>Cloud unavailable</strong><p>${esc(cloudState.error)}</p><div class="sm-cloud-actions"><button type="button" data-sm="cloud-refresh">Try again</button></div></section>`;
+  const info=cloudState.info;
+  if(!info?.signedIn)return `<section class="sm-card sm-cloud"><small>CLOUD</small><strong>Not signed in</strong><p>Sign in once on each device to move your Meadowline city through the cloud.</p><div class="sm-cloud-actions"><button type="button" data-sm="account" class="primary">Sign in / Account</button></div></section>`;
+  const save=info.save;
+  const cs=payloadSummary(save?.payload);
+  return `<section class="sm-card sm-cloud"><div class="sm-heading"><div><small>CLOUD</small><strong>${save?'Cloud city ready':'No cloud backup yet'}</strong></div>${save?`<span>Revision ${Number(save.revision)||0}</span>`:''}</div>${save?`<p>${cs?`Day ${cs.day} · ${cs.pop} residents · ${cs.coins} coins · ${cs.buildings} buildings<br>`:''}Updated ${esc(fmtTime(save.updated_at||save.client_saved_at))}</p>`:`<p>Back up this device to create your first cloud city.</p>`}<div class="sm-cloud-actions"><button type="button" data-sm="cloud-backup" class="primary">Back up to cloud</button><button type="button" data-sm="cloud-load" ${save?'':'disabled'}>Load cloud city</button><button type="button" data-sm="cloud-refresh">Refresh</button></div></section>`;
+}
 function render(){
   if(!root)return;
   const current=verifyCurrent(); const meta=getMeta(); const s=current.summary; const stage=cityStage()?.name||'Settlement';
@@ -131,19 +191,20 @@ function render(){
       <div><small>LAST VERIFIED SAVE</small><strong>${esc(fmtTime(meta.savedAt))}</strong></div>
       <div><small>CURRENT CITY</small><strong>${esc(stage)} · Day ${s?.day??Math.floor(S.day||1)}</strong><span>${s?.pop??0} residents · ${s?.coins??Math.floor(S.coins||0)} coins</span></div>
     </section>
+    ${cloudMarkup()}
     <div class="sm-actions">
-      <button type="button" data-sm="save" class="primary">Save now</button>
-      <button type="button" data-sm="export">Export city</button>
-      <button type="button" data-sm="import">Import city</button>
+      <button type="button" data-sm="save" class="primary">Save on this device</button>
+      <button type="button" data-sm="export">Export emergency file</button>
+      <button type="button" data-sm="import">Import emergency file</button>
     </div>
     <section class="sm-card"><div class="sm-heading"><div><small>RECOVERY</small><strong>Local backups</strong></div><span>${list.length}/${BACKUP_COUNT}</span></div>
       <div class="sm-backups">${list.length?list.map(b=>`<button type="button" data-restore="${b.index}"><span><b>${esc(fmtTime(b.meta.savedAt))}</b><small>Day ${b.summary?.day||1} · ${b.summary?.pop||0} residents · ${b.summary?.buildings||0} buildings</small></span><i>Restore</i></button>`).join(''):'<p>No recovery snapshots yet. Meadowline creates them before verified saves, imports and restores.</p>'}</div>
     </section>
-    <section class="sm-card sm-note"><strong>Portable backups travel with you.</strong><p>Export a city before changing domains, browsers or devices. Imported saves remain Save V3 compatible.</p></section>`;
+    <section class="sm-card sm-note"><strong>Cloud is the normal way to move a city.</strong><p>Back up on one device, then sign into the same account on another device and choose Load cloud city. JSON export remains available only as an emergency portable backup.</p></section>`;
 }
 function injectStyles(){
   const style=document.createElement('style'); style.textContent=`
-  .save-manager{position:fixed;inset:0;z-index:10050;display:none;align-items:flex-end;justify-content:center;background:rgba(16,26,22,.52);padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom));font-family:inherit}.save-manager.open{display:flex}.save-manager-sheet{width:min(640px,100%);max-height:min(86dvh,760px);overflow:auto;background:#f6f0df;color:#24332c;border:1px solid rgba(46,72,58,.2);border-radius:24px 24px 18px 18px;box-shadow:0 24px 70px rgba(0,0,0,.28)}.save-manager-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:18px 20px 14px;background:rgba(246,240,223,.96);border-bottom:1px solid rgba(46,72,58,.12)}.save-manager-head small,.sm-card small{display:block;font-size:10px;letter-spacing:.12em;color:#6b7c70}.save-manager-head h2{margin:2px 0 0;font-size:24px}.save-manager-head button{width:44px;height:44px;border:0;border-radius:50%;background:#e6deca;font-size:24px;color:#34483d}.save-manager-body{display:grid;gap:12px;padding:14px}.sm-card{background:#fffaf0;border:1px solid rgba(46,72,58,.12);border-radius:16px;padding:14px}.sm-health{display:grid;grid-template-columns:1fr 1fr;gap:12px}.sm-health>div:last-child{grid-column:1/-1}.sm-card strong{display:block;font-size:14px}.sm-card span,.sm-card p{font-size:12px;color:#65756b;margin:3px 0 0}.sm-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.sm-actions button,.sm-backups button{min-height:46px;border:1px solid rgba(46,72,58,.18);border-radius:12px;background:#fffaf0;color:#2c4135;font:600 13px inherit}.sm-actions .primary{background:#315f46;color:white;border-color:#315f46}.sm-heading{display:flex;justify-content:space-between;align-items:center}.sm-backups{display:grid;gap:7px;margin-top:10px}.sm-backups button{width:100%;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;text-align:left}.sm-backups button small{letter-spacing:0;text-transform:none;margin-top:2px}.sm-backups button i{font-style:normal;color:#315f46}.sm-note p{line-height:1.45}.save-manager-status{min-height:22px;padding:0 16px 14px;font-size:12px}.save-manager-status[data-kind=good]{color:#23613c}.save-manager-status[data-kind=bad]{color:#9a3a31}@media(max-width:520px){.save-manager{padding:0;align-items:flex-end}.save-manager-sheet{border-radius:24px 24px 0 0;max-height:88dvh}.sm-actions{grid-template-columns:1fr}.sm-health{grid-template-columns:1fr}.sm-health>div:last-child{grid-column:auto}}
+  .save-manager{position:fixed;inset:0;z-index:10050;display:none;align-items:flex-end;justify-content:center;background:rgba(16,26,22,.52);padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom));font-family:inherit}.save-manager.open{display:flex}.save-manager-sheet{width:min(640px,100%);max-height:min(86dvh,760px);overflow:auto;background:#f6f0df;color:#24332c;border:1px solid rgba(46,72,58,.2);border-radius:24px 24px 18px 18px;box-shadow:0 24px 70px rgba(0,0,0,.28)}.save-manager-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:18px 20px 14px;background:rgba(246,240,223,.96);border-bottom:1px solid rgba(46,72,58,.12)}.save-manager-head small,.sm-card small{display:block;font-size:10px;letter-spacing:.12em;color:#6b7c70}.save-manager-head h2{margin:2px 0 0;font-size:24px}.save-manager-head button{width:44px;height:44px;border:0;border-radius:50%;background:#e6deca;font-size:24px;color:#34483d}.save-manager-body{display:grid;gap:12px;padding:14px}.sm-card{background:#fffaf0;border:1px solid rgba(46,72,58,.12);border-radius:16px;padding:14px}.sm-health{display:grid;grid-template-columns:1fr 1fr;gap:12px}.sm-health>div:last-child{grid-column:1/-1}.sm-card strong{display:block;font-size:14px}.sm-card span,.sm-card p{font-size:12px;color:#65756b;margin:3px 0 0}.sm-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.sm-actions button,.sm-backups button,.sm-cloud-actions button{min-height:46px;border:1px solid rgba(46,72,58,.18);border-radius:12px;background:#fffaf0;color:#2c4135;font:600 13px inherit}.sm-actions .primary,.sm-cloud-actions .primary{background:#315f46;color:white;border-color:#315f46}.sm-cloud-actions{display:grid;grid-template-columns:1.25fr 1.25fr .8fr;gap:8px;margin-top:12px}.sm-cloud-actions button:disabled{opacity:.45}.sm-heading{display:flex;justify-content:space-between;align-items:center}.sm-backups{display:grid;gap:7px;margin-top:10px}.sm-backups button{width:100%;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;text-align:left}.sm-backups button small{letter-spacing:0;text-transform:none;margin-top:2px}.sm-backups button i{font-style:normal;color:#315f46}.sm-note p{line-height:1.45}.save-manager-status{min-height:22px;padding:0 16px 14px;font-size:12px}.save-manager-status[data-kind=good]{color:#23613c}.save-manager-status[data-kind=bad]{color:#9a3a31}@media(max-width:520px){.save-manager{padding:0;align-items:flex-end}.save-manager-sheet{border-radius:24px 24px 0 0;max-height:88dvh}.sm-actions,.sm-cloud-actions{grid-template-columns:1fr}.sm-health{grid-template-columns:1fr}.sm-health>div:last-child{grid-column:auto}}
   `; document.head.appendChild(style);
 }
 function build(){
@@ -152,7 +213,14 @@ function build(){
   root.innerHTML=`<div class="save-manager-sheet" role="dialog" aria-modal="true" aria-labelledby="save-manager-title"><header class="save-manager-head"><div><small>MEADOWLINE</small><h2 id="save-manager-title">Save Manager</h2></div><button type="button" data-sm="close" aria-label="Close Save Manager">×</button></header><div class="save-manager-body" data-save-body></div><div class="save-manager-status" data-save-status aria-live="polite"></div></div>`;
   root.addEventListener('pointerdown',e=>e.stopPropagation()); root.addEventListener('click',e=>{
     e.stopPropagation(); const action=e.target.closest('[data-sm]')?.dataset.sm;
-    if(action==='close'){close();return;} if(action==='save'){const r=verifiedSave();render();setStatus(r.success?`Verified save complete · ${fmtTime(r.savedAt)}`:r.error,r.success?'good':'bad');return;} if(action==='export'){exportCurrent();return;} if(action==='import'){fileInput?.click();return;}
+    if(action==='close'){close();return;}
+    if(action==='save'){const r=verifiedSave();render();setStatus(r.success?`Verified device save complete · ${fmtTime(r.savedAt)}`:r.error,r.success?'good':'bad');return;}
+    if(action==='export'){exportCurrent();return;}
+    if(action==='import'){fileInput?.click();return;}
+    if(action==='account'){openAccount();return;}
+    if(action==='cloud-refresh'){refreshCloud();return;}
+    if(action==='cloud-backup'){backupToCloud();return;}
+    if(action==='cloud-load'){loadFromCloud();return;}
     const restore=e.target.closest('[data-restore]'); if(restore)restoreBackup(Number(restore.dataset.restore));
     if(e.target===root)close();
   });
@@ -165,4 +233,4 @@ function build(){
 }
 
 build();
-window.__meadowlineSaveManager={open:openSaveManager,save:verifiedSave,verify:verifyCurrent,backups};
+window.__meadowlineSaveManager={open:openSaveManager,save:verifiedSave,verify:verifyCurrent,backups,refreshCloud};
