@@ -114,6 +114,35 @@ export function ambientTick(dt){
 export function siren(kind='police'){
   if(S.muted)return;const a=ac();if(!a)return;try{if(a.state==='suspended')a.resume();const o=a.createOscillator(),gg=a.createGain(),n=a.currentTime;o.type='triangle';const base=kind==='fire'?360:kind==='medical'?520:440;o.frequency.setValueAtTime(base,n);o.frequency.linearRampToValueAtTime(base*1.28,n+.22);o.frequency.linearRampToValueAtTime(base,n+.44);gg.gain.setValueAtTime(.0001,n);gg.gain.linearRampToValueAtTime(.035,n+.03);gg.gain.exponentialRampToValueAtTime(.0001,n+.48);o.connect(gg);gg.connect(a.destination);o.start(n);o.stop(n+.5);}catch(e){}
 }
+/* Thunder, delayed behind the flash the way distance delays it. Filtered noise
+   with a slow swell rather than a crack: this is a calm game, and the storm
+   should register as weather rather than as an alarm. */
+export function thunder(strength=0.8){
+  if(S.muted)return;const a=ac();if(!a)return;
+  try{
+    if(a.state==='suspended')a.resume();
+    const dur=1.6+strength*1.4,n=a.currentTime+0.35+Math.random()*0.9;
+    const frames=Math.floor(a.sampleRate*dur),buffer=a.createBuffer(1,frames,a.sampleRate),data=buffer.getChannelData(0);
+    let last=0;
+    for(let i=0;i<frames;i++){
+      // Brown noise: white noise integrated, which puts the energy low where
+      // thunder lives instead of leaving it hissing like rain.
+      last=(last+(Math.random()*2-1)*0.035)/1.005;
+      data[i]=last*3.2;
+    }
+    const src=a.createBufferSource();src.buffer=buffer;
+    const lp=a.createBiquadFilter();lp.type='lowpass';
+    lp.frequency.setValueAtTime(220+strength*260,n);
+    lp.frequency.exponentialRampToValueAtTime(90,n+dur);
+    const gg=a.createGain();
+    gg.gain.setValueAtTime(0.0001,n);
+    gg.gain.linearRampToValueAtTime(0.055*strength,n+0.18);
+    gg.gain.exponentialRampToValueAtTime(0.0001,n+dur);
+    src.connect(lp);lp.connect(gg);gg.connect(a.destination);
+    src.start(n);src.stop(n+dur);
+  }catch(e){}
+}
+
 /* ---------- starting the bed legally ----------
    Sound is on by default, but a browser refuses to start an AudioContext until
    the player has interacted with the page. The ambient bed therefore waits for

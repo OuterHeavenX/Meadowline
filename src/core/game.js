@@ -1,4 +1,4 @@
-import { ambientTick, blip, siren } from '../audio/audio.js';
+import { ambientTick, blip, siren, thunder } from '../audio/audio.js';
 import { growth } from '../buildings/houses.js';
 import { DAY } from './constants.js';
 import { load, save } from './save.js';
@@ -26,12 +26,12 @@ import { cityHallSelected, renderCityHall } from '../ui/city-hall.js';
 import { bMap, bSound } from '../ui/hud.js';
 import { paintTools } from '../ui/toolbar.js';
 import { paintWishes } from '../ui/wishes.js';
-import { genWorld, stepCamera } from '../world/map.js';
+import { genWorld, stepCamera, viewBounds } from '../world/map.js';
 import { refreshPalette } from '../world/seasons.js';
 import { activeFestival } from '../world/festivals.js';
 import { note, recordDay } from '../simulation/chronicle.js';
 import { paintLedger } from '../ui/ledger.js';
-import { seedBirds, seedClouds, updateBirds, updateClouds, updateDrops, updateMotes, updateWeather } from '../world/weather.js';
+import { seedBirds, seedClouds, updateBirds, updateClouds, updateDrops, updateMotes, updateSplashes, updateStorm, updateWeather } from '../world/weather.js';
 import { cityStage, evaluateCityGrowth, resetProgression } from '../progression/city-growth.js';
 import { paintGrowthPanel } from '../ui/growth.js';
 import { updateMunicipal } from '../simulation/municipal.js';
@@ -65,7 +65,7 @@ function celebrateStage(name){
    MAIN LOOP
    ============================================================ */
 export let last=performance.now();
-configureServices({blip,siren,puff,hearts,hint,toast,paintTools,paintWishes,closeLook});
+configureServices({blip,siren,thunder,puff,hearts,hint,toast,paintTools,paintWishes,closeLook});
 let simClock=0, uiClock=0, lookClock=0, miniClock=0, saveClock=0, ledgerClock=0;
 // One thrown error used to end the session: frame() re-queued itself on the
 // last line, so an exception anywhere stopped simulation, the HUD and the
@@ -132,6 +132,10 @@ function step(now){
     updateClouds(sdt);
   }
   updateDrops(dt);
+  // Splashes are seeded across the ground the player can actually see, so they
+  // follow a pan or a turn instead of raining on the far corner of the map.
+  updateSplashes(dt,viewBounds(1));
+  updateStorm(dt);
   updateMotes(dt);
   updateBirds(dt);
   updatePuffs(dt);
