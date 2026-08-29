@@ -5,7 +5,6 @@ import { CITY_STAGES, parcelStatus, unlockParcel } from '../progression/city-gro
 import { civicUpgradeStatus, upgradeCivic } from '../progression/civic-upgrades.js';
 import { getCitySummary } from '../simulation/city-summary.js';
 import { idx } from '../world/tiles.js';
-import { askConfirm } from './confirm.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
 
@@ -37,7 +36,7 @@ function landRows(summary){
   html+='<p class="muted">Available next:</p>';
   for(const p of summary.land.available){
     const st=parcelStatus(p.id);
-    html+='<button class="go cityhall-parcel" data-cityhall-parcel="'+p.id+'" '+(st?.coinsOk?'':'disabled')+'>'+p.name+' · '+p.cost+' coins</button>';
+    html+='<button type="button" class="go cityhall-parcel" data-cityhall-parcel="'+p.id+'" '+(st?.coinsOk?'':'disabled')+'>'+p.name+' · '+p.cost+' coins</button>';
   }
   return html;
 }
@@ -54,7 +53,7 @@ function upgradeBlock(b){
   if(st.maxed) return '<h4>Civic Center</h4><p><b>Meadowline City Hall is complete.</b> Future municipal systems can report here without changing City Growth.</p>';
   const next=st.next;
   return '<h4>Civic Center</h4><dl class="service">'+row('Current',current?.name||'Civic Center')+row('Next',next.name)+row('City stage',CITY_STAGES[(next.requiresStage||1)-1].name,st.stageOk?'up':'dn')+row('Cost',next.cost+' coins',st.coinsOk?'':'dn')+'</dl>'+
-    '<button class="go civic-upgrade" data-upgrade-cityhall="1" '+(st.available?'':'disabled')+'>Upgrade to '+next.name+'</button>'+
+    '<button type="button" class="go civic-upgrade" data-upgrade-cityhall="1" '+(st.available?'':'disabled')+'>Upgrade to '+next.name+'</button>'+
     (!st.stageOk?'<p class="muted">This improvement unlocks when Meadowline reaches '+CITY_STAGES[next.requiresStage-1].name+'.</p>':!st.coinsOk?'<p class="muted">The city can keep growing while you save for this improvement.</p>':'<p class="muted">Upgrading is optional and does not gate the next city stage.</p>');
 }
 function stat(label,value,tone=''){return '<div class="cityhall-stat '+tone+'"><span>'+label+'</span><b>'+value+'</b></div>';}
@@ -75,7 +74,7 @@ export function renderCityHall(){
   const nav=[['overview','Overview'],['goals','Town Goals'],['growth','Growth'],['land','Land'],['finances','Finances'],['services','Services'],['mobility','Mobility']];
   const crime=safe.pressure===0?'Low':safe.pressure<35?'Limited':'Elevated',fireRisk=fire.risk===0?'Low':fire.risk<30?'Limited':'Elevated';
   elLook.classList.add('cityhall-open');
-  elLookBody.innerHTML='<div class="cityhall-shell"><nav class="cityhall-nav" aria-label="City Hall sections">'+nav.map(n=>'<button class="'+(activeSection===n[0]?'on':'')+'" data-cityhall-nav="'+n[0]+'">'+n[1]+'</button>').join('')+'</nav><main class="cityhall-content"><header class="cityhall-hero"><div><h3>Meadowline City Hall</h3><div class="kind">'+name+' · Level '+level+'</div></div><div class="cityhall-stat"><span>City stage</span><b>'+o.stage+'</b></div></header>'+
+  elLookBody.innerHTML='<div class="cityhall-shell"><nav class="cityhall-nav" aria-label="City Hall sections">'+nav.map(n=>'<button type="button" class="'+(activeSection===n[0]?'on':'')+'" data-cityhall-nav="'+n[0]+'">'+n[1]+'</button>').join('')+'</nav><main class="cityhall-content"><header class="cityhall-hero"><div><h3>Meadowline City Hall</h3><div class="kind">'+name+' · Level '+level+'</div></div><div class="cityhall-stat"><span>City stage</span><b>'+o.stage+'</b></div></header>'+
     section('overview','Town overview','<div class="cityhall-grid">'+stat('Population',o.population)+stat('Housing',o.occupiedHomes+' / '+o.homes)+stat('Mood',o.mood)+stat('Education',o.education)+stat('Recreation',rec.served+' / '+rec.demand)+stat('Prosperity',work.prosperity+' / 100')+stat('Crime pressure',crime)+stat('Fire risk',fireRisk)+stat('Healthcare',health.demand+' demand')+'</div>'+upgradeBlock(b))+
     section('goals','Town Goals',goalRows(summary.goals))+
     section('growth','City Growth',growthRows(summary.growth.next)+'<div class="cityhall-grid">'+stat('Cottages',o.cottages)+stat('Town Homes',o.townHomes)+stat('Established',o.establishedHomes)+'</div>')+
@@ -93,7 +92,7 @@ export function inspectCityHall(x,y){
   return true;
 }
 
-elLookBody?.addEventListener('click',async e=>{
+elLookBody?.addEventListener('click',e=>{
   if(!cityHallSelected()) return;
   const nav=e.target.closest('[data-cityhall-nav]');
   if(nav){activeSection=nav.dataset.cityhallNav;renderCityHall();return;}
@@ -101,7 +100,9 @@ elLookBody?.addEventListener('click',async e=>{
   if(parcel){
     const st=parcelStatus(parcel.dataset.cityhallParcel); if(!st) return;
     if(!st.coinsOk){ toast('You need '+st.parcel.cost+' coins to open '+st.parcel.name+'.'); return; }
-    if(!await askConfirm({title:'Open '+st.parcel.name+'?',body:'This costs '+st.parcel.cost+' coins and cannot be undone.',confirmLabel:'Open land'})) return;
+    let approved=false;
+    try{ approved=globalThis.confirm('Open '+st.parcel.name+' for '+st.parcel.cost+' coins?'); }catch(err){ approved=false; }
+    if(!approved) return;
     const r=unlockParcel(st.parcel.id);
     if(r.ok){ toast(r.parcel.name+' is open','gold'); save(); paintGrowthPanel(); renderCityHall(); }
     else toast(r.why||'That land cannot be opened yet.');
@@ -112,7 +113,9 @@ elLookBody?.addEventListener('click',async e=>{
   const b=S.grid[idx(S.pick.x,S.pick.y)];
   const st=civicUpgradeStatus(b);
   if(!st.available){ toast(st.reason||'That civic upgrade is not ready yet.'); return; }
-  if(!await askConfirm({title:'Upgrade to '+st.next.name+'?',body:'This costs '+st.next.cost+' coins.',confirmLabel:'Upgrade'})) return;
+  let approved=false;
+  try{ approved=globalThis.confirm('Upgrade to '+st.next.name+' for '+st.next.cost+' coins?'); }catch(err){ approved=false; }
+  if(!approved) return;
   const r=upgradeCivic(b);
   if(!r.ok){ toast(r.why||'The civic center could not be upgraded.'); return; }
   toast(r.upgrade.name+' established','gold'); save(); renderCityHall();
