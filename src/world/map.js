@@ -100,6 +100,19 @@ export function viewDepth(x,y){
 
 export function proj(x,y){const p=world2screen(x,y);return {x:p.x*S.cam.z+S.cam.x, y:p.y*S.cam.z+S.cam.y};}
 
+/* The rectangle of world the screen currently covers. Rotation means the four
+   screen corners no longer map to an axis-aligned patch, so the bounding box of
+   all four is what callers want; anything seeding effects across the view needs
+   it, and scattering over the whole map instead would spend almost everything
+   where nobody is looking. */
+export function viewBounds(pad=1){
+  const c=[screen2world(0,0),screen2world(innerWidth,0),screen2world(0,innerHeight),screen2world(innerWidth,innerHeight)];
+  return {
+    minX:Math.min(...c.map(p=>p.x))-pad, maxX:Math.max(...c.map(p=>p.x))+pad,
+    minY:Math.min(...c.map(p=>p.y))-pad, maxY:Math.max(...c.map(p=>p.y))+pad
+  };
+}
+
 /* ---------- turning the city ----------
    Rotation is about the middle of the map, which world2screen sends to the
    same screen point at every angle, so the city turns in place instead of

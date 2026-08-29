@@ -1,3 +1,4 @@
+import { H, W } from '../src/core/constants.js';
 import { BUILDINGS, defaultBuildingState } from '../src/buildings/registry.js';
 import { restoreFacilityOccupancy } from '../src/buildings/buildings.js';
 import { S } from '../src/core/state.js';
@@ -5,7 +6,8 @@ import { resetProgression } from '../src/progression/city-growth.js';
 import { projectThroughCamera, renderThreeScene, resetThreeRenderer, threeSnapshot } from '../src/rendering/three-renderer.js';
 import { artMetrics, roadKind, roadMask, visualDescriptor, waterMask } from '../src/rendering/three-world-art.js';
 import { hover } from '../src/rendering/interaction-state.js';
-import { genWorld, proj, screen2world, setViewRotation, stepCamera, viewDepth, viewRotation } from '../src/world/map.js';
+import { genWorld, proj, screen2world, setViewRotation, stepCamera, viewBounds, viewDepth, viewRotation } from '../src/world/map.js';
+import { cloudOpacity, clouds, seedClouds, splashes, storm, updateSplashes, updateStorm } from '../src/world/weather.js';
 import { idx } from '../src/world/tiles.js';
 
 const checks=[],check=(name,pass,detail='')=>checks.push({name,pass:!!pass,detail});
@@ -114,5 +116,58 @@ check('rotation eases toward its target rather than snapping',
   started>0&&started<Math.PI/2&&Math.abs(S.cam.rot-Math.PI/2)<1e-3,
   `first step ${started.toFixed(4)} settled ${S.cam.rot.toFixed(6)}`);
 setViewRotation(0);
+
+// ---------- weather ----------
+// Rain, cloud shadows and the whole storm were drawn only inside the Canvas
+// path, so on the renderer Auto actually picks the game announced rain over a
+// dry, shadowless valley. These check the state every renderer reads.
+setViewRotation(0);
+genWorld(8181);resetProgression('legacy-open');
+seedClouds();
+check('the valley has clouds to move',clouds.length>0,clouds.length);
+check('every cloud carries a height and a shape',clouds.every(c=>c.h>0&&Number.isFinite(c.seed)),
+  clouds[0]&&(clouds[0].h.toFixed(1)+'/'+clouds[0].seed));
+// The sun's shadow camera is 28 units around the view centre and the sun sits
+// low, so a cloud much above ten stops casting a shadow entirely. That is a
+// hard ceiling, not a preference, and nothing on screen would show it broke.
+check('clouds stay inside the sun shadow volume',clouds.every(c=>c.h<=11),
+  Math.max(...clouds.map(c=>c.h)).toFixed(2));
+
+S.cam.z=0.5;const farOpacity=cloudOpacity();
+S.cam.z=2.2;const nearOpacity=cloudOpacity();
+S.cam.z=1;
+check('clouds fade as the camera comes in',farOpacity>nearOpacity&&farOpacity>0.6&&nearOpacity<0.2,
+  'out '+farOpacity.toFixed(2)+' in '+nearOpacity.toFixed(2));
+
+// Splashes belong to a place on the ground, so they are world coordinates and
+// have to land inside the map and inside the view.
+splashes.length=0;
+S.wx={k:'rain',amt:1,target:1,next:99};
+for(let i=0;i<10;i++) updateSplashes(0.05,viewBounds(1));
+check('rain lands on the ground',splashes.length>0,splashes.length);
+check('splashes stay on the map',splashes.every(s=>s.x>=0&&s.y>=0&&s.x<=W&&s.y<=H),
+  splashes.length?splashes[0].x.toFixed(1)+','+splashes[0].y.toFixed(1):'none');
+// They have to expire, or a long shower grows the array without bound.
+const peak=splashes.length;
+for(let i=0;i<40;i++) updateSplashes(0.05,null);
+check('splashes expire instead of accumulating',splashes.length<peak,peak+' -> '+splashes.length);
+
+splashes.length=0;
+S.wx={k:'snow',amt:1,target:1,next:99};
+for(let i=0;i<10;i++) updateSplashes(0.05,viewBounds(1));
+check('snow does not splash',splashes.length===0,splashes.length);
+
+// A storm belongs to heavy rain only, so a light shower stays calm.
+S.wx={k:'rain',amt:0.2,target:0.2,next:99};storm.flash=0;storm.next=0;
+updateStorm(0.05);
+check('a light shower brings no lightning',storm.flash===0,storm.flash);
+S.wx={k:'rain',amt:0.9,target:0.9,next:99};storm.next=0;
+updateStorm(0.05);
+const struck=storm.flash;
+check('heavy rain brings lightning',struck>0.5,struck);
+for(let i=0;i<80;i++) updateStorm(0.05);
+check('the flash fades instead of staying lit',storm.flash<struck,struck.toFixed(2)+' -> '+storm.flash.toFixed(3));
+S.wx={k:'clear',amt:0,target:0,next:99};storm.flash=0;storm.bolt=null;splashes.length=0;
+
 
 const failed=checks.filter(c=>!c.pass);document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);document.documentElement.dataset.result=failed.length?'fail':'pass';

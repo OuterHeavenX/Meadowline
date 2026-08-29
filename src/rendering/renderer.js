@@ -9,7 +9,7 @@ import { drawHousingHouse } from './housing.js';
 import { drawCivicPlacementPreview } from './service-overlays.js';
 import { drawLandAccess } from './land-overlays.js';
 import { drawSchoolUpgradeDetails } from './school-upgrades.js';
-import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
+import { drawBirds, drawClouds, drawCloudShadows, drawFireflies, drawLanterns, drawLightning, drawMotes, drawPuff, drawSplashes, drawWeather } from './effects.js';
 import { drawBoat, drawCitizen, drawTrain } from './entities.js';
 import { drawVehicle } from './vehicles.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
@@ -152,7 +152,10 @@ export function render(){
     }
     g.globalCompositeOperation="source-over";
   }
-  drawFireflies(dark); drawLanterns(dark); drawMotes(); drawWeather();
+  drawFireflies(dark); drawLanterns(dark); drawMotes();
+  // Ground first, then what is falling, then the clouds above it, then the
+  // sky lighting all of it.
+  drawSplashes(); drawWeather(); drawClouds(); drawLightning();
   for(const inc of S.incidents||[]) drawIncident(inc);
   drawFeedback();
   presentFrame();

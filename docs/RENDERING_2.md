@@ -176,6 +176,52 @@ natural trees is the obvious lever if it ever matters. The old cap of 110 to
 230 visible trees existed because each one cost its own group and meshes, and
 is now 900.
 
+## Weather
+
+Rain, cloud shadows and everything else the sky does were drawn only inside the
+Canvas renderer's own draw call. On the renderer Auto actually picks, the game
+announced rain over a dry, shadowless valley. All of it now reaches both.
+
+**Clouds** are real bodies in the GPU scene at the height the cloud data
+carries, so the sun that lights the town casts their shadows. Drawing a cloud
+overhead and a dark patch on the ground as two separate things means keeping
+them in step by hand for ever, and getting the occlusion wrong the moment one
+passes behind a roof.
+
+That also delivers the behaviour asked for without a special case. A
+transparent material still casts a full shadow in three.js, so `cloudOpacity()`
+can fade the cloud out of the way as the camera comes in - 0.98 zoomed out,
+0.08 zoomed in - while the shadow crossing the ground keeps its full strength.
+The Canvas fallback reads the same curve for its 2D bodies and keeps its
+existing shadow gradient.
+
+Cloud height is capped at about ten units, and that is a hard constraint rather
+than a preference. The sun's shadow camera covers 28 units around the view
+centre and the sun sits low, so a cloud above that falls outside the volume and
+stops casting entirely. Measured: at height 9 the ground under a cloud darkens
+by a third; at 16 nothing lands at all, even with the bounds widened to 44.
+Raising the clouds means enlarging that volume, which spreads the same shadow
+map over more ground and softens every building shadow in the valley to buy
+height nobody can see. The regression suite asserts the ceiling, because
+breaking it shows up as clouds that quietly stop casting rather than as
+anything that looks wrong.
+
+**Rain** draws in two passes, a dense faint one and a sparser brighter one; a
+single uniform stroke at 0.4 alpha was easy to miss even where it was drawn.
+**Splashes** are world coordinates, not screen ones: a drop falls in screen
+space but its arrival belongs to a tile, and has to stay there while the camera
+pans, zooms and turns. They are seeded across the visible ground only, since
+scattering over the whole map spends almost all of them where nobody is
+looking, and they expire so a long shower cannot grow the array without bound.
+
+**Lightning** comes with heavy rain only, so a light shower stays calm. The
+flash is a full-screen veil, which lands identically on both renderers without
+either needing to know about the storm, plus a lift to the GPU ambient term -
+the veil alone reads as a filter over the picture rather than as the sky
+lighting the ground. Thunder follows at a delay, as filtered brown noise with a
+slow swell rather than a crack: this is a calm game, and a storm should
+register as weather rather than as an alarm.
+
 ## Known limits and required proof
 
 - The Three path currently favors procedural geometry and shared materials over texture downloads. Further batching/LOD will be guided by physical iPhone/iPad profiling.
