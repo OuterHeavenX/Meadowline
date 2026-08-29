@@ -2,6 +2,7 @@ import { S } from '../core/state.js';
 import { CITY_STAGES, LAND_PARCELS, cityStage, nextStageProgress, parcelStatus, unlockParcel } from '../progression/city-growth.js';
 import { save } from '../core/save.js';
 import { toast } from './notify.js';
+import { askConfirm } from './confirm.js';
 
 export const elGrowth=document.getElementById('growth');
 export const elGrowthBody=document.getElementById('growth-body');

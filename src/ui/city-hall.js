@@ -7,6 +7,7 @@ import { getCitySummary } from '../simulation/city-summary.js';
 import { idx } from '../world/tiles.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
+import { askConfirm } from './confirm.js';
 
 const elLook=document.getElementById('look');
 const elLookBody=document.getElementById('look-body');

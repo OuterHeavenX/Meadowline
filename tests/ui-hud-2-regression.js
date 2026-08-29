@@ -139,4 +139,70 @@ check('City Hall uses responsive section navigation',hall.querySelectorAll('[dat
 check('City Hall maximum is Level 4',hall.querySelector('.cityhall-hero')?.textContent.includes('Level 4'));
 check('City Hall never advertises Level 5',!hall.getElementById('look-body')?.textContent.includes('Level 5'));
 check('City Hall reads real municipal sections',hall.getElementById('look-body')?.textContent.includes('Services')&&hall.getElementById('look-body')?.textContent.includes('Mobility'));
+
+// Every confirmation-gated action in City Hall shipped dead: the module called
+// askConfirm() without importing it, and because the handler is async the
+// ReferenceError became an unhandled rejection - no dialog, no toast, no
+// console anyone was looking at, just a button that did nothing. Module
+// hygiene catches the missing import now; this checks the thing the player
+// actually does, so a future break anywhere along the path still fails.
+const hallWin=frame.contentWindow,hallState=hallWin.__MEADOWLINE_STATE__;
+if(hallState){
+  hallState.coins=1914;
+  hallState.cityProgress.stage=4;
+  const civic=hallState.grid.find(b=>b&&b.type==='cityHall');
+  if(civic) civic.state.level=3;
+  hall.querySelector('[data-cityhall-nav="overview"]')?.click();
+  const upgradeBtn=hall.querySelector('[data-upgrade-cityhall]');
+  check('City Hall offers a live upgrade action',!!upgradeBtn&&!upgradeBtn.disabled,
+    upgradeBtn?('disabled='+upgradeBtn.disabled):'(missing)');
+  if(upgradeBtn&&!upgradeBtn.disabled){
+    const levelBefore=civic.state.level,coinsBefore=hallState.coins;
+    upgradeBtn.click();
+    const dlg2=hall.querySelector('.ml-confirm');
+    check('the upgrade asks for confirmation instead of failing silently',!!dlg2?.open);
+    if(dlg2?.open){
+      dlg2.querySelector('.ml-confirm-go').click();
+      await new Promise(r=>setTimeout(r,0));
+      check('confirming the upgrade actually upgrades the civic centre',
+        civic.state.level===levelBefore+1&&hallState.coins<coinsBefore,
+        'level '+levelBefore+'->'+civic.state.level+' coins '+coinsBefore+'->'+Math.round(hallState.coins));
+    }
+  }
+  hall.querySelector('[data-cityhall-nav="land"]')?.click();
+  const parcelBtn=hall.querySelector('[data-cityhall-parcel]:not([disabled])');
+  check('City Hall offers a live land purchase',!!parcelBtn,parcelBtn?.textContent?.trim()||'(none available)');
+  if(parcelBtn){
+    const openedBefore=(hallState.cityProgress.unlockedParcels||[]).length;
+    parcelBtn.click();
+    const dlg3=hall.querySelector('.ml-confirm');
+    check('opening land asks for confirmation instead of failing silently',!!dlg3?.open);
+    if(dlg3?.open){
+      dlg3.querySelector('.ml-confirm-go').click();
+      await new Promise(r=>setTimeout(r,0));
+      check('confirming a land purchase actually opens the parcel',
+        (hallState.cityProgress.unlockedParcels||[]).length===openedBefore+1,
+        openedBefore+' -> '+(hallState.cityProgress.unlockedParcels||[]).length);
+    }
+  }
+}
+
+// A disabled action has to look disabled. Nothing in the stylesheet spoke to
+// :disabled, so a button the game refuses to act on was pixel-identical to one
+// it honours - and since a disabled button emits no click, there was not even
+// a toast to explain the refusal.
+{
+  const probe=hall.createElement('button');
+  probe.className='go';probe.disabled=true;probe.textContent='x';
+  hall.body.appendChild(probe);
+  const live=hall.createElement('button');
+  live.className='go';live.textContent='x';
+  hall.body.appendChild(live);
+  const a=hallWin.getComputedStyle(probe),b=hallWin.getComputedStyle(live);
+  check('a disabled action is visually distinct from a live one',
+    a.backgroundColor!==b.backgroundColor||a.color!==b.color,
+    a.backgroundColor+' vs '+b.backgroundColor);
+  probe.remove();live.remove();
+}
+
 const failed=checks.filter(c=>!c.pass);document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);document.documentElement.dataset.result=failed.length?'fail':'pass';

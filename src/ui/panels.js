@@ -17,6 +17,7 @@ import { facilityFootprint, facilityRootAt, idx, inBounds, isWater } from '../wo
 import { darkness } from '../world/time.js';
 import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
+import { askConfirm } from './confirm.js';
 
 /* ---------- the Look card ---------- */
 export const elLook=document.getElementById("look"), elLookBody=document.getElementById("look-body");

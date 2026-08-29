@@ -83,5 +83,61 @@ for (const f of files) {
 }
 if (!remoteBad) pass('no static import from an off-origin URL');
 
+
+// 5. calling another module's export without importing it
+// A missed import inside an async handler is invisible: the ReferenceError
+// becomes an unhandled promise rejection, so the button simply does nothing
+// and no error reaches the player or the console they are not looking at.
+// That is how four confirmation-gated actions - opening land twice, upgrading
+// the civic centre and expanding a school - shipped dead.
+// Deliberately narrow: only names some module in this project exports, called
+// as functions, and not declared anywhere in the calling file. Anything
+// declared locally at any depth is treated as the local one, so a shadowing
+// variable is never reported.
+const exportedNames = new Map();
+for (const f of files) {
+  const t = stripBlockComments(read(f));
+  for (const m of t.matchAll(/export\s+(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/g)) exportedNames.set(m[1], f);
+  for (const m of t.matchAll(/export\s+(?:const|let|var|class)\s+([A-Za-z_$][\w$]*)/g)) exportedNames.set(m[1], f);
+}
+const declaredIn = (t) => {
+  const names = new Set();
+  const add = (re, group = 1) => { for (const m of t.matchAll(re)) names.add(m[group]); };
+  add(/(?:function|class)\s+([A-Za-z_$][\w$]*)/g);
+  add(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)/g);
+  // Destructuring and parameter lists, kept crude on purpose: over-collecting
+  // names only costs a missed report, while under-collecting invents failures.
+  for (const m of t.matchAll(/[{(,]\s*([A-Za-z_$][\w$]*)\s*[,)}:=]/g)) names.add(m[1]);
+  return names;
+};
+const importedIn = (t) => {
+  const names = new Set();
+  for (const m of t.matchAll(/import\s+([^'"();]*?)\s+from\s*['"]/g)) {
+    for (const part of m[1].replace(/[{}]/g, ' ').split(',')) {
+      const name = part.trim().split(/\s+as\s+/).pop().trim();
+      if (name && name !== '*') names.add(name);
+    }
+  }
+  return names;
+};
+let missingImports = 0;
+for (const f of files) {
+  const raw = read(f);
+  const t = stripBlockComments(raw).replace(/(['"`])(?:\\.|(?!\1)[^\\])*\1/g, '""');
+  const imported = importedIn(raw), declared = declaredIn(t);
+  const reported = new Set();
+  // The lookbehind keeps this to bare calls. Without it every services.hint()
+  // and renderer.render() reads as an unimported free function.
+  for (const m of t.matchAll(/(?<![.\w$])([A-Za-z_$][\w$]*)\s*\(/g)) {
+    const name = m[1];
+    if (reported.has(name) || !exportedNames.has(name)) continue;
+    if (exportedNames.get(name) === f || imported.has(name) || declared.has(name)) continue;
+    reported.add(name);
+    fail(`${f} calls ${name}() from ${exportedNames.get(name)} without importing it`);
+    missingImports++;
+  }
+}
+if (!missingImports) pass("no module calls another module's export without importing it");
+
 console.log(`\n${failures ? failures + ' hygiene failure(s)' : 'module hygiene clean'} across ${files.length} modules`);
 process.exit(failures ? 1 : 0);
