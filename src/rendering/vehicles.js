@@ -1,11 +1,14 @@
 import { lerp, shade } from '../core/constants.js';
+import { laneOffset } from '../transport/lanes.js';
 import { S } from '../core/state.js';
 import { g } from './terrain.js';
 import { proj } from '../world/map.js';
 
 function pointOnVehicle(v){
-  const t=Math.max(0,Math.min(1,v.p||0));
-  return {x:lerp(v.x,v.nx,t),y:lerp(v.y,v.ny,t)};
+  const t=Math.max(0,Math.min(1,v.p||0)),lane=laneOffset(v);
+  // Cars used to ride the centre line, in the same place as the pedestrians.
+  // The lane is perpendicular to travel, so oncoming traffic passes properly.
+  return {x:lerp(v.x,v.nx,t)+lane.x,y:lerp(v.y,v.ny,t)+lane.y};
 }
 
 export function drawVehicle(v){

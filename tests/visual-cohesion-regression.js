@@ -21,4 +21,28 @@ check('residential tiers have distinct archetypes',new Set(homes.map(h=>visualDe
 const before=homes.map(h=>JSON.stringify(h.state)).join('|');for(const h of homes)check('visual variation is deterministic',visualDescriptor(h).variant===visualDescriptor(h).variant);check('visual descriptors do not mutate Housing',before===homes.map(h=>JSON.stringify(h.state)).join('|'));
 for(const type of Object.keys(BUILDINGS))check(`${type} has a visual archetype`,!!visualDescriptor({type,seed:7,state:{}})?.archetype);
 S.rendererMode='gpu';S.quality='balanced';resetThreeRenderer();const rendered=renderThreeScene(),snap=threeSnapshot();check('cohesive Three scene initializes',rendered,snap.error);if(rendered){check('art kit creates shared materials',artMetrics().materials>8,artMetrics());check('world creates real geometry',snap.geometries>0,snap);check('draw calls remain bounded',snap.drawCalls<1100,snap.drawCalls);check('visual tree count is bounded',snap.visibleTrees<=230,snap.visibleTrees);const gridBefore=JSON.stringify(S.grid);S.tool='house';hover.x=12;hover.y=12;hover.on=true;renderThreeScene();const overlay=threeSnapshot();check('GPU placement overlay renders without mutating grid',overlay.drawCalls>snap.drawCalls&&JSON.stringify(S.grid)===gridBefore,{base:snap.drawCalls,overlay:overlay.drawCalls});hover.on=false;S.tool='move';}
+// Cafe, Market, Bakery and Station shared one storefront box with a different
+// paint colour, so four trades read as the same shop four times over at play
+// distance. Each now carries a silhouette cue, which means measurably different
+// geometry rather than a different material: a scene holding one of each must
+// draw a different number of triangles for each.
+const trades=['cafe','market','bakery','station'];
+const tradeShapes=trades.map(type=>{
+  genWorld(606);resetProgression('legacy-open');
+  S.grid.fill(null);
+  for(let x=12;x<22;x++) road(x,21);
+  root(type,16,20);
+  resetThreeRenderer();
+  const drew=renderThreeScene();
+  return {type,drew,triangles:threeSnapshot().triangles};
+});
+const drewAll=tradeShapes.every(t=>t.drew);
+check('every trade builds a GPU scene',drewAll,tradeShapes.map(t=>t.type+':'+t.drew).join(' '));
+if(drewAll){
+  const counts=tradeShapes.map(t=>t.triangles);
+  check('each trade has its own silhouette',new Set(counts).size===trades.length,
+    tradeShapes.map(t=>t.type+'='+t.triangles).join(' '));
+  check('every trade actually draws geometry',counts.every(n=>n>0),counts.join(','));
+}
+
 const failed=checks.filter(c=>!c.pass);document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);document.documentElement.dataset.result=failed.length?'fail':'pass';

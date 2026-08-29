@@ -13,7 +13,11 @@ This pass turns the initial Three.js proof into one coherent low-poly miniature-
 - Cottage: low single-storey mass, gable, porch, chimney, garden.
 - Town Home: stronger two-storey mass, side volume, cross-gable and landscaping.
 - Established Home: broad articulated mass, wing, richer roof, porch, fence and hedge.
-- Café, Market, Bakery and Station share storefront grammar but have distinct awning/detail cues.
+- Café, Market, Bakery and Station share storefront grammar but now differ in silhouette, not only in paint:
+  the Café has a terrace of parasol tables, the Market is an open stall with a striped canopy on posts and
+  crates out front, the Bakery has a steep gable with an oven chimney and a hanging sign, and the Station has
+  a platform, a deep canopy and a clock. A scene holding one of each draws a different triangle count for
+  every one; previously all four produced identical geometry.
 - School, City Hall, Police, Fire, Clinic and Hospital use category-specific silhouettes, entrances and service aprons.
 - Housing variation derives deterministically from the saved building seed and a cheap spatial district hash. No mesh selection is saved.
 - Multi-tile Recreation and municipal facilities use their existing registry footprint as visual composition space.

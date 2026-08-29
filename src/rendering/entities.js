@@ -3,6 +3,7 @@ import { S } from '../core/state.js';
 import { HULLS } from '../simulation/boats.js';
 import { box, g } from './terrain.js';
 import { proj } from '../world/map.js';
+import { sidewalkOffset } from '../transport/lanes.js';
 
 export function drawTrain(t){
   const z=S.cam.z;
@@ -34,23 +35,17 @@ export function drawTrain(t){
   }
 }
 
-function sidewalkOffset(c,fx,fy){
-  const z=S.cam.z;
-  let dx=(c.nx-c.x),dy=(c.ny-c.y);
-  if(!dx&&!dy){ dx=c.x-c.px; dy=c.y-c.py; }
-  if(!dx&&!dy) dx=1;
-  const p=proj(fx,fy), q=proj(fx+dx*0.3,fy+dy*0.3);
-  let sx=q.x-p.x,sy=q.y-p.y,len=Math.hypot(sx,sy)||1; sx/=len;sy/=len;
-  return {x:-sy*7*z*(c.side||1),y:sx*7*z*(c.side||1)};
-}
 
 export function drawCitizen(c){
   const z=S.cam.z;
   const local=c.facilityLocal;
   const fx=local?local.x:lerp(c.x,c.nx,c.p), fy=local?local.y:lerp(c.y,c.ny,c.p);
-  const p=proj(fx,fy), side=local?{x:0,y:0}:sidewalkOffset(c,fx,fy);
+  // Offset in world tiles before projecting, so the pavement a citizen walks on
+  // is the one the road art draws, and both renderers agree on where that is.
+  const side=sidewalkOffset(c);
+  const p=proj(fx+side.x,fy+side.y);
   const bob=Math.abs(Math.sin(S.t*(local?2.2:6)+c.bob))*(local?0.55:1.6)*z;
-  const px=p.x+side.x,py=p.y+side.y;
+  const px=p.x,py=p.y;
   g.fillStyle="rgba(30,44,38,.18)";
   g.beginPath(); g.ellipse(px,py+2*z,2.6*z,1.3*z,0,0,TAU); g.fill();
   g.fillStyle=c.col;
