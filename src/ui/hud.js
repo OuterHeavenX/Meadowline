@@ -1,4 +1,4 @@
-import { ambientStart, ambientStop, blip } from '../audio/audio.js';
+import { ambientStart, ambientStop, armAmbient, blip } from '../audio/audio.js';
 import { save } from '../core/save.js';
 import { S } from '../core/state.js';
 import { toggleMap } from '../rendering/minimap.js';
@@ -61,11 +61,11 @@ export function toggleSound(){
   S.muted=!S.muted;
   bSound.classList.toggle("off",S.muted);
   if(S.muted) ambientStop();
-  else { blip(520,0.08); ambientStart(); }
+  else { armAmbient(); blip(520,0.08); ambientStart(); }
 }
 bSpeed.addEventListener("click",toggleSpeed);
 bSound.addEventListener("click",toggleSound);
-bSound.classList.add("off");
+bSound.classList.toggle("off",S.muted);
 bLedger.classList.add("off");
 bNew.addEventListener("click",async()=>{
   const ok=await askConfirm({title:'Start a brand new valley?',

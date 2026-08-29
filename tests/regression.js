@@ -3,8 +3,9 @@ import { BUILDINGS, BUILDABLE } from '../src/buildings/registry.js';
 import { COST, H, TOOLS, W } from '../src/core/constants.js';
 import { WATER_COST, paintWater, playerWaterAt, removePlayerWater } from '../src/world/landscaping.js';
 import { conflictingToolKeys, isTextEntryTarget, RESERVED_SHORTCUT_KEYS } from '../src/core/input-policy.js';
-import { KEY, KEY_OLD, KEY_V2, load, save, store } from '../src/core/save.js';
+import { KEY, KEY_OLD, KEY_V2, applySave, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
+import { AC, amb, armAmbient } from '../src/audio/audio.js';
 import { advanceEducation, educationAssignment, getEducationLevel, invalidateServices, previewEducationAt, recomputeServices, schoolStats, serviceBoundaryGeometry } from '../src/simulation/civic-services.js';
 import { outFrom, spawnCitizen, updateCitizens } from '../src/simulation/citizens.js';
 import { advanceHousing, evaluateHousingReadiness, getDesirability, housingBaseCapacity, housingCapacity, housingTaxMultiplier, housingTierIndex } from '../src/simulation/housing.js';
@@ -153,6 +154,24 @@ check('v1 migration',load()&&S.coins===222&&S.grid[idx(5,5)]?.type==='house'&&S.
 store.set(KEY,JSON.stringify({v:3,seed:2468,coins:111,day:2,dayT:.2,b:[{type:'house',x:8,y:8,pop:2,state:{housingTier:99,upgradeProgress:9,education:-5}},{type:'school',x:9,y:8,state:{level:'bad'}},{type:'not-real',x:10,y:8},{nonsense:true}]}));
 store.set(KEY_V2,''); store.set(KEY_OLD,'');
 check('malformed optional v3 state is defensive',load()&&S.grid[idx(8,8)]?.type==='house'&&getEducationLevel(S.grid[idx(8,8)])===0&&S.grid[idx(8,8)]?.state?.housingTier===3&&S.grid[idx(8,8)]?.state?.upgradeProgress===1&&S.grid[idx(9,8)]?.state?.level===1&&!S.grid[idx(10,8)]);
+
+// Sound was forced off at boot, so the procedural ambience, dispatch cues and
+// rain never reached a player who did not find the sound chip. It is on by
+// default now, the choice is the player's and it is remembered, and no
+// AudioContext is created before the gesture browsers require.
+check('sound is on for a new valley',S.muted===false);
+check('no audio context exists before a gesture',AC===null);
+check('the ambient bed waits for that gesture',amb.on===false);
+const wasMuted=S.muted;
+S.muted=true; save();
+const soundSave=JSON.parse(store.get(KEY)||'{}');
+check('the mute preference is saved',soundSave.muted===true);
+S.muted=false; applySave(soundSave);
+check('a saved mute is restored',S.muted===true);
+delete soundSave.muted;
+S.muted=false; applySave(soundSave);
+check('a save from before the field keeps sound on',S.muted===false);
+S.muted=wasMuted;
 
 // A pond the player painted must be undoable. Water is a hold-and-drag tool, so
 // one slipped gesture used to flood opened land permanently.

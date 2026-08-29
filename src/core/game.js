@@ -159,7 +159,10 @@ if(!load()){
   genWorld(S.seed); recompute(); rollWishes();
 }
 recomputeServices(true);
-S.muted=true; bSound.classList.add("off");
+// Sound is on unless the player turned it off, and the chip is painted from
+// the loaded preference rather than a hardcoded mute. The ambient bed still
+// waits for a gesture: browsers refuse to start an AudioContext before one.
+bSound.classList.toggle("off",S.muted);
 elMini.classList.remove("hide");
 bMap.classList.remove("off");
 paintHud(); paintTools(); paintWishes(); drawMini(); paintGrowthPanel();

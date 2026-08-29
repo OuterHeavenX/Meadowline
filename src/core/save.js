@@ -43,7 +43,7 @@ export function save(){
   // enter Save V3, so a 4×4 Town Park is still one saved building.
   const b=[]; for(const x of S.grid||[]) if(x&&!isFacilityPart(x)&&BUILDABLE[x.type]) b.push(packBuilding(x));
   let woods=''; for(let i=0;i<S.natTree.length;i++) woods+=S.natTree[i]?'1':'0';
-  const payload=JSON.stringify({v:3,seed:S.seed,coins:Math.floor(S.coins),day:S.day,dayT:S.dayT,b,woods,terrain:packTerrain(),tutorial:S.tutorial,municipal:S.municipal,quality:S.quality,rendererMode:S.rendererMode,cityProgress:sanitizeProgression(S.cityProgress,false),mile:mileHit,granted:S.granted||0,wishes:S.wishes.map(w=>({k:w.k,slot:w.slot,t:w.t,g:w.g,r:w.r})),log:S.log.slice(0,40),history:S.history.slice(-40)});
+  const payload=JSON.stringify({v:3,seed:S.seed,coins:Math.floor(S.coins),day:S.day,dayT:S.dayT,b,woods,terrain:packTerrain(),tutorial:S.tutorial,municipal:S.municipal,quality:S.quality,rendererMode:S.rendererMode,muted:!!S.muted,cityProgress:sanitizeProgression(S.cityProgress,false),mile:mileHit,granted:S.granted||0,wishes:S.wishes.map(w=>({k:w.k,slot:w.slot,t:w.t,g:w.g,r:w.r})),log:S.log.slice(0,40),history:S.history.slice(-40)});
   if(S.diagnostics) S.diagnostics.saveBytes=payload.length; store.set(KEY,payload);
 }
 function unpackEntry(entry){ if(Array.isArray(entry)){ const[type,x,y,pop]=entry; return {type,x,y,pop,state:defaultBuildingState(type)}; } if(!entry||typeof entry!=='object') return null; return {type:entry.type,x:entry.x,y:entry.y,pop:entry.pop,state:cleanState(entry.type,entry.state)}; }
@@ -53,6 +53,10 @@ export function applySave(d){
   if(d.municipal&&typeof d.municipal==='object') S.municipal={...S.municipal,...d.municipal};
   if(['auto','high','balanced','battery'].includes(d.quality)) S.quality=d.quality;
   if(['auto','gpu','compatibility'].includes(d.rendererMode)) S.rendererMode=d.rendererMode;
+  // Older saves predate the field and were all written while sound was
+  // forced off at boot, so their silence is not a preference. Only an
+  // explicit value counts.
+  if(typeof d.muted==='boolean') S.muted=d.muted;
   S.cityProgress=sanitizeProgression(d.cityProgress,!d.cityProgress); setMileHit(d.mile||0); S.granted=d.granted||0;
   S.log=Array.isArray(d.log)?d.log.filter(e=>e&&typeof e.text==='string').slice(0,60):[]; S.history=Array.isArray(d.history)?d.history.filter(h=>h&&typeof h.day==='number').slice(-40):[];
   if(typeof d.woods==='string'&&d.woods.length===S.natTree.length) for(let i=0;i<d.woods.length;i++) S.natTree[i]=d.woods[i]==='1'?1:0;

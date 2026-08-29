@@ -34,20 +34,26 @@ check('the same key still works outside a field',armed()==='cityHall',armed());
 field.remove();
 
 // A thrown frame must cost one frame, not the session. Breaking the weather
-// object makes the render path throw for real rather than simulating it.
+// object makes the render path throw for real. The loop is driven directly
+// rather than waited on: headless rAF is sparse enough to starve a poll, which
+// made this read as a failure when the guard was working perfectly well.
 const st=w.__MEADOWLINE_STATE__;
+const runFrame=w.__MEADOWLINE_FRAME__;
 check('the fixture exposes real state',!!st&&typeof st.diagnostics?.frameCount==='number');
-const weather=st.wx,before=st.diagnostics.frameCount,errorsBefore=st.diagnostics.loopErrors||0;
-st.wx=null;
-// Both conditions are waited on together. Waiting for them in sequence doubled
-// the worst case and pushed this suite up against the CI time budget.
-await waitFor(()=>(st.diagnostics.loopErrors||0)>errorsBefore&&st.diagnostics.frameCount>before,50);
-const during=st.diagnostics.frameCount;
-check('a thrown frame is caught',(st.diagnostics.loopErrors||0)>errorsBefore,String(st.diagnostics.lastLoopError||''));
-check('the loop keeps running through the error',during>before,before+' -> '+during);
-st.wx=weather;// Recovery after the fault clears is deliberately not asserted here: headless
-// rAF stops ticking once the harness settles, so it would measure the browser
-// rather than the loop. The two checks above are the behaviour that matters.
+check('the fixture exposes the frame loop',typeof runFrame==='function');
+if(st&&typeof runFrame==='function'){
+  const weather=st.wx,before=st.diagnostics.frameCount,errorsBefore=st.diagnostics.loopErrors||0;
+  st.wx=null;
+  runFrame();
+  check('a thrown frame is caught',(st.diagnostics.loopErrors||0)===errorsBefore+1,String(st.diagnostics.lastLoopError||''));
+  check('the loop keeps running through the error',st.diagnostics.frameCount>before,before+' -> '+st.diagnostics.frameCount);
+  st.wx=weather;
+  const errorsAtRestore=st.diagnostics.loopErrors||0,framesAtRestore=st.diagnostics.frameCount;
+  runFrame();
+  check('the loop recovers once the fault clears',
+    st.diagnostics.frameCount>framesAtRestore&&(st.diagnostics.loopErrors||0)===errorsAtRestore,
+    framesAtRestore+' -> '+st.diagnostics.frameCount);
+}
 
 // The in-shell confirmation replaces eight native confirm() dialogs, so it has
 // to hold up as a real UI surface: centred, inside the viewport, thumb-sized,

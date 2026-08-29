@@ -79,6 +79,21 @@ pointer input, and clears itself when the renderer falls back to Canvas so a
 lost context cannot leave the last GPU frame's badges frozen on screen. The
 Canvas path is unchanged and keeps drawing both in-scene.
 
+## Sound
+
+Sound is on for a new valley. It was forced off at boot, so the procedural
+ambient bed, the seasonal chord, dispatch cues, bird calls and rain never
+reached a player who did not find the sound chip.
+
+Browsers refuse to start an AudioContext before the player has interacted, so
+the ambient bed waits for the first tap or key rather than being lost — no
+context is created until then. The choice is the player's and is remembered in
+Save V3 as an optional `muted` field; a save written before the field existed
+keeps sound on, because its silence was the old boot default rather than a
+preference. Leaving the tab still stops the bed, and returning now restarts it:
+previously one glance elsewhere silenced the valley for the rest of the session
+while the chip still read as on.
+
 ## Known limits and required proof
 
 - The Three path currently favors procedural geometry and shared materials over texture downloads. Further batching/LOD will be guided by physical iPhone/iPad profiling.
