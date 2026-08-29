@@ -19,7 +19,7 @@ export async function getCloudSaveSummary(){
   if(!user) return {signedIn:false,save:null};
   const supabase=await cloudClient();
   const {data,error}=await supabase.from('city_saves')
-    .select('id,slot,city_name,save_version,revision,client_saved_at,updated_at')
+    .select('id,slot,city_name,save_version,revision,client_saved_at,updated_at,payload')
     .eq('user_id',user.id).eq('slot',1).maybeSingle();
   if(error) throw error;
   if(data) writeRevision(data.revision);
@@ -77,9 +77,11 @@ export async function downloadCloudSave(){
   if(error) throw error;
   if(!data) return {status:'empty'};
   if(!data.payload||Number(data.payload.v)!==3||!Array.isArray(data.payload.b)) throw new Error('Cloud save failed Meadowline validation.');
-  store.set(KEY,JSON.stringify(data.payload));
+  const raw=JSON.stringify(data.payload);
+  store.set(KEY,raw);
+  if(store.get(KEY)!==raw) throw new Error('The cloud city downloaded, but this device could not verify the local write.');
   writeRevision(Number(data.revision)||0);
-  return {status:'downloaded',revision:Number(data.revision)||0,updatedAt:data.updated_at||null};
+  return {status:'downloaded',revision:Number(data.revision)||0,updatedAt:data.updated_at||null,payload:data.payload};
 }
 
 export async function restoreCloudHistory(historyId){
