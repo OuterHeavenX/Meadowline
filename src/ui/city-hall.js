@@ -5,6 +5,7 @@ import { CITY_STAGES, parcelStatus, unlockParcel } from '../progression/city-gro
 import { civicUpgradeStatus, upgradeCivic } from '../progression/civic-upgrades.js';
 import { getCitySummary } from '../simulation/city-summary.js';
 import { idx } from '../world/tiles.js';
+import { askConfirm } from './confirm.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
 
