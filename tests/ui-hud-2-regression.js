@@ -1,6 +1,14 @@
+import { askConfirm } from '../src/ui/confirm.js';
 const checks=[];const check=(name,pass,detail='')=>checks.push({name,pass:!!pass,detail});
-const frame=document.getElementById('game');
-await new Promise(resolve=>frame.addEventListener('load',()=>setTimeout(resolve,1300),{once:true}));
+// Polled rather than driven by load events and fixed sleeps. A load event that
+// fires before its listener attaches hangs the suite instead of failing it, and
+// headless timers are sparse enough that a fixed wait is a coin toss.
+// Bounded by iterations, not by the clock: headless pauses the virtual clock
+// when its budget runs out, so a Date.now() deadline can stop advancing and
+// spin forever. A tick count always terminates and always reports.
+const waitFor=async(fn,ticks=100)=>{for(let i=0;i<ticks;i++){try{ if(fn()) return true; }catch(e){} await new Promise(r=>setTimeout(r,50));}return false;};
+const frame=document.getElementById('game');const booted=await waitFor(()=>frame.contentDocument?.getElementById('build-tray')?.classList.contains('open'));
+check('the build fixture finishes booting',booted);
 const d=frame.contentDocument,w=frame.contentWindow;
 check('application boots',d.documentElement.dataset.boot==='pass');
 check('real coins are displayed',d.getElementById('s-coins').textContent===String(Math.floor(w.__MEADOWLINE_STATE__?.coins??Number(d.getElementById('s-coins').textContent))));
@@ -13,8 +21,72 @@ check('safe-area dock exists',getComputedStyle(d.querySelector('.dock')).positio
 check('no Level 5 text exists',!d.body.textContent.includes('Level 5'));
 check('main menu has real actions',!!d.getElementById('b-start')&&!!d.getElementById('menu-new')&&!!d.getElementById('menu-settings'));
 check('document has no horizontal overflow',d.documentElement.scrollWidth<=d.documentElement.clientWidth,d.documentElement.scrollWidth+' / '+d.documentElement.clientWidth);
+// Keystrokes typed into a field must not reach the map. Dispatching on a real
+// input inside the booted app covers the wiring, not just the policy helper.
+const armed=()=>[...d.querySelectorAll('#tools .tool,#modes .tool')].find(b=>b.classList.contains('on'))?.dataset.id||'';
+const key=(k,target)=>target.dispatchEvent(new w.KeyboardEvent('keydown',{key:k,bubbles:true}));
+const field=d.createElement('input');field.type='email';d.body.appendChild(field);field.focus();
+const toolBeforeTyping=armed();
+key('h',field);key('c',field);key('r',field);
+check('typing in a field does not change the build tool',armed()===toolBeforeTyping,armed());
+key('h',d.body);
+check('the same key still works outside a field',armed()==='cityHall',armed());
+field.remove();
+
+// A thrown frame must cost one frame, not the session. Breaking the weather
+// object makes the render path throw for real. The loop is driven directly
+// rather than waited on: headless rAF is sparse enough to starve a poll, which
+// made this read as a failure when the guard was working perfectly well.
+const st=w.__MEADOWLINE_STATE__;
+const runFrame=w.__MEADOWLINE_FRAME__;
+check('the fixture exposes real state',!!st&&typeof st.diagnostics?.frameCount==='number');
+check('the fixture exposes the frame loop',typeof runFrame==='function');
+if(st&&typeof runFrame==='function'){
+  const weather=st.wx,before=st.diagnostics.frameCount,errorsBefore=st.diagnostics.loopErrors||0;
+  st.wx=null;
+  runFrame();
+  check('a thrown frame is caught',(st.diagnostics.loopErrors||0)===errorsBefore+1,String(st.diagnostics.lastLoopError||''));
+  check('the loop keeps running through the error',st.diagnostics.frameCount>before,before+' -> '+st.diagnostics.frameCount);
+  st.wx=weather;
+  const errorsAtRestore=st.diagnostics.loopErrors||0,framesAtRestore=st.diagnostics.frameCount;
+  runFrame();
+  check('the loop recovers once the fault clears',
+    st.diagnostics.frameCount>framesAtRestore&&(st.diagnostics.loopErrors||0)===errorsAtRestore,
+    framesAtRestore+' -> '+st.diagnostics.frameCount);
+}
+
+// The in-shell confirmation replaces eight native confirm() dialogs, so it has
+// to hold up as a real UI surface: centred, inside the viewport, thumb-sized,
+// and cancelling by default rather than committing. askConfirm() opens the
+// dialog synchronously, so nothing here waits on a timer.
+const pending=askConfirm({title:'Remove the Fire Station?',body:'You get 260 coins back of the 520 it cost.',confirmLabel:'Remove',tone:'danger'});
+const dlg=document.querySelector('.ml-confirm');check('the confirmation opens as a modal',!!dlg?.open&&dlg.matches(':modal'));
+if(dlg?.open){
+  const r=dlg.getBoundingClientRect();
+  // clientWidth, not innerWidth: innerWidth includes the scrollbar, which
+  // would read a correctly centred dialog as off-centre.
+  const vw=document.documentElement.clientWidth;
+  check('the confirmation stays inside the viewport',r.left>=-0.5&&r.right<=vw+0.5,Math.round(r.left)+'..'+Math.round(r.right)+' of '+vw);
+  check('the confirmation is centred',Math.abs(r.left-(vw-r.right))<2,Math.round(r.left)+' vs '+Math.round(vw-r.right));
+  check('its actions are thumb-sized',[...dlg.querySelectorAll('button')].every(b=>b.getBoundingClientRect().height>=44));
+  check('cancel holds focus, not the destructive action',document.activeElement===dlg.querySelector('.ml-confirm-cancel'));
+  check('the destructive action is marked',dlg.querySelector('.ml-confirm-go').classList.contains('danger'));
+  check('it reads as a question, not an alert',dlg.textContent.includes('Remove the Fire Station?')&&dlg.textContent.includes('260 coins back'));
+}
+// Awaiting is safe only because the dialog exists and is being closed here; a
+// missing dialog would strand the promise, so that case reports and moves on.
+// Dismissed the way a player does it, by pressing Cancel, rather than by
+// calling close() directly: the button is the path that has to work.
+if(dlg?.open){
+  dlg.querySelector('.ml-confirm-cancel').click();
+  check('dismissing resolves as a refusal',(await pending)===false);
+}else{
+  check('dismissing resolves as a refusal',(await pending)===false,'dialog never opened');
+}
+
 frame.src='../?uitest=cityhall';
-await new Promise(resolve=>frame.addEventListener('load',()=>setTimeout(resolve,900),{once:true}));
+const hallReady=await waitFor(()=>frame.contentDocument?.querySelectorAll('[data-cityhall-nav]')?.length===7);
+check('the City Hall fixture finishes rendering',hallReady);
 const hall=frame.contentDocument;
 check('City Hall uses responsive section navigation',hall.querySelectorAll('[data-cityhall-nav]').length===7);
 check('City Hall maximum is Level 4',hall.querySelector('.cityhall-hero')?.textContent.includes('Level 4'));

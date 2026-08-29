@@ -46,7 +46,7 @@ export function toggleGrowth(force){
 
 bGrowth?.addEventListener('click',()=>toggleGrowth());
 bClose?.addEventListener('click',()=>toggleGrowth(false));
-elGrowthBody?.addEventListener('click',e=>{
+elGrowthBody?.addEventListener('click',async e=>{
   const btn=e.target.closest('[data-parcel]');
   if(!btn) return;
   const id=btn.dataset.parcel;
@@ -57,7 +57,7 @@ elGrowthBody?.addEventListener('click',e=>{
     return;
   }
   if(!st.coinsOk){ toast('You need '+st.parcel.cost+' coins to open '+st.parcel.name+'.'); return; }
-  if(!confirm('Open '+st.parcel.name+' for '+st.parcel.cost+' coins?')) return;
+  if(!await askConfirm({title:'Open '+st.parcel.name+'?',body:'This costs '+st.parcel.cost+' coins and cannot be undone.',confirmLabel:'Open land'})) return;
   const r=unlockParcel(id);
   if(r.ok){ toast(r.parcel.name+' is open','gold'); save(); paintGrowthPanel(); }
   else toast(r.why||'That land cannot be opened yet.');

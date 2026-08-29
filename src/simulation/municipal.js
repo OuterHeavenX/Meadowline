@@ -10,6 +10,10 @@ import { isFacilityPart, isType } from '../world/tiles.js';
 
 const SERVICE={crime:{facility:'policeStation',vehicle:'police',color:'#356da0',work:2.8,label:'Police'},fire:{facility:'fireStation',vehicle:'fireEngine',color:'#c74f43',work:5.2,label:'Fire crew'},medical:{facility:null,vehicle:'ambulance',color:'#e5e6df',work:4.1,label:'Ambulance'}};
 const INCIDENT_LIMIT=12,SERVICE_VEHICLE_LIMIT=6;
+// An incident nobody can reach must not live forever: while one is active its
+// service refuses to report another, so a single undispatchable report would
+// silence Police, Fire or Healthcare for the rest of the session.
+const INCIDENT_TIMEOUT=90;
 function roots(type){return(S.grid||[]).filter(b=>b&&!isFacilityPart(b)&&b.type===type);}
 function entry(b){const fp=getBuildingDefinition(b.type)?.placement?.footprint||[1,1];for(let y=b.y;y<b.y+fp[1];y++)for(let x=b.x;x<b.x+fp[0];x++)for(const[dx,dy]of DIRS)if(isType(x+dx,y+dy,'road'))return{x:x+dx,y:y+dy};return null;}
 function capacity(types){return types.reduce((n,t)=>n+roots(t).reduce((a,b)=>a+(getBuildingDefinition(b.type)?.service?.capacity||0),0),0);}
@@ -43,5 +47,10 @@ export function updateMunicipal(dt){
   const crimePressure=Math.max(0,Math.min(100,pop*.28+emp.unemployed*.4-police*10)),fireRisk=Math.max(0,Math.min(100,pop*.16-fireCap*9)),healthDemand=Math.round(Math.max(0,pop*(S.wx.k==='snow'?.16:.1)));
   Object.assign(S.municipal.safety,{pressure:Math.round(crimePressure),capacity:police,active:active('crime')});Object.assign(S.municipal.fire,{risk:Math.round(fireRisk),capacity:fireCap,active:active('fire')});Object.assign(S.municipal.healthcare,{demand:healthDemand,capacity:health,patients:Math.max(0,healthDemand-health)});
   if(pop>=18&&active('crime')<1&&Math.random()<dt*crimePressure/2600)spawnMunicipalIncident('crime');if(pop>=35&&active('fire')<1&&Math.random()<dt*fireRisk/4200)spawnMunicipalIncident('fire');if(pop>=28&&active('medical')<1&&healthDemand>0&&Math.random()<dt*healthDemand/3500)spawnMunicipalIncident('medical');
-  for(const inc of S.incidents){inc.age+=dt;if(inc.resolved)inc.resolvedAge+=dt;if(!inc.dispatched&&!inc.resolved)dispatch(inc);}updateVehicles(dt);S.incidents=S.incidents.filter(i=>i.status!=='CLEARED'&&(!i.resolved||i.resolvedAge<12)).slice(-INCIDENT_LIMIT);
+  for(const inc of S.incidents){inc.age+=dt;if(inc.resolved)inc.resolvedAge+=dt;if(!inc.dispatched&&!inc.resolved)dispatch(inc);}updateVehicles(dt);S.incidents=S.incidents.filter(i=>{
+    if(i.status==='CLEARED') return false;
+    if(i.resolved) return i.resolvedAge<12;
+    if(!i.dispatched&&i.age>=INCIDENT_TIMEOUT){ if(S.diagnostics) S.diagnostics.incidentTimeouts=(S.diagnostics.incidentTimeouts||0)+1; return false; }
+    return true;
+  }).slice(-INCIDENT_LIMIT);
 }

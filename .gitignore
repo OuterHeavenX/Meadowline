@@ -1,0 +1,7 @@
+# Blender working files. tree_lowpoly.py regenerates the .blend and the .glb
+# from scratch, and Blender embeds per-session state in a .blend, so the file
+# differs byte for byte on every save while the exported .glb does not. The
+# script is the source of record; the .blend is a build product.
+assets/source/blender/*.blend
+assets/source/blender/*.blend1
+__pycache__/

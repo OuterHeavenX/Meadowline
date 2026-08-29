@@ -92,7 +92,7 @@ export function inspectCityHall(x,y){
   return true;
 }
 
-elLookBody?.addEventListener('click',e=>{
+elLookBody?.addEventListener('click',async e=>{
   if(!cityHallSelected()) return;
   const nav=e.target.closest('[data-cityhall-nav]');
   if(nav){activeSection=nav.dataset.cityhallNav;renderCityHall();return;}
@@ -100,7 +100,7 @@ elLookBody?.addEventListener('click',e=>{
   if(parcel){
     const st=parcelStatus(parcel.dataset.cityhallParcel); if(!st) return;
     if(!st.coinsOk){ toast('You need '+st.parcel.cost+' coins to open '+st.parcel.name+'.'); return; }
-    if(!confirm('Open '+st.parcel.name+' for '+st.parcel.cost+' coins?')) return;
+    if(!await askConfirm({title:'Open '+st.parcel.name+'?',body:'This costs '+st.parcel.cost+' coins and cannot be undone.',confirmLabel:'Open land'})) return;
     const r=unlockParcel(st.parcel.id);
     if(r.ok){ toast(r.parcel.name+' is open','gold'); save(); paintGrowthPanel(); renderCityHall(); }
     else toast(r.why||'That land cannot be opened yet.');
@@ -111,7 +111,7 @@ elLookBody?.addEventListener('click',e=>{
   const b=S.grid[idx(S.pick.x,S.pick.y)];
   const st=civicUpgradeStatus(b);
   if(!st.available){ toast(st.reason||'That civic upgrade is not ready yet.'); return; }
-  if(!confirm('Upgrade to '+st.next.name+' for '+st.next.cost+' coins?')) return;
+  if(!await askConfirm({title:'Upgrade to '+st.next.name+'?',body:'This costs '+st.next.cost+' coins.',confirmLabel:'Upgrade'})) return;
   const r=upgradeCivic(b);
   if(!r.ok){ toast(r.why||'The civic center could not be upgraded.'); return; }
   toast(r.upgrade.name+' established','gold'); save(); renderCityHall();

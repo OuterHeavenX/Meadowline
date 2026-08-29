@@ -1,8 +1,11 @@
-import { canPlace, erase, place } from '../src/buildings/buildings.js';
+import { CONFIRM_REMOVAL_COST, canPlace, erase, place, removalIntent } from '../src/buildings/buildings.js';
 import { BUILDINGS, BUILDABLE } from '../src/buildings/registry.js';
-import { COST, H, W } from '../src/core/constants.js';
-import { KEY, KEY_OLD, KEY_V2, load, save, store } from '../src/core/save.js';
+import { COST, H, TOOLS, W } from '../src/core/constants.js';
+import { WATER_COST, paintWater, playerWaterAt, removePlayerWater } from '../src/world/landscaping.js';
+import { conflictingToolKeys, isTextEntryTarget, RESERVED_SHORTCUT_KEYS } from '../src/core/input-policy.js';
+import { KEY, KEY_OLD, KEY_V2, applySave, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
+import { AC, amb, armAmbient } from '../src/audio/audio.js';
 import { advanceEducation, educationAssignment, getEducationLevel, invalidateServices, previewEducationAt, recomputeServices, schoolStats, serviceBoundaryGeometry } from '../src/simulation/civic-services.js';
 import { outFrom, spawnCitizen, updateCitizens } from '../src/simulation/citizens.js';
 import { advanceHousing, evaluateHousingReadiness, getDesirability, housingBaseCapacity, housingCapacity, housingTaxMultiplier, housingTierIndex } from '../src/simulation/housing.js';
@@ -151,6 +154,69 @@ check('v1 migration',load()&&S.coins===222&&S.grid[idx(5,5)]?.type==='house'&&S.
 store.set(KEY,JSON.stringify({v:3,seed:2468,coins:111,day:2,dayT:.2,b:[{type:'house',x:8,y:8,pop:2,state:{housingTier:99,upgradeProgress:9,education:-5}},{type:'school',x:9,y:8,state:{level:'bad'}},{type:'not-real',x:10,y:8},{nonsense:true}]}));
 store.set(KEY_V2,''); store.set(KEY_OLD,'');
 check('malformed optional v3 state is defensive',load()&&S.grid[idx(8,8)]?.type==='house'&&getEducationLevel(S.grid[idx(8,8)])===0&&S.grid[idx(8,8)]?.state?.housingTier===3&&S.grid[idx(8,8)]?.state?.upgradeProgress===1&&S.grid[idx(9,8)]?.state?.level===1&&!S.grid[idx(10,8)]);
+
+// Sound was forced off at boot, so the procedural ambience, dispatch cues and
+// rain never reached a player who did not find the sound chip. It is on by
+// default now, the choice is the player's and it is remembered, and no
+// AudioContext is created before the gesture browsers require.
+check('sound is on for a new valley',S.muted===false);
+check('no audio context exists before a gesture',AC===null);
+check('the ambient bed waits for that gesture',amb.on===false);
+const wasMuted=S.muted;
+S.muted=true; save();
+const soundSave=JSON.parse(store.get(KEY)||'{}');
+check('the mute preference is saved',soundSave.muted===true);
+S.muted=false; applySave(soundSave);
+check('a saved mute is restored',S.muted===true);
+delete soundSave.muted;
+S.muted=false; applySave(soundSave);
+check('a save from before the field keeps sound on',S.muted===false);
+S.muted=wasMuted;
+
+// A pond the player painted must be undoable. Water is a hold-and-drag tool, so
+// one slipped gesture used to flood opened land permanently.
+const pond=firstTile(false);
+check('painted water is player water',paintWater(pond.x,pond.y).ok&&playerWaterAt(pond.x,pond.y));
+const pondCoins=S.coins;
+check('Remove takes a painted pond back',erase(pond.x,pond.y)&&S.terr[idx(pond.x,pond.y)]!==1);
+check('removing painted water refunds half',S.coins===pondCoins+Math.floor(WATER_COST/2));
+const natural=firstTile(true);
+check('the valley\u2019s own water is not player water',!playerWaterAt(natural.x,natural.y));
+check('generated water cannot be drained',!removePlayerWater(natural.x,natural.y).ok&&S.terr[idx(natural.x,natural.y)]===1);
+
+// A tap must not quietly destroy something expensive. The old gate was
+// footprint area, which asked about a 3\u00d73 Picnic Green but not about a
+// 520-coin Fire Station at 2\u00d73.
+const cheap=firstTile(false);
+place('lamp',cheap.x,cheap.y);
+check('a cheap building removes without a question',removalIntent(cheap.x,cheap.y).needsConfirm===false&&erase(cheap.x,cheap.y));
+const costly=firstTile(false);
+S.coins=5000; place('fireStation',costly.x,costly.y);
+const costlyIntent=removalIntent(costly.x,costly.y);
+check('an expensive facility asks first',costlyIntent.needsConfirm===true,String(BUILDINGS.fireStation.cost));
+check('the question names what it costs',/coins back/.test(costlyIntent.body||''));
+check('an unconfirmed removal changes nothing',!erase(costly.x,costly.y)&&!!S.grid[idx(costly.x,costly.y)]);
+check('a confirmed removal goes through',erase(costly.x,costly.y,{confirmed:true})&&!S.grid[idx(costly.x,costly.y)]);
+check('the threshold is value, not footprint',BUILDINGS.fireStation.cost>=CONFIRM_REMOVAL_COST&&BUILDINGS.fireStation.placement.footprint[0]*BUILDINGS.fireStation.placement.footprint[1]<9);
+
+// No building tool may claim a key the shell owns. The keydown handler resolves
+// tools before shell shortcuts, so a collision silently kills the shortcut:
+// Pocket Park took 'p' and the postcard button went on advertising it.
+const clashes=conflictingToolKeys(TOOLS);
+check('no tool key shadows a shell shortcut',clashes.length===0,clashes.join(','));
+check('the postcard key stays reserved',RESERVED_SHORTCUT_KEYS.has('p')&&!TOOLS.some(t=>t.key==='p'));
+check('every tool still has a key',TOOLS.every(t=>typeof t.key==='string'&&t.key.length>0));
+const keys=TOOLS.map(t=>t.key);
+check('tool keys remain unique',new Set(keys).size===keys.length);
+
+// Typing into a field must not reach the map. Without this the account panel's
+// email and password inputs retyped the build tool letter by letter.
+check('text inputs own their keystrokes',isTextEntryTarget({tagName:'INPUT'}));
+check('textareas own their keystrokes',isTextEntryTarget({tagName:'TEXTAREA'}));
+check('selects own their keystrokes',isTextEntryTarget({tagName:'SELECT'}));
+check('contenteditable owns its keystrokes',isTextEntryTarget({isContentEditable:true}));
+check('the map canvas does not swallow shortcuts',!isTextEntryTarget({tagName:'CANVAS'}));
+check('a missing target is not text entry',!isTextEntryTarget(null));
 
 const failed=checks.filter(x=>!x.pass); document.getElementById('results').textContent=JSON.stringify({pass:failed.length===0,checks},null,2);
 document.documentElement.dataset.result=failed.length?'fail':'pass';

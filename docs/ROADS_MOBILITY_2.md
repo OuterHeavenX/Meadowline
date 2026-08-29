@@ -59,6 +59,26 @@ At Rail crossings pedestrians pause while a train occupies the protected crossin
 
 No navmesh or per-citizen sidewalk graph was introduced.
 
+## Lane placement
+
+`src/transport/lanes.js` owns where an actor stands across the width of a
+street, in world tiles, and both renderers use it. Before it, only the Canvas
+renderer offset anyone, only pedestrians, and it did so in screen space after
+projection. The Three.js renderer — the one Auto selects — placed every citizen
+and every vehicle on the raw tile centre, so people and cars occupied the same
+middle line and vehicles never rotated to face travel.
+
+- pedestrians sit at ±0.42 tiles perpendicular to travel, on their stable side,
+  which is the sidewalk strip the road art draws on any exposed edge;
+- vehicles sit at ±0.18, the same hand relative to travel, so oncoming traffic
+  passes on the other side of the centre line;
+- a citizen inside a Recreation facility takes no street offset;
+- `headingAngle()` turns a vehicle mesh to face where it is going.
+
+This is presentation only. Routing, Road counts, crossing semantics, Housing
+access and City Growth are untouched: an actor's authoritative tile is still the
+tile, and the offset never leaves it.
+
 ## Vehicle network
 
 `src/simulation/mobility.js` owns runtime mobility state. `src/rendering/vehicles.js` draws it.

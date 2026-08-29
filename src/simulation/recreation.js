@@ -9,6 +9,23 @@ let dirty=true;
 let lastPopulationSignature='';
 const connectivityCache=new Map();
 
+/* ---------- how much a public space is worth ----------
+   Registry `quality` existed from the start but only ever broke ties when
+   sorting candidate facilities, so it never reached the player: a resident
+   served by a 1x1 Pocket Green got exactly the mood and desirability of one
+   served by a 4x4 Town Park. That made the legacy tile strictly dominant and
+   left the five facilities Recreation 2.0 added with no mechanical reason to
+   exist.
+
+   The factor scales the existing bounded contributions rather than adding to
+   them, so the documented maxima (+12 Mood, +6 Desirability) still stand and
+   are simply earned by better public space. Housing thresholds, capacities,
+   tax multipliers, timers and the non-downgrade rule are untouched. */
+export const RECREATION_QUALITY_FLOOR=0.7;
+export function recreationQualityFactor(quality){
+  return clamp(RECREATION_QUALITY_FLOOR+((Number(quality)||1)-1)*0.6,RECREATION_QUALITY_FLOOR,1);
+}
+
 function key(x,y){ return x+','+y; }
 function providerKey(b){ return key(b.x,b.y); }
 function houseKey(h){ return key(h.x,h.y); }
@@ -140,7 +157,7 @@ export function recomputeRecreation(force=false){
   let demand=0,served=0;
   for(const h of ordered){
     const hd=Math.max(0,h.pop|0); demand+=hd;
-    let remaining=hd,hs=0;
+    let remaining=hd,hs=0,qualitySum=0;
     const used=[];
     for(const c of candidatesByHome.get(h)||[]){
       if(remaining<=0) break;
@@ -148,13 +165,19 @@ export function recomputeRecreation(force=false){
       if(!spare) continue;
       const take=Math.min(remaining,spare);
       c.p.served+=take; hs+=take; remaining-=take;
+      // Weighted by the places actually taken, so a household drawing on one
+      // good park and one poor one lands between the two.
+      qualitySum+=take*c.p.quality;
       used.push({key:providerKey(c.p.root),served:take,entry:c.entry});
     }
     served+=hs;
     const satisfaction=hd?Math.round(clamp(hs/hd,0,1)*100):100;
+    const quality=hs?qualitySum/hs:0;
     if(!h.state||typeof h.state!=='object') h.state={};
     h.state.recreationSatisfaction=satisfaction;
-    assignments[houseKey(h)]={house:h,demand:hd,served:hs,satisfaction,providers:used,nearest:(candidatesByHome.get(h)||[])[0]?.p||null};
+    // Quality is derived from the registry every pass, so it is deliberately
+    // not persisted: no save field, no migration.
+    assignments[houseKey(h)]={house:h,demand:hd,served:hs,satisfaction,quality,providers:used,nearest:(candidatesByHome.get(h)||[])[0]?.p||null};
   }
 
   const capacity=Object.values(providers).reduce((n,p)=>n+p.capacity,0);
@@ -177,17 +200,21 @@ export function recomputeRecreation(force=false){
 
 export function recreationAssignment(h){
   recomputeRecreation();
-  return S.services?.recreation?.assignments?.[houseKey(h)]||{house:h,demand:Math.max(0,h?.pop|0),served:0,satisfaction:0,providers:[],nearest:null};
+  return S.services?.recreation?.assignments?.[houseKey(h)]||{house:h,demand:Math.max(0,h?.pop|0),served:0,satisfaction:0,quality:0,providers:[],nearest:null};
 }
 
 export function recreationStatus(h){
   const a=recreationAssignment(h), sat=a.satisfaction||0;
-  if(!a.demand) return {label:'No demand yet',detail:'This home is empty.',satisfaction:100,assignment:a};
-  if(sat>=90) return {label:'Excellent Recreation',detail:'Nearby public space has comfortable room.',satisfaction:sat,assignment:a};
-  if(sat>=65) return {label:'Good Recreation',detail:'Nearby recreation is serving most residents.',satisfaction:sat,assignment:a};
-  if(sat>=35) return {label:'Limited Recreation',detail:'Nearby recreation is crowded or only partly available.',satisfaction:sat,assignment:a};
-  if(a.nearest) return {label:'Poor Recreation',detail:'A nearby facility exists, but access or capacity is limited.',satisfaction:sat,assignment:a};
-  return {label:'No Recreation access',detail:'No connected public recreation space is within walking reach.',satisfaction:0,assignment:a};
+  // An empty home has no service to judge, so it keeps the contribution it has
+  // always had rather than being scaled by a quality it never received.
+  const factor=a.demand&&a.served?recreationQualityFactor(a.quality):1;
+  const base={satisfaction:sat,assignment:a,quality:a.quality||0,qualityFactor:factor};
+  if(!a.demand) return {label:'No demand yet',detail:'This home is empty.',...base,satisfaction:100,qualityFactor:1};
+  if(sat>=90) return {label:'Excellent Recreation',detail:'Nearby public space has comfortable room.',...base};
+  if(sat>=65) return {label:'Good Recreation',detail:'Nearby recreation is serving most residents.',...base};
+  if(sat>=35) return {label:'Limited Recreation',detail:'Nearby recreation is crowded or only partly available.',...base};
+  if(a.nearest) return {label:'Poor Recreation',detail:'A nearby facility exists, but access or capacity is limited.',...base};
+  return {label:'No Recreation access',detail:'No connected public recreation space is within walking reach.',...base,satisfaction:0};
 }
 
 export function recreationFacilityStats(root){

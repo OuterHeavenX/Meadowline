@@ -5,6 +5,7 @@ import { getBuildingDefinition } from '../buildings/registry.js';
 import { isTileUnlocked } from '../progression/city-growth.js';
 import { isBridge } from '../transport/bridges.js';
 import { idx,isFacilityPart,isType } from '../world/tiles.js';
+import { CANOPY_GREENS, TREE_TRIANGLES, TRUNK_COLOR, treeAsset } from './tree-asset.js';
 
 const materials=new Map(), geometries=new Map();
 const C={
@@ -44,14 +45,112 @@ function road(parent,x,z,b){const mask=roadMask(x,z),kind=roadKind(mask),wet=S.w
 }
 function rail(parent,x,z){const mask=roadMask(x,z,'rail'),lift=isBridge(x,z)?.22:0,ew=!!(mask&10),steel=mat('#697176',.3,.58),tie=mat('#574b42');box(parent,x,lift,z,.98,.045,.74,mat('#806f62'),false);if(ew){for(let q=-.4;q<=.4;q+=.2)box(parent,x+q,lift+.05,z,.045,.05,.72,tie,false);for(const q of[-.23,.23])box(parent,x,lift+.1,z+q,.98,.04,.04,steel,false);}else{for(let q=-.4;q<=.4;q+=.2)box(parent,x,lift+.05,z+q,.72,.05,.045,tie,false);for(const q of[-.23,.23])box(parent,x+q,lift+.1,z,.04,.04,.98,steel,false);}}
 
-function tree(parent,x,z,seed,scale=1,compact=false){const nearDevelopment=[[-1,0],[1,0],[0,-1],[0,1]].some(([dx,dz])=>S.grid[idx(clamp(Math.round(x+dx),0,W-1),clamp(Math.round(z+dz),0,H-1))]);const s=scale*(nearDevelopment?.78:1),variant=Math.abs(seed)%4;const greens=['#397b4f','#4b9158','#62a05d','#2f6c4b'];if(!compact)cyl(parent,x,0,z,.06*s,.45*s,mat(C.trunk),7);if(variant===0||variant===3)cone(parent,x,compact?.08*s:.34*s,z,.38*s,.95*s,mat(greens[variant]),7);else{sphere(parent,x,compact?.48*s:.78*s,z,.4*s,mat(greens[variant]));if(!compact)sphere(parent,x-.18*s,.67*s,z+.08*s,.25*s,mat(greens[(variant+1)%4]));}}
+/* Trees are collected rather than drawn. Every one in the valley is the same
+   authored mesh, so emitting them as two instanced meshes at the end of the
+   build costs two draw calls instead of one group per tree - which is both
+   cheaper than the procedural version it replaces and the only way the
+   authored geometry is affordable at a couple of hundred trees.
+
+   Coordinates arrive local to a parent group for park and placed trees, and
+   absolute for the natural ones. Instancing needs absolute, so the parent
+   offset is added here; that also fixes the neighbour test below, which was
+   reading local coordinates as grid indices for park trees and clamping the
+   nonsense away rather than failing. */
+const pendingTrees=[];
+function tree(parent,x,z,seed,scale=1){
+  const ax=(parent?.position?.x||0)+x,az=(parent?.position?.z||0)+z;
+  const nearDevelopment=[[-1,0],[1,0],[0,-1],[0,1]].some(([dx,dz])=>S.grid[idx(clamp(Math.round(ax+dx),0,W-1),clamp(Math.round(az+dz),0,H-1))]);
+  pendingTrees.push({x:ax,z:az,s:scale*(nearDevelopment?.78:1),seed});
+}
+
+const UP=new THREE.Vector3(0,1,0);
+function canopyMat(){
+  const key='canopy:instanced';
+  if(!materials.has(key))materials.set(key,new THREE.MeshStandardMaterial({color:'#ffffff',roughness:.78,vertexColors:true}));
+  return materials.get(key);
+}
+function emitTrees(parent){
+  if(!pendingTrees.length)return;
+  const {trunk,canopy}=treeAsset(),count=pendingTrees.length;
+  const trunkMesh=new THREE.InstancedMesh(trunk,mat(TRUNK_COLOR,.88),count);
+  const canopyMesh=new THREE.InstancedMesh(canopy,canopyMat(),count);
+  const matrix=new THREE.Matrix4(),quat=new THREE.Quaternion(),pos=new THREE.Vector3(),scl=new THREE.Vector3(),col=new THREE.Color();
+  for(let i=0;i<count;i++){
+    const t=pendingTrees[i];
+    // Eight yaw steps off the seed. One authored mesh repeated at a single
+    // angle reads as wallpaper; turning each one hides that it is the same
+    // tree, which is the whole reason a single mesh is acceptable here.
+    quat.setFromAxisAngle(UP,(Math.abs(t.seed)%8)*(Math.PI/4));
+    pos.set(t.x,0,t.z);
+    scl.set(t.s,t.s,t.s);
+    matrix.compose(pos,quat,scl);
+    trunkMesh.setMatrixAt(i,matrix);
+    canopyMesh.setMatrixAt(i,matrix);
+    col.set(CANOPY_GREENS[Math.abs(t.seed)%CANOPY_GREENS.length]);
+    canopyMesh.setColorAt(i,col);
+  }
+  trunkMesh.castShadow=canopyMesh.castShadow=true;
+  trunkMesh.receiveShadow=canopyMesh.receiveShadow=true;
+  parent.add(trunkMesh,canopyMesh);
+  S.diagnostics.treeTriangles=count*TREE_TRIANGLES;
+}
+
 function lotBase(g,w,d){box(g,0,.005,0,w,.055,d,mat('#78a961'),false);path(g,0,d*.32,.22,d*.32);}
 function house(g,b){const seed=b.seed||0,tier=clamp(b.state?.housingTier||1,1,3),district=Math.abs(Math.floor(b.x/4)+Math.floor(b.y/4)),walls=['#ead8b8','#d8c7a9','#c8d4c7','#e4bea8'][Math.abs(seed)%4],roofs=['#8c5042','#50637a','#745649','#a5654d'],roof=mat(roofs[(district+Math.abs(seed)%2)%roofs.length],.88);lotBase(g,.94,.94);
   if(tier===1){box(g,0,.06,-.05,.7,.46,.62,mat(walls));gable(g,0,.52,-.05,.76,.68,.25,roof);box(g,-.2,.52,.02,.09,.26,.09,mat('#74564a'));path(g,0,.34,.2,.24);box(g,0,.06,.31,.4,.08,.16,mat('#b99b76'));door(g,0,.14,.397);window(g,-.22,.2,.267,'z',seed%2===0);window(g,.22,.2,.267,'z',seed%3===0);hedge(g,-.35,.28,.25);}
   if(tier===2){box(g,-.07,.06,-.04,.72,.7,.64,mat(walls));gable(g,-.07,.76,-.04,.78,.7,.28,roof,seed%2===0);box(g,.29,.06,.15,.25,.42,.3,mat(walls));gable(g,.29,.48,.15,.29,.34,.14,roof);path(g,.2,.35,.22,.22);door(g,.2,.14,.39);for(const x of[-.25,.02,.27])window(g,x,.22,.285,'z',(seed+x*10)%3>0);for(const x of[-.22,.12])window(g,x,.52,.285,'z',seed%2===0);hedge(g,-.37,.31,.3);hedge(g,.37,-.25,.25);}
   if(tier===3){box(g,-.08,.06,-.04,.78,.76,.68,mat(walls));box(g,.29,.06,.12,.28,.56,.38,mat(walls));gable(g,-.08,.82,-.04,.84,.74,.3,roof);gable(g,.29,.62,.12,.34,.44,.2,roof,true);box(g,-.28,.82,.02,.1,.28,.1,mat('#6c5246'));path(g,.14,.38,.25,.2);box(g,.13,.06,.32,.52,.09,.18,mat('#b79b7c'));door(g,.14,.15,.415,.2,.32,'#634839');for(const y of[.24,.55])for(const x of[-.3,-.04,.25])window(g,x,y,.305,'z',(seed+Math.round(x*10)+Math.round(y*10))%3!==0);hedge(g,-.4,.34,.35);hedge(g,.4,-.28,.3);for(const x of[-.43,.43])box(g,x,.03,.05,.035,.22,.7,mat('#d7d0bd'),false);}
 }
-function storefront(g,type,seed){const colors={cafe:'#c98666',market:'#9db7a5',bakery:'#d8b56f',station:'#aaa99e'},wall=colors[type]||'#c8c3b2',accent=type==='cafe'?'#7e3f36':type==='market'?'#4f765e':type==='bakery'?'#9a633d':'#576b76';lotBase(g,.94,.94);box(g,0,.06,-.05,.78,.62,.66,mat(wall));if(type==='station')gable(g,0,.68,-.05,.84,.72,.24,mat('#4e5964'));else box(g,0,.68,-.05,.82,.12,.7,mat('#5d5b59'));box(g,0,.43,.292,.68,.14,.045,mat(accent),false);box(g,0,.15,.31,.56,.26,.04,mat(C.glass,.25,.08),false);for(const x of[-.23,.23])box(g,x,.42,.335,.18,.07,.08,mat(accent),false);path(g,0,.37,.45,.18);if(type==='cafe')for(const x of[-.25,.25]){cyl(g,x,.03,.39,.06,.04,mat('#795a46'),8);cyl(g,x,.07,.39,.015,.12,mat('#5d4d42'),6);}if(type==='bakery')cyl(g,-.27,.68,-.12,.055,.28,mat('#695246'),7);}
+function storefront(g,type,seed){const colors={cafe:'#c98666',market:'#9db7a5',bakery:'#d8b56f',station:'#aaa99e'},wall=colors[type]||'#c8c3b2',accent=type==='cafe'?'#7e3f36':type==='market'?'#4f765e':type==='bakery'?'#9a633d':'#576b76';
+  // Four trades used to share one box with a different paint colour, which read
+  // as the same shop four times over at play distance. Each keeps the shared
+  // storefront grammar — lot, frontage, awning, glazing — and then carries one
+  // silhouette cue that is legible from across the map.
+  lotBase(g,.94,.94);
+  if(type==='market'){
+    // An open stall: low counter, tall canopy on posts, crates out front.
+    box(g,0,.06,-.12,.76,.34,.5,mat(wall));
+    for(const x of[-.34,.34])for(const z of[-.34,.18])cyl(g,x,.06,z,.028,.62,mat('#7d6b52'),6);
+    box(g,0,.66,-.08,.9,.05,.78,mat(accent),false);
+    for(const q of[-.27,0,.27])box(g,q,.71,-.08,.12,.03,.78,mat('#f0ece0'),false);
+    for(const[cx,cz]of[[-.24,.3],[0,.34],[.26,.29]])box(g,cx,.06,cz,.17,.13,.15,mat('#a98c63'),false);
+    path(g,0,.42,.5,.14);
+    return;
+  }
+  if(type==='bakery'){
+    // Steep loaf-brown roof, a big oven chimney and a hanging sign.
+    box(g,0,.06,-.05,.74,.56,.62,mat(wall));
+    gable(g,0,.62,-.05,.8,.68,.3,mat('#8d5a3c'));
+    cyl(g,-.28,.62,-.2,.07,.36,mat('#7b6152'),7);
+    box(g,0,.2,.3,.5,.22,.04,mat(C.glass,.25,.08),false);
+    box(g,.3,.44,.31,.03,.16,.03,mat('#6c5545'),false);
+    box(g,.3,.36,.33,.22,.11,.03,mat(accent),false);
+    path(g,0,.4,.42,.16);
+    return;
+  }
+  if(type==='station'){
+    // Long platform, deep canopy and a platform clock.
+    box(g,0,.05,.28,.94,.09,.32,mat('#c3bdb0'),false);
+    box(g,0,.06,-.14,.8,.6,.5,mat(wall));
+    gable(g,0,.66,-.14,.88,.6,.26,mat('#4e5964'));
+    for(const x of[-.36,.36])cyl(g,x,.14,.28,.026,.5,mat('#6f7a80'),6);
+    box(g,0,.64,.28,.92,.045,.4,mat('#5d6a72'),false);
+    cyl(g,0,.5,.11,.075,.03,mat('#f2efe4'),12);
+    box(g,0,.18,.12,.56,.26,.04,mat(C.glass,.25,.08),false);
+    return;
+  }
+  // Cafe: the shared storefront, plus a real terrace with parasols.
+  box(g,0,.06,-.08,.72,.58,.6,mat(wall));
+  box(g,0,.64,-.08,.78,.11,.66,mat('#5d5b59'));
+  box(g,0,.4,.24,.62,.13,.045,mat(accent),false);
+  box(g,0,.14,.25,.5,.24,.04,mat(C.glass,.25,.08),false);
+  for(const x of[-.28,.28]){
+    cyl(g,x,.02,.4,.055,.03,mat('#795a46'),8);
+    cyl(g,x,.05,.4,.014,.16,mat('#5d4d42'),6);
+    cyl(g,x,.21,.4,.15,.02,mat(accent),9);
+  }
+  path(g,0,.42,.4,.14);
+}
 function civic(g,type,b,fp){const w=fp[0]*.82,d=fp[1]*.82,level=b.state?.level||1;lotBase(g,fp[0]*.94,fp[1]*.94);const wall=type==='policeStation'?'#a9c5cf':type==='fireStation'?'#d79a86':type==='school'?'#d9c39a':'#e1dfd5',accent=type==='policeStation'?C.blue:type==='fireStation'?C.red:type==='hospital'||type==='clinic'?'#b74348':'#92784f';
   if(type==='hospital'){box(g,-.35,.06,0,w*.6,1.25,d*.78,mat(wall));box(g,.55,.06,.1,w*.28,.78,d*.62,mat(wall));box(g,-.35,1.31,0,w*.62,.12,d*.8,mat('#d3d5d1'));box(g,.55,.84,.1,w*.3,.1,d*.64,mat('#d3d5d1'));box(g,.55,.2,d*.34,w*.18,.45,.04,mat(accent));box(g,.55,.38,d*.365,.4,.12,.045,mat(accent),false);path(g,.55,d*.43,.55,.42);for(const y of[.28,.62,.96]){for(let x=-w*.5;x<w*.1;x+=.32)window(g,x,y,d*.315,'z',(b.seed+x*10+y*10)%3!==0);for(let z=-d*.24;z<d*.25;z+=.34)window(g,-.35-w*.305,y,z,'x',(b.seed+z*10+y*10)%3!==0);}for(const x of[-.55,-.25])box(g,x,1.43,-.15,.18,.12,.18,mat('#768084',.45,.35));cyl(g,.55,.96,-.15,.07,.22,mat(accent),12);return;}
   const h=type==='cityHall'?.7+level*.12:type==='school'?.78:type==='fireStation'?.82:.72;box(g,0,.06,0,w*.8,h,d*.72,mat(wall));if(type==='fireStation'){for(const x of[-w*.22,w*.22])box(g,x,.1,d*.37,w*.32,.5,.045,mat('#9d443d'),false);box(g,-w*.32,.06,-d*.2,w*.18,1.15,d*.25,mat(wall));box(g,-w*.32,1.21,-d*.2,w*.21,.1,d*.28,mat(accent));path(g,0,d*.43,w*.72,.42);}
@@ -70,6 +169,27 @@ function terrain(parent){box(parent,(W-1)/2,-.6,(H-1)/2,W+.8,.48,H+.8,mat('#455a
   for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(S.terr[idx(x,y)]===1){const mask=waterMask(x,y),shore=mat(C.shore,.95);for(const [bit,dx,dz,w,d]of[[1,0,-.47,.96,.07],[2,.47,0,.07,.96],[4,0,.47,.96,.07],[8,-.47,0,.07,.96]])if(!(mask&bit))box(parent,x+dx,-.07,y+dz,w,.055,d,shore,false);for(const [a,b,dx,dz]of[[1,8,-.46,-.46],[1,2,.46,-.46],[4,8,-.46,.46],[4,2,.46,.46]])if(!(mask&a)&&!(mask&b))cyl(parent,x+dx,-.072,y+dz,.105,.058,shore,10);if((x*13+y*7+S.seed)%11===0){for(const q of[-.035,.035])cyl(parent,x+.32+q,-.05,y+.3,.012,.2,mat('#547750'),5);}}
 }
 
-export function buildCohesiveWorld(parent){terrain(parent);const treeLimit=S.cam.z<.72?110:230;let visibleTrees=0;for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=idx(x,y),b=S.grid[i],treeHash=(x*19+y*31+S.seed);if(b?.type==='road')road(parent,x,y,b);else if(b?.type==='rail')rail(parent,x,y);if(S.natTree[i]&&visibleTrees<treeLimit&&(isTileUnlocked(x,y)?treeHash%4!==0:treeHash%3!==0)){tree(parent,x,y,i,.65+((i*17)%20)/100,true);visibleTrees++;}}for(const b of S.grid)if(b&&!isFacilityPart(b)&&b.type!=='road'&&b.type!=='rail')building(parent,b);S.diagnostics.rendererMaterials=materials.size;S.diagnostics.visibleTrees=visibleTrees;}
+export function buildCohesiveWorld(parent){
+  terrain(parent);
+  pendingTrees.length=0;
+  // Was 110 trees when zoomed out and 230 in, because each one cost its own
+  // group and meshes. Instanced, the whole valley is two draw calls whatever
+  // the count, so the cap only exists now to bound the instance buffers.
+  const treeLimit=900;
+  let visibleTrees=0;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const i=idx(x,y),b=S.grid[i],treeHash=(x*19+y*31+S.seed);
+    if(b?.type==='road')road(parent,x,y,b);
+    else if(b?.type==='rail')rail(parent,x,y);
+    if(S.natTree[i]&&visibleTrees<treeLimit&&(isTileUnlocked(x,y)?treeHash%4!==0:treeHash%3!==0)){
+      tree(parent,x,y,i,.65+((i*17)%20)/100);
+      visibleTrees++;
+    }
+  }
+  for(const b of S.grid)if(b&&!isFacilityPart(b)&&b.type!=='road'&&b.type!=='rail')building(parent,b);
+  emitTrees(parent);
+  S.diagnostics.rendererMaterials=materials.size;
+  S.diagnostics.visibleTrees=visibleTrees;
+}
 export function visualDescriptor(b){if(!b)return null;if(b.type==='house')return{archetype:['cottage','town-home','established-home'][clamp((b.state?.housingTier||1)-1,0,2)],variant:Math.abs(b.seed||0)%4};return{archetype:b.type,variant:Math.abs(b.seed||0)%4};}
 export function artMetrics(){return{materials:materials.size,geometries:geometries.size};}

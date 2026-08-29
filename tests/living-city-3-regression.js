@@ -1,12 +1,14 @@
 import { restoreFacilityOccupancy } from '../src/buildings/buildings.js';
 import { FEEDBACK_LIMIT, emitFeedback, updateFeedback } from '../src/simulation/feedback.js';
 import { recomputeEmployment } from '../src/simulation/employment.js';
-import { updateMunicipal } from '../src/simulation/municipal.js';
+import { spawnMunicipalIncident, updateMunicipal } from '../src/simulation/municipal.js';
 import { KEY, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
 import { resetProgression } from '../src/progression/city-growth.js';
 import { genWorld } from '../src/world/map.js';
 import { recompute } from '../src/simulation/mood.js';
+import { payday } from '../src/simulation/economy.js';
+import { refreshPalette } from '../src/world/seasons.js';
 import { canPaintWater, paintWater } from '../src/world/landscaping.js';
 import { idx } from '../src/world/tiles.js';
 import { getBuildingDefinition } from '../src/buildings/registry.js';
@@ -25,6 +27,44 @@ const random=Math.random;Math.random=()=>0;updateMunicipal(1);Math.random=random
 check('municipal capacities derive from real facilities',S.municipal.safety.capacity===2&&S.municipal.fire.capacity===2&&S.municipal.healthcare.capacity>=18);
 check('shared dispatcher bounds service actors',S.serviceVehicles.length<=3&&S.incidents.length<=3);
 
+// Runtime actors belong to the world that spawned them. An incident that
+// survived genWorld could never be dispatched in the new city, and because a
+// service refuses to report a second incident while one is active, that single
+// leftover silenced Police, Fire or Healthcare for the rest of the session.
+reset();for(let x=8;x<24;x++)root('road',x,15);root('house',10,14,8);recompute();
+const stale=spawnMunicipalIncident('crime',S.grid[idx(10,14)]);
+check('a crime incident can be reported',!!stale&&S.incidents.length>0);
+genWorld(9090);
+check('a new world clears incidents',S.incidents.length===0);
+check('a new world clears ambient vehicles',S.vehicles.length===0);
+check('a new world clears service vehicles',S.serviceVehicles.length===0);
+check('a new world clears feedback',S.feedback.length===0);
+
+// An incident nobody can reach must expire rather than wedge its service.
+reset();root('house',10,14,8);recompute();
+const orphan=spawnMunicipalIncident('crime',S.grid[idx(10,14)]);
+check('an incident with no roads stays undispatched',!!orphan&&!orphan.dispatched);
+const noRandom=Math.random;Math.random=()=>1;
+for(let i=0;i<420;i++)updateMunicipal(.25);
+Math.random=noRandom;
+check('an undispatchable incident times out',S.incidents.length===0);
+
 for(let i=0;i<FEEDBACK_LIMIT+12;i++)emitFeedback(i%5,i%5,'mood','☺');check('feedback pool remains bounded',S.feedback.length===FEEDBACK_LIMIT);updateFeedback(3);check('feedback expires cleanly',S.feedback.length===0);
+
+// Payday raised one coin badge on one rotating house, which read as a stray
+// blip rather than the town being paid. Nearby badges still coalesce, so a
+// dense street sums into one rather than cluttering the map.
+reset();refreshPalette();
+for(let x=8;x<26;x++)root('road',x,15);
+for(let x=8;x<26;x+=3){const h=root('house',x,14);h.pop=4;}
+recompute();
+S.feedback=[];S.day=3;payday();
+const coins=S.feedback.filter(f=>f.kind==='coin');
+check('payday lights several homes, not one',coins.length>1,String(coins.length));
+const firstDay=coins.map(f=>f.x+','+f.y).sort().join('|');
+S.feedback=[];S.day=4;payday();
+const secondDay=S.feedback.filter(f=>f.kind==='coin').map(f=>f.x+','+f.y).sort().join('|');
+check('a different street is paid the next day',firstDay!==secondDay,firstDay+' vs '+secondDay);
+check('payday feedback stays inside the pool bound',S.feedback.length<=FEEDBACK_LIMIT);
 
 const failed=checks.filter(c=>!c.pass);document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);document.documentElement.dataset.result=failed.length?'fail':'pass';store.set(KEY,'');

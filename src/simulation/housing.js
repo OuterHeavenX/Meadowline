@@ -86,7 +86,7 @@ export function desirabilityDetails(h){
   // Recreation is a modest neighborhood-quality input. Its larger effect is
   // already visible through Mood, so this direct contribution stays bounded.
   const rec=recreationStatus(h);
-  const recValue=Math.round(clamp(rec.satisfaction,0,100)*0.06);
+  const recValue=Math.round(clamp(rec.satisfaction,0,100)*0.06*(rec.qualityFactor??1));
   if(recValue){ total+=recValue; rows.push({label:rec.label,value:recValue}); }
 
   const cafes=countNear(c.cafes,h,5), cafe=Math.min(6,cafes*2);

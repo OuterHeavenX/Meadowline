@@ -1,6 +1,7 @@
 import { BUILDINGS } from '../buildings/registry.js';
 import { H, W } from '../core/constants.js';
 import { S } from '../core/state.js';
+import { countType } from '../world/tiles.js';
 
 export const CITY_STAGES = Object.freeze([
   { id: 1, key: 'settlement', name: 'Settlement' },
@@ -173,10 +174,11 @@ export function developmentStats() {
     educationTotal += Number(house.state?.education) || 0;
   }
 
-  let roads = 0;
-  for (const building of S.grid || []) {
-    if (building?.type === 'road') roads++;
-  }
+  // One semantic Road tile is one City Growth Road tile. countType() is the
+  // authoritative counter because a Road overlaid on Rail keeps type 'rail'
+  // and carries state.roadRailCrossing; counting type === 'road' here lost
+  // those tiles and could silently close the Settlement to Village gate.
+  const roads = countType('road');
 
   return {
     population: S.pop || 0,

@@ -1,4 +1,4 @@
-import { ambientStart, ambientStop, blip } from '../audio/audio.js';
+import { ambientStart, ambientStop, armAmbient, blip } from '../audio/audio.js';
 import { save } from '../core/save.js';
 import { S } from '../core/state.js';
 import { toggleMap } from '../rendering/minimap.js';
@@ -9,6 +9,7 @@ import { refreshPalette, seasonName } from '../world/seasons.js';
 import { shortTime, timeName } from '../world/time.js';
 import { weatherName } from '../world/weather.js';
 import { cityStage, nextStageProgress, resetProgression } from '../progression/city-growth.js';
+import { askConfirm } from './confirm.js';
 import { toast } from './notify.js';
 import { closeLook } from './panels.js';
 import { postcard } from './postcard.js';
@@ -39,10 +40,13 @@ export function paintHud(){
     pct=rows.length?Math.round(rows.filter(r=>r.met).length/rows.length*100):0;
   }
   S_stageProgress?.style.setProperty('--stage-progress',pct+'%');
-  document.getElementById('menu-pop').textContent=S.pop;
-  document.getElementById('menu-stage').textContent=stage.name;
-  document.getElementById('menu-residents').textContent=S.pop;
-  document.getElementById('menu-day').textContent=S.day;
+  // paintHud runs five times a second; a missing element must skip a label,
+  // not throw and take the whole frame loop down with it.
+  const setText=(id,value)=>{ const el=document.getElementById(id); if(el) el.textContent=value; };
+  setText('menu-pop',S.pop);
+  setText('menu-stage',stage.name);
+  setText('menu-residents',S.pop);
+  setText('menu-day',S.day);
 }
 
 export const bSpeed=document.getElementById("b-speed"), bSound=document.getElementById("b-sound"),
@@ -57,14 +61,17 @@ export function toggleSound(){
   S.muted=!S.muted;
   bSound.classList.toggle("off",S.muted);
   if(S.muted) ambientStop();
-  else { blip(520,0.08); ambientStart(); }
+  else { armAmbient(); blip(520,0.08); ambientStart(); }
 }
 bSpeed.addEventListener("click",toggleSpeed);
 bSound.addEventListener("click",toggleSound);
-bSound.classList.add("off");
+bSound.classList.toggle("off",S.muted);
 bLedger.classList.add("off");
-bNew.addEventListener("click",()=>{
-  if(confirm("Start a brand new valley? This clears the town you've built.")){
+bNew.addEventListener("click",async()=>{
+  const ok=await askConfirm({title:'Start a brand new valley?',
+    body:"The town you've built is cleared and replaced with fresh land. This cannot be undone.",
+    confirmLabel:'New valley',tone:'danger'});
+  if(ok){
     resetProgression('parcel');
     genWorld((Math.random()*1e9)|0); setMileHit(0); S.granted=0; refreshPalette(); recompute(); rollWishes(); closeLook(); save(); paintGrowthPanel(); toast("A fresh valley");
   }

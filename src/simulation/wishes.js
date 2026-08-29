@@ -113,7 +113,26 @@ export function getPrimaryDevelopmentGoal(){ const id=getEligibleGoals('primary'
 function chooseOptional(exclude){ const ids=getEligibleGoals('optional').filter(id=>id!==exclude); if(!ids.length) return buildGoal('pop','optional')||buildGoal('purse','optional'); const id=ids[(Math.random()*ids.length)|0]; return buildGoal(id,'optional'); }
 export function sanitizeGoals(list){ const keep=[]; for(const raw of Array.isArray(list)?list:[]){ if(!raw||!GOAL_TYPES[raw.k]) continue; const goal={k:raw.k,slot:raw.slot==='primary'?'primary':'optional',t:String(raw.t||''),g:Number(raw.g)||0,r:Number(raw.r)||0}; if(goal.g>0&&isGoalEligible(goal)&&!keep.some(x=>x.slot===goal.slot)) keep.push(goal); } return keep.slice(0,2); }
 export function rollWishes(){ S.wishes=sanitizeGoals(S.wishes); let primary=S.wishes.find(w=>w.slot==='primary'); if(!primary){ primary=getPrimaryDevelopmentGoal(); if(primary) S.wishes.unshift(primary); } let optional=S.wishes.find(w=>w.slot==='optional'); if(!optional){ optional=chooseOptional(primary?.k); if(optional) S.wishes.push(optional); } S.wishes=S.wishes.slice(0,2); if(S.diagnostics){ S.diagnostics.goalRecomputes=(S.diagnostics.goalRecomputes||0)+1; S.diagnostics.primaryGoal=primary?.k||''; S.diagnostics.optionalGoal=optional?.k||''; } services.paintWishes(); }
-export function checkWishes(){ let granted=false; for(let i=S.wishes.length-1;i>=0;i--){ const w=S.wishes[i]; if(!GOAL_TYPES[w.k]||!isGoalEligible(w)){ S.wishes.splice(i,1); if(S.diagnostics) S.diagnostics.goalReplacements=(S.diagnostics.goalReplacements||0)+1; continue; } if(goalAt(w)>=w.g){ S.wishes.splice(i,1); S.coins+=w.r; S.granted=(S.granted||0)+1; services.toast('Town goal complete · +'+w.r+' coins','gold'); note('Town goal: '+w.t.replace(/<[^>]+>/g,'')); services.blip(784,.16,'triangle'); granted=true; } } if(granted||S.wishes.length<2) rollWishes(); else services.paintWishes(); }
+// Completion is tested before eligibility, and the order is load-bearing:
+// isGoalEligible() requires goalAt(goal) < goal.g, so a goal that has just
+// been met is never eligible. Checking eligibility first retired every
+// finished goal through the replacement branch and no reward was ever paid.
+export function checkWishes(){
+  let granted=false;
+  for(let i=S.wishes.length-1;i>=0;i--){
+    const w=S.wishes[i];
+    if(!GOAL_TYPES[w.k]){ S.wishes.splice(i,1); if(S.diagnostics) S.diagnostics.goalReplacements=(S.diagnostics.goalReplacements||0)+1; continue; }
+    if(goalAt(w)>=w.g){
+      S.wishes.splice(i,1); S.coins+=w.r; S.granted=(S.granted||0)+1;
+      services.toast('Town goal complete · +'+w.r+' coins','gold');
+      note('Town goal: '+w.t.replace(/<[^>]+>/g,''));
+      services.blip(784,.16,'triangle');
+      granted=true; continue;
+    }
+    if(!isGoalEligible(w)){ S.wishes.splice(i,1); if(S.diagnostics) S.diagnostics.goalReplacements=(S.diagnostics.goalReplacements||0)+1; }
+  }
+  if(granted||S.wishes.length<2) rollWishes(); else services.paintWishes();
+}
 
 export const MILES=[10,25,50,100,175];
 export let mileHit=0;

@@ -9,6 +9,7 @@ import { invalidateRecreation } from '../simulation/recreation.js';
 import { BUILDABLE, BUILDING_COST, defaultBuildingState, getBuildingDefinition } from './registry.js';
 import { SPANS } from '../transport/bridges.js';
 import { facilityRootAt, footprintCells, idx, inBounds, isFacilityPart, isType, isWater, isRoadRailCrossing } from '../world/tiles.js';
+import { playerWaterAt, removePlayerWater } from '../world/landscaping.js';
 import { cityStage, isBuildingUnlocked, isFootprintUnlocked, parcelAt } from '../progression/city-growth.js';
 
 export { BUILDABLE } from './registry.js';
@@ -164,12 +165,57 @@ export function place(kind,x,y){
   return true;
 }
 
-export function erase(x,y){
+// A tap should never quietly destroy something expensive. The old gate was
+// footprint area, which asked about a 3×3 Picnic Green but not about a
+// 520-coin Fire Station at 2×3. Value is what the player actually loses, so
+// that is what earns the question.
+export const CONFIRM_REMOVAL_COST=90;
+
+// Reports what removing this tile would mean, without touching the world. The
+// input layer uses it to raise the in-shell confirmation; simulation code never
+// imports the UI.
+export function removalIntent(x,y){
+  if(!inBounds(x,y)) return {ok:false};
+  if(!isFootprintUnlocked(x,y,1,1)) return {ok:false,why:'Open this land before developing it.'};
+  const i=idx(x,y),picked=S.grid[i];
+  if(!picked){
+    if(playerWaterAt(x,y)) return {ok:true,kind:'water',needsConfirm:false};
+    if(S.natTree[i]) return {ok:true,kind:'tree',needsConfirm:false};
+    return {ok:false};
+  }
+  const b=facilityRootAt(x,y);
+  if(!b) return {ok:true,kind:isFacilityPart(picked)?'orphan':'none',needsConfirm:false};
+  const def=getBuildingDefinition(b.type),name=def?.name||'facility';
+  if(isRoadRailCrossing(b)) return {ok:true,kind:'crossing',root:b,needsConfirm:false};
+  if(b.type==='cityHall') return {ok:true,kind:'building',root:b,needsConfirm:true,
+    title:'Remove Meadowline’s civic center?',
+    body:'City Growth, Town Goals and opened land all remain. You can build a new one later.',
+    confirmLabel:'Remove'};
+  const cost=costOf(b.type,b.x,b.y);
+  if(cost>=CONFIRM_REMOVAL_COST){
+    const fp=getBuildingDefinition(b.type)?.placement?.footprint||[1,1];
+    const size=fp[0]>1||fp[1]>1?' Its whole '+fp[0]+'×'+fp[1]+' footprint goes with it.':'';
+    return {ok:true,kind:'building',root:b,needsConfirm:true,
+      title:'Remove the '+name+'?',
+      body:'You get '+Math.floor(cost/2)+' coins back of the '+cost+' it cost.'+size,
+      confirmLabel:'Remove'};
+  }
+  return {ok:true,kind:'building',root:b,needsConfirm:false};
+}
+
+export function erase(x,y,{confirmed=false}={}){
   if(!inBounds(x,y)) return false;
   if(!isFootprintUnlocked(x,y,1,1)){ services.hint("Open this land before developing it.",true); return false; }
   const i=idx(x,y);
   const picked=S.grid[i];
   if(!picked){
+    // A pond the player painted is theirs to undo. Generated water is terrain.
+    if(playerWaterAt(x,y)){
+      const r=removePlayerWater(x,y);
+      if(r.ok){ services.puff(x,y); services.blip(250); return true; }
+      if(r.why) services.hint(r.why,true);
+      return false;
+    }
     if(S.natTree[i]){ S.natTree[i]=0; services.puff(x,y); services.blip(240); return true; }
     return false;
   }
@@ -179,9 +225,8 @@ export function erase(x,y){
     if(isFacilityPart(picked)){ S.grid[i]=null; if(S.diagnostics) S.diagnostics.invalidFacilityCleanup=(S.diagnostics.invalidFacilityCleanup||0)+1; return true; }
     return false;
   }
-  if(b.type==='cityHall'&&!confirm('Remove Meadowline’s civic center? City Growth, Town Goals and opened land will remain.')) return false;
-  const fp=getBuildingDefinition(b.type)?.placement?.footprint||[1,1];
-  if(fp[0]*fp[1]>=9&&!confirm('Remove the entire '+(getBuildingDefinition(b.type)?.name||'facility')+'?')) return false;
+  const intent=removalIntent(x,y);
+  if(intent.needsConfirm&&!confirmed) return false;
   if(isRoadRailCrossing(b)){
     const overlay=b.type==='rail'?'road':'rail';
     S.coins+=Math.floor((BUILDING_COST[overlay]||0)/2);

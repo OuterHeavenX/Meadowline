@@ -67,10 +67,14 @@ function recreationBlock(h){
   const nearest=a.nearest;
   const facility=nearest?.name||'None within walking reach';
   const cls=status.satisfaction>=65?'up':status.satisfaction>0?'':'dn';
+  // Why a bigger park would help, in the game's own words rather than a number.
+  const room=a.demand&&a.served&&(status.qualityFactor??1)<0.98
+    ? ' A larger public space nearby would lift this neighborhood further.'
+    : '';
   return '<h4>Recreation</h4><dl class="service">'+
     '<dt>Status</dt><dd class="'+cls+'">'+status.label+'</dd>'+
     '<dt>Residents served</dt><dd>'+a.served+' / '+a.demand+'</dd>'+
-    '<dt>Nearby space</dt><dd>'+facility+'</dd></dl><p>'+status.detail+'</p>';
+    '<dt>Nearby space</dt><dd>'+facility+'</dd></dl><p>'+status.detail+room+'</p>';
 }
 
 function housingBlock(h){
@@ -210,14 +214,14 @@ export function describe(x,y){
   return card("Meadow","Open ground",'<p>Room for anything you like.</p><dl><dt>Homes within 4</dt><dd>'+countNear("houses",x,y,4)+'</dd><dt>Recreation nearby</dt><dd>'+((S.ctx.recreation||[]).filter(r=>Math.abs(r.x-x)<=4&&Math.abs(r.y-y)<=4).length)+'</dd></dl>');
 }
 
-elLookBody.addEventListener('click',e=>{
+elLookBody.addEventListener('click',async e=>{
   const btn=e.target.closest('[data-upgrade-school]');
   if(!btn||!S.pick) return;
   const root=facilityRootAt(S.pick.x,S.pick.y),b=root||S.grid[idx(S.pick.x,S.pick.y)];
   if(!b||b.type!=="school") return;
   const st=civicUpgradeStatus(b);
   if(!st.available){ toast(st.reason||'That upgrade is not ready yet.'); return; }
-  if(!confirm('Upgrade this School to Level 2 for '+st.next.cost+' coins?')) return;
+  if(!await askConfirm({title:'Expand this School?',body:'Level 2 costs '+st.next.cost+' coins'+(st.next.capacity?' and raises capacity to '+st.next.capacity+' students':'')+'.',confirmLabel:'Expand'})) return;
   const r=upgradeCivic(b);
   if(!r.ok){ toast(r.why||'The School could not be upgraded.'); return; }
   toast('School Level 2 · capacity '+r.upgrade.capacity,'gold');

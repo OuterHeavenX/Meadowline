@@ -3,6 +3,11 @@ import { getBuildingDefinition } from '../src/buildings/registry.js';
 import { resetProgression } from '../src/progression/city-growth.js';
 import { rendererSnapshot, presentFrame, resetRendererBackend } from '../src/rendering/backend.js';
 import { renderThreeScene, resetThreeRenderer, threeSnapshot } from '../src/rendering/three-renderer.js';
+import { render } from '../src/rendering/renderer.js';
+import { resetJuiceOverlay } from '../src/rendering/overlay.js';
+import { emitFeedback, updateFeedback } from '../src/simulation/feedback.js';
+import { refreshPalette } from '../src/world/seasons.js';
+import { seedBirds, updateBirds } from '../src/world/weather.js';
 import { graphicsProfile } from '../src/rendering/capabilities.js';
 import { S } from '../src/core/state.js';
 import { AC, blip } from '../src/audio/audio.js';
@@ -21,6 +26,44 @@ S.muted=true;blip(440,.1);check('muted audio does not initialize a context',AC==
 S.quality='balanced';S.rendererMode='compatibility';resetRendererBackend();presentFrame();check('compatibility mode keeps Canvas fallback',rendererSnapshot().backend!=='webgl2-hybrid');
 S.rendererMode='gpu';resetRendererBackend();presentFrame();const gpu=rendererSnapshot();check('GPU mode initializes or safely falls back',['webgl2-hybrid','canvas2d-fallback'].includes(gpu.backend),gpu.backend);check('GPU pass never exceeds one draw call',gpu.drawCalls<=1);
 reset();S.rendererMode='gpu';resetThreeRenderer();const threeOk=renderThreeScene(),three=threeSnapshot();check('Three.js scene initializes',threeOk,three.error);if(threeOk){check('Three.js reports real geometry',three.geometries>0);check('Three.js draw calls remain bounded',three.drawCalls<900,three.drawCalls);}
+
+// Coin payouts, upgrade stars and placement puffs live in state and the Canvas
+// renderer draws them in-scene. The GPU scene has no equivalent, so on the
+// renderer Auto actually picks they were invisible: the whole feedback layer
+// existed and nobody saw it. It now comes from an overlay above the GPU canvas.
+refreshPalette();resetJuiceOverlay();
+emitFeedback(12,12,'coin',9);emitFeedback(14,12,'upgrade','★ Town Home');updateFeedback(.25);
+render();
+const juice=document.getElementById('juice-layer');
+const inkPx=(el)=>{
+  if(!el||!el.width||!el.height) return -1;
+  const data=el.getContext('2d').getImageData(0,0,el.width,el.height).data;
+  let n=0; for(let i=3;i<data.length;i+=4) if(data[i]!==0) n++;
+  return n;
+};
+const anyInk=(el)=>inkPx(el)>0;
+if(threeOk){
+  check('the GPU path draws a feedback layer',!!juice,'missing overlay canvas');
+  check('the feedback layer covers the world canvas',!!juice&&juice.width>0&&juice.height>0,juice?juice.width+'x'+juice.height:'none');
+  check('the feedback layer never takes pointer input',juice?.style.pointerEvents==='none');
+  check('the feedback layer sits below the HUD',Number(juice?.style.zIndex||0)<5);
+  check('the feedback actually reaches the screen',anyInk(juice));
+
+  // Birds, drifting motes, fireflies over public space and festival lanterns
+  // were Canvas-only too, so the GPU renderer showed a valley with no weather
+  // in it but the rain. With nothing at all pending, the layer must still be
+  // carrying ambient life.
+  S.feedback=[];S.puffs=[];
+  S.dayT=.3;seedBirds();for(let i=0;i<20;i++)updateBirds(.05);
+  render();
+  check('the GPU path draws ambient life on its own',anyInk(document.getElementById('juice-layer')),
+    'ink='+inkPx(document.getElementById('juice-layer')));
+}
+// Falling back to Canvas must not leave the last GPU frame's badges frozen on
+// screen: the Canvas path draws them in-scene and clears the overlay.
+S.rendererMode='compatibility';resetThreeRenderer();render();
+check('falling back to Canvas clears the overlay',!anyInk(document.getElementById('juice-layer')),'ink='+inkPx(document.getElementById('juice-layer')));
+S.feedback=[];
 
 for(const [kind,facility,x]of [['crime','policeStation',18],['fire','fireStation',21],['medical','clinic',26]]){const r=lifecycle(kind,facility,x);check(kind+' incident spawned',!!r.inc);check(kind+' reaches working state',r.seen.has('WORKING'),[...r.seen].join(','));check(kind+' enters return state',r.seen.has('RETURNING'),[...r.seen].join(','));check(kind+' vehicle cleans up',r.remaining===0);check(kind+' resolves only after response',r.resolved>0);}
 

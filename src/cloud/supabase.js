@@ -1,19 +1,44 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/+esm';
+// The Supabase client is fetched on demand and never during boot. A static
+// import here would put the whole module graph — game loop, renderer and save
+// system included — behind one network request, so Meadowline would not start
+// at all when the CDN is unreachable. Guest play must never touch the network.
+const CLIENT_MODULE='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/+esm';
+const OFFLINE_MESSAGE='Could not reach Meadowline cloud services. Your local city is unaffected.';
 
 const SUPABASE_URL='https://hnhpeerowianivojwqqr.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_eMJWkzvug2VhYpX9kI6Xiw_fUEae1Yj';
 
+let clientPromise=null;
+
 // Publishable browser credentials only. Never place service-role/secret keys here.
-export const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
-  auth:{
-    persistSession:true,
-    autoRefreshToken:true,
-    detectSessionInUrl:true,
-    storageKey:'meadowline.auth'
+export function cloudClient(){
+  if(!clientPromise){
+    clientPromise=import(CLIENT_MODULE)
+      .then(module=>module.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
+        auth:{
+          persistSession:true,
+          autoRefreshToken:true,
+          detectSessionInUrl:true,
+          storageKey:'meadowline.auth'
+        }
+      }))
+      .catch(()=>{ clientPromise=null; throw new Error(OFFLINE_MESSAGE); });
   }
-});
+  return clientPromise;
+}
+
+// Subscribes once the player actually opens the account panel. Returns false
+// when cloud services are unreachable so the caller can carry on regardless.
+export async function onCloudAuthChange(handler){
+  try{
+    const supabase=await cloudClient();
+    supabase.auth.onAuthStateChange(()=>handler());
+    return true;
+  }catch(e){ return false; }
+}
 
 export async function getSession(){
+  const supabase=await cloudClient();
   const {data,error}=await supabase.auth.getSession();
   if(error) throw error;
   return data.session||null;
@@ -45,12 +70,14 @@ export function friendlyAuthError(error,phase='signin'){
 }
 
 export async function signInWithPassword(email,password){
+  const supabase=await cloudClient();
   const {data,error}=await supabase.auth.signInWithPassword({email:cleanEmail(email),password:cleanPassword(password)});
   if(error) throw new Error(friendlyAuthError(error,'signin'));
   return data.session||null;
 }
 
 export async function createPasswordAccount(email,password){
+  const supabase=await cloudClient();
   const {data,error}=await supabase.auth.signUp({email:cleanEmail(email),password:cleanPassword(password)});
   if(error) throw new Error(friendlyAuthError(error,'signup'));
   return data;
@@ -58,18 +85,21 @@ export async function createPasswordAccount(email,password){
 
 export async function sendPasswordSetup(email){
   const target=cleanEmail(email);
+  const supabase=await cloudClient();
   const {error}=await supabase.auth.resetPasswordForEmail(target,{redirectTo:`${location.origin}${location.pathname}`});
   if(error) throw new Error(friendlyAuthError(error,'reset'));
   return target;
 }
 
 export async function updatePassword(password){
+  const supabase=await cloudClient();
   const {data,error}=await supabase.auth.updateUser({password:cleanPassword(password)});
   if(error) throw new Error(friendlyAuthError(error,'update'));
   return data.user||null;
 }
 
 export async function signOut(){
+  const supabase=await cloudClient();
   const {error}=await supabase.auth.signOut();
   if(error) throw error;
 }

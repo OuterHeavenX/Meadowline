@@ -3,11 +3,12 @@ import { canPlace, erase, place } from '../src/buildings/buildings.js';
 import { touchIntent } from '../src/core/input-policy.js';
 import { applySave, KEY, KEY_OLD, KEY_V2, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
-import { resetProgression } from '../src/progression/city-growth.js';
+import { developmentStats, resetProgression } from '../src/progression/city-growth.js';
 import { crossingBlockedByTrain, invalidateMobility, mobilitySnapshot, railCrossingCount, vehicleCap } from '../src/simulation/mobility.js';
 import { findPath } from '../src/transport/pathfinding.js';
 import { connectedRoadComponents, roadTiles } from '../src/transport/roads.js';
 import { railTiles } from '../src/transport/rails.js';
+import { LANE_OFFSET, SIDEWALK_OFFSET, headingAngle, headingOf, laneOffset, sidewalkOffset } from '../src/transport/lanes.js';
 import { genWorld } from '../src/world/map.js';
 import { countType, idx, isRoadRailCrossing, isType } from '../src/world/tiles.js';
 
@@ -90,6 +91,44 @@ applySave({v:3,seed:13579,coins:777,day:3,dayT:.3,b:[{type:'road',x:16,y:16}],wo
 check('old Road save loads as upgraded Road semantics',isType(16,16,'road')&&S.grid[idx(16,16)].type==='road');
 check('old Road migration deducts no coins',S.coins===777);
 check('ambient vehicles are transient save state',!Object.prototype.hasOwnProperty.call(JSON.parse(store.get(KEY)||'{}'),'vehicles'));
+
+// One semantic Road tile is one City Growth Road tile, including when the same
+// tile is also a Rail crossing. City Growth counted type === 'road' and so lost
+// every Road that had been overlaid onto Rail, which could close a stage gate.
+genWorld(20406080);resetProgression('legacy-open');S.coins=100000;
+for(let y=10;y<=18;y++)place('rail',16,y);
+for(let x=13;x<21;x++)if(x!==16)place('road',x,14);
+check('road overlays rail as a clean crossing',place('road',16,14)&&isRoadRailCrossing(S.grid[idx(16,14)]));
+check('the crossing still reads as a Road',isType(16,14,'road'));
+check('City Growth counts a Road laid over Rail',developmentStats().roads===countType('road'));
+check('City Growth agrees with Mobility on Road tiles',developmentStats().roads===mobilitySnapshot().roadTiles);
+
+// One tile reads as sidewalk / curb -> carriageway -> curb / sidewalk. Only the
+// Canvas renderer ever placed anyone accordingly, and only pedestrians; the GPU
+// path put every citizen and vehicle on the raw tile centre. These offsets are
+// world tiles so both renderers agree, and both stay inside the tile.
+const eastbound={x:10,y:10,nx:11,ny:10,px:9,py:10,side:1};
+const westbound={x:11,y:10,nx:10,ny:10,px:12,py:10,side:1};
+const walkEast=sidewalkOffset(eastbound),walkWest=sidewalkOffset(westbound);
+check('a pedestrian steps off the centre line',Math.hypot(walkEast.x,walkEast.y)>0.3);
+check('the pavement is perpendicular to travel',Math.abs(walkEast.x)<1e-9&&Math.abs(walkEast.y)>0.3,JSON.stringify(walkEast));
+check('opposing pedestrians take opposite sides',Math.sign(walkEast.y)===-Math.sign(walkWest.y));
+check('a pedestrian stays inside their own tile',Math.abs(walkEast.y)<0.5&&SIDEWALK_OFFSET<0.5);
+check('the stable side flips the pavement',Math.sign(sidewalkOffset({...eastbound,side:-1}).y)===-Math.sign(walkEast.y));
+check('a citizen inside a facility leaves the street',
+  sidewalkOffset({...eastbound,facilityLocal:{x:3,y:3}}).x===0&&sidewalkOffset({...eastbound,facilityLocal:{x:3,y:3}}).y===0);
+
+const laneEast=laneOffset(eastbound),laneWest=laneOffset(westbound);
+check('a vehicle keeps to a lane',Math.hypot(laneEast.x,laneEast.y)>0.1);
+check('oncoming traffic passes on the other side',Math.sign(laneEast.y)===-Math.sign(laneWest.y));
+check('a lane sits inside the carriageway, not on the pavement',LANE_OFFSET<SIDEWALK_OFFSET&&Math.abs(laneEast.y)<0.5);
+
+// A vehicle mesh points its local +X along travel; world Y is the scene's Z.
+check('heading points east at zero',Math.abs(headingAngle(eastbound))<1e-9,String(headingAngle(eastbound)));
+check('heading turns to face west',Math.abs(Math.abs(headingAngle(westbound))-Math.PI)<1e-9,String(headingAngle(westbound)));
+const south={x:10,y:10,nx:10,ny:11,px:10,py:9};
+check('heading turns to face south',Math.abs(headingAngle(south)+Math.PI/2)<1e-9,String(headingAngle(south)));
+check('a stalled actor still has a heading',Math.hypot(headingOf({x:5,y:5,nx:5,ny:5,px:5,py:5}).x,headingOf({x:5,y:5,nx:5,ny:5,px:5,py:5}).y)===1);
 
 const failed=checks.filter(c=>!c.pass);
 document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);

@@ -35,3 +35,20 @@ body.menu-open>.hud,body.menu-open>.corner,body.menu-open>.side,body.menu-open>.
 @media(max-width:520px){.corner #b-sound,.corner #b-map,.corner #b-growth,.corner #b-ledger,.corner #b-new{display:none}.graphics-settings{top:calc(env(safe-area-inset-top,0px) + 220px);right:8px}.corner{bottom:calc(env(safe-area-inset-bottom,0px) + 94px)}}
 .title-top{position:absolute;top:max(16px,env(safe-area-inset-top));left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right))}
 body.menu-open .graphics-settings{visibility:hidden}body.menu-open.menu-settings-open .graphics-settings{visibility:visible}.menu-settings-open .graphics-settings .settings-toggle{display:none}.menu-settings-open .graphics-settings section{position:fixed;top:76px;right:16px}
+
+/* ---------- in-shell confirmation ---------- */
+.ml-confirm{position:fixed;inset:0;margin:auto;height:fit-content;border:0;padding:0;max-width:min(360px,calc(100vw - 36px));width:calc(100vw - 36px);border-radius:var(--ui-radius);background:var(--ui-paper);color:var(--ui-ink);box-shadow:var(--ui-shadow);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.ml-confirm::backdrop{background:rgba(21,32,26,.52)}
+.ml-confirm form{padding:20px 20px 16px;margin:0;display:grid;gap:10px}
+.ml-confirm h2{margin:0;font-size:18px;font-weight:800;line-height:1.25;letter-spacing:-.01em}
+.ml-confirm p{margin:0;color:var(--ui-muted);font-size:14px}
+.ml-confirm p[hidden]{display:none}
+.ml-confirm-actions{display:flex;gap:9px;margin-top:6px}
+.ml-confirm-actions button{flex:1;min-height:44px;padding:11px 12px;border:0;border-radius:13px;font:800 14px system-ui;cursor:pointer}
+.ml-confirm-cancel{background:var(--ui-paper-2);color:var(--ui-ink);border:1px solid var(--ui-line)}
+.ml-confirm-go{background:var(--ui-green);color:#fff}
+.ml-confirm-go.danger{background:var(--ui-red)}
+.ml-confirm-actions button:focus-visible{outline:2px solid var(--ui-ink);outline-offset:2px}
+@media(prefers-reduced-motion:no-preference){.ml-confirm[open]{animation:ml-confirm-in .16s ease-out}}
+.ml-confirm.no-motion[open]{animation:none}
+@keyframes ml-confirm-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}

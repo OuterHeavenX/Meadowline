@@ -1,5 +1,5 @@
 import { KEY, save, store } from '../core/save.js';
-import { getSession, supabase } from './supabase.js';
+import { cloudClient, getSession } from './supabase.js';
 
 const REVISION_KEY='meadowline.cloud.revision.slot1';
 
@@ -17,6 +17,7 @@ export async function getCloudAccount(){
 export async function getCloudSaveSummary(){
   const user=await getCloudAccount();
   if(!user) return {signedIn:false,save:null};
+  const supabase=await cloudClient();
   const {data,error}=await supabase.from('city_saves')
     .select('id,slot,city_name,save_version,revision,client_saved_at,updated_at')
     .eq('user_id',user.id).eq('slot',1).maybeSingle();
@@ -28,6 +29,7 @@ export async function getCloudSaveSummary(){
 export async function getCloudHistory(){
   const user=await getCloudAccount();
   if(!user) return [];
+  const supabase=await cloudClient();
   const {data,error}=await supabase.from('city_save_history')
     .select('id,slot,city_name,save_version,revision,client_saved_at,archived_at,payload')
     .eq('user_id',user.id).eq('slot',1)
@@ -45,6 +47,7 @@ export async function uploadLocalSave(){
   let payload;
   try{ payload=JSON.parse(raw); }catch{ throw new Error('The local save could not be read.'); }
   const expected=readRevision();
+  const supabase=await cloudClient();
   const {data,error}=await supabase.rpc('save_city_slot',{
     p_slot:1,
     p_city_name:'Meadowline',
@@ -67,6 +70,7 @@ export async function uploadLocalSave(){
 export async function downloadCloudSave(){
   const user=await getCloudAccount();
   if(!user) throw new Error('Sign in before using cloud saves.');
+  const supabase=await cloudClient();
   const {data,error}=await supabase.from('city_saves')
     .select('payload,revision,updated_at')
     .eq('user_id',user.id).eq('slot',1).maybeSingle();
@@ -84,6 +88,7 @@ export async function restoreCloudHistory(historyId){
   if(!historyId) throw new Error('Choose a cloud revision to restore.');
   const expected=readRevision();
   if(expected<1) throw new Error('Refresh the cloud save before restoring history.');
+  const supabase=await cloudClient();
   const {data,error}=await supabase.rpc('restore_city_save',{
     p_history_id:historyId,
     p_expected_revision:expected
