@@ -140,12 +140,18 @@ the same rewrite the tile shapes do.
 Rotation eases toward its target instead of jumping, and is view state: like
 pan and zoom it is not written to Save V3, and a reloaded city faces north.
 
-Controls are a two-finger twist on touch, which is the primary one for a
-mobile-first game and runs alongside the pinch that zooms, and `,` and `.` on a
-keyboard for quarter turns. Both are reserved in `input-policy.js` so a future
-tool key cannot silently shadow them. There is no on-screen rotate control: the
-dock is a documented five actions and the UI suite asserts that count, so
-adding a sixth is a UI decision rather than a rendering one.
+Controls are a compass chip in the HUD corner that turns a quarter per tap, a
+two-finger twist on touch, and `,` and `.` on a keyboard. The keys are reserved
+in `input-policy.js` so a future tool key cannot silently shadow them.
+
+The compass is the one that matters. Shipping only the keys and the gesture is
+very close to shipping nothing: nothing on screen said the camera could move,
+so for anyone who had not read the source, it could not. It went in the chip
+column rather than the dock because the dock is a documented five actions and
+the UI suite asserts that count. One button turning one way is enough because
+four taps come back to where you started, and the needle shows which way the
+city faces so a player can see the state rather than count taps. The regression
+suite clicks it, not just the key handler.
 
 ## Vegetation
 

@@ -55,6 +55,53 @@ if(st&&typeof runFrame==='function'){
     framesAtRestore+' -> '+st.diagnostics.frameCount);
 }
 
+// Turning the city, driven the way a player does it: a real keypress on the
+// booted app, then the real frame loop. Checking S.cam.rot after a keypress
+// alone would pass even if the easing never ran, and checking the easing
+// function alone would pass even if the key were never wired up.
+if(st&&typeof runFrame==='function'){
+  const startRot=st.cam.rot||0,startTarget=st.cam.rotTo||0;
+  key('.',d.body);
+  const targetMoved=Math.abs((st.cam.rotTo||0)-startTarget)>1e-6;
+  check('a keypress asks the city to turn',targetMoved,startTarget+' -> '+st.cam.rotTo);
+  // Explicit advancing timestamps: headless pauses the virtual clock during a
+  // synchronous loop, so performance.now() returns the same value every
+  // iteration and every frame would see zero elapsed time. Driving the clock
+  // here tests the real easing rather than 160 frames of standing still.
+  let clock=performance.now();
+  for(let i=0;i<160;i++){ clock+=16; runFrame(clock); }
+  check('the frame loop turns the city toward the target',
+    Math.abs((st.cam.rot||0)-(st.cam.rotTo||0))<1e-2&&Math.abs((st.cam.rot||0)-startRot)>1e-3,
+    'rot '+startRot.toFixed(4)+' -> '+(st.cam.rot||0).toFixed(4)+' target '+(st.cam.rotTo||0).toFixed(4));
+  // The on-screen control, clicked the way a player clicks it. The keys and
+  // the twist gesture worked before this existed, which for anyone who had not
+  // read the source was the same as the camera not turning at all.
+  const compass=d.getElementById('b-rotate');
+  check('the HUD offers a visible way to turn the city',!!compass);
+  if(compass){
+    const beforeClick=st.cam.rotTo;
+    compass.click();
+    check('the compass turns the city a quarter',Math.abs((st.cam.rotTo-beforeClick)-Math.PI/2)<1e-9,
+      beforeClick.toFixed(4)+' -> '+st.cam.rotTo.toFixed(4));
+    // Four taps come back to where you started, which is what makes a single
+    // one-way button enough.
+    compass.click();compass.click();compass.click();
+    check('four taps return the city to its start',Math.abs((st.cam.rotTo-beforeClick)-Math.PI*2)<1e-9,st.cam.rotTo);
+    let spin=performance.now();
+    for(let i=0;i<200;i++){ spin+=16; runFrame(spin); }
+    check('the needle shows which way the city faces',
+      /rotate\(/.test(compass.querySelector('svg')?.style.transform||''),
+      compass.querySelector('svg')?.style.transform||'(none)');
+  }
+
+  // The rotation keys go through the same text-entry guard as the tool keys.
+  const box=d.createElement('input');d.body.appendChild(box);box.focus();
+  const heldTarget=st.cam.rotTo;
+  key('.',box);
+  check('typing in a field does not turn the city',st.cam.rotTo===heldTarget,st.cam.rotTo);
+  box.remove();
+}
+
 // The in-shell confirmation replaces eight native confirm() dialogs, so it has
 // to hold up as a real UI surface: centred, inside the viewport, thumb-sized,
 // and cancelling by default rather than committing. askConfirm() opens the
@@ -92,4 +139,70 @@ check('City Hall uses responsive section navigation',hall.querySelectorAll('[dat
 check('City Hall maximum is Level 4',hall.querySelector('.cityhall-hero')?.textContent.includes('Level 4'));
 check('City Hall never advertises Level 5',!hall.getElementById('look-body')?.textContent.includes('Level 5'));
 check('City Hall reads real municipal sections',hall.getElementById('look-body')?.textContent.includes('Services')&&hall.getElementById('look-body')?.textContent.includes('Mobility'));
+
+// Every confirmation-gated action in City Hall shipped dead: the module called
+// askConfirm() without importing it, and because the handler is async the
+// ReferenceError became an unhandled rejection - no dialog, no toast, no
+// console anyone was looking at, just a button that did nothing. Module
+// hygiene catches the missing import now; this checks the thing the player
+// actually does, so a future break anywhere along the path still fails.
+const hallWin=frame.contentWindow,hallState=hallWin.__MEADOWLINE_STATE__;
+if(hallState){
+  hallState.coins=1914;
+  hallState.cityProgress.stage=4;
+  const civic=hallState.grid.find(b=>b&&b.type==='cityHall');
+  if(civic) civic.state.level=3;
+  hall.querySelector('[data-cityhall-nav="overview"]')?.click();
+  const upgradeBtn=hall.querySelector('[data-upgrade-cityhall]');
+  check('City Hall offers a live upgrade action',!!upgradeBtn&&!upgradeBtn.disabled,
+    upgradeBtn?('disabled='+upgradeBtn.disabled):'(missing)');
+  if(upgradeBtn&&!upgradeBtn.disabled){
+    const levelBefore=civic.state.level,coinsBefore=hallState.coins;
+    upgradeBtn.click();
+    const dlg2=hall.querySelector('.ml-confirm');
+    check('the upgrade asks for confirmation instead of failing silently',!!dlg2?.open);
+    if(dlg2?.open){
+      dlg2.querySelector('.ml-confirm-go').click();
+      await new Promise(r=>setTimeout(r,0));
+      check('confirming the upgrade actually upgrades the civic centre',
+        civic.state.level===levelBefore+1&&hallState.coins<coinsBefore,
+        'level '+levelBefore+'->'+civic.state.level+' coins '+coinsBefore+'->'+Math.round(hallState.coins));
+    }
+  }
+  hall.querySelector('[data-cityhall-nav="land"]')?.click();
+  const parcelBtn=hall.querySelector('[data-cityhall-parcel]:not([disabled])');
+  check('City Hall offers a live land purchase',!!parcelBtn,parcelBtn?.textContent?.trim()||'(none available)');
+  if(parcelBtn){
+    const openedBefore=(hallState.cityProgress.unlockedParcels||[]).length;
+    parcelBtn.click();
+    const dlg3=hall.querySelector('.ml-confirm');
+    check('opening land asks for confirmation instead of failing silently',!!dlg3?.open);
+    if(dlg3?.open){
+      dlg3.querySelector('.ml-confirm-go').click();
+      await new Promise(r=>setTimeout(r,0));
+      check('confirming a land purchase actually opens the parcel',
+        (hallState.cityProgress.unlockedParcels||[]).length===openedBefore+1,
+        openedBefore+' -> '+(hallState.cityProgress.unlockedParcels||[]).length);
+    }
+  }
+}
+
+// A disabled action has to look disabled. Nothing in the stylesheet spoke to
+// :disabled, so a button the game refuses to act on was pixel-identical to one
+// it honours - and since a disabled button emits no click, there was not even
+// a toast to explain the refusal.
+{
+  const probe=hall.createElement('button');
+  probe.className='go';probe.disabled=true;probe.textContent='x';
+  hall.body.appendChild(probe);
+  const live=hall.createElement('button');
+  live.className='go';live.textContent='x';
+  hall.body.appendChild(live);
+  const a=hallWin.getComputedStyle(probe),b=hallWin.getComputedStyle(live);
+  check('a disabled action is visually distinct from a live one',
+    a.backgroundColor!==b.backgroundColor||a.color!==b.color,
+    a.backgroundColor+' vs '+b.backgroundColor);
+  probe.remove();live.remove();
+}
+
 const failed=checks.filter(c=>!c.pass);document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);document.documentElement.dataset.result=failed.length?'fail':'pass';

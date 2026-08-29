@@ -47,7 +47,17 @@
 .card{background:var(--ink);border-radius:24px;box-shadow:var(--shadow);padding:26px 24px;max-width:380px;width:100%}
 .card h1{margin:0 0 2px;font-size:27px;letter-spacing:-.02em;font-weight:800}.card p.sub{margin:0 0 16px;color:var(--mustard);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
 .card ul{margin:0 0 20px;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px}.card li{display:flex;gap:10px;font-size:13.5px;line-height:1.45;color:#ded9c8}.card li b{color:var(--cream)}.card li em{flex:0 0 auto;width:22px;text-align:center;font-style:normal;color:var(--meadow);font-weight:800}
-.go{width:100%;border:0;border-radius:14px;padding:14px;cursor:pointer;background:var(--meadow);color:#13291a;font:inherit;font-size:15px;font-weight:900;letter-spacing:.02em;transition:transform .1s ease,filter .12s ease}.go:hover{filter:brightness(1.06)}.go:active{transform:scale(.98)}
+.go{width:100%;border:0;border-radius:14px;padding:14px;cursor:pointer;background:var(--meadow);color:#13291a;font:inherit;font-size:15px;font-weight:900;letter-spacing:.02em;transition:transform .1s ease,filter .12s ease}
+/* A disabled button looked exactly like a live one: same fill, same weight,
+   same contrast. Nothing in the stylesheet spoke to :disabled at all, so a
+   parcel that costs more coins than the town has, or an upgrade the stage
+   does not allow, read as an ordinary action that silently did nothing when
+   tapped. Disabled buttons emit no click, so there was not even a toast to
+   explain the refusal. */
+button:disabled{cursor:not-allowed}
+.go:disabled,.go[disabled]{background:#dcdcd3;color:#8b8f86;box-shadow:none;filter:none}
+.go:disabled:active,.go[disabled]:active{transform:none}
+.go:hover{filter:brightness(1.06)}.go:active{transform:scale(.98)}
 
 @media (max-width:430px){
   .tool{width:54px}.modes .tool{width:36px}.cat{padding:4px 8px;font-size:10px}.stat{padding:5px 9px}.stat b{font-size:14px}.side{width:44vw}.wish{font-size:11.5px}

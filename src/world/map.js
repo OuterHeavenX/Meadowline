@@ -114,6 +114,12 @@ export function setViewRotation(a){ S.cam.rotTo=a; S.cam.rot=a; }
 export function stepCamera(dt){
   const target=S.cam.rotTo||0,current=S.cam.rot||0,gap=target-current;
   if(Math.abs(gap)<1e-4){ S.cam.rot=target; return; }
+  // A non-finite frame time would put NaN into the angle, and NaN is sticky:
+  // every later frame reads it back as the current angle and the camera never
+  // recovers, in a way that looks like the controls have died rather than like
+  // one bad frame. Skipping the frame costs nothing - the next one eases from
+  // the same place.
+  if(!Number.isFinite(dt)||dt<=0) return;
   // Frame-rate independent ease, so the turn takes the same time on a phone
   // at 30fps as on a desktop at 120.
   S.cam.rot=current+gap*(1-Math.exp(-dt*9));
