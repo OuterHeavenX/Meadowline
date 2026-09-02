@@ -158,6 +158,7 @@ export function recompute(){
   }
   S.homes=bins.houses.length;
   S.pop=pop;
+  if(pop>S.peakPop) S.peakPop=pop;   // unlocks never take themselves back
   S.mood=bins.houses.length?Math.round(moodSum/bins.houses.length):0;
   S._cafes=bins.cafes.length; S._houses=bins.houses;
   tallyWork();                      // population may have moved since the first pass

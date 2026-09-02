@@ -1,6 +1,7 @@
 import { CATEGORIES, COST, ICONS, TOOLS } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
+import { isUnlocked } from '../buildings/buildings.js';
 import { hint } from './notify.js';
 
 /* ---------- the tool dock ----------
@@ -18,7 +19,9 @@ function button(t,compact){
   const b=document.createElement("button");
   b.className="tool"+(t.id===S.tool?" on":"");
   b.dataset.id=t.id;
-  b.title=t.name+(t.cost?" · "+t.cost:"")+" ("+t.key.toUpperCase()+")";
+  b.title=t.unlock&&!isUnlocked(t.id)
+    ? t.name+" — arrives at "+t.unlock+" citizens"
+    : t.name+(t.cost?" · "+t.cost:"")+" ("+t.key.toUpperCase()+")";
   b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[t.id]+'</svg>'+
               (compact?'':'<i>'+t.name+'</i><u>'+(t.cost?t.cost:"&nbsp;")+'</u>');
   b.addEventListener("click",()=>pickTool(t.id));
@@ -56,7 +59,9 @@ export function pickTool(id){
 export function paintTools(){
   for(const b of [...elTools.children,...elModes.children]){
     const c=COST[b.dataset.id];
-    b.classList.toggle("broke",c>0&&S.coins<c);
+    const locked=!isUnlocked(b.dataset.id);
+    b.classList.toggle("locked",locked);
+    b.classList.toggle("broke",!locked&&c>0&&S.coins<c);
     b.classList.toggle("on",b.dataset.id===S.tool);
   }
   elDock.classList.toggle("more",

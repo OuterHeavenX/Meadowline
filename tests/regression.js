@@ -1,4 +1,4 @@
-import { canPlace, erase, place } from '../src/buildings/buildings.js';
+import { canPlace, erase, isUnlocked, place, unlockOf } from '../src/buildings/buildings.js';
 import { COST, H, W } from '../src/core/constants.js';
 import { KEY, KEY_OLD, KEY_PREV, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
@@ -22,6 +22,11 @@ function firstTile(water){
 store.set(KEY,''); store.set(KEY_PREV,''); store.set(KEY_OLD,'');
 genWorld(24681357); refreshPalette(); recompute(); rollWishes();
 check('new game',S.coins===340&&S.day===1&&S.grid.length===W*H);
+
+// Tools arrive as the town grows. These checks are about placement mechanics,
+// so unlock everything first; progression gets its own check below.
+check('progression gates the toolset',!isUnlocked('rail')&&isUnlocked('road')&&unlockOf('clinic')===100);
+S.peakPop=9999;
 
 const land=firstTile(false), water=firstTile(true);
 const landBefore=S.coins; check('road placement',place('road',land.x,land.y)&&S.coins===landBefore-COST.road);

@@ -1,7 +1,7 @@
 import { note } from '../simulation/chronicle.js';
 import { IS_WONDER, WONDERS } from './wonders.js';
 import { SIGNAL_COST, addSignal, removeSignal, signalAt } from '../transport/signals.js';
-import { COST, DIRS } from '../core/constants.js';
+import { COST, DIRS, TOOLS } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { SPANS } from '../transport/bridges.js';
@@ -16,8 +16,22 @@ export const BUILDABLE={road:1,rail:1,house:1,cafe:1,park:1,tree:1,lamp:1,mill:1
 // A span over water costs three times what it does on dry ground.
 export function costOf(kind,x,y){ return COST[kind]*(SPANS[kind]&&isWater(x,y)?3:1); }
 
+// Tools arrive as the town grows into needing them, and never go away again.
+export function unlockOf(kind){
+  const t=TOOLS.find(t=>t.id===kind);
+  return t&&t.unlock||0;
+}
+export function isUnlocked(kind){
+  return S.peakPop>=unlockOf(kind);
+}
+
 export function canPlace(kind,x,y){
   if(!inBounds(x,y)) return {ok:false};
+  if(!isUnlocked(kind)){
+    const t=TOOLS.find(t=>t.id===kind);
+    return {ok:false,why:(t?t.name:"That")+" comes to a valley of "+unlockOf(kind)+
+      " citizens. You have reached "+S.peakPop+"."};
+  }
   const i=idx(x,y);
   // a signal rides on top of a road rather than replacing it, so it is
   // checked before the "something is already there" rule
@@ -47,8 +61,11 @@ export function canPlace(kind,x,y){
     const spec=WONDERS[kind];
     if(S.ctx.wonders.some(w=>w.type===kind))
       return {ok:false,why:"There is only ever one "+spec.name+"."};
-    if(S.pop<spec.unlock)
-      return {ok:false,why:spec.name+" waits for a valley of "+spec.unlock+" citizens. You have "+S.pop+"."};
+    // measured against the peak, like every other unlock, so a slump never
+    // puts a wonder back out of reach
+    if(S.peakPop<spec.unlock)
+      return {ok:false,why:spec.name+" waits for a valley of "+spec.unlock+
+        " citizens. You have reached "+S.peakPop+"."};
     if(spec.water){
       let touching=false;
       for(const[dx,dy]of DIRS) if(isWater(x+dx,y+dy)) touching=true;

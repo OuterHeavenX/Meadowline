@@ -79,4 +79,5 @@
   @keyframes pop{from{opacity:0;transform:translateY(-10px) scale(.9)}to{opacity:1;transform:none}}
   .toast.out{opacity:0;transform:translateY(-8px);transition:opacity .5s ease,transform .5s ease}
 
-  
+    .tool.locked{opacity:.3}
+  .tool.locked u{color:var(--cream-dim)}

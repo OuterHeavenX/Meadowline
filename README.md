@@ -24,25 +24,60 @@ straight off disk will not work: browsers refuse to load ES modules over `file:/
 | Lamp | 9 | A small lift that doubles once the light goes |
 | Windmill | 95 | Grinds coin every day, and most at harvest |
 | Station | 110 | Must touch a rail tile; lifts homes for 6 tiles |
+| Signal | 25 | Sits on a road; keeps a busy crossroads in order |
 | Dock | 70 | Must touch water; puts boats on the lake |
-| Market | 130 | Lifts what every café and bakery nearby takes |
+| Market | 130 | Lifts what every café, bakery and workshop nearby takes |
 | Bakery | 80 | Pays double with a windmill within 4 tiles |
+| Farm | 60 | Grows the grain the windmills need; wants open ground |
+| Sawmill | 85 | Earns from the woodland within 5 tiles; noisy neighbour |
+| Workshop | 100 | Doubles its takings with a market in reach |
+| Inn | 120 | Earns from the stations and docks that bring travellers |
 | School | 145 | Room for two more in every home it reaches |
+| Clinic | 160 | Takes most of the sting out of a crowded street |
+| Well | 15 | A small, cheap comfort for the houses around it |
 | Look | — | Ask any tile how it's doing, and why |
 | Remove | — | Clears a tile and refunds half |
 
-The dock groups these into **Ways**, **Homes**, **Trade** and **Green**, with move, look and
-remove pinned beside them.
+The dock groups these into **Ways**, **Homes**, **Food**, **Trade**, **Green** and
+**Wonders**, with move, look and remove pinned beside them.
+
+Tools arrive as the town grows into needing them — the café at eight citizens, rail at
+twenty, the clinic at a hundred — and never go away again, so a slump costs you nothing you
+had earned.
+
+### Wonders
+
+One of each, ever, and expensive.
+
+| Wonder | Cost | Arrives at | What it does |
+|---|---|---|---|
+| Statue | 900 | 60 citizens | Cheers every home for 9 tiles |
+| Clock Tower | 1600 | 120 | Every trade in the valley earns 15% more |
+| Lighthouse | 2000 | 150 | Calls three more boats in; must stand on the water's edge |
+| Great Library | 2600 | 200 | Room for one more in every home in the valley |
+
+### Making a living
+
+Every trade offers jobs and every resident wants one. Too few jobs and the mood suffers;
+too few residents and every trade runs short-handed and earns less. Every building also
+costs coins a day to keep, so sprawl is no longer free — build past what you earn and the
+treasury drains, and once it is empty the mood takes a further knock until the books
+balance. Nothing falls down and coins never go negative: the pressure is real, but there
+is still no fail state.
+
+Goods travel. **Farm → windmill → bakery** is a chain, and each link runs at half output
+without the one before it. Carts leave the producers, drive the roads to a market, and
+drive home again. They stop at red.
 
 Roads, rails and trees paint continuously while you drag. **Roads and rails cross water on
 their own** — draw straight over a pond and it becomes a bridge, at three times the usual
 price. A house with a `!` above it has no road yet. Each in-game day (100 seconds) pays out
 tax scaled by population and mood, plus café trade and whatever the windmills ground.
 
-Keys: `1`–`0` pick building tools and `R`/`K`/`C`/`D` reach the market, bakery, school and
-dock — a shortcut for a tool in a category you aren't looking at switches to it. `I` looks,
-`E` removes, `space` pauses, `S` cycles speed, `M` toggles sound, `B` toggles the map,
-`L` opens the ledger, `P` saves a postcard, `Esc` closes the card, arrows pan.
+Keys: every tool has a letter or digit, and a shortcut for a tool in a category you aren't
+looking at switches to that category first. `I` looks, `E` removes, `Z` places a signal,
+`space` pauses, `S` cycles speed, `M` toggles sound, `B` toggles the map, `L` opens the
+ledger, `P` saves a postcard, `Esc` closes the card, arrows pan.
 
 ## The year
 
@@ -78,7 +113,15 @@ each kind of building went up.
 
 ## Under the hood
 
-Vanilla ES modules on a 2D canvas, isometric 44×44 grid, painter's-algorithm depth sort.
+Vanilla ES modules on a 2D canvas, isometric **128×128** grid (16,384 tiles), painter's-algorithm
+depth sort. Both the ground pass and the depth-sorted pass walk only the visible band of the
+grid, so a map this size costs about the same to draw as the small one did.
+
+Buildings are modelled and lit in Blender and rendered to sprites — see `tools/README.md`.
+Moving parts (the windmill's sails, the clock hands, the lighthouse beam) are still drawn by
+the game over the rendered structure, and trees, parks and lamps stay hand-drawn because they
+carry the season's colour. If the sprites fail to load, every building is drawn by hand
+exactly as it was before.
 Trains, boats and citizens share one no-backtracking step rule, so a rail loop just works and
 a dead end reverses; `stepWhere` takes a predicate, which is the only difference between a
 train on rails and a boat on water. Citizens layer a breadth-first `findPath` on top and only
@@ -94,6 +137,10 @@ Each building owns its own tuning — radius, strength, yield — in `src/buildi
 mood model and the economy read those rather than hard-coding numbers. `tests/module-hygiene.mjs`
 runs without a browser and fails the build on three things this layout can silently break:
 assignment to an imported binding, re-export shim modules, and import cycles.
+
+Save format is v3 and records its own map size. A save written on the old 44×44 grid is
+detected and the town is dropped into the middle of the new map, with the terrain cleared
+under each rebuilt building so nothing comes back underwater.
 
 Progress saves to `localStorage` every few seconds (guarded, so it degrades to a session-only
 game where storage is blocked). Saves from the previous version load and carry over.

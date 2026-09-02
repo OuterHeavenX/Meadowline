@@ -6,7 +6,7 @@ export const S={
   speed:1, muted:true, running:true,
   tool:"move",
   citizens:[], trains:[], boats:[], carts:[], signals:[], puffs:[],
-  pop:0, mood:0, homes:0,
+  pop:0, mood:0, homes:0, peakPop:0,
   ctx:{parks:[],cafes:[],stations:[],houses:[],lamps:[],mills:[]},
   wx:{k:"clear",amt:0,target:0,next:70},
   wishes:[], log:[], history:[],
