@@ -4,6 +4,7 @@ import { S } from '../core/state.js';
 import { getBuildingDefinition } from '../buildings/registry.js';
 import { graphicsProfile,effectiveQuality } from './capabilities.js';
 import { darkness } from '../world/time.js';
+import { cloudOpacity, clouds, storm } from '../world/weather.js';
 import { screen2world, viewRotation } from '../world/map.js';
 import { footprintCells,idx,inBounds,isFacilityPart,isType } from '../world/tiles.js';
 import { buildCohesiveWorld, artMetrics, litMaterials } from './three-world-art.js';
@@ -61,7 +62,38 @@ function addInteractionOverlay(){
   const def=getBuildingDefinition(S.tool),cells=def?footprintCells(S.tool,hover.x,hover.y):[{x:hover.x,y:hover.y}],i=idx(hover.x,hover.y),ok=S.tool==='erase'?(!!S.grid[i]||!!S.natTree[i]):S.tool==='water'?(!S.grid[i]&&S.terr[i]!==1):canPlace(S.tool,hover.x,hover.y).ok,material=overlayMat(ok?'#dff1c5':'#d66050',ok ? .34 : .42);
   for(const c of cells)if(inBounds(c.x,c.y))box(c.x,.13,c.y,.94,.025,.94,material,dynamic,false);
 }
-function rebuildDynamic(){if(dynamic)scene.remove(dynamic);dynamic=new THREE.Group();scene.add(dynamic);for(const c of S.citizens){const walk=sidewalkOffset(c),x=(c.facilityLocal?.x??lerp(c.x,c.nx,c.p))+walk.x,z=(c.facilityLocal?.y??lerp(c.y,c.ny,c.p))+walk.y,g=new THREE.Group();g.position.set(x,.08,z);dynamic.add(g);cylinder(0,0,0,.045,.22,mat(c.col||c.color||'#d6a86e'),g,7);mesh(geo('head',()=>new THREE.SphereGeometry(.055,7,5)),mat('#d7a678'),0,.28,0,g,false);}for(const v of S.vehicles||[])addVehicle(v);for(const v of S.serviceVehicles||[])addVehicle(v,true);for(const t of S.trains||[]){const x=t.fx||t.x,z=t.fy||t.y;box(x,.12,z,.72,.28,.34,mat('#b34f42'),dynamic,true);}// Signals belong to the dynamic group: their lamps change every second, and
+function cloudMat(){
+  const key='cloud:body';
+  if(!mats.has(key)) mats.set(key,new THREE.MeshStandardMaterial({color:'#ffffff',roughness:1,transparent:true,opacity:1,depthWrite:false}));
+  return mats.get(key);
+}
+function addClouds(){
+  const opacity=cloudOpacity();
+  const material=cloudMat();
+  material.opacity=opacity;
+  for(const c of clouds){
+    const group=new THREE.Group();
+    group.position.set(c.x,c.h,c.y);
+    dynamic.add(group);
+    // Four overlapping lumps off the cloud's own seed, so each one keeps its
+    // shape as it drifts instead of shimmering from frame to frame.
+    const lumps=4;
+    for(let i=0;i<lumps;i++){
+      const n=c.seed+i*97;
+      // A quarter of the shadow radius, not most of it. At full size a cloud
+      // is a third of the screen and sits in front of the town rather than
+      // over it, which reads as fog at ground level.
+      const r=c.r*(0.22+((n*13)%20)/100);
+      const m=mesh(geo('cloudlump',()=>new THREE.IcosahedronGeometry(1,1)),material,
+        (((n*29)%100)/100-0.5)*c.r*0.9, (((n*17)%100)/100-0.5)*c.r*0.14, (((n*41)%100)/100-0.5)*c.r*0.8,
+        group,true);
+      m.scale.set(r,r*0.58,r*0.85);
+    }
+  }
+}
+
+function rebuildDynamic(){if(dynamic)scene.remove(dynamic);dynamic=new THREE.Group();scene.add(dynamic);for(const c of S.citizens){const walk=sidewalkOffset(c),x=(c.facilityLocal?.x??lerp(c.x,c.nx,c.p))+walk.x,z=(c.facilityLocal?.y??lerp(c.y,c.ny,c.p))+walk.y,g=new THREE.Group();g.position.set(x,.08,z);dynamic.add(g);cylinder(0,0,0,.045,.22,mat(c.col||c.color||'#d6a86e'),g,7);mesh(geo('head',()=>new THREE.SphereGeometry(.055,7,5)),mat('#d7a678'),0,.28,0,g,false);}for(const v of S.vehicles||[])addVehicle(v);for(const v of S.serviceVehicles||[])addVehicle(v,true);for(const t of S.trains||[]){const x=t.fx||t.x,z=t.fy||t.y;box(x,.12,z,.72,.28,.34,mat('#b34f42'),dynamic,true);}
+  // Signals belong to the dynamic group: their lamps change every second, and
   // the static world is only rebuilt when the map itself changes.
   for(const j of signalJunctions()){const ph=signalPhase(j.x,j.y),post=mat('#41474a',.6,.2);
     cylinder(j.x+.42,0,j.y+.42,.035,.62,post,dynamic,6);
@@ -69,10 +101,10 @@ function rebuildDynamic(){if(dynamic)scene.remove(dynamic);dynamic=new THREE.Gro
       hx=j.x+.42+(axis==='ew'?-.16:.16),hz=j.y+.42+(axis==='ew'?.16:-.16);
       box(hx,.5,hz,.09,.2,.09,mat('#2f3538',.7),dynamic,false);
       box(hx,.5+(green?(ph.amber?.07:.13):.01),hz,.11,.055,.11,glowMat(lit),dynamic,false);}}
-  for(const inc of S.incidents||[]){if(inc.resolved)continue;const x=inc.target.x,z=inc.target.y;if(inc.kind==='fire'){for(let i=0;i<3;i++)pyramid(x+(i-1)*.12,.25,z,.12,.38,mat(i%2?'#ffad3e':'#e34b2f',.25),dynamic,7);}else if(inc.kind==='crime'){cylinder(x,.08,z,.06,.3,mat('#34383b'),dynamic,7);}else{mesh(geo('med',()=>new THREE.OctahedronGeometry(.13)),mat('#e9eeee'),x,.55,z,dynamic,false);}}addInteractionOverlay();}
+  for(const inc of S.incidents||[]){if(inc.resolved)continue;const x=inc.target.x,z=inc.target.y;if(inc.kind==='fire'){for(let i=0;i<3;i++)pyramid(x+(i-1)*.12,.25,z,.12,.38,mat(i%2?'#ffad3e':'#e34b2f',.25),dynamic,7);}else if(inc.kind==='crime'){cylinder(x,.08,z,.06,.3,mat('#34383b'),dynamic,7);}else{mesh(geo('med',()=>new THREE.OctahedronGeometry(.13)),mat('#e9eeee'),x,.55,z,dynamic,false);}}addClouds();addInteractionOverlay();}
 function ensure(){if(failed||S.rendererMode==='compatibility')return false;if(renderer&&!lost)return true;try{canvas=document.createElement('canvas');canvas.id='three-layer';canvas.setAttribute('aria-hidden','true');canvas.style.pointerEvents='none';document.getElementById('c').insertAdjacentElement('afterend',canvas);renderer=new THREE.WebGLRenderer({canvas,antialias:effectiveQuality()!=='battery',powerPreference:effectiveQuality()==='battery'?'low-power':'high-performance',failIfMajorPerformanceCaveat:S.rendererMode!=='gpu'});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.shadowMap.enabled=effectiveQuality()!=='battery';renderer.shadowMap.type=THREE.PCFSoftShadowMap;scene=new THREE.Scene();scene.background=color('#a7c9d3');scene.fog=new THREE.Fog('#a7c9d3',34,72);camera=new THREE.OrthographicCamera(-10,10,10,-10,.1,160);const hemi=new THREE.HemisphereLight('#d8ecff','#65814f',2.1),sun=new THREE.DirectionalLight('#fff0d2',3.1);sun.position.set(-18,32,-12);sun.castShadow=true;sun.shadow.mapSize.set(effectiveQuality()==='high'?1536:768,effectiveQuality()==='high'?1536:768);sun.shadow.camera.left=-28;sun.shadow.camera.right=28;sun.shadow.camera.top=28;sun.shadow.camera.bottom=-28;sun.shadow.camera.near=1;sun.shadow.camera.far=90;scene.add(hemi,sun);lights={hemi,sun};canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;canvas.hidden=true;S.diagnostics.rendererBackend='canvas2d-fallback';});canvas.addEventListener('webglcontextrestored',()=>{lost=false;canvas.hidden=false;lastSignature='';});rebuild();S.diagnostics.rendererBackend='three-webgl2';return true;}catch(e){failed=true;canvas?.remove();renderer=null;S.diagnostics.rendererBackend='canvas2d-fallback';S.diagnostics.rendererError=String(e.message||e);return false;}}
 function syncCamera(){const profile=graphicsProfile(),dpr=Math.min(devicePixelRatio||1,profile.dpr),w=innerWidth,h=innerHeight;if(canvas.width!==Math.floor(w*dpr)||canvas.height!==Math.floor(h*dpr)){renderer.setPixelRatio(dpr);renderer.setSize(w,h,false);}const center=screen2world(w/2,h/2),halfW=w/(64*S.cam.z*Math.SQRT2),halfH=halfW/(w/h),radius=70,height=radius*Math.tan(Math.PI/6);camera.left=-halfW;camera.right=halfW;camera.top=halfH;camera.bottom=-halfH;const azimuth=Math.PI/4-viewRotation();camera.position.set(center.x+radius*Math.cos(azimuth),height,center.y+radius*Math.sin(azimuth));camera.lookAt(center.x,0,center.y);camera.updateProjectionMatrix();lights.sun.target.position.set(center.x,0,center.y);scene.add(lights.sun.target);}
-function syncLighting(){const dark=clamp(darkness()/.62,0,1),rain=S.wx?.k==='rain'?(S.wx.amt||0):0;scene.background.set(dark>.65?'#263246':rain>.25?'#78909a':'#a7c9d3');scene.fog.color.copy(scene.background);scene.fog.near=76;scene.fog.far=122;lights.hemi.intensity=2.1-dark*1.25-rain*.35;lights.sun.intensity=3.1-dark*2.35-rain*.55;renderer.toneMappingExposure=1.08-dark*.22;for(const [key,m]of mats)if(key.startsWith('glow:'))m.emissiveIntensity=.08+dark*1.2;
+function syncLighting(){const dark=clamp(darkness()/.62,0,1),rain=S.wx?.k==='rain'?(S.wx.amt||0):0;scene.background.set(dark>.65?'#263246':rain>.25?'#78909a':'#a7c9d3');scene.fog.color.copy(scene.background);scene.fog.near=76;scene.fog.far=122;/* A 2D veil alone leaves the valley unlit, which reads as a filter laid over the picture rather than as the sky lighting the ground. Lifting the ambient term makes the town itself flash. */const flash=storm.flash||0;lights.hemi.intensity=2.1-dark*1.25-rain*.35+flash*2.6;lights.sun.intensity=3.1-dark*2.35-rain*.55+flash*0.8;renderer.toneMappingExposure=1.08-dark*.22+flash*.22;for(const [key,m]of mats)if(key.startsWith('glow:'))m.emissiveIntensity=.08+dark*1.2;
   // The authored landmarks carry their own emissive materials - the clock
   // faces, the lighthouse lantern - and have to follow the same night curve or
   // a wonder would be the only thing in the valley lit at noon.

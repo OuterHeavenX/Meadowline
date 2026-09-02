@@ -13,7 +13,7 @@
    ordering is better than an overlay can be. */
 import { S } from '../core/state.js';
 import { cv } from './terrain.js';
-import { drawBirds, drawFireflies, drawLanterns, drawMotes, drawPuff } from './effects.js';
+import { drawBirds, drawFireflies, drawLanterns, drawLightning, drawMotes, drawPuff, drawSplashes, drawWeather } from './effects.js';
 import { drawFeedback } from './feedback.js';
 import { darkness } from '../world/time.js';
 
@@ -68,7 +68,15 @@ export function drawJuiceOverlay(){
   drawFireflies(dark,ctx);
   drawLanterns(dark,ctx);
   for(const p of S.puffs||[]) drawPuff(p,ctx);
+  // Splashes sit on the ground, so they go under the falling rain; the flash
+  // goes over everything, because it is the sky lighting the whole scene.
+  // None of this reached the GPU renderer before: the weather layer was drawn
+  // only inside the Canvas path, so a player on the renderer Auto actually
+  // picks was told it was raining and shown a dry valley.
+  drawSplashes(ctx);
+  drawWeather(ctx);
   drawFeedback(ctx);
+  drawLightning(ctx);
   painted=true;
 }
 
