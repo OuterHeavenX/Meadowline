@@ -3,7 +3,7 @@ import { H, W, clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { drawBakery, drawCafe, drawClinic, drawClockTower, drawDock, drawFarm, drawHouse, drawInn, drawLamp, drawLibrary, drawLighthouse, drawMarket, drawPark, drawSawmill, drawSchool, drawStatue, drawStation, drawWell, drawWindmill, drawWorkshop } from './buildings.js';
 import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
-import { drawBoat, drawCitizen, drawTrain } from './entities.js';
+import { drawBoat, drawCart, drawCitizen, drawSignal, drawTrain } from './entities.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
 import { SPANS } from '../transport/bridges.js';
 import { proj, visibleBand } from '../world/map.js';
@@ -78,6 +78,8 @@ export function render(){
   for(const c of S.citizens) items.push({d:lerp(c.x,c.nx,c.p)+lerp(c.y,c.ny,c.p)+0.05,k:2,c});
   for(const t of S.trains) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.1,k:3,t});
   for(const t of S.boats) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.08,k:6,t});
+  for(const t of S.carts) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.06,k:7,t});
+  for(const sg of S.signals) items.push({d:sg.x+sg.y+0.04,k:8,sg});
   for(const p of S.puffs) items.push({d:p.x+p.y+0.2,k:4,p});
   items.sort((a,b)=>a.d-b.d);
 
@@ -114,6 +116,8 @@ export function render(){
     } else if(it.k===2) drawCitizen(it.c);
     else if(it.k===3) drawTrain(it.t);
     else if(it.k===6) drawBoat(it.t);
+    else if(it.k===7) drawCart(it.t);
+    else if(it.k===8) drawSignal(it.sg,dark);
     else if(it.k===5){
       const p=proj(it.b.x,it.b.y);
       if(p.x<-120||p.x>innerWidth+120||p.y<-160||p.y>innerHeight+120) continue;

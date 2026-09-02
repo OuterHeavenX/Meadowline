@@ -5,7 +5,7 @@ export const S={
   coins:340, day:1, dayT:0.24, t:0,
   speed:1, muted:true, running:true,
   tool:"move",
-  citizens:[], trains:[], boats:[], puffs:[],
+  citizens:[], trains:[], boats:[], carts:[], signals:[], puffs:[],
   pop:0, mood:0, homes:0,
   ctx:{parks:[],cafes:[],stations:[],houses:[],lamps:[],mills:[]},
   wx:{k:"clear",amt:0,target:0,next:70},

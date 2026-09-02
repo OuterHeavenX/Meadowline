@@ -23,7 +23,8 @@ export function genWorld(seed){
     const f=fbm(x/(6.5*F),y/(6.5*F),s+404);
     if(!S.terr[i]&&f>0.585&&hash2(x,y,s+9)>0.45) S.natTree[i]=1;
   }
-  S.citizens.length=0; S.trains.length=0; S.boats.length=0; S.puffs.length=0;
+  S.citizens.length=0; S.trains.length=0; S.boats.length=0; S.carts.length=0;
+  S.signals.length=0; S.puffs.length=0;
   S.coins=340; S.day=1; S.dayT=0.24; S.t=0;
   S.wx={k:"clear",amt:0,target:0,next:70}; drops.length=0;
   S.wishes.length=0; S.log.length=0; S.history.length=0;

@@ -1,5 +1,6 @@
 import { note } from '../simulation/chronicle.js';
 import { IS_WONDER, WONDERS } from './wonders.js';
+import { SIGNAL_COST, addSignal, removeSignal, signalAt } from '../transport/signals.js';
 import { COST, DIRS } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
@@ -18,6 +19,14 @@ export function costOf(kind,x,y){ return COST[kind]*(SPANS[kind]&&isWater(x,y)?3
 export function canPlace(kind,x,y){
   if(!inBounds(x,y)) return {ok:false};
   const i=idx(x,y);
+  // a signal rides on top of a road rather than replacing it, so it is
+  // checked before the "something is already there" rule
+  if(kind==="signal"){
+    if(!isType(x,y,"road")) return {ok:false,why:"A signal has to stand on a road."};
+    if(signalAt(x,y)) return {ok:false};
+    if(S.coins<SIGNAL_COST) return {ok:false,why:"Not enough coins yet \u2014 wait for the next payday."};
+    return {ok:true};
+  }
   if(S.terr[i]===1&&!SPANS[kind]) return {ok:false,why:"Only roads and rails can cross the water."};
   const cur=S.grid[i];
   if(cur){
@@ -71,6 +80,13 @@ const NOTE_NAMES={cafe:"The first caf\u00e9 opened",park:"The first park was lai
 export function place(kind,x,y){
   const r=canPlace(kind,x,y);
   if(!r.ok){ if(r.why) services.hint(r.why,true); return false; }
+  if(kind==="signal"){
+    S.coins-=SIGNAL_COST;
+    addSignal(x,y);
+    if(!NOTED.signal){ NOTED.signal=1; note("The first signal went up"); }
+    services.puff(x,y); services.blip(500,0.05,"triangle");
+    return true;
+  }
   const i=idx(x,y);
   S.coins-=costOf(kind,x,y);
   S.natTree[i]=0;
@@ -83,6 +99,12 @@ export function place(kind,x,y){
 
 export function erase(x,y){
   if(!inBounds(x,y)) return false;
+  // a signal sits above the road, so it comes off first
+  if(removeSignal(x,y)){
+    S.coins+=Math.floor(SIGNAL_COST/2);
+    services.puff(x,y); services.blip(220);
+    return true;
+  }
   const i=idx(x,y);
   const b=S.grid[i];
   if(!b){

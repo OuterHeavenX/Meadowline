@@ -17,6 +17,7 @@ import { CLINIC_MOOD, CLINIC_R, CLINIC_RELIEF } from '../buildings/clinics.js';
 import { WELL_MOOD } from '../buildings/wells.js';
 import { IS_WONDER, WONDERS } from '../buildings/wonders.js';
 import { tallyWork } from './economics.js';
+import { isCrossroads, signalAt } from '../transport/signals.js';
 import { DIRS, clamp } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
@@ -105,6 +106,14 @@ export function evalHouse(h,out){
     if(cared) pen=Math.round(pen*(1-CLINIC_RELIEF));
     m-=pen; if(out) out.push([cared?"Crowded, but the clinic helps":"Rather crowded round here",-pen]);
   }
+
+  // a busy crossroads with nothing directing it is no fun next door
+  let chaos=0;
+  for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
+    const x=h.x+dx,y=h.y+dy;
+    if(isCrossroads(x,y)&&!signalAt(x,y)) chaos++;
+  }
+  if(chaos){ const pen=Math.min(chaos*4,10); m-=pen; if(out) out.push(["An unsignalled crossroads",-pen]); }
 
   // work: nobody is content in a town with nothing to do
   const idle=S.econ.unemployment||0;

@@ -1,7 +1,9 @@
 import { TAU, lerp, shade } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { HULLS } from '../simulation/boats.js';
-import { box, g } from './terrain.js';
+import { CART_COLOURS } from '../simulation/carts.js';
+import { greenAxis } from '../transport/signals.js';
+import { box, g, lights } from './terrain.js';
 import { proj } from '../world/map.js';
 
 export function drawTrain(t){
@@ -100,4 +102,63 @@ export function drawBoat(t){
   g.moveTo(p.x-0.8*z,y-16.5*z);
   g.quadraticCurveTo(p.x-6*z,y-11.5*z,p.x-1*z,y-6*z);
   g.closePath(); g.fill();
+}
+
+/* ---------- carts ---------- */
+export function drawCart(c){
+  const z=S.cam.z;
+  const p=proj(c.fx!==undefined?c.fx:c.x, c.fy!==undefined?c.fy:c.y);
+  const col=CART_COLOURS[c.hue];
+  const roll=c.wait>0?0:S.t*7;
+  g.fillStyle="rgba(30,44,38,.20)";
+  g.beginPath(); g.ellipse(p.x,p.y+2*z,7*z,3*z,0,0,TAU); g.fill();
+  // bed and sideboards
+  g.fillStyle=col[1];
+  g.fillRect(p.x-6*z,p.y-6*z,12*z,4.2*z);
+  g.fillStyle=col[0];
+  g.fillRect(p.x-6*z,p.y-8.4*z,12*z,2.6*z);
+  // a load, if it is carrying one
+  if(c.laden){
+    g.fillStyle="#d2b070";
+    g.fillRect(p.x-4*z,p.y-11*z,8*z,3*z);
+    g.fillStyle="#bd9a58";
+    g.fillRect(p.x-2*z,p.y-13*z,4*z,2.2*z);
+  }
+  // wheels that turn while it is moving
+  g.strokeStyle="#4a3a2a"; g.lineWidth=1.1*z;
+  for(const wx of [-4,4]){
+    g.beginPath(); g.arc(p.x+wx*z,p.y-1.6*z,2.4*z,0,TAU); g.stroke();
+    g.beginPath();
+    g.moveTo(p.x+wx*z-Math.cos(roll)*2.2*z,p.y-1.6*z-Math.sin(roll)*2.2*z);
+    g.lineTo(p.x+wx*z+Math.cos(roll)*2.2*z,p.y-1.6*z+Math.sin(roll)*2.2*z);
+    g.stroke();
+  }
+  // the horse in front
+  g.fillStyle="#8a6a4a";
+  g.fillRect(p.x+6.5*z,p.y-8*z,5*z,3.4*z);
+  g.beginPath(); g.arc(p.x+11.5*z,p.y-9*z,1.9*z,0,TAU); g.fill();
+}
+
+/* ---------- traffic signals ---------- */
+export function drawSignal(sig,dark){
+  const z=S.cam.z;
+  const p=proj(sig.x,sig.y);
+  const axis=greenAxis(sig);
+  g.fillStyle="rgba(30,44,38,.20)";
+  g.beginPath(); g.ellipse(p.x,p.y+1*z,3.4*z,1.6*z,0,0,TAU); g.fill();
+  g.fillStyle="#46524b";
+  g.fillRect(p.x-0.9*z,p.y-15*z,1.8*z,15*z);
+  g.fillStyle="#2f3a34";
+  g.fillRect(p.x-2.8*z,p.y-23*z,5.6*z,8.4*z);
+  const on="#ff6b52", off="#4a2b26", onG="#7fe08a", offG="#2c4a31";
+  const xGreen=axis==="x";
+  g.fillStyle=xGreen?off:on;
+  g.beginPath(); g.arc(p.x,p.y-20.6*z,1.5*z,0,TAU); g.fill();
+  g.fillStyle=xGreen?onG:offG;
+  g.beginPath(); g.arc(p.x,p.y-17*z,1.5*z,0,TAU); g.fill();
+  if(dark>0.08){
+    lights.push(xGreen
+      ? {x:p.x-1.5*z,y:p.y-18.5*z,w:3*z,h:3*z}
+      : {x:p.x-1.5*z,y:p.y-22.1*z,w:3*z,h:3*z});
+  }
 }

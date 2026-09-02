@@ -1,3 +1,4 @@
+import { SIGNAL_UPKEEP, greenAxis, isCrossroads, signalAt } from '../transport/signals.js';
 import { JOBS, UPKEEP, grossOf, supplyOf } from '../simulation/economics.js';
 import { WONDERS } from '../buildings/wonders.js';
 import { FIRSTS, HOUSE_NAMES, residents } from '../buildings/houses.js';
@@ -153,8 +154,17 @@ export function describe(x,y){
       '<dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,2)+'</dd></dl>');
     case "tree": return card("Planted Trees","Trees",
       '<p>A small lift to any home with a view of them, out to <b>3 tiles</b>.</p>');
-    case "road": return card(isWater(x,y)?"Road Bridge":"Road",isWater(x,y)?"Span":"Road",
+    case "road": {
+      const sig=signalAt(x,y);
+      if(sig) return card("Traffic Signal","Signal",
+        '<p>Keeps this crossroads in order. Carts and people on foot wait their turn.</p>'+
+        '<dl><dt>Green now</dt><dd>'+(greenAxis(sig)==="x"?"East\u2013west":"North\u2013south")+'</dd>'+
+        '<dt>Upkeep a day</dt><dd class="dn">'+SIGNAL_UPKEEP+'</dd></dl>');
+      if(isCrossroads(x,y)) return card("Crossroads","Road",
+        '<p>Four ways meet here and nothing is directing them. A <b>signal</b> would settle it, and the homes around would thank you.</p>');
+      return card(isWater(x,y)?"Road Bridge":"Road",isWater(x,y)?"Span":"Road",
       '<p>Homes fill up only when a road runs alongside. Citizens walk wherever it leads.</p>');
+    }
     case "rail": return card(isWater(x,y)?"Rail Bridge":"Rail",isWater(x,y)?"Span":"Rail",
       '<p>Trains appear once <b>6 tiles</b> of rail exist, and one more for every 13 after.</p>');
   }

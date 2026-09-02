@@ -3,6 +3,7 @@ import { TAU, clamp } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { findPath, stepFrom } from '../transport/pathfinding.js';
 import { roadNear } from '../transport/roads.js';
+import { stoppedBy } from '../transport/signals.js';
 import { isType } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 
@@ -91,6 +92,8 @@ export function updateCitizens(dt){
   for(let i=S.citizens.length-1;i>=0;i--){
     const c=S.citizens[i];
     if(c.linger>0){ c.linger-=dt; continue; }   // standing about
+    // wait at the kerb if the light is against them
+    if(c.p<0.02&&stoppedBy(c.x,c.y,c.nx!==c.x?"x":"y")) continue;
     c.p+=dt*c.sp;
     while(c.p>=1){
       c.p-=1;

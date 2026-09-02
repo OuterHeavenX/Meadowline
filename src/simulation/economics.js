@@ -1,3 +1,4 @@
+import { SIGNAL_UPKEEP } from '../transport/signals.js';
 import { BAKERY_MILL_R } from '../buildings/bakeries.js';
 import { CAFE_TRADE } from '../buildings/cafes.js';
 import { FARM_FIELD_NEED, FARM_FIELD_R, FARM_YIELD } from '../buildings/farms.js';
@@ -104,6 +105,7 @@ export function tallyWork(){
 export function upkeepTotal(){
   let up=0;
   for(const b of S.ctx.all) up+=UPKEEP[b.type]||0;
+  up+=S.signals.length*SIGNAL_UPKEEP;
   return up;
 }
 

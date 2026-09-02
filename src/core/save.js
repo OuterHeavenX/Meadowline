@@ -2,6 +2,7 @@ import { BUILDABLE } from '../buildings/buildings.js';
 import { S } from './state.js';
 import { H, LEGACY_W, W } from './constants.js';
 import { SPANS } from '../transport/bridges.js';
+import { addSignal } from '../transport/signals.js';
 import { recompute } from '../simulation/mood.js';
 import { WISH_TYPES, mileHit, rollWishes, setMileHit } from '../simulation/wishes.js';
 import { toast } from '../ui/notify.js';
@@ -29,7 +30,8 @@ export function save(){
     v:3,w:W,h:H,seed:S.seed,coins:Math.floor(S.coins),day:S.day,dayT:S.dayT,b,woods,
     mile:mileHit,granted:S.granted||0,
     wishes:S.wishes.map(w=>({k:w.k,t:w.t,g:w.g,r:w.r})),
-    log:S.log.slice(0,40), history:S.history.slice(-40)
+    log:S.log.slice(0,40), history:S.history.slice(-40),
+    signals:S.signals.map(g=>[g.x,g.y])
   }));
 }
 export function applySave(d){
@@ -55,6 +57,11 @@ export function applySave(d){
     if(S.terr[i]===1&&!SPANS[type]) S.terr[i]=0;
     S.natTree[i]=0;
     S.grid[i]={type,x:nx,y:ny,seed:((nx*73856093)^(ny*19349663))>>>0,pop:pop||0,grow:0,mood:50,linked:false};
+  }
+  // signals sit on roads, so they can only go back once the roads are down
+  S.signals.length=0;
+  if(Array.isArray(d.signals)) for(const g of d.signals){
+    if(Array.isArray(g)&&inBounds(g[0]+off,g[1]+off)) addSignal(g[0]+off,g[1]+off);
   }
   if(off) centreCamera();                  // look at where the town actually is
   refreshPalette();
