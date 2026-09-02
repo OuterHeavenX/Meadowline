@@ -1,3 +1,4 @@
+import { WONDERS } from './wonders.js';
 import { hash2 } from '../core/constants.js';
 import { SCHOOL_MOOD, SCHOOL_ROOM } from './schools.js';
 import { services } from '../core/services.js';
@@ -6,7 +7,8 @@ import { S } from '../core/state.js';
 // How many can live under one roof: four, or six where a school reaches.
 export function capFor(h){
   const schooled=S.ctx.schools.some(k=>Math.abs(k.x-h.x)<=SCHOOL_MOOD.r&&Math.abs(k.y-h.y)<=SCHOOL_MOOD.r);
-  return 4+(schooled?SCHOOL_ROOM:0);
+  const lettered=S.ctx.wonders.some(w=>w.type==="library");
+  return 4+(schooled?SCHOOL_ROOM:0)+(lettered?WONDERS.library.room:0);
 }
 
 export function growth(dt){

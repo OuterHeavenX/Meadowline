@@ -1,3 +1,5 @@
+import { JOBS, UPKEEP, grossOf, supplyOf } from '../simulation/economics.js';
+import { WONDERS } from '../buildings/wonders.js';
 import { FIRSTS, HOUSE_NAMES, residents } from '../buildings/houses.js';
 import { capFor } from '../buildings/houses.js';
 import { outFrom } from '../simulation/citizens.js';
@@ -109,12 +111,62 @@ export function describe(x,y){
       '<p>Boats put out from here and sail the open water. Homes with a view of it are cheered for <b>4 tiles</b>.</p>'+
       '<dl><dt>Boats afloat</dt><dd>'+S.boats.length+'</dd>'+
       '<dt>Homes in reach</dt><dd>'+countNear("houses",x,y,4)+'</dd></dl>');
+    case "farm": {
+      const sup=supplyOf(b);
+      return card("The Farm","Farm",
+        '<p>Grows the grain the windmills need. It wants open ground around it \u2014 '+
+        (sup>=1?'these fields are <b>full</b>.':'right now the fields are only <b>'+Math.round(sup*100)+'%</b> of what they could be.')+'</p>'+
+        '<dl><dt>Fields</dt><dd class="'+(sup>=1?'up':'dn')+'">'+Math.round(sup*100)+'%</dd>'+
+        '<dt>Earns a day</dt><dd>'+Math.round(grossOf(b))+'</dd>'+
+        '<dt>Jobs</dt><dd>'+(JOBS.farm||0)+'</dd></dl>');
+    }
+    case "sawmill": {
+      const sup=supplyOf(b);
+      return card("The Sawmill","Sawmill",
+        '<p>Cuts timber from the woodland around it, and the neighbours would rather it were further off.</p>'+
+        '<dl><dt>Woodland in reach</dt><dd class="'+(sup>=1?'up':'dn')+'">'+Math.round(sup*100)+'%</dd>'+
+        '<dt>Earns a day</dt><dd>'+Math.round(grossOf(b))+'</dd>'+
+        '<dt>Jobs</dt><dd>'+(JOBS.sawmill||0)+'</dd></dl>');
+    }
+    case "workshop": {
+      const sup=supplyOf(b);
+      return card("The Workshop","Workshop",
+        '<p>Makes goods to sell. '+(sup>=1?'A market is in reach, so it sells <b>everything</b> it makes.':'No market within <b>5 tiles</b>, so half of what it makes sits unsold.')+'</p>'+
+        '<dl><dt>Market</dt><dd class="'+(sup>=1?'up':'dn')+'">'+(sup>=1?'In reach':'Too far')+'</dd>'+
+        '<dt>Earns a day</dt><dd>'+Math.round(grossOf(b))+'</dd>'+
+        '<dt>Jobs</dt><dd>'+(JOBS.workshop||0)+'</dd></dl>');
+    }
+    case "inn": {
+      const sup=supplyOf(b);
+      return card("The Inn","Inn",
+        '<p>Puts up travellers. It earns from every station and dock within <b>6 tiles</b>, up to four of them.</p>'+
+        '<dl><dt>Travellers</dt><dd class="'+(sup>=1?'up':'')+'">'+Math.round(sup*100)+'%</dd>'+
+        '<dt>Earns a day</dt><dd>'+Math.round(grossOf(b))+'</dd>'+
+        '<dt>Jobs</dt><dd>'+(JOBS.inn||0)+'</dd></dl>');
+    }
+    case "clinic": return card("The Clinic","Clinic",
+      '<p>Lifts the mood for <b>5 tiles</b>, and takes most of the sting out of a crowded street.</p>'+
+      '<dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,5)+'</dd>'+
+      '<dt>Jobs</dt><dd>'+(JOBS.clinic||0)+'</dd></dl>');
+    case "well": return card("The Well","Well",
+      '<p>A small, cheap comfort for the houses right around it.</p>'+
+      '<dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,2)+'</dd></dl>');
     case "tree": return card("Planted Trees","Trees",
       '<p>A small lift to any home with a view of them, out to <b>3 tiles</b>.</p>');
     case "road": return card(isWater(x,y)?"Road Bridge":"Road",isWater(x,y)?"Span":"Road",
       '<p>Homes fill up only when a road runs alongside. Citizens walk wherever it leads.</p>');
     case "rail": return card(isWater(x,y)?"Rail Bridge":"Rail",isWater(x,y)?"Span":"Rail",
       '<p>Trains appear once <b>6 tiles</b> of rail exist, and one more for every 13 after.</p>');
+  }
+  if(b&&WONDERS[b.type]){
+    const spec=WONDERS[b.type];
+    const extra=b.type==="library"?'<dt>Room in every home</dt><dd class="up">+1</dd>'
+      :b.type==="clocktower"?'<dt>Every trade earns</dt><dd class="up">+'+Math.round(spec.output*100)+'%</dd>'
+      :b.type==="lighthouse"?'<dt>Extra boats</dt><dd class="up">+'+spec.boats+'</dd>':'';
+    return card(spec.name,"Wonder",
+      '<p>One of a kind, and the pride of the valley. It cheers every home within <b>'+spec.mood.r+' tiles</b>.</p>'+
+      '<dl><dt>Homes in reach</dt><dd>'+countNear("houses",x,y,spec.mood.r)+'</dd>'+
+      '<dt>Upkeep a day</dt><dd class="dn">'+(UPKEEP[b.type]||0)+'</dd>'+extra+'</dl>');
   }
   if(S.terr[i]===1) return card("Open Water","Water",
     '<p>Only <b>roads and rails</b> can cross, and a span costs <b>three times</b> the usual. Water cheers up the homes that can see it.</p>');

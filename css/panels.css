@@ -120,3 +120,8 @@
 .chron li{display:flex;gap:8px;font-size:11.5px;line-height:1.35;color:#ded9c8}
 .chron em{flex:0 0 auto;font-style:normal;font-weight:800;color:var(--mustard);opacity:.85;min-width:44px}
 body.ledger-open .side{display:none}
+.books{margin:0;display:grid;grid-template-columns:1fr auto;gap:3px 10px;font-size:11.5px;align-items:baseline}
+.books dt{color:#ded9c8;font-weight:600}
+.books dd{margin:0;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.books dd.up{color:var(--meadow)} .books dd.dn{color:var(--rose)}
+.books .net{margin-top:5px;padding-top:5px;border-top:1px solid rgba(244,240,226,.14)}

@@ -1,4 +1,5 @@
 import { note } from '../simulation/chronicle.js';
+import { IS_WONDER, WONDERS } from './wonders.js';
 import { COST, DIRS } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
@@ -7,7 +8,9 @@ import { idx, inBounds, isType, isWater } from '../world/tiles.js';
 
 /* ---------- building placement ---------- */
 export const BUILDABLE={road:1,rail:1,house:1,cafe:1,park:1,tree:1,lamp:1,mill:1,station:1,
-                        market:1,bakery:1,school:1,dock:1};
+                        market:1,bakery:1,school:1,dock:1,
+                        farm:1,sawmill:1,workshop:1,inn:1,clinic:1,well:1,
+                        statue:1,clocktower:1,lighthouse:1,library:1};
 
 // A span over water costs three times what it does on dry ground.
 export function costOf(kind,x,y){ return COST[kind]*(SPANS[kind]&&isWater(x,y)?3:1); }
@@ -31,6 +34,18 @@ export function canPlace(kind,x,y){
     for(const[dx,dy]of DIRS) if(isWater(x+dx,y+dy)) touching=true;
     if(!touching) return {ok:false,why:"A dock has to stand at the water's edge."};
   }
+  if(IS_WONDER[kind]){
+    const spec=WONDERS[kind];
+    if(S.ctx.wonders.some(w=>w.type===kind))
+      return {ok:false,why:"There is only ever one "+spec.name+"."};
+    if(S.pop<spec.unlock)
+      return {ok:false,why:spec.name+" waits for a valley of "+spec.unlock+" citizens. You have "+S.pop+"."};
+    if(spec.water){
+      let touching=false;
+      for(const[dx,dy]of DIRS) if(isWater(x+dx,y+dy)) touching=true;
+      if(!touching) return {ok:false,why:spec.name+" must stand at the water's edge."};
+    }
+  }
   const c=costOf(kind,x,y);
   if(S.coins<c){
     return {ok:false,why:S.terr[i]===1
@@ -43,6 +58,11 @@ export function canPlace(kind,x,y){
 // the first of each kind is worth writing down
 const NOTED={};
 const NOTE_NAMES={cafe:"The first caf\u00e9 opened",park:"The first park was laid out",
+  farm:"The first fields were sown",sawmill:"The first sawmill started up",
+  workshop:"The first workshop opened",inn:"The first inn took guests",
+  clinic:"The first clinic opened its doors",well:"The first well was dug",
+  statue:"The Statue was unveiled",clocktower:"The Clock Tower struck its first hour",
+  lighthouse:"The Lighthouse was lit",library:"The Great Library opened",
   station:"The first station opened",mill:"The first windmill turned",
   market:"The first market day",bakery:"The first bakery lit its oven",
   school:"The first school took pupils",dock:"The first dock was built",

@@ -52,6 +52,18 @@ export const WISH_TYPES={
   boats: {at:()=>S.boats.length,      ok:()=>hasWater(),
           make(){ const n=ladder(S.boats.length,[1,2,4,6]);
                   return {t:"Put <b>"+n+"</b> boat"+(n>1?"s":"")+" on the water",g:n,r:70+n*40}; }},
+  farm:  {at:()=>countType("farm"),   ok:()=>countType("mill")>=1,
+          make(){ const n=ladder(countType("farm"),[1,3,6,10]);
+                  return {t:"Sow <b>"+n+"</b> farm"+(n>1?"s":""),g:n,r:50+n*25}; }},
+  inn:   {at:()=>countType("inn"),    ok:()=>countType("station")+countType("dock")>=1,
+          make(){ const n=ladder(countType("inn"),[1,2,4]);
+                  return {t:"Open <b>"+n+"</b> inn"+(n>1?"s":""),g:n,r:90+n*45}; }},
+  work:  {at:()=>S.econ.employed,     ok:()=>S.pop>=12,
+          make(){ const n=ladder(S.econ.employed,[10,25,50,90,150]);
+                  return {t:"Find work for <b>"+n+"</b> people",g:n,r:60+n*4}; }},
+  wonder:{at:()=>S.ctx.wonders.length, ok:()=>S.pop>=60,
+          make(){ const n=ladder(S.ctx.wonders.length,[1,2,3,4]);
+                  return {t:"Raise <b>"+n+"</b> wonder"+(n>1?"s":""),g:n,r:400+n*300}; }},
   purse: {at:()=>Math.floor(S.coins), ok:()=>S.day>=2,
           make(){ const n=ladder(Math.floor(S.coins),[250,600,1200,2400]);
                   return {t:"Put by <b>"+n+"</b> coins",g:n,r:Math.round(n*0.18)}; }}

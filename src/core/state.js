@@ -10,6 +10,7 @@ export const S={
   ctx:{parks:[],cafes:[],stations:[],houses:[],lamps:[],mills:[]},
   wx:{k:"clear",amt:0,target:0,next:70},
   wishes:[], log:[], history:[],
+  econ:{jobs:0,employed:0,idle:0,unemployment:0,staffing:1,upkeep:0,gross:0,net:0,broke:false},
   cam:{x:0,y:0,z:1}
 };
 

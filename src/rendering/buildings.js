@@ -2,6 +2,7 @@ import { P, TAU, TH, TW, clamp, hash2, shade } from '../core/constants.js';
 import { S, reduceMotion } from '../core/state.js';
 import { box, diamond, drawTree, g, lights, snowCap } from './terrain.js';
 import { PAL } from '../world/seasons.js';
+import { proj } from '../world/map.js';
 import { activeFestival, festivalGlow } from '../world/festivals.js';
 
 
@@ -334,4 +335,283 @@ export function drawDock(b,p,dark){
   g.fillStyle=lit>0.05?"#ffdd9f":"rgba(206,216,208,.8)";
   g.fillRect(p.x-hw*0.62-0.8*z,p.y-12*z,3.8*z,3*z);
   if(lit>0.05) lights.push({x:p.x-hw*0.62-0.8*z,y:p.y-12*z,w:3.8*z,h:3*z,big:true});
+}
+
+/* ---------- farm: a barn with its fields ---------- */
+export function drawFarm(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,18*z,8*z);
+  // ploughed rows on the tile itself
+  diamond(p.x,p.y,0.98); g.fillStyle=PAL.snow>0.4?"#d8dcd4":"#a98b5f"; g.fill();
+  g.strokeStyle=PAL.snow>0.4?"#c6ccc4":"#8e7048"; g.lineWidth=1*z;
+  for(let i=-2;i<=2;i++){
+    const a=proj(b.x-0.45+i*0.18,b.y-0.45), c2=proj(b.x+0.45+i*0.18,b.y+0.45);
+    g.beginPath(); g.moveTo(a.x,a.y); g.lineTo(c2.x,c2.y); g.stroke();
+  }
+  const topY=box(p.x-6*z,p.y-2*z,0.44,13,"#c2624f","#8d4436","#a95443");
+  const hw=TW/2*0.44*z, hh=TH/2*0.44*z;
+  g.fillStyle="#e9dfc9";                                   // pale barn roof
+  g.beginPath();
+  g.moveTo(p.x-6*z,topY-hh); g.lineTo(p.x-6*z+hw,topY); g.lineTo(p.x-6*z,topY+hh); g.lineTo(p.x-6*z-hw,topY);
+  g.closePath(); g.fill();
+  snowCap(p.x-6*z,topY,0.44);
+  g.fillStyle="#5a3b2a"; g.fillRect(p.x-7.5*z,p.y-8*z,3*z,5*z);
+  // stooks of grain
+  for(let i=0;i<3;i++){
+    g.fillStyle=PAL.snow>0.4?"#e8ece4":"#d9b455";
+    g.beginPath();
+    g.moveTo(p.x+4*z+i*4*z,p.y+1*z); g.lineTo(p.x+6*z+i*4*z,p.y+1*z); g.lineTo(p.x+5*z+i*4*z,p.y-6*z);
+    g.closePath(); g.fill();
+  }
+  if(dark>0.12) lights.push({x:p.x-7.5*z,y:p.y-8*z,w:3*z,h:3*z});
+}
+
+/* ---------- sawmill: an open shed, a blade and a log pile ---------- */
+export function drawSawmill(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,18*z,8*z);
+  const topY=box(p.x,p.y,0.66,12,"#c9ae84","#8f7550","#ad9267");
+  const hw=TW/2*0.66*z, hh=TH/2*0.66*z;
+  g.fillStyle="#6f6157";
+  g.beginPath();
+  g.moveTo(p.x,topY-hh); g.lineTo(p.x+hw,topY); g.lineTo(p.x,topY+hh); g.lineTo(p.x-hw,topY);
+  g.closePath(); g.fill();
+  snowCap(p.x,topY,0.66);
+  // circular blade, turning
+  const bx=p.x-hw*0.5, by=p.y-7*z, br=4.2*z;
+  g.save(); g.translate(bx,by); g.rotate(reduceMotion?0:S.t*2.2);
+  g.fillStyle="#b9c2c9"; g.beginPath(); g.arc(0,0,br,0,TAU); g.fill();
+  g.strokeStyle="#7f8b93"; g.lineWidth=0.9*z;
+  for(let i=0;i<8;i++){ const a=i*TAU/8; g.beginPath(); g.moveTo(Math.cos(a)*br*0.6,Math.sin(a)*br*0.6); g.lineTo(Math.cos(a)*br,Math.sin(a)*br); g.stroke(); }
+  g.restore();
+  // stacked logs
+  for(let i=0;i<3;i++){
+    g.fillStyle=i%2?"#8b6742":"#7a5a3a";
+    g.beginPath(); g.ellipse(p.x+hw*0.45,p.y-2*z-i*3*z,3.2*z,1.8*z,0,0,TAU); g.fill();
+  }
+}
+
+/* ---------- workshop: a working shed with a smoking flue ---------- */
+export function drawWorkshop(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,18*z,8*z);
+  const topY=box(p.x,p.y,0.7,14,"#d9d2c4","#9d9484","#bcb3a1");
+  const hw=TW/2*0.7*z;
+  g.fillStyle="#6d7f86";                                   // corrugated roof
+  g.beginPath();
+  g.moveTo(p.x,topY-TH/2*0.7*z); g.lineTo(p.x+hw,topY); g.lineTo(p.x,topY+TH/2*0.7*z); g.lineTo(p.x-hw,topY);
+  g.closePath(); g.fill();
+  g.strokeStyle="#5b6b72"; g.lineWidth=0.7*z;
+  for(let i=-2;i<=2;i++){ g.beginPath(); g.moveTo(p.x+i*hw*0.35,topY-TH/2*0.7*z*0.6); g.lineTo(p.x+i*hw*0.35+hw*0.5,topY+2*z); g.stroke(); }
+  snowCap(p.x,topY,0.7);
+  g.fillStyle="#8a7a66"; g.fillRect(p.x+hw*0.5,topY-8*z,2.6*z,8*z);
+  for(let i=0;i<2;i++){
+    const t=((S.t*0.4+i*0.5+(b.seed%7)/7)%1);
+    g.fillStyle="rgba(190,190,185,"+((1-t)*0.28).toFixed(3)+")";
+    g.beginPath(); g.arc(p.x+hw*0.5+1.3*z,topY-8*z-t*13*z,(1.4+t*3)*z,0,TAU); g.fill();
+  }
+  // lit doorway
+  g.fillStyle=dark>0.2?"#ffb765":"rgba(90,110,120,.5)";
+  g.fillRect(p.x-2*z,p.y-9*z,4.4*z,6*z);
+  lights.push({x:p.x-2*z,y:p.y-9*z,w:4.4*z,h:6*z});
+}
+
+/* ---------- inn: two storeys and a hanging sign ---------- */
+export function drawInn(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,19*z,8*z);
+  const topY=box(p.x,p.y,0.72,22,"#f0e7d6","#b09878","#d2c1a3");
+  const hw=TW/2*0.72*z, hh=TH/2*0.72*z, peak=8*z;
+  g.fillStyle="#8a5a4a";
+  g.beginPath(); g.moveTo(p.x-hw,topY); g.lineTo(p.x,topY+hh); g.lineTo(p.x,topY+hh-peak*0.5); g.lineTo(p.x-hw,topY-peak); g.closePath(); g.fill();
+  g.fillStyle="#9c6858";
+  g.beginPath(); g.moveTo(p.x+hw,topY); g.lineTo(p.x,topY+hh); g.lineTo(p.x,topY+hh-peak*0.5); g.lineTo(p.x+hw,topY-peak); g.closePath(); g.fill();
+  g.fillStyle="#ab7565";
+  g.beginPath(); g.moveTo(p.x,topY-hh); g.lineTo(p.x+hw,topY-peak); g.lineTo(p.x,topY+hh-peak*0.5); g.lineTo(p.x-hw,topY-peak); g.closePath(); g.fill();
+  if(PAL.snow>0.03){
+    g.fillStyle="rgba(250,252,255,"+(PAL.snow*0.8)+")";
+    g.beginPath(); g.moveTo(p.x,topY-hh); g.lineTo(p.x+hw,topY-peak); g.lineTo(p.x,topY+hh-peak*0.5); g.lineTo(p.x-hw,topY-peak); g.closePath(); g.fill();
+  }
+  // two rows of windows
+  for(let row=0;row<2;row++) for(let i=0;i<2;i++){
+    const wx=p.x-hw*0.5+i*hw*0.7, wy=p.y-(9+row*7)*z;
+    g.fillStyle=dark>0.15?"#ffd28a":"rgba(120,145,158,.55)";
+    g.fillRect(wx,wy,3.2*z,4*z);
+    if(dark>0.12) lights.push({x:wx,y:wy,w:3.2*z,h:4*z});
+  }
+  // sign on a bracket
+  g.strokeStyle="#5a4a3a"; g.lineWidth=0.9*z;
+  g.beginPath(); g.moveTo(p.x+hw*0.75,p.y-16*z); g.lineTo(p.x+hw*1.15,p.y-16*z); g.stroke();
+  g.fillStyle="#3f6f52";
+  g.fillRect(p.x+hw*0.95,p.y-15.6*z,5*z,4*z);
+  g.fillStyle="#e0ae4e";
+  g.beginPath(); g.arc(p.x+hw*0.95+2.5*z,p.y-13.6*z,1.1*z,0,TAU); g.fill();
+}
+
+/* ---------- clinic: white walls, a green cross ---------- */
+export function drawClinic(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,20*z,9*z);
+  const topY=box(p.x,p.y,0.78,17,"#fbf7ee","#c3bfb2","#e4dfd2");
+  snowCap(p.x,topY,0.78);
+  const hw=TW/2*0.78*z;
+  g.fillStyle="#dfe6e2";
+  diamond(p.x,topY,0.78); g.fill();
+  // cross on the front wall
+  g.fillStyle="#5fa46f";
+  g.fillRect(p.x-1.3*z,p.y-13*z,2.6*z,7.4*z);
+  g.fillRect(p.x-3.7*z,p.y-10.6*z,7.4*z,2.6*z);
+  for(let i=0;i<2;i++){
+    const wx=p.x+(i?hw*0.42:-hw*0.66);
+    g.fillStyle=dark>0.15?"#dff0ff":"rgba(120,145,158,.5)";
+    g.fillRect(wx,p.y-8*z,3.4*z,4.2*z);
+    if(dark>0.12) lights.push({x:wx,y:p.y-8*z,w:3.4*z,h:4.2*z});
+  }
+}
+
+/* ---------- well: a stone ring under a little roof ---------- */
+export function drawWell(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,9*z,4*z);
+  g.fillStyle="#a9a396";
+  g.beginPath(); g.ellipse(p.x,p.y-2*z,6*z,3*z,0,0,TAU); g.fill();
+  g.fillStyle="#8d887c";
+  g.beginPath(); g.ellipse(p.x,p.y-3.4*z,4.4*z,2.2*z,0,0,TAU); g.fill();
+  g.fillStyle="#3d4a52";
+  g.beginPath(); g.ellipse(p.x,p.y-3.6*z,3.2*z,1.6*z,0,0,TAU); g.fill();
+  g.fillStyle="#7a5c43";
+  g.fillRect(p.x-4.6*z,p.y-13*z,1.4*z,10*z);
+  g.fillRect(p.x+3.2*z,p.y-13*z,1.4*z,10*z);
+  g.fillStyle="#9c6858";
+  g.beginPath();
+  g.moveTo(p.x-6.4*z,p.y-12.6*z); g.lineTo(p.x+6.4*z,p.y-12.6*z); g.lineTo(p.x,p.y-17.5*z);
+  g.closePath(); g.fill();
+  if(PAL.snow>0.05){
+    g.fillStyle="rgba(250,252,255,"+(PAL.snow*0.75)+")";
+    g.beginPath(); g.moveTo(p.x-6.4*z,p.y-12.6*z); g.lineTo(p.x+6.4*z,p.y-12.6*z); g.lineTo(p.x,p.y-17.5*z); g.closePath(); g.fill();
+  }
+}
+
+/* ============================================================
+   WONDERS — one of each, ever, so they are worth drawing properly
+   ============================================================ */
+
+export function drawStatue(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,15*z,7*z);
+  const topY=box(p.x,p.y,0.62,9,"#cfc8b6","#9c968a","#b9b2a2");   // plinth
+  const hw=TW/2*0.62*z;
+  g.fillStyle="#ded7c6"; diamond(p.x,topY,0.62); g.fill();
+  // bronze figure, arm raised
+  const fy=topY-2*z;
+  g.fillStyle="#8d7a4e";
+  g.fillRect(p.x-1.8*z,fy-13*z,3.6*z,13*z);
+  g.beginPath(); g.arc(p.x,fy-15*z,2.4*z,0,TAU); g.fill();
+  g.lineWidth=1.8*z; g.strokeStyle="#8d7a4e"; g.lineCap="round";
+  g.beginPath(); g.moveTo(p.x+1.2*z,fy-11*z); g.lineTo(p.x+5.5*z,fy-19*z); g.stroke();
+  g.beginPath(); g.moveTo(p.x-1.2*z,fy-11*z); g.lineTo(p.x-4*z,fy-5*z); g.stroke();
+  g.fillStyle="#a8945f";
+  g.beginPath(); g.arc(p.x+5.5*z,fy-19*z,1.6*z,0,TAU); g.fill();
+  snowCap(p.x,topY,0.62);
+  if(dark>0.15){
+    lights.push({x:p.x-3*z,y:topY-4*z,w:6*z,h:2*z,big:true});
+  }
+}
+
+export function drawClockTower(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,17*z,8*z);
+  const topY=box(p.x,p.y,0.5,44,"#efe7d6","#b3a88e","#d5cab0");
+  const hw=TW/2*0.5*z;
+  // belfry
+  g.fillStyle="#c9bda2";
+  g.fillRect(p.x-hw*1.15,topY-4*z,hw*2.3,4*z);
+  g.fillStyle="#5f7f8c";
+  g.beginPath();
+  g.moveTo(p.x-hw*1.15,topY-4*z); g.lineTo(p.x+hw*1.15,topY-4*z); g.lineTo(p.x,topY-18*z);
+  g.closePath(); g.fill();
+  g.fillStyle="#e0ae4e";
+  g.beginPath(); g.arc(p.x,topY-19.5*z,1.7*z,0,TAU); g.fill();
+  // clock face with hands that keep the valley's time
+  const cy=p.y-34*z;
+  g.fillStyle="#f7f3e6"; g.beginPath(); g.arc(p.x,cy,5.4*z,0,TAU); g.fill();
+  g.strokeStyle="#3b4a44"; g.lineWidth=1*z;
+  g.beginPath(); g.arc(p.x,cy,5.4*z,0,TAU); g.stroke();
+  const hr=S.dayT*TAU*2, mn=S.dayT*TAU*24;
+  g.lineCap="round"; g.lineWidth=1.4*z;
+  g.beginPath(); g.moveTo(p.x,cy); g.lineTo(p.x+Math.sin(hr)*2.8*z,cy-Math.cos(hr)*2.8*z); g.stroke();
+  g.lineWidth=0.9*z;
+  g.beginPath(); g.moveTo(p.x,cy); g.lineTo(p.x+Math.sin(mn)*4.2*z,cy-Math.cos(mn)*4.2*z); g.stroke();
+  if(dark>0.1) lights.push({x:p.x-5.4*z,y:cy-5.4*z,w:10.8*z,h:10.8*z,big:true});
+  for(let i=0;i<2;i++){
+    g.fillStyle=dark>0.15?"#ffd9a0":"rgba(120,145,158,.5)";
+    g.fillRect(p.x-1.8*z,p.y-(14+i*9)*z,3.6*z,5*z);
+    if(dark>0.12) lights.push({x:p.x-1.8*z,y:p.y-(14+i*9)*z,w:3.6*z,h:5*z});
+  }
+}
+
+export function drawLighthouse(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,16*z,7*z);
+  // tapered tower, drawn as a stack of shrinking boxes
+  let y=p.y;
+  for(let i=0;i<5;i++){
+    const f=0.62-i*0.075;
+    box(p.x,y,f,10,i%2?"#f4efe2":"#d9564e",i%2?"#b9b2a2":"#a03a34",i%2?"#ddd6c6":"#c04a43");
+    y-=9.4*z;
+  }
+  const lampY=y+2*z;
+  g.fillStyle="#3f4c52";
+  g.fillRect(p.x-4.4*z,lampY-6*z,8.8*z,6*z);
+  const beam=0.4+0.6*Math.abs(Math.sin(S.t*0.9));
+  g.fillStyle="rgba(255,238,190,"+beam.toFixed(2)+")";
+  g.fillRect(p.x-3.2*z,lampY-5*z,6.4*z,4.2*z);
+  g.fillStyle="#5f7f8c";
+  g.beginPath();
+  g.moveTo(p.x-5*z,lampY-6*z); g.lineTo(p.x+5*z,lampY-6*z); g.lineTo(p.x,lampY-12*z);
+  g.closePath(); g.fill();
+  // the sweeping beam itself, once it is dark enough to see
+  if(dark>0.18&&!reduceMotion){
+    const a=S.t*0.9;
+    g.save();
+    g.globalCompositeOperation="lighter";
+    const gr=g.createLinearGradient(p.x,lampY-3*z,p.x+Math.cos(a)*150*z,lampY-3*z+Math.sin(a)*70*z);
+    gr.addColorStop(0,"rgba(255,240,200,"+(0.30*clamp((dark-0.18)/0.3,0,1)).toFixed(3)+")");
+    gr.addColorStop(1,"rgba(255,240,200,0)");
+    g.fillStyle=gr;
+    g.beginPath();
+    g.moveTo(p.x,lampY-3*z);
+    g.lineTo(p.x+Math.cos(a-0.13)*150*z, lampY-3*z+Math.sin(a-0.13)*70*z);
+    g.lineTo(p.x+Math.cos(a+0.13)*150*z, lampY-3*z+Math.sin(a+0.13)*70*z);
+    g.closePath(); g.fill();
+    g.restore();
+  }
+  lights.push({x:p.x-3.2*z,y:lampY-5*z,w:6.4*z,h:4.2*z,big:true});
+}
+
+export function drawLibrary(b,p,dark){
+  const z=S.cam.z;
+  groundShadow(p.x,p.y,24*z,11*z);
+  const topY=box(p.x,p.y,0.92,20,"#f2ecdb","#b6ac93","#d8cfb6");
+  const hw=TW/2*0.92*z, hh=TH/2*0.92*z;
+  // colonnade across the front
+  g.fillStyle="#e8e0cb";
+  for(let i=-2;i<=2;i++) g.fillRect(p.x+i*hw*0.34-1.3*z,p.y-16*z,2.6*z,13*z);
+  g.fillStyle="#d6cbb0";
+  g.fillRect(p.x-hw,p.y-18.5*z,hw*2,2.6*z);
+  // pediment and dome
+  g.fillStyle="#8f9ea6";
+  g.beginPath();
+  g.moveTo(p.x,topY-hh); g.lineTo(p.x+hw,topY); g.lineTo(p.x,topY+hh); g.lineTo(p.x-hw,topY);
+  g.closePath(); g.fill();
+  snowCap(p.x,topY,0.92);
+  g.fillStyle="#6f8fae";
+  g.beginPath(); g.arc(p.x,topY-3*z,7*z,Math.PI,0); g.fill();
+  g.fillStyle="#e0ae4e";
+  g.beginPath(); g.arc(p.x,topY-11*z,1.5*z,0,TAU); g.fill();
+  for(let i=-1;i<=1;i++){
+    g.fillStyle=dark>0.15?"#ffe3ad":"rgba(120,145,158,.5)";
+    g.fillRect(p.x+i*hw*0.5-2*z,p.y-13*z,4*z,5*z);
+    if(dark>0.12) lights.push({x:p.x+i*hw*0.5-2*z,y:p.y-13*z,w:4*z,h:5*z,big:true});
+  }
 }

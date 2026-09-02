@@ -49,6 +49,23 @@ export function paintLedger(){
     html+=row("Coins",series("coins"),"var(--mustard)",Math.floor(S.coins));
     html+=row("Mood",series("mood"),"var(--sky)",moodName());
   }
+  // the day's books: where the money came from and where it went
+  const e=S.econ, lp=S.lastPay;
+  html+='<h2 class="lsep">The books</h2>';
+  html+='<dl class="books">'+
+    '<dt>Work</dt><dd class="'+(e.idle?'dn':'up')+'">'+e.employed+' of '+S.pop+' in work</dd>'+
+    '<dt>Jobs going</dt><dd>'+Math.max(0,e.jobs-e.employed)+'</dd>'+
+    (lp?('<dt>Taxes</dt><dd class="up">+'+lp.tax+'</dd>'+
+         '<dt>Trade</dt><dd class="up">+'+lp.trade+'</dd>'+
+         '<dt>Grant</dt><dd class="up">+'+lp.grant+'</dd>'+
+         (lp.feast?'<dt>Festival</dt><dd class="up">+'+lp.feast+'</dd>':'')+
+         '<dt>Upkeep</dt><dd class="dn">\u2212'+lp.upkeep+'</dd>'+
+         '<dt class="net">Last payday</dt><dd class="net '+(lp.total>=0?'up':'dn')+'">'+
+           (lp.total>=0?'+':'\u2212')+Math.abs(lp.total)+'</dd>')
+        :'<dt>Last payday</dt><dd>not yet</dd>')+
+    '</dl>';
+  if(e.broke) html+='<p class="lempty">Upkeep is outrunning the takings. Build something that earns, or clear what you do not need.</p>';
+
   html+='<h2 class="lsep">Chronicle</h2>';
   if(!S.log.length){
     html+='<p class="lempty">Nothing has happened yet worth writing down.</p>';

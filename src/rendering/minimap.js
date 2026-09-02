@@ -11,6 +11,9 @@ const bMap=document.getElementById("b-map");
 export const MS=mm.width/W;
 export const MINI_COL={road:"#cfc3a6",rail:"#8a7c63",house:"#d9897a",cafe:"#e0b45a",
                 market:"#e5645c",bakery:"#d9a463",school:"#8a6f96",dock:"#a98d68",
+                farm:"#c2a35e",sawmill:"#8f7550",workshop:"#6d7f86",inn:"#9c6858",
+                clinic:"#e6f0ea",well:"#a9a396",statue:"#c7bd9d",clocktower:"#dcd2b8",
+                lighthouse:"#d9564e",library:"#cfd8dd",
                 park:"#7bb268",tree:"#5f9350",lamp:"#efd79a",mill:"#efe6d3",station:"#6f8fae"};
 export function drawMini(){
   if(elMini.classList.contains("hide")) return;

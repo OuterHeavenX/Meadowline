@@ -1,7 +1,7 @@
 import { canPlace } from '../buildings/buildings.js';
 import { H, W, clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
-import { drawBakery, drawCafe, drawDock, drawHouse, drawLamp, drawMarket, drawPark, drawSchool, drawStation, drawWindmill } from './buildings.js';
+import { drawBakery, drawCafe, drawClinic, drawClockTower, drawDock, drawFarm, drawHouse, drawInn, drawLamp, drawLibrary, drawLighthouse, drawMarket, drawPark, drawSawmill, drawSchool, drawStatue, drawStation, drawWell, drawWindmill, drawWorkshop } from './buildings.js';
 import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
 import { drawBoat, drawCitizen, drawTrain } from './entities.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
@@ -25,7 +25,9 @@ export function drawGhost(){
   g.strokeStyle=ok?"rgba(244,240,226,.85)":"rgba(214,96,80,.9)";
   g.lineWidth=1.6*S.cam.z; g.stroke();
   // radius preview for mood buildings
-  const RADII={park:4,cafe:5,station:6,lamp:2,mill:3,market:5,bakery:4,school:5,dock:4};
+  const RADII={park:4,cafe:5,station:6,lamp:2,mill:3,market:5,bakery:4,school:5,dock:4,
+               farm:3,sawmill:5,workshop:3,inn:6,clinic:5,well:2,
+               statue:9,clocktower:11,lighthouse:10,library:13};
   const rad=RADII[S.tool]||0;
   if(rad){
     g.strokeStyle="rgba(244,240,226,.26)"; g.lineWidth=1.4*S.cam.z;
@@ -82,7 +84,7 @@ export function render(){
   for(const it of items){
     if(it.k===0){
       const p=proj(it.b.x,it.b.y);
-      if(p.x<-120||p.x>innerWidth+120||p.y<-160||p.y>innerHeight+120) continue;
+      if(p.x<-140||p.x>innerWidth+140||p.y<-260||p.y>innerHeight+140) continue;
       const t=it.b.type;
       if(t==="house") drawHouse(it.b,p,dark);
       else if(t==="park") drawPark(it.b,p);
@@ -94,6 +96,16 @@ export function render(){
       else if(t==="bakery") drawBakery(it.b,p,dark);
       else if(t==="school") drawSchool(it.b,p,dark);
       else if(t==="dock") drawDock(it.b,p,dark);
+      else if(t==="farm") drawFarm(it.b,p,dark);
+      else if(t==="sawmill") drawSawmill(it.b,p,dark);
+      else if(t==="workshop") drawWorkshop(it.b,p,dark);
+      else if(t==="inn") drawInn(it.b,p,dark);
+      else if(t==="clinic") drawClinic(it.b,p,dark);
+      else if(t==="well") drawWell(it.b,p,dark);
+      else if(t==="statue") drawStatue(it.b,p,dark);
+      else if(t==="clocktower") drawClockTower(it.b,p,dark);
+      else if(t==="lighthouse") drawLighthouse(it.b,p,dark);
+      else if(t==="library") drawLibrary(it.b,p,dark);
       else if(t==="tree") drawTree(p.x,p.y,it.b.seed,1);
     } else if(it.k===1){
       const p=proj(it.x,it.y);

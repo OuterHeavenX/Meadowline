@@ -1,3 +1,4 @@
+import { WONDERS } from '../buildings/wonders.js';
 import { DOCK_BOATS } from '../buildings/docks.js';
 import { DIRS, clamp, lerp } from '../core/constants.js';
 import { S } from '../core/state.js';
@@ -22,7 +23,8 @@ function launchPoint(){
 }
 
 export function updateBoats(dt){
-  const want=clamp(S.ctx.docks.length*DOCK_BOATS,0,6);
+  const beacon=S.ctx.wonders.some(w=>w.type==="lighthouse")?WONDERS.lighthouse.boats:0;
+  const want=clamp(S.ctx.docks.length*DOCK_BOATS+beacon,0,10);
   if(S.boats.length<want&&Math.random()<dt*1.1){
     const start=launchPoint();
     if(start){
