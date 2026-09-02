@@ -128,6 +128,18 @@ def dome(colour, x=0.0, y=0.0, z=0.0, r=0.5, subdivisions=2):
     return _made(bpy.context.object, colour)
 
 
+def rotate_x(obj, angle, about):
+    """The same turn about the X axis, for anything that slopes forward -
+    an awning over a pavement, a crane arm over the water."""
+    ay, az = about[1], about[2]
+    c, s = math.cos(angle), math.sin(angle)
+    for vertex in obj.data.vertices:
+        y, z = vertex.co.y - ay, vertex.co.z - az
+        vertex.co.y = ay + y * c - z * s
+        vertex.co.z = az + y * s + z * c
+    return obj
+
+
 def rotate_y(obj, angle, about):
     """Turn a part about a point of its own, in mesh space.
 
@@ -266,8 +278,318 @@ def windmill():
     hub.rotation_euler = (math.pi / 2, 0, 0)
 
 
+# ---------------------------- the everyday town ----------------------------
+# These are what the player actually looks at: a valley is mostly homes and
+# shopfronts, and a wonder among plain boxes reads as a wonder among plain
+# boxes. Modelled to the same palette and the same flat-shaded look as the
+# recipes they replace, so the two can stand in one street.
+
+WALL_A = "#ead8b8"
+WALL_B = "#d8c7a9"
+WALL_C = "#c8d4c7"
+ROOF_A = "#8c5042"
+ROOF_B = "#50637a"
+ROOF_C = "#745649"
+SIDEWALK = "#cfd1ca"
+GRASS_LOT = "#78a961"
+SHOP_CAFE = "#c98666"
+SHOP_MARKET = "#9db7a5"
+SHOP_BAKERY = "#d8b56f"
+SHOP_STATION = "#aaa99e"
+AWNING_CAFE = "#7e3f36"
+AWNING_MARKET = "#4f765e"
+AWNING_BAKERY = "#9a633d"
+AWNING_STATION = "#576b76"
+DOOR = "#725342"
+GLASS = "#9fc0cc"
+
+
+def _lot(w=0.94, d=0.94):
+    box(GRASS_LOT, 0, 0, 0, w, d, 0.05)
+    box(SIDEWALK, 0, d * 0.34, 0.05, 0.22, d * 0.3, 0.012)
+
+
+def _house(storeys, wall, roof, chimney):
+    """One home. The tiers differ in height and in what they have grown - a
+    porch, a dormer, a second chimney - rather than only in size, so a street
+    of upgraded homes reads as a street that has been lived in."""
+    _lot()
+    height = (0.42, 0.66, 0.9)[storeys - 1]
+    box(wall, 0, 0, 0.05, 0.62, 0.56, height)
+    gable(roof, 0, 0, 0.05 + height, 0.72, 0.64, 0.24)
+    box(DOOR, 0, -0.29, 0.05, 0.16, 0.03, 0.26)
+    for i in (-1, 1):
+        box(GLASS, i * 0.19, -0.285, 0.22, 0.14, 0.02, 0.16)
+        if storeys >= 2:
+            box(GLASS, i * 0.19, -0.285, 0.22 + 0.3, 0.14, 0.02, 0.16)
+        box(GLASS, 0.315, i * 0.14, 0.22, 0.02, 0.14, 0.16)
+    if chimney:
+        box(ROOF_C, 0.2, 0.16, 0.05 + height, 0.1, 0.1, 0.28)
+    if storeys >= 2:
+        # a porch over the door
+        box(wall, 0, -0.34, 0.05, 0.3, 0.12, 0.3)
+        gable(roof, 0, -0.34, 0.35, 0.36, 0.18, 0.08)
+    if storeys >= 3:
+        # a dormer in the roof, which is what an established home has grown
+        box(wall, -0.16, -0.12, 0.05 + height, 0.18, 0.2, 0.16)
+        gable(roof, -0.16, -0.12, 0.21 + height, 0.22, 0.24, 0.08)
+        box(ROOF_C, -0.24, 0.2, 0.05 + height, 0.09, 0.09, 0.24)
+
+
+def house_1():
+    _house(1, WALL_A, ROOF_A, True)
+
+
+def house_2():
+    _house(2, WALL_B, ROOF_B, True)
+
+
+def house_3():
+    _house(3, WALL_C, ROOF_C, True)
+
+
+def _shopfront(wall, height=0.6, depth=0.62):
+    """The part every trade shares: a lot, a block and a glazed front."""
+    _lot()
+    box(wall, 0, 0, 0.05, 0.7, depth, height)
+    box(GLASS, 0, -depth / 2 - 0.01, 0.12, 0.46, 0.03, 0.34)
+    box(DOOR, 0.24, -depth / 2 - 0.015, 0.05, 0.16, 0.03, 0.3)
+    return height
+
+
+def cafe():
+    """A flat parapet, a striped awning, and tables out on the pavement. The
+    tables are the read: a cafe is the trade you can see people sitting at."""
+    height = _shopfront(SHOP_CAFE)
+    box(AWNING_CAFE, 0, 0, 0.05 + height, 0.76, 0.68, 0.07)
+    canopy = box(AWNING_CAFE, 0, -0.42, 0.48, 0.62, 0.22, 0.03)
+    rotate_x(canopy, math.radians(18), (0, -0.31, 0.5))
+    for i in (-1, 1):
+        box(AWNING_CAFE, i * 0.29, -0.32, 0.05, 0.03, 0.03, 0.43)
+    for i in (-1, 1):
+        cylinder("#f0e2c8", i * 0.22, -0.42, 0.05, 0.03, 0.16, 6)
+        cylinder("#f0e2c8", i * 0.22, -0.42, 0.21, 0.1, 0.02, 10)
+        for q in (-1, 1):
+            cylinder(DOOR, i * 0.22 + q * 0.13, -0.42, 0.05, 0.025, 0.11, 6)
+
+
+def market():
+    """No shopfront at all: a low building behind an open canopy on posts,
+    with the produce crates stacked under it."""
+    _lot()
+    box(SHOP_MARKET, 0, 0.16, 0.05, 0.66, 0.34, 0.44)
+    box(AWNING_MARKET, 0, 0.16, 0.49, 0.72, 0.4, 0.06)
+    box(GLASS, 0, -0.02, 0.16, 0.4, 0.02, 0.24)
+    # the canopy over the stalls, sloping out to the street
+    for i in (-1, 1):
+        box(SHOP_MARKET, i * 0.3, -0.36, 0.05, 0.04, 0.04, 0.42)
+    canopy = box(AWNING_MARKET, 0, -0.3, 0.47, 0.72, 0.42, 0.03)
+    rotate_x(canopy, math.radians(12), (0, -0.09, 0.49))
+    for i in (-1, 0, 1):
+        box("#c8a97a", i * 0.2, -0.3, 0.05, 0.16, 0.22, 0.14)
+        box("#a8493f" if i else "#7fa05a", i * 0.2, -0.3, 0.19, 0.13, 0.18, 0.05)
+
+
+def bakery():
+    """A gable rather than a parapet, and the oven flue beside it - the one
+    trade in the valley with a chimney going all day."""
+    height = _shopfront(SHOP_BAKERY, 0.52)
+    gable(AWNING_BAKERY, 0, 0, 0.05 + height, 0.78, 0.7, 0.24)
+    box("#8a5a34", 0.24, 0.2, 0.05 + height, 0.12, 0.12, 0.4)
+    box("#6f4728", 0.24, 0.2, 0.45 + height, 0.16, 0.16, 0.05)
+    canopy = box(AWNING_BAKERY, 0, -0.4, 0.44, 0.56, 0.2, 0.03)
+    rotate_x(canopy, math.radians(20), (0, -0.31, 0.46))
+    box("#f6ead2", 0, -0.315, 0.5, 0.3, 0.02, 0.09)
+    # bread in the window
+    for i in (-1, 0, 1):
+        box("#d9a45c", i * 0.12, -0.3, 0.2, 0.08, 0.05, 0.05)
+
+
+def station():
+    """Must touch rail, so it is read from the platform side: a long canopy on
+    posts, a clock on the gable and a low waiting room behind."""
+    _lot()
+    box(SHOP_STATION, 0, 0.12, 0.05, 0.66, 0.4, 0.44)
+    gable(AWNING_STATION, 0, 0.12, 0.49, 0.76, 0.48, 0.16)
+    box(WARM, 0, -0.09, 0.5, 0.14, 0.02, 0.14)          # the platform clock
+    box(SIDEWALK, 0, -0.3, 0.05, 0.84, 0.28, 0.03)      # the platform
+    for i in (-1, 1):
+        box(SHOP_STATION, i * 0.34, -0.3, 0.08, 0.04, 0.04, 0.32)
+    box(AWNING_STATION, 0, -0.3, 0.4, 0.84, 0.34, 0.04)
+    box(GLASS, -0.2, -0.09, 0.16, 0.2, 0.02, 0.2)
+
+
+def school():
+    """Two wings and a bell, so it is not just a larger house."""
+    _lot()
+    box("#d9c39a", 0, 0.08, 0.05, 0.78, 0.46, 0.5)
+    gable(ROOF_C, 0, 0.08, 0.55, 0.86, 0.54, 0.2)
+    box("#d9c39a", 0, -0.26, 0.05, 0.38, 0.24, 0.4)
+    gable(ROOF_C, 0, -0.26, 0.45, 0.44, 0.3, 0.12)
+    box(DOOR, 0, -0.38, 0.05, 0.16, 0.03, 0.26)
+    for i in (-1, 0, 1):
+        box(GLASS, i * 0.24, 0.31, 0.24, 0.16, 0.02, 0.18)
+    # the bell over the entrance
+    box("#c9c3b2", 0, -0.26, 0.57, 0.1, 0.1, 0.1)
+    dome(GOLD, 0, -0.26, 0.65, 0.045)
+
+
+def dock():
+    """Must touch water. Decking, bollards and a crane arm over the edge."""
+    box("#80664e", 0, 0, 0, 0.9, 0.9, 0.08)
+    for i in range(-2, 3):
+        box("#6f5842", i * 0.2, 0, 0.08, 0.04, 0.88, 0.012)
+    for x, y in ((-0.34, -0.34), (0.34, -0.34), (-0.34, 0.34), (0.34, 0.34)):
+        cylinder("#4d4a44", x, y, 0.08, 0.045, 0.14, 8)
+    box("#8a7358", 0.24, 0.16, 0.08, 0.1, 0.1, 0.5)
+    arm = box("#8a7358", 0.24, -0.02, 0.54, 0.1, 0.42, 0.08)
+    rotate_x(arm, math.radians(-12), (0.24, 0.16, 0.58))
+
+
+# ---------------------------- civic and municipal ----------------------------
+# Multi-tile facilities. Their footprints come from src/buildings/registry.js
+# and the model has to sit inside one: a 2x3 Fire Station is two tiles across
+# and three deep, centred on its middle, or it overhangs the street.
+
+CIVIC_WALL = "#e1dfd5"
+HALL_WALL = "#d9d6ca"
+HALL_ROOF = "#596778"
+POLICE_WALL = "#a9c5cf"
+POLICE_ACCENT = "#2f6594"
+FIRE_WALL = "#d79a86"
+FIRE_ACCENT = "#b5302b"
+HEALTH_ACCENT = "#c9444b"
+CIVIC_TRIM = "#92784f"
+
+
+def _city_hall(level):
+    """The civic centre, growing from a town office to a city hall. Each rung
+    adds something a citizen would notice from the street - a colonnade, a
+    clock, a cupola - rather than just another metre of wall."""
+    _lot()
+    height = 0.42 + level * 0.1
+    box(HALL_WALL, 0, 0, 0.05, 0.66, 0.58, height)
+    gable(HALL_ROOF, 0, 0, 0.05 + height, 0.76, 0.66, 0.2)
+    box(DOOR, 0, -0.3, 0.05, 0.18, 0.03, 0.3)
+    for i in (-1, 1):
+        box(GLASS, i * 0.2, -0.295, 0.24, 0.14, 0.02, 0.18)
+        box(GLASS, 0.335, i * 0.15, 0.24, 0.02, 0.14, 0.18)
+    if level >= 2:
+        # a portico over the steps
+        for i in (-1, 1):
+            cylinder(PALE, i * 0.16, -0.36, 0.05, 0.045, 0.38, 8)
+        box(PALE, 0, -0.36, 0.43, 0.44, 0.16, 0.06)
+        gable(HALL_ROOF, 0, -0.36, 0.49, 0.48, 0.2, 0.1)
+    if level >= 3:
+        # a clock on the gable
+        box(WARM, 0, -0.335, 0.08 + height, 0.16, 0.02, 0.16)
+    if level >= 4:
+        # the cupola of a mature civic building
+        box(HALL_WALL, 0, 0, 0.25 + height, 0.22, 0.22, 0.2)
+        cone(HALL_ROOF, 0, 0, 0.45 + height, 0.2, 0.22, 8)
+        dome(GOLD, 0, 0, 0.7 + height, 0.045)
+
+
+def city_hall_1():
+    _city_hall(1)
+
+
+def city_hall_2():
+    _city_hall(2)
+
+
+def city_hall_3():
+    _city_hall(3)
+
+
+def city_hall_4():
+    _city_hall(4)
+
+
+def _facility(w, d, wall, accent, roof_flat=True, height=0.6):
+    """The shared shape of a municipal facility: a flat-roofed block on its
+    own forecourt with a coloured band over the door."""
+    box(GRASS_LOT, 0, 0, 0, w * 0.94, d * 0.94, 0.05)
+    box(SIDEWALK, 0, -d * 0.4, 0.05, w * 0.5, d * 0.16, 0.012)
+    box(wall, 0, 0, 0.05, w * 0.8, d * 0.72, height)
+    if roof_flat:
+        box(accent, 0, 0, 0.05 + height, w * 0.84, d * 0.76, 0.06)
+    else:
+        gable(accent, 0, 0, 0.05 + height, w * 0.86, d * 0.78, 0.2)
+    box(accent, 0, -d * 0.365, 0.28, w * 0.3, 0.03, 0.16)
+    box(DOOR, 0, -d * 0.365, 0.05, 0.2, 0.03, 0.28)
+    return height
+
+
+def police_station():
+    """2x2. A blue lamp over the door and a bay for the cruisers."""
+    h = _facility(2, 2, POLICE_WALL, POLICE_ACCENT)
+    for i in (-1, 1):
+        box(GLASS, i * 0.42, -0.72, 0.3, 0.28, 0.02, 0.2)
+        box(GLASS, 0.8, i * 0.4, 0.3, 0.02, 0.24, 0.2)
+    cylinder(POLICE_ACCENT, 0, -0.74, 0.5, 0.05, 0.14, 8)
+    box(POLICE_ACCENT, 0, 0.62, 0.05 + h + 0.06, 0.05, 0.05, 0.26)
+
+
+def fire_station():
+    """2x3. Three engine doors on the short side, and a hose tower behind."""
+    h = _facility(2, 3, FIRE_WALL, FIRE_ACCENT)
+    for i in (-1, 0, 1):
+        box(FIRE_ACCENT, i * 0.44, -1.09, 0.05, 0.36, 0.03, 0.42)
+    box(FIRE_WALL, -0.62, 0.86, 0.05, 0.34, 0.34, h + 0.5)
+    box(FIRE_ACCENT, -0.62, 0.86, 0.05 + h + 0.5, 0.38, 0.38, 0.06)
+    box(GLASS, 0.72, 0.3, 0.3, 0.02, 0.5, 0.2)
+
+
+def clinic():
+    """2x2. The cross over the door is the whole read at this size."""
+    h = _facility(2, 2, "#e8e9e2", "#d8ddd8")
+    box(HEALTH_ACCENT, 0, -0.735, 0.34, 0.06, 0.03, 0.22)
+    box(HEALTH_ACCENT, 0, -0.735, 0.42, 0.22, 0.03, 0.06)
+    for i in (-1, 1):
+        box(GLASS, i * 0.44, -0.72, 0.26, 0.26, 0.02, 0.2)
+        box(GLASS, 0.8, i * 0.4, 0.26, 0.02, 0.24, 0.2)
+    box("#d8ddd8", 0, 0.6, 0.05 + h, 0.5, 0.3, 0.08)
+
+
+def hospital():
+    """3x3. A tall main block with a lower wing, a helipad and the same cross."""
+    box(GRASS_LOT, 0, 0, 0, 2.82, 2.82, 0.05)
+    box(SIDEWALK, 0, -1.2, 0.05, 1.5, 0.44, 0.012)
+    box("#e7e9e7", -0.34, 0, 0.05, 1.4, 1.9, 1.3)
+    box("#d3d5d1", -0.34, 0, 1.35, 1.46, 1.96, 0.1)
+    box("#e7e9e7", 0.68, 0.2, 0.05, 0.62, 1.4, 0.8)
+    box("#d3d5d1", 0.68, 0.2, 0.85, 0.68, 1.46, 0.08)
+    box(HEALTH_ACCENT, 0.68, -0.52, 0.28, 0.12, 0.03, 0.44)
+    box(HEALTH_ACCENT, 0.68, -0.52, 0.42, 0.44, 0.03, 0.12)
+    box(DOOR, 0.68, -0.52, 0.05, 0.3, 0.03, 0.34)
+    for z in (0.3, 0.72, 1.14):
+        for i in (-2, -1, 0, 1, 2):
+            box(GLASS, -0.34 + i * 0.26, -0.96, z, 0.16, 0.02, 0.22)
+    # the helipad, which is what says hospital rather than office block
+    cylinder("#768084", -0.34, 0, 1.45, 0.34, 0.03, 16)
+    cylinder(HEALTH_ACCENT, -0.34, 0, 1.48, 0.24, 0.012, 16)
+
+
 MODELS = {
     "statue": (statue, "civic", 1500),
+    "house-1": (house_1, "buildings", 1500),
+    "house-2": (house_2, "buildings", 1500),
+    "house-3": (house_3, "buildings", 1500),
+    "cafe": (cafe, "buildings", 1500),
+    "market": (market, "buildings", 1500),
+    "bakery": (bakery, "buildings", 1500),
+    "station": (station, "buildings", 1500),
+    "school": (school, "civic", 1500),
+    "cityHall-1": (city_hall_1, "civic", 1500),
+    "cityHall-2": (city_hall_2, "civic", 1500),
+    "cityHall-3": (city_hall_3, "civic", 1500),
+    "cityHall-4": (city_hall_4, "civic", 1500),
+    "policeStation": (police_station, "civic", 2500),
+    "fireStation": (fire_station, "civic", 2500),
+    "clinic": (clinic, "civic", 2500),
+    "hospital": (hospital, "civic", 6000),
+    "dock": (dock, "buildings", 1500),
     "clockTower": (clock_tower, "civic", 1500),
     "lighthouse": (lighthouse, "civic", 2500),
     "greatLibrary": (great_library, "civic", 6000),

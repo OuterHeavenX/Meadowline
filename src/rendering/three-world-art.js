@@ -6,7 +6,7 @@ import { isTileUnlocked } from '../progression/city-growth.js';
 import { isBridge } from '../transport/bridges.js';
 import { idx,isFacilityPart,isType } from '../world/tiles.js';
 import { CANOPY_GREENS, TREE_TRIANGLES, TRUNK_COLOR, treeAsset } from './tree-asset.js';
-import { hasLandmark, landmarkAsset, landmarkMetrics } from './landmark-assets.js';
+import { hasLandmark, landmarkAsset, landmarkKey, landmarkMetrics } from './landmark-assets.js';
 import { PAL } from '../world/seasons.js';
 
 const materials=new Map(), geometries=new Map();
@@ -212,8 +212,8 @@ function greatLibrary(g,fp){const w=fp[0]*.94,d=fp[1]*.94;box(g,0,.005,0,w,.06,d
    hand-built recipes below, which stay as the fallback for everything that has
    not been modelled - and as the thing the models were matched against, so the
    two sit in one frame without a style break. */
-function landmark(g,type){
-  const asset=landmarkAsset(type);
+function landmark(g,key){
+  const asset=landmarkAsset(key);
   if(!asset) return false;
   const mesh=new THREE.Mesh(asset.geometry,asset.materials);
   mesh.castShadow=true; mesh.receiveShadow=true;
@@ -221,7 +221,8 @@ function landmark(g,type){
   return true;
 }
 function building(parent,b){const def=getBuildingDefinition(b.type),fp=def?.placement?.footprint||[1,1],cx=b.x+(fp[0]-1)/2,cz=b.y+(fp[1]-1)/2,g=groupAt(parent,cx,cz);
-  if(hasLandmark(b.type)&&landmark(g,b.type)){
+  const authored=landmarkKey(b);
+  if(hasLandmark(authored)&&landmark(g,authored)){
     // The windmill's sails turn, so they are not in its mesh: they are added
     // here against the hub the model leaves at the front.
     // The windmill's sails turn, so they are not in its mesh. They are hung

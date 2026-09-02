@@ -5,6 +5,23 @@ import * as lighthouse from './assets/lighthouse.mesh.js';
 import * as greatLibrary from './assets/greatLibrary.mesh.js';
 import * as farm from './assets/farm.mesh.js';
 import * as mill from './assets/mill.mesh.js';
+import * as house1 from './assets/house-1.mesh.js';
+import * as house2 from './assets/house-2.mesh.js';
+import * as house3 from './assets/house-3.mesh.js';
+import * as cafe from './assets/cafe.mesh.js';
+import * as market from './assets/market.mesh.js';
+import * as bakery from './assets/bakery.mesh.js';
+import * as station from './assets/station.mesh.js';
+import * as school from './assets/school.mesh.js';
+import * as dock from './assets/dock.mesh.js';
+import * as cityHall1 from './assets/cityHall-1.mesh.js';
+import * as cityHall2 from './assets/cityHall-2.mesh.js';
+import * as cityHall3 from './assets/cityHall-3.mesh.js';
+import * as cityHall4 from './assets/cityHall-4.mesh.js';
+import * as policeStation from './assets/policeStation.mesh.js';
+import * as fireStation from './assets/fireStation.mesh.js';
+import * as clinic from './assets/clinic.mesh.js';
+import * as hospital from './assets/hospital.mesh.js';
 
 /* ---------- the authored landmarks ----------
    The buildings whose silhouette carries a city, modelled in Blender by
@@ -22,11 +39,27 @@ import * as mill from './assets/mill.mesh.js';
    One geometry per building with one group per material, which is what lets a
    whole wonder draw in as many calls as it has colours - four to nine each -
    rather than one per box the recipe stacked. */
-const MESHES={statue,clockTower,lighthouse,greatLibrary,farm,mill};
+const MESHES={statue,clockTower,lighthouse,greatLibrary,farm,mill,
+  cafe,market,bakery,station,school,dock,
+  policeStation,fireStation,clinic,hospital,
+  'cityHall-1':cityHall1,'cityHall-2':cityHall2,'cityHall-3':cityHall3,'cityHall-4':cityHall4,
+  // Homes are keyed by tier, not by type: an Established Home has grown a
+  // porch and a dormer, and that is the whole point of upgrading one.
+  'house-1':house1,'house-2':house2,'house-3':house3};
+
+/* The key a building asks for. Everything is its own type except a home,
+   whose tier is what decides which of the three it is. */
+export function landmarkKey(b){
+  if(!b) return '';
+  if(b.type==='house') return 'house-'+Math.max(1,Math.min(3,Math.floor(Number(b.state?.housingTier)||1)));
+  // The civic centre grows through four buildings, not one that gets taller.
+  if(b.type==='cityHall') return 'cityHall-'+Math.max(1,Math.min(4,Math.floor(Number(b.state?.level)||1)));
+  return b.type;
+}
 
 const cache=new Map();
 
-export function hasLandmark(type){ return !!MESHES[type]; }
+export function hasLandmark(key){ return !!MESHES[key]; }
 
 function build(mesh){
   const geometry=new THREE.BufferGeometry();
