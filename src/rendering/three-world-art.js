@@ -6,6 +6,7 @@ import { isTileUnlocked } from '../progression/city-growth.js';
 import { isBridge } from '../transport/bridges.js';
 import { idx,isFacilityPart,isType } from '../world/tiles.js';
 import { CANOPY_GREENS, TREE_TRIANGLES, TRUNK_COLOR, treeAsset } from './tree-asset.js';
+import { hasLandmark, landmarkAsset, landmarkMetrics } from './landmark-assets.js';
 import { PAL } from '../world/seasons.js';
 
 const materials=new Map(), geometries=new Map();
@@ -207,7 +208,29 @@ function greatLibrary(g,fp){const w=fp[0]*.94,d=fp[1]*.94;box(g,0,.005,0,w,.06,d
   sphere(g,0,1.78,0,.07,mat(C.lit,.3,0,C.lit));
   for(let i=-1;i<=1;i++)window(g,i*.4,.5,d*.345,'z',true,.22,.4);
   door(g,0,.2,d*.35,.3,.42);}
-function building(parent,b){const def=getBuildingDefinition(b.type),fp=def?.placement?.footprint||[1,1],cx=b.x+(fp[0]-1)/2,cz=b.y+(fp[1]-1)/2,g=groupAt(parent,cx,cz);if(def?.service?.type==='recreation'||b.type==='park'){recreation(g,b.type,fp,b.seed||0);return;}if(b.type==='tree'){tree(g,0,0,b.seed||0,1);return;}if(b.type==='lamp'){lamp(g,0,0);return;}if(b.type==='dock'){box(g,0,.02,0,.8,.12,.8,mat('#80664e'));return;}if(b.type==='house'){house(g,b);return;}if(['cafe','market','bakery','station'].includes(b.type)){storefront(g,b.type,b.seed||0);return;}if(b.type==='farm'){farm(g,fp,b.seed||0);return;}if(b.type==='statue'){statue(g,fp);return;}if(b.type==='clockTower'){clockTower(g,fp);return;}if(b.type==='lighthouse'){lighthouse(g,fp);return;}if(b.type==='greatLibrary'){greatLibrary(g,fp);return;}if(b.type==='mill'){lotBase(g,.94,.94);box(g,0,.05,0,.55,.72,.55,mat('#d3c6aa'));gable(g,0,.77,0,.62,.62,.22,mat('#75594b'));cyl(g,0,.5,.3,.035,.45,mat('#5d4a3e'),7);for(const a of[0,Math.PI/2,Math.PI,Math.PI*1.5]){const blade=box(g,Math.cos(a)*.24,.68,Math.sin(a)*.24,.08,.05,.42,mat('#e2d4b8'),false);blade.rotation.y=-a;}return;}civic(g,b.type,b,fp);}
+/* An authored building, straight from its Blender mesh. It is tried before the
+   hand-built recipes below, which stay as the fallback for everything that has
+   not been modelled - and as the thing the models were matched against, so the
+   two sit in one frame without a style break. */
+function landmark(g,type){
+  const asset=landmarkAsset(type);
+  if(!asset) return false;
+  const mesh=new THREE.Mesh(asset.geometry,asset.materials);
+  mesh.castShadow=true; mesh.receiveShadow=true;
+  g.add(mesh);
+  return true;
+}
+function building(parent,b){const def=getBuildingDefinition(b.type),fp=def?.placement?.footprint||[1,1],cx=b.x+(fp[0]-1)/2,cz=b.y+(fp[1]-1)/2,g=groupAt(parent,cx,cz);
+  if(hasLandmark(b.type)&&landmark(g,b.type)){
+    // The windmill's sails turn, so they are not in its mesh: they are added
+    // here against the hub the model leaves at the front.
+    // The windmill's sails turn, so they are not in its mesh. They are hung
+    // here on the hub the model leaves proud of the tower's front face.
+    if(b.type==='mill'){const spin=S.t*.35;for(let k=0;k<4;k++){const a=spin+k*Math.PI/2;
+      const blade=box(g,Math.cos(a)*.22,.62+Math.sin(a)*.22,-.36,.09,.05,.4,mat('#e2d4b8'),false);
+      blade.rotation.z=a;}}
+    return;
+  }if(def?.service?.type==='recreation'||b.type==='park'){recreation(g,b.type,fp,b.seed||0);return;}if(b.type==='tree'){tree(g,0,0,b.seed||0,1);return;}if(b.type==='lamp'){lamp(g,0,0);return;}if(b.type==='dock'){box(g,0,.02,0,.8,.12,.8,mat('#80664e'));return;}if(b.type==='house'){house(g,b);return;}if(['cafe','market','bakery','station'].includes(b.type)){storefront(g,b.type,b.seed||0);return;}if(b.type==='farm'){farm(g,fp,b.seed||0);return;}if(b.type==='statue'){statue(g,fp);return;}if(b.type==='clockTower'){clockTower(g,fp);return;}if(b.type==='lighthouse'){lighthouse(g,fp);return;}if(b.type==='greatLibrary'){greatLibrary(g,fp);return;}if(b.type==='mill'){lotBase(g,.94,.94);box(g,0,.05,0,.55,.72,.55,mat('#d3c6aa'));gable(g,0,.77,0,.62,.62,.22,mat('#75594b'));cyl(g,0,.5,.3,.035,.45,mat('#5d4a3e'),7);for(const a of[0,Math.PI/2,Math.PI,Math.PI*1.5]){const blade=box(g,Math.cos(a)*.24,.68,Math.sin(a)*.24,.08,.05,.42,mat('#e2d4b8'),false);blade.rotation.y=-a;}return;}civic(g,b.type,b,fp);}
 
 function terrain(parent){box(parent,(W-1)/2,-.6,(H-1)/2,W+.8,.48,H+.8,mat('#455a45'),false);const batches=new Map(),matrix=new THREE.Matrix4();for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=idx(x,y),water=S.terr[i]===1,open=isTileUnlocked(x,y),broad=Math.floor(x/5)+Math.floor(y/5),speck=((x*13+y*7+S.seed)%17===0?1:0),v=Math.abs((broad+speck)%4),mask=water?waterMask(x,y):0,key=water?(mask===15?'water-deep':'water-edge'):open?`grass:${v}`:`locked:${v%2}`;if(!batches.has(key))batches.set(key,[]);batches.get(key).push({x,y});}
   for(const [key,cells]of batches){const water=key.startsWith('water'),hex=water?C.water:key.startsWith('locked')?C.locked[+key.at(-1)]:C.grass[+key.at(-1)],height=water?.045:.09,g=geo(`terrain:${water?'water':'land'}`,()=>new THREE.BoxGeometry(1,height,1)),surface=water?basicMat(key==='water-deep'?'#245f7b':'#3f829c'):mat(hex,.93),inst=new THREE.InstancedMesh(g,surface,cells.length);for(let i=0;i<cells.length;i++){matrix.makeTranslation(cells[i].x,water?-.105:-.14,cells[i].y);inst.setMatrixAt(i,matrix);}inst.receiveShadow=true;parent.add(inst);}
@@ -237,4 +260,4 @@ export function buildCohesiveWorld(parent){
   S.diagnostics.visibleTrees=visibleTrees;
 }
 export function visualDescriptor(b){if(!b)return null;if(b.type==='house')return{archetype:['cottage','town-home','established-home'][clamp((b.state?.housingTier||1)-1,0,2)],variant:Math.abs(b.seed||0)%4};return{archetype:b.type,variant:Math.abs(b.seed||0)%4};}
-export function artMetrics(){return{materials:materials.size,geometries:geometries.size};}
+export function artMetrics(){const authored=landmarkMetrics();return{materials:materials.size+authored.materials,geometries:geometries.size,authoredModels:authored.models,authoredTriangles:authored.triangles};}
