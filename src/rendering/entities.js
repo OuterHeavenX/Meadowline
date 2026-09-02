@@ -38,24 +38,62 @@ export function drawTrain(t){
   }
 }
 
+const SKINS=["#f0d9bd","#e0bb95","#c69a70","#a97b52","#7d5636"];
+const HAIRS=["#3a2b20","#5c4230","#8a6a3f","#c9a35e","#2b2b2b","#7d4a2e"];
+
+/* A citizen is about seven pixels tall at normal zoom, so the thing that makes
+   them read is motion and silhouette rather than detail: legs that stride,
+   arms that swing, and a body that leans the way it is going. */
 export function drawCitizen(c){
   const z=S.cam.z;
   const fx=lerp(c.x,c.nx,c.p), fy=lerp(c.y,c.ny,c.p);
   const p=proj(fx,fy);
-  const off=((c.bob*7)%1-0.5)*10*z;   // spread walkers across the road width
-  const bob=Math.abs(Math.sin(S.t*6+c.bob))*1.6*z;
+  const off=((c.bob*7)%1-0.5)*10*z;      // spread walkers across the road width
+  const moving=(c.nx!==c.x||c.ny!==c.y)&&!c.linger;
+  const gait=moving?Math.sin(S.t*7.5+c.bob*6):0;
+  const bob=moving?Math.abs(Math.sin(S.t*7.5+c.bob*6))*1.1*z:0;
+  const x=p.x+off, y=p.y-bob;
+  // which way they face on screen, so they lean into the walk
+  const dir=(c.nx-c.x)-(c.ny-c.y);
+  const lean=moving?(dir>0?0.55:dir<0?-0.55:0)*z:0;
+  const skin=SKINS[(c.bob*997|0)%SKINS.length];
+  const hair=HAIRS[(c.bob*613|0)%HAIRS.length];
+
   g.fillStyle="rgba(30,44,38,.18)";
-  g.beginPath(); g.ellipse(p.x+off,p.y+2*z,2.6*z,1.3*z,0,0,TAU); g.fill();
+  g.beginPath(); g.ellipse(x,p.y+2*z,2.8*z,1.3*z,0,0,TAU); g.fill();
+
+  // legs
+  g.strokeStyle="#3f4a52"; g.lineWidth=1.15*z; g.lineCap="round";
+  g.beginPath();
+  g.moveTo(x,y-2.4*z); g.lineTo(x+gait*1.5*z,y+0.4*z); g.stroke();
+  g.beginPath();
+  g.moveTo(x,y-2.4*z); g.lineTo(x-gait*1.5*z,y+0.4*z); g.stroke();
+
+  // body, leaning into the direction of travel
   g.fillStyle=c.col;
-  g.fillRect(p.x+off-1.5*z,p.y-5.4*z-bob,3*z,4*z);
-  g.fillStyle="#f0d9bd";
-  g.beginPath(); g.arc(p.x+off,p.y-6.8*z-bob,1.7*z,0,TAU); g.fill();
-  // a basket, if they are on their way back from the market or the bakery
+  g.save(); g.translate(x,y-2.4*z); g.rotate(lean*0.12);
+  g.beginPath();
+  g.moveTo(-1.7*z,0); g.lineTo(1.7*z,0); g.lineTo(1.45*z,-4.1*z); g.lineTo(-1.45*z,-4.1*z);
+  g.closePath(); g.fill();
+  // arms swinging opposite the legs
+  g.strokeStyle=c.col; g.lineWidth=1*z;
+  g.beginPath(); g.moveTo(1.4*z,-3.4*z); g.lineTo(1.9*z-gait*1.3*z,-0.7*z); g.stroke();
+  g.beginPath(); g.moveTo(-1.4*z,-3.4*z); g.lineTo(-1.9*z+gait*1.3*z,-0.7*z); g.stroke();
+  g.restore();
+
+  // head, with hair on top
+  const hy=y-7.4*z;
+  g.fillStyle=skin;
+  g.beginPath(); g.arc(x+lean*0.5,hy,1.75*z,0,TAU); g.fill();
+  g.fillStyle=hair;
+  g.beginPath(); g.arc(x+lean*0.5,hy-0.45*z,1.75*z,Math.PI*1.03,Math.PI*2.0); g.fill();
+
+  // a basket, on the way back from the market or the bakery
   if(c.carry){
     g.fillStyle="#b98d5c";
-    g.fillRect(p.x+off+1.6*z,p.y-3.4*z-bob,2.4*z,2*z);
+    g.fillRect(x+1.9*z,y-3.2*z,2.4*z,2*z);
     g.strokeStyle="#8d6a42"; g.lineWidth=0.6*z;
-    g.beginPath(); g.arc(p.x+off+2.8*z,p.y-3.4*z-bob,1.2*z,Math.PI,0); g.stroke();
+    g.beginPath(); g.arc(x+3.1*z,y-3.2*z,1.2*z,Math.PI,0); g.stroke();
   }
 }
 

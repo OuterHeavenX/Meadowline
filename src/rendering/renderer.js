@@ -5,6 +5,7 @@ import { drawBakery, drawCafe, drawClinic, drawClockTower, drawDock, drawFarm, d
 import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
 import { drawBoat, drawCart, drawCitizen, drawSignal, drawTrain } from './entities.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
+import { drawLitSprites, loadSprites } from './sprites.js';
 import { SPANS } from '../transport/bridges.js';
 import { proj, visibleBand } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
@@ -152,8 +153,11 @@ export function render(){
     g.globalCompositeOperation="source-over";
   }
 
+  drawLitSprites();
   drawFireflies(dark);
   drawLanterns(dark);
   drawMotes();
   drawWeather();
 }
+
+loadSprites();      // buildings fall back to being drawn by hand until this lands

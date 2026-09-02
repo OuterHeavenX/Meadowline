@@ -1,0 +1,229 @@
+{
+ "size": [
+  256,
+  256
+ ],
+ "sprites": {
+  "bakery": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "cafe": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "clinic": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "clocktower": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "dock": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "farm": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "house_a": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "house_b": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "house_c": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "inn": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "library": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "lighthouse": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "market": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "mill": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "sawmill": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "school": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "station": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "statue": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "well": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  },
+  "workshop": {
+   "anchor": [
+    128.0,
+    154.65
+   ],
+   "passes": [
+    "base",
+    "snow",
+    "lit"
+   ]
+  }
+ },
+ "tile": 128
+}

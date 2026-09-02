@@ -3,6 +3,7 @@ import { S, reduceMotion } from '../core/state.js';
 import { box, diamond, drawTree, g, lights, snowCap } from './terrain.js';
 import { PAL } from '../world/seasons.js';
 import { proj } from '../world/map.js';
+import { drawSprite, houseSprite } from './sprites.js';
 import { activeFestival, festivalGlow } from '../world/festivals.js';
 
 
@@ -12,9 +13,55 @@ export function groundShadow(sx,sy,rx,ry,alpha){
   g.beginPath(); g.ellipse(sx,sy+1*S.cam.z,rx,ry,0,0,TAU); g.fill();
 }
 
+
+/* The parts of a house that move or change: smoke when a fire is lit, a
+   festival pennant, and the marker for a home no road has reached yet. Offsets
+   are relative to the tile centre so they sit correctly on the rendered sprite. */
+export function houseExtras(b,p,dark,z){
+  const lit=b.pop>0;
+  if(lit){
+    const cold=Math.max(PAL.snow||0, dark>0.35?1:0);
+    if(cold>0.05){
+      for(let i=0;i<3;i++){
+        const t=((S.t*0.5+i*0.33+(b.seed%10)/10)%1);
+        const a=(1-t)*0.30*cold;
+        if(a<=0.01) continue;
+        g.fillStyle="rgba(226,228,224,"+a.toFixed(3)+")";
+        g.beginPath();
+        g.arc(p.x+13*z+Math.sin(t*3+b.seed)*3*z, p.y-40*z-t*16*z, (1.6+t*3.4)*z, 0, TAU);
+        g.fill();
+      }
+    }
+  }
+  const fest=activeFestival();
+  if(fest){
+    const gl=festivalGlow(), fy=p.y-40*z;
+    g.strokeStyle="rgba(70,60,50,.8)"; g.lineWidth=0.9*z;
+    g.beginPath(); g.moveTo(p.x,fy); g.lineTo(p.x,fy-9*z); g.stroke();
+    g.fillStyle=fest.flag; g.globalAlpha=Math.max(0.35,gl);
+    const wave=Math.sin(S.t*3+b.seed)*1.6*z;
+    g.beginPath();
+    g.moveTo(p.x,fy-9*z); g.lineTo(p.x+7*z,fy-6.5*z+wave); g.lineTo(p.x,fy-4.5*z);
+    g.closePath(); g.fill();
+    g.globalAlpha=1;
+  }
+  if(!b.linked){
+    const yy=p.y-52*z+Math.sin(S.t*2.4+b.seed%7)*2*z;
+    g.fillStyle="rgba(29,43,38,.85)";
+    g.beginPath(); g.arc(p.x,yy,7*z,0,TAU); g.fill();
+    g.fillStyle=P.warm;
+    g.fillRect(p.x-0.9*z,yy-4*z,1.8*z,5*z);
+    g.fillRect(p.x-0.9*z,yy+2.2*z,1.8*z,1.8*z);
+  }
+}
+
 export function drawHouse(b,p,dark){
   const z=S.cam.z, r=hash2(b.seed,1,3);
   groundShadow(p.x,p.y,17*z,8*z);
+  if(drawSprite(houseSprite(b),p,dark)){
+    houseExtras(b,p,dark,z);
+    return;
+  }
   const storeys=b.pop>=3?2:1;
   const hgt=(11+storeys*5+r*3);
   const wall=P.wall[(hash2(b.seed,2,4)*3)|0];
@@ -96,6 +143,8 @@ export function drawHouse(b,p,dark){
 }
 
 export function drawCafe(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("cafe",p,dark===undefined?0:dark)) return;
   const z=S.cam.z;
   groundShadow(p.x,p.y,18*z,8*z);
   const topY=box(p.x,p.y,0.66,13,"#f0e7d4","#c9b294","#ddcbaa");
@@ -156,6 +205,22 @@ export function drawLamp(b,p,dark){
 }
 
 export function drawWindmill(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("mill",p,dark)){
+    // the sails keep turning over the rendered tower
+    const z=S.cam.z, hy=p.y-46*z;
+    const a=S.t*(reduceMotion?0.1:0.55)+(b.seed%64)/10;
+    g.save(); g.translate(p.x,hy);
+    for(let k=0;k<4;k++){
+      g.save(); g.rotate(a+k*TAU/4);
+      g.fillStyle="#7a5c43"; g.fillRect(-0.8*z,-20*z,1.6*z,20*z);
+      g.fillStyle=PAL.snow>0.5?"rgba(246,249,251,.95)":"rgba(246,242,229,.93)";
+      g.fillRect(1.1*z,-19*z,5.2*z,13.5*z);
+      g.restore();
+    }
+    g.restore();
+    return;
+  }
   const z=S.cam.z;
   groundShadow(p.x,p.y,13*z,6*z);
   const topY=box(p.x,p.y,0.46,27,"#efe6d3","#bcac8b","#dbcdac");
@@ -184,6 +249,8 @@ export function drawWindmill(b,p,dark){
 }
 
 export function drawStation(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("station",p,dark===undefined?0:dark)) return;
   const z=S.cam.z;
   groundShadow(p.x,p.y,21*z,9*z);
   const topY=box(p.x,p.y,0.78,10,"#e9dfc9","#a89577","#c6b493");
@@ -211,6 +278,8 @@ export function drawStation(b,p,dark){
 
 /* ---------- market: an open awning over trestle tables ---------- */
 export function drawMarket(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("market",p,dark===undefined?0:dark)) return;
   const z=S.cam.z;
   groundShadow(p.x,p.y,20*z,9*z);
   const hw=TW/2*0.82*z, hh=TH/2*0.82*z;
@@ -246,6 +315,17 @@ export function drawMarket(b,p,dark){
 
 /* ---------- bakery: a squat oven house with a hot mouth ---------- */
 export function drawBakery(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("bakery",p,dark)){
+    // the oven never stops
+    const z=S.cam.z;
+    for(let i=0;i<3;i++){
+      const t=((S.t*0.42+i*0.34+(b.seed%9)/9)%1);
+      g.fillStyle="rgba(232,228,220,"+((1-t)*0.34).toFixed(3)+")";
+      g.beginPath(); g.arc(p.x+11*z+Math.sin(t*3+b.seed)*3*z,p.y-34*z-t*15*z,(1.5+t*3.2)*z,0,TAU); g.fill();
+    }
+    return;
+  }
   const z=S.cam.z;
   groundShadow(p.x,p.y,17*z,8*z);
   const topY=box(p.x,p.y,0.6,12,"#f0e5cf","#c2a883","#dcc9a4");
@@ -278,6 +358,8 @@ export function drawBakery(b,p,dark){
 
 /* ---------- school: a hall with a little bell tower ---------- */
 export function drawSchool(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("school",p,dark===undefined?0:dark)) return;
   const z=S.cam.z;
   groundShadow(p.x,p.y,21*z,9*z);
   const topY=box(p.x,p.y,0.8,15,"#f2ecdc","#b9ac8c","#d8ccae");
@@ -308,6 +390,8 @@ export function drawSchool(b,p,dark){
 
 /* ---------- dock: planks out over the water with a lamp on the post ------- */
 export function drawDock(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("dock",p,dark===undefined?0:dark)) return;
   const z=S.cam.z;
   groundShadow(p.x,p.y,16*z,7*z);
   const hw=TW/2*z, hh=TH/2*z;
@@ -339,6 +423,8 @@ export function drawDock(b,p,dark){
 
 /* ---------- farm: a barn with its fields ---------- */
 export function drawFarm(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("farm",p,dark===undefined?0:dark)) return;
   const z=S.cam.z;
   groundShadow(p.x,p.y,18*z,8*z);
   // ploughed rows on the tile itself
@@ -368,6 +454,18 @@ export function drawFarm(b,p,dark){
 
 /* ---------- sawmill: an open shed, a blade and a log pile ---------- */
 export function drawSawmill(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("sawmill",p,dark)){
+    // the blade keeps spinning
+    const z=S.cam.z, bx=p.x+17*z, by=p.y-19*z, br=4.6*z;
+    g.save(); g.translate(bx,by); g.rotate(reduceMotion?0:S.t*2.2);
+    g.fillStyle="#b9c2c9"; g.beginPath(); g.arc(0,0,br,0,TAU); g.fill();
+    g.strokeStyle="#7f8b93"; g.lineWidth=0.9*z;
+    for(let i=0;i<8;i++){ const q=i*TAU/8; g.beginPath();
+      g.moveTo(Math.cos(q)*br*0.55,Math.sin(q)*br*0.55); g.lineTo(Math.cos(q)*br,Math.sin(q)*br); g.stroke(); }
+    g.restore();
+    return;
+  }
   const z=S.cam.z;
   groundShadow(p.x,p.y,18*z,8*z);
   const topY=box(p.x,p.y,0.66,12,"#c9ae84","#8f7550","#ad9267");
@@ -393,6 +491,16 @@ export function drawSawmill(b,p,dark){
 
 /* ---------- workshop: a working shed with a smoking flue ---------- */
 export function drawWorkshop(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("workshop",p,dark)){
+    const z=S.cam.z;
+    for(let i=0;i<2;i++){
+      const t=((S.t*0.4+i*0.5+(b.seed%7)/7)%1);
+      g.fillStyle="rgba(190,190,185,"+((1-t)*0.28).toFixed(3)+")";
+      g.beginPath(); g.arc(p.x+13*z,p.y-36*z-t*13*z,(1.4+t*3)*z,0,TAU); g.fill();
+    }
+    return;
+  }
   const z=S.cam.z;
   groundShadow(p.x,p.y,18*z,8*z);
   const topY=box(p.x,p.y,0.7,14,"#d9d2c4","#9d9484","#bcb3a1");
@@ -418,6 +526,8 @@ export function drawWorkshop(b,p,dark){
 
 /* ---------- inn: two storeys and a hanging sign ---------- */
 export function drawInn(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("inn",p,dark===undefined?0:dark)) return;
   const z=S.cam.z;
   groundShadow(p.x,p.y,19*z,8*z);
   const topY=box(p.x,p.y,0.72,22,"#f0e7d6","#b09878","#d2c1a3");
@@ -450,6 +560,8 @@ export function drawInn(b,p,dark){
 
 /* ---------- clinic: white walls, a green cross ---------- */
 export function drawClinic(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("clinic",p,dark===undefined?0:dark)) return;
   const z=S.cam.z;
   groundShadow(p.x,p.y,20*z,9*z);
   const topY=box(p.x,p.y,0.78,17,"#fbf7ee","#c3bfb2","#e4dfd2");
@@ -471,6 +583,8 @@ export function drawClinic(b,p,dark){
 
 /* ---------- well: a stone ring under a little roof ---------- */
 export function drawWell(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("well",p,dark===undefined?0:dark)) return;
   const z=S.cam.z;
   groundShadow(p.x,p.y,9*z,4*z);
   g.fillStyle="#a9a396";
@@ -497,6 +611,8 @@ export function drawWell(b,p,dark){
    ============================================================ */
 
 export function drawStatue(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("statue",p,dark===undefined?0:dark)) return;
   const z=S.cam.z;
   groundShadow(p.x,p.y,15*z,7*z);
   const topY=box(p.x,p.y,0.62,9,"#cfc8b6","#9c968a","#b9b2a2");   // plinth
@@ -519,6 +635,17 @@ export function drawStatue(b,p,dark){
 }
 
 export function drawClockTower(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("clocktower",p,dark)){
+    // the hands keep the valley's time
+    const z=S.cam.z, cy=p.y-72*z;
+    const hr=S.dayT*TAU*2, mn=S.dayT*TAU*24;
+    g.strokeStyle="#3b4a44"; g.lineCap="round"; g.lineWidth=1.5*z;
+    g.beginPath(); g.moveTo(p.x,cy); g.lineTo(p.x+Math.sin(hr)*3*z,cy-Math.cos(hr)*3*z); g.stroke();
+    g.lineWidth=1*z;
+    g.beginPath(); g.moveTo(p.x,cy); g.lineTo(p.x+Math.sin(mn)*4.4*z,cy-Math.cos(mn)*4.4*z); g.stroke();
+    return;
+  }
   const z=S.cam.z;
   groundShadow(p.x,p.y,17*z,8*z);
   const topY=box(p.x,p.y,0.5,44,"#efe7d6","#b3a88e","#d5cab0");
@@ -551,6 +678,23 @@ export function drawClockTower(b,p,dark){
 }
 
 export function drawLighthouse(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("lighthouse",p,dark)){
+    // the beam sweeps out over the water
+    const z=S.cam.z, ly=p.y-92*z;
+    if(dark>0.18&&!reduceMotion){
+      const a=S.t*0.9;
+      g.save(); g.globalCompositeOperation="lighter";
+      const gr=g.createLinearGradient(p.x,ly,p.x+Math.cos(a)*150*z,ly+Math.sin(a)*70*z);
+      gr.addColorStop(0,"rgba(255,240,200,"+(0.30*clamp((dark-0.18)/0.3,0,1)).toFixed(3)+")");
+      gr.addColorStop(1,"rgba(255,240,200,0)");
+      g.fillStyle=gr; g.beginPath(); g.moveTo(p.x,ly);
+      g.lineTo(p.x+Math.cos(a-0.13)*150*z, ly+Math.sin(a-0.13)*70*z);
+      g.lineTo(p.x+Math.cos(a+0.13)*150*z, ly+Math.sin(a+0.13)*70*z);
+      g.closePath(); g.fill(); g.restore();
+    }
+    return;
+  }
   const z=S.cam.z;
   groundShadow(p.x,p.y,16*z,7*z);
   // tapered tower, drawn as a stack of shrinking boxes
@@ -590,6 +734,8 @@ export function drawLighthouse(b,p,dark){
 }
 
 export function drawLibrary(b,p,dark){
+  groundShadow(p.x,p.y,18*S.cam.z,8*S.cam.z);
+  if(drawSprite("library",p,dark===undefined?0:dark)) return;
   const z=S.cam.z;
   groundShadow(p.x,p.y,24*z,11*z);
   const topY=box(p.x,p.y,0.92,20,"#f2ecdb","#b6ac93","#d8cfb6");
