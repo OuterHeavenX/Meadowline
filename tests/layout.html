@@ -5,10 +5,20 @@
 <script>
 Promise.all([...document.querySelectorAll('iframe')].map(frame=>new Promise(resolve=>frame.addEventListener('load',()=>setTimeout(()=>{
   const d=frame.contentDocument,w=frame.contentWindow; d.getElementById('b-start').click();
-  resolve({name:frame.id,width:w.innerWidth,clientWidth:d.documentElement.clientWidth,scrollWidth:d.documentElement.scrollWidth,dockWidth:d.querySelector('.dock').getBoundingClientRect().width,minimap:getComputedStyle(d.querySelector('.mini')).display});
+  // HUD 2.0 gives the minimap to small screens too, so what matters is no
+  // longer that mobile hides it - it is that the map button works everywhere.
+  // Asserting the toggle rather than a platform default is also what catches a
+  // rule that pins it to display:none underneath the class the button flips,
+  // which is exactly how phones in landscape lost it.
+  const mini=d.querySelector('.mini'),shown=()=>getComputedStyle(mini).display;
+  const minimapStart=shown(); d.getElementById('b-map').click();
+  const minimapToggled=shown(); d.getElementById('b-map').click();
+  const minimapBack=shown();
+  resolve({name:frame.id,width:w.innerWidth,clientWidth:d.documentElement.clientWidth,scrollWidth:d.documentElement.scrollWidth,dockWidth:d.querySelector('.dock').getBoundingClientRect().width,minimapStart,minimapToggled,minimapBack});
 },400))))).then(layouts=>{
   const mobile=layouts[0],desktop=layouts[1];
-  const pass=mobile.width===390&&mobile.scrollWidth===mobile.clientWidth&&mobile.dockWidth<=390&&mobile.minimap==='none'&&desktop.width===1280&&desktop.scrollWidth===desktop.clientWidth;
+  const toggles=l=>l.minimapStart!=='none'&&l.minimapToggled==='none'&&l.minimapBack!=='none';
+  const pass=mobile.width===390&&mobile.scrollWidth===mobile.clientWidth&&mobile.dockWidth<=390&&toggles(mobile)&&desktop.width===1280&&desktop.scrollWidth===desktop.clientWidth&&toggles(desktop);
   document.getElementById('results').textContent=JSON.stringify({pass,layouts},null,2); document.documentElement.dataset.result=pass?'pass':'fail';
 });
 </script>

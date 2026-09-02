@@ -7,7 +7,7 @@ import { darkness } from '../world/time.js';
 import { cloudOpacity, clouds, storm } from '../world/weather.js';
 import { screen2world, viewRotation } from '../world/map.js';
 import { footprintCells,idx,inBounds,isFacilityPart,isType } from '../world/tiles.js';
-import { buildCohesiveWorld, artMetrics, litMaterials } from './three-world-art.js';
+import { buildCohesiveWorld, artMetrics, litMaterials, roadIsWet } from './three-world-art.js';
 import { landmarkGlowMaterials } from './landmark-assets.js';
 import { canPlace } from '../buildings/buildings.js';
 import { hover } from './interaction-state.js';
@@ -29,8 +29,6 @@ function roof(x,y,z,w,d,h,material,parent=world){const shape=new THREE.BufferGeo
 function disposeGroup(group){if(!group)return;const cached=new Set(geos.values());scene.remove(group);group.traverse(o=>{if(o.geometry&&!cached.has(o.geometry)&&!o.geometry.userData?.meadowlineCached)o.geometry.dispose?.();});}
 function addWindow(parent,x,y,z,axis='z',lit=false){const m=lit?glowMat('#ffd98c'):mat('#6aa1b1',.35,.08),w=axis==='z'?.22:.04,d=axis==='z'?.04:.22;box(x,y,z,w,.28,d,m,parent,false);}
 function tree(x,z,seed=1,scale=1,parent=world){const trunk=mat('#704d35'),greens=['#3f8b55','#55a85d','#72b65e','#3d7753'],g=greens[Math.abs(seed)%greens.length];cylinder(x,0,z,.09*scale,.52*scale,trunk,parent,7);if(seed%3===0){pyramid(x,.42*scale,z,.48*scale,1.25*scale,mat(g),parent,7);}else{const canopy=mesh(geo('dodeca',()=>new THREE.DodecahedronGeometry(.52,0)),mat(g),x,.95*scale,z,parent,true);canopy.scale.set(scale,.92*scale,scale);}}
-function roadTile(x,z,b){const wet=S.wx?.k==='rain'?(S.wx.amt||0):0,road=mat(wet>.2?'#444b50':'#555a5d',.9-wet*.35,.04),walk=mat('#cfd1ca',.96),line=mat('#efe9cf',.7);box(x,0,z,.98,.035,.98,road,world,false);const ex=isType(x-1,z,'road')||isType(x+1,z,'road'),ez=isType(x,z-1,'road')||isType(x,z+1,'road');if(ex&&!ez){box(x,.035,z-.42,.98,.055,.13,walk,world,false);box(x,.035,z+.42,.98,.055,.13,walk,world,false);box(x,.038,z,.32,.012,.025,line,world,false);}else if(ez&&!ex){box(x-.42,.035,z,.13,.055,.98,walk,world,false);box(x+.42,.035,z,.13,.055,.98,walk,world,false);box(x,.038,z,.025,.012,.32,line,world,false);}else{for(const [dx,dz]of[[-.42,-.42],[.42,-.42],[-.42,.42],[.42,.42]])box(x+dx,.035,z+dz,.13,.055,.13,walk,world,false);}}
-function railTile(x,z){box(x,.03,z,.98,.06,.76,mat('#806d5e'),world,false);const ex=isType(x-1,z,'rail')||isType(x+1,z,'rail'),steel=mat('#71787b',.35,.55),tie=mat('#57493e');if(ex){for(let i=-2;i<=2;i++)box(x+i*.2,.08,z,.05,.055,.78,tie,world,false);box(x,.13,z-.25,.98,.045,.045,steel,world,false);box(x,.13,z+.25,.98,.045,.045,steel,world,false);}else{for(let i=-2;i<=2;i++)box(x,.08,z+i*.2,.78,.055,.05,tie,world,false);box(x-.25,.13,z,.045,.045,.98,steel,world,false);box(x+.25,.13,z,.045,.045,.98,steel,world,false);}}
 function buildingPalette(type,seed){const palettes={house:['#e8d5b8','#d8c0a5','#c7d4c5','#e5c0ad'],cafe:['#d39b73'],market:['#c8d1c8'],bakery:['#e6c890'],mill:['#d7ccb2'],school:['#d9c59f'],cityHall:['#d9d6ca'],policeStation:['#9fc1cf'],fireStation:['#d99182'],clinic:['#e8e9e2'],hospital:['#e7e9e7'],station:['#b7b3a9']};const a=palettes[type]||['#c9c6b7'];return a[Math.abs(seed||0)%a.length];}
 function addBuilding(b){const def=getBuildingDefinition(b.type),fp=def?.placement?.footprint||[1,1],cx=b.x+(fp[0]-1)/2,cz=b.y+(fp[1]-1)/2,w=fp[0]*.82,d=fp[1]*.82,type=b.type,seed=b.seed||b.x*31+b.y*17;
   if(def?.service?.type==='recreation'||type==='park'){box(cx,0,cz,fp[0]*.94,.06,fp[1]*.94,mat(type==='sportsCourt'?'#708d7b':'#78b45b'),world,false);const n=Math.min(8,fp[0]*fp[1]+1);for(let i=0;i<n;i++)tree(b.x+.2+((i*37)%70)/100*fp[0],b.y+.18+((i*53)%68)/100*fp[1],seed+i,.45,world);if(type==='sportsCourt'){box(cx,.065,cz,w,.025,d,mat('#68899a'),world,false);}if(type==='townPark')cylinder(cx,.06,cz,.34,.16,mat('#cbd0c6'),world,16);return;}
@@ -44,17 +42,22 @@ function addBuilding(b){const def=getBuildingDefinition(b.type),fp=def?.placemen
   if(type==='mill'){cylinder(0,.12+h*.65,0,.055,.55,mat('#53483d'),group,8);}
 }
 /* What the static world is made of, as a string to compare against the last
-   frame's. It walks all 16,384 tiles every frame, which is eight times the
+   frame's. Every term is something the world art actually reads: the seed, the
+   season, whether the roads are wet, the opened parcels, and the tiles. The
+   camera zoom used to be in here as well, from when trees were thinned when
+   zoomed out - nothing in buildCohesiveWorld() has consulted the zoom since
+   they were instanced, so it only meant a full rebuild of 16,384 tiles every
+   time the player crossed it. It walks all 16,384 tiles every frame, which is eight times the
    work it was on the old valley. A numeric hash was tried in its place and
    measured slower - the cost is the walk, not the concatenation, and V8's
    ropes make the string nearly free - so this stays as it is. Deriving it from
    a revision counter instead would need every writer of S.grid, S.terr,
    S.natTree and the upgrade levels to bump it, and a missed one shows up as a
    world that stops redrawing; walking is correct by construction. */
-function signature(){let s=`${S.seed}:${Math.floor(S.day/7)%4}:${S.wx?.k}:${Math.round((S.wx?.amt||0)*4)}:${S.cam.z<.72?'far':'near'}:${(S.cityProgress?.unlockedParcels||[]).join(',')}:`;for(let i=0;i<S.grid.length;i++){const b=S.grid[i];if(b&&!isFacilityPart(b))s+=`${b.type[0]}${b.x},${b.y},${b.state?.level||b.state?.housingTier||0};`;if(S.terr[i]===1)s+=`w${i};`;if(S.natTree[i])s+=`t${i};`;}return s;}
+function signature(){let s=`${S.seed}:${Math.floor(S.day/7)%4}:${roadIsWet()?'wet':'dry'}:${(S.cityProgress?.unlockedParcels||[]).join(',')}:`;for(let i=0;i<S.grid.length;i++){const b=S.grid[i];if(b&&!isFacilityPart(b))s+=`${b.type[0]}${b.x},${b.y},${b.state?.level||b.state?.housingTier||0};`;if(S.terr[i]===1)s+=`w${i};`;if(S.natTree[i])s+=`t${i};`;}return s;}
 
 function tileInstances(cells,material,height,y,colors){if(!cells.length)return;const geometry=geo(`tiles:${height}`,()=>new THREE.BoxGeometry(.99,height,.99)),inst=new THREE.InstancedMesh(geometry,material,cells.length),matrix=new THREE.Matrix4();for(let i=0;i<cells.length;i++){const c=cells[i];matrix.makeTranslation(c.x,y+height/2,c.z);inst.setMatrixAt(i,matrix);if(colors)inst.setColorAt(i,color(colors[i]));}inst.receiveShadow=true;inst.castShadow=false;world.add(inst);}
-function rebuild(){lastSignature=signature();disposeGroup(world);world=new THREE.Group();scene.add(world);buildCohesiveWorld(world);}
+function rebuild(){lastSignature=signature();disposeGroup(world);world=new THREE.Group();scene.add(world);buildCohesiveWorld(world);if(S.diagnostics)S.diagnostics.worldRebuilds=(S.diagnostics.worldRebuilds||0)+1;}
 function addVehicle(v,service=false){const lane=laneOffset(v),x=lerp(v.x,v.nx,v.p)+lane.x,z=lerp(v.y,v.ny,v.p)+lane.y,kind=v.type||'',col=kind==='fireEngine'?'#d74738':kind==='ambulance'?'#e9ece9':kind==='police'?'#3e6f9c':v.color||'#d58b45',group=new THREE.Group();group.position.set(x,.1,z);group.rotation.y=headingAngle(v);dynamic.add(group);box(0,0,0,.42,.18,.24,mat(col),group,true);box(-.04,.18,0,.2,.11,.21,mat('#9fc1c9',.25,.1),group,true);for(const dx of[-.14,.14])for(const dz of[-.13,.13])cylinder(dx,-.01,dz,.045,.035,mat('#292c2d'),group,8).rotation.z=Math.PI/2;if(kind==='ambulance')box(.12,.19,.122,.1,.06,.015,mat('#d33f45'),group,false);if((v.state==='EN_ROUTE'||v.state==='DISPATCHED')&&service){const pulse=Math.sin(S.t*8)>0;box(-.08,.29,0,.08,.035,.05,mat(pulse?'#ed4d4d':'#4d80ed',.2),group,false);box(.08,.29,0,.08,.035,.05,mat(pulse?'#4d80ed':'#ed4d4d',.2),group,false);}}
 function addInteractionOverlay(){
   if(S.pick&&inBounds(S.pick.x,S.pick.y)){const pulse=.42+.16*Math.sin(S.t*3);box(S.pick.x,.12,S.pick.y,.94,.025,.94,overlayMat('#e5b75b',pulse),dynamic,false);}
@@ -102,7 +105,27 @@ function rebuildDynamic(){if(dynamic)scene.remove(dynamic);dynamic=new THREE.Gro
       box(hx,.5,hz,.09,.2,.09,mat('#2f3538',.7),dynamic,false);
       box(hx,.5+(green?(ph.amber?.07:.13):.01),hz,.11,.055,.11,glowMat(lit),dynamic,false);}}
   for(const inc of S.incidents||[]){if(inc.resolved)continue;const x=inc.target.x,z=inc.target.y;if(inc.kind==='fire'){for(let i=0;i<3;i++)pyramid(x+(i-1)*.12,.25,z,.12,.38,mat(i%2?'#ffad3e':'#e34b2f',.25),dynamic,7);}else if(inc.kind==='crime'){cylinder(x,.08,z,.06,.3,mat('#34383b'),dynamic,7);}else{mesh(geo('med',()=>new THREE.OctahedronGeometry(.13)),mat('#e9eeee'),x,.55,z,dynamic,false);}}addClouds();addInteractionOverlay();}
-function ensure(){if(failed||S.rendererMode==='compatibility')return false;if(renderer&&!lost)return true;try{canvas=document.createElement('canvas');canvas.id='three-layer';canvas.setAttribute('aria-hidden','true');canvas.style.pointerEvents='none';document.getElementById('c').insertAdjacentElement('afterend',canvas);renderer=new THREE.WebGLRenderer({canvas,antialias:effectiveQuality()!=='battery',powerPreference:effectiveQuality()==='battery'?'low-power':'high-performance',failIfMajorPerformanceCaveat:S.rendererMode!=='gpu'});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.shadowMap.enabled=effectiveQuality()!=='battery';renderer.shadowMap.type=THREE.PCFSoftShadowMap;scene=new THREE.Scene();scene.background=color('#a7c9d3');scene.fog=new THREE.Fog('#a7c9d3',34,72);camera=new THREE.OrthographicCamera(-10,10,10,-10,.1,160);const hemi=new THREE.HemisphereLight('#d8ecff','#65814f',2.1),sun=new THREE.DirectionalLight('#fff0d2',3.1);sun.position.set(-18,32,-12);sun.castShadow=true;sun.shadow.mapSize.set(effectiveQuality()==='high'?1536:768,effectiveQuality()==='high'?1536:768);sun.shadow.camera.left=-28;sun.shadow.camera.right=28;sun.shadow.camera.top=28;sun.shadow.camera.bottom=-28;sun.shadow.camera.near=1;sun.shadow.camera.far=90;scene.add(hemi,sun);lights={hemi,sun};canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;canvas.hidden=true;S.diagnostics.rendererBackend='canvas2d-fallback';});canvas.addEventListener('webglcontextrestored',()=>{lost=false;canvas.hidden=false;lastSignature='';});rebuild();S.diagnostics.rendererBackend='three-webgl2';return true;}catch(e){failed=true;canvas?.remove();renderer=null;S.diagnostics.rendererBackend='canvas2d-fallback';S.diagnostics.rendererError=String(e.message||e);return false;}}
+/* Context-loss handlers hold the element they were attached to, not the
+   module-level `canvas`. resetThreeRenderer() nulls that variable and then
+   calls forceContextLoss(), and the browser dispatches the loss event
+   afterwards - so a handler reading the module variable finds null and throws
+   inside the browser's own event dispatch, where nothing here can catch it.
+
+   The identity check does the other half: a late event from a canvas that has
+   already been torn down and replaced must not mark the new renderer lost. */
+function bindContextEvents(el){
+  el.addEventListener('webglcontextlost',e=>{
+    e.preventDefault();
+    if(canvas!==el) return;
+    lost=true; el.hidden=true;
+    S.diagnostics.rendererBackend='canvas2d-fallback';
+  });
+  el.addEventListener('webglcontextrestored',()=>{
+    if(canvas!==el) return;
+    lost=false; el.hidden=false; lastSignature='';
+  });
+}
+function ensure(){if(failed||S.rendererMode==='compatibility')return false;if(renderer&&!lost)return true;try{canvas=document.createElement('canvas');canvas.id='three-layer';canvas.setAttribute('aria-hidden','true');canvas.style.pointerEvents='none';document.getElementById('c').insertAdjacentElement('afterend',canvas);renderer=new THREE.WebGLRenderer({canvas,antialias:effectiveQuality()!=='battery',powerPreference:effectiveQuality()==='battery'?'low-power':'high-performance',failIfMajorPerformanceCaveat:S.rendererMode!=='gpu'});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.shadowMap.enabled=effectiveQuality()!=='battery';renderer.shadowMap.type=THREE.PCFSoftShadowMap;scene=new THREE.Scene();scene.background=color('#a7c9d3');scene.fog=new THREE.Fog('#a7c9d3',34,72);camera=new THREE.OrthographicCamera(-10,10,10,-10,.1,160);const hemi=new THREE.HemisphereLight('#d8ecff','#65814f',2.1),sun=new THREE.DirectionalLight('#fff0d2',3.1);sun.position.set(-18,32,-12);sun.castShadow=true;sun.shadow.mapSize.set(effectiveQuality()==='high'?1536:768,effectiveQuality()==='high'?1536:768);sun.shadow.camera.left=-28;sun.shadow.camera.right=28;sun.shadow.camera.top=28;sun.shadow.camera.bottom=-28;sun.shadow.camera.near=1;sun.shadow.camera.far=90;scene.add(hemi,sun);lights={hemi,sun};bindContextEvents(canvas);rebuild();S.diagnostics.rendererBackend='three-webgl2';return true;}catch(e){failed=true;canvas?.remove();renderer=null;S.diagnostics.rendererBackend='canvas2d-fallback';S.diagnostics.rendererError=String(e.message||e);return false;}}
 function syncCamera(){const profile=graphicsProfile(),dpr=Math.min(devicePixelRatio||1,profile.dpr),w=innerWidth,h=innerHeight;if(canvas.width!==Math.floor(w*dpr)||canvas.height!==Math.floor(h*dpr)){renderer.setPixelRatio(dpr);renderer.setSize(w,h,false);}const center=screen2world(w/2,h/2),halfW=w/(64*S.cam.z*Math.SQRT2),halfH=halfW/(w/h),radius=70,height=radius*Math.tan(Math.PI/6);camera.left=-halfW;camera.right=halfW;camera.top=halfH;camera.bottom=-halfH;const azimuth=Math.PI/4-viewRotation();camera.position.set(center.x+radius*Math.cos(azimuth),height,center.y+radius*Math.sin(azimuth));camera.lookAt(center.x,0,center.y);camera.updateProjectionMatrix();lights.sun.target.position.set(center.x,0,center.y);scene.add(lights.sun.target);}
 function syncLighting(){const dark=clamp(darkness()/.62,0,1),rain=S.wx?.k==='rain'?(S.wx.amt||0):0;scene.background.set(dark>.65?'#263246':rain>.25?'#78909a':'#a7c9d3');scene.fog.color.copy(scene.background);scene.fog.near=76;scene.fog.far=122;/* A 2D veil alone leaves the valley unlit, which reads as a filter laid over the picture rather than as the sky lighting the ground. Lifting the ambient term makes the town itself flash. */const flash=storm.flash||0;lights.hemi.intensity=2.1-dark*1.25-rain*.35+flash*2.6;lights.sun.intensity=3.1-dark*2.35-rain*.55+flash*0.8;renderer.toneMappingExposure=1.08-dark*.22+flash*.22;for(const [key,m]of mats)if(key.startsWith('glow:'))m.emissiveIntensity=.08+dark*1.2;
   // The authored landmarks carry their own emissive materials - the clock
@@ -123,4 +146,4 @@ export function projectThroughCamera(x,z){
 }
 
 export function resetThreeRenderer(){if(renderer){renderer.dispose();renderer.forceContextLoss?.();}canvas?.remove();renderer=scene=camera=world=dynamic=lights=canvas=null;lastSignature='';failed=lost=false;}
-export function threeSnapshot(){return{active:!!renderer&&!failed&&!lost,backend:S.diagnostics.rendererBackend,drawCalls:S.diagnostics.rendererDrawCalls||0,triangles:S.diagnostics.rendererTriangles||0,geometries:S.diagnostics.rendererGeometries||0,materials:artMetrics().materials,textures:S.diagnostics.rendererTextures||0,visibleTrees:S.diagnostics.visibleTrees||0,error:S.diagnostics.rendererError||''};}
+export function threeSnapshot(){return{active:!!renderer&&!failed&&!lost,worldRebuilds:S.diagnostics.worldRebuilds||0,backend:S.diagnostics.rendererBackend,drawCalls:S.diagnostics.rendererDrawCalls||0,triangles:S.diagnostics.rendererTriangles||0,geometries:S.diagnostics.rendererGeometries||0,materials:artMetrics().materials,textures:S.diagnostics.rendererTextures||0,visibleTrees:S.diagnostics.visibleTrees||0,error:S.diagnostics.rendererError||''};}

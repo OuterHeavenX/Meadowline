@@ -6,7 +6,7 @@ import { restoreFacilityOccupancy } from '../src/buildings/buildings.js';
 import { S } from '../src/core/state.js';
 import { resetProgression } from '../src/progression/city-growth.js';
 import { projectThroughCamera, renderThreeScene, resetThreeRenderer, threeSnapshot } from '../src/rendering/three-renderer.js';
-import { artMetrics, roadKind, roadMask, visualDescriptor, waterMask } from '../src/rendering/three-world-art.js';
+import { artMetrics, roadIsWet, roadKind, roadMask, visualDescriptor, waterMask } from '../src/rendering/three-world-art.js';
 import { hover } from '../src/rendering/interaction-state.js';
 import { genWorld, proj, screen2world, setViewRotation, stepCamera, viewBounds, viewDepth, viewRotation } from '../src/world/map.js';
 import { cloudOpacity, clouds, seedClouds, splashes, storm, updateSplashes, updateStorm } from '../src/world/weather.js';
@@ -170,6 +170,36 @@ check('heavy rain brings lightning',struck>0.5,struck);
 for(let i=0;i<80;i++) updateStorm(0.05);
 check('the flash fades instead of staying lit',storm.flash<struck,struck.toFixed(2)+' -> '+storm.flash.toFixed(3));
 S.wx={k:'clear',amt:0,target:0,next:99};storm.flash=0;storm.bolt=null;splashes.length=0;
+
+
+/* The static world must be rebuilt when it LOOKS different and at no other
+   time. The signature used to quantise the rain - Math.round(amt*4), crossing
+   at .125 - while the road turns wet at .15, so between those the roads kept
+   the old colour until some other term of the signature moved. The camera zoom
+   was in the signature too, so panning and zooming were what usually applied
+   the change: the roads visibly changed colour when the player moved the
+   camera, and a full 16,384-tile rebuild ran every time they crossed the zoom
+   threshold. */
+{
+  S.rendererMode='gpu';S.quality='balanced';resetThreeRenderer();
+  S.wx={k:'clear',amt:0,target:0,next:70};S.cam.z=1;
+  const rebuilds=()=>threeSnapshot().worldRebuilds;
+  renderThreeScene();
+  const wetOn=(()=>{const before=rebuilds();S.wx={k:'rain',amt:.20,target:.2,next:70};renderThreeScene();return rebuilds()>before;})();
+  check('rain wetting the roads rebuilds the world',wetOn&&roadIsWet());
+  const wetOff=(()=>{const before=rebuilds();S.wx.amt=.14;renderThreeScene();return rebuilds()>before;})();
+  check('rain easing below the threshold rebuilds it back',wetOff&&!roadIsWet());
+  const idle=(()=>{const before=rebuilds();S.wx.amt=.10;renderThreeScene();return rebuilds()===before;})();
+  check('rain moving within one state costs no rebuild',idle);
+  const camera=(()=>{
+    const before=rebuilds();
+    S.cam.z=.6;renderThreeScene();S.cam.z=1.4;renderThreeScene();
+    S.cam.x-=900;S.cam.y+=400;renderThreeScene();S.cam.z=1;renderThreeScene();
+    return rebuilds()===before;
+  })();
+  check('moving the camera never rebuilds the world',camera,'zoom and pan must not change how the roads look');
+  S.wx={k:'clear',amt:0,target:0,next:99};S.cam.z=1;
+}
 
 
 const failed=checks.filter(c=>!c.pass);document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);document.documentElement.dataset.result=failed.length?'fail':'pass';

@@ -14,10 +14,30 @@ function resources(){
   buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);const loc=gl.getAttribLocation(program,'a_position');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
   texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);textureW=textureH=0;
 }
+/* The handlers hold the element, not the module-level `overlay`, and check
+   that it is still the live one. resetRendererBackend() removes the canvas and
+   nulls the variable, and a context-loss event dispatched after that would
+   otherwise read null and throw inside the browser's own event dispatch. The
+   same shape as three-renderer.js, for the same reason. */
+function bindContextEvents(el){
+  el.addEventListener('webglcontextlost',e=>{
+    e.preventDefault();
+    if(overlay!==el) return;
+    lost=true; el.hidden=true;
+    S.diagnostics.rendererContextLosses=(S.diagnostics.rendererContextLosses||0)+1;
+    S.diagnostics.rendererBackend='canvas2d-fallback';
+  });
+  el.addEventListener('webglcontextrestored',()=>{
+    if(overlay!==el) return;
+    lost=false;
+    try{ resources(); el.hidden=false; S.diagnostics.rendererContextRestores=(S.diagnostics.rendererContextRestores||0)+1; }
+    catch(e){ failed=true; }
+  });
+}
 function ensure(){
   if(S.rendererMode==='compatibility'||failed)return false;if(gl&&!lost)return true;
   try{
-    if(!overlay){overlay=document.createElement('canvas');overlay.id='gpu-layer';overlay.setAttribute('aria-hidden','true');overlay.style.pointerEvents='none';cv.insertAdjacentElement('afterend',overlay);overlay.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;overlay.hidden=true;S.diagnostics.rendererContextLosses=(S.diagnostics.rendererContextLosses||0)+1;S.diagnostics.rendererBackend='canvas2d-fallback';});overlay.addEventListener('webglcontextrestored',()=>{lost=false;try{resources();overlay.hidden=false;S.diagnostics.rendererContextRestores=(S.diagnostics.rendererContextRestores||0)+1;}catch(e){failed=true;}});}
+    if(!overlay){overlay=document.createElement('canvas');overlay.id='gpu-layer';overlay.setAttribute('aria-hidden','true');overlay.style.pointerEvents='none';cv.insertAdjacentElement('afterend',overlay);bindContextEvents(overlay);}
     gl=overlay.getContext('webgl2',{alpha:false,antialias:false,preserveDrawingBuffer:false,powerPreference:effectiveQuality()==='battery'?'low-power':'high-performance',failIfMajorPerformanceCaveat:S.rendererMode!=='gpu'});if(!gl)throw new Error('WebGL2 unavailable');resources();overlay.hidden=false;S.diagnostics.rendererBackend='webgl2-hybrid';return true;
   }catch(e){failed=true;if(overlay)overlay.hidden=true;S.diagnostics.rendererBackend='canvas2d-fallback';return false;}
 }

@@ -29,7 +29,11 @@ button{font-family:inherit}.hud{position:fixed;inset:0;pointer-events:none;trans
 body.menu-open>.hud,body.menu-open>.corner,body.menu-open>.side,body.menu-open>.mini,body.menu-open>.dock,body.menu-open>.tutorial{visibility:hidden}
 @media(max-width:520px){.title-lockup h1{font-size:30px;letter-spacing:.035em}.title-actions{width:calc(100vw - 32px)!important;max-width:calc(100vw - 32px)}.menu-split,.menu-graphics div{min-width:0}.menu-action{min-width:0}.menu-graphics button{font-size:8px}}
 .commandbar{width:100%;min-width:0}.modes{flex:1;min-width:0}.modes .tool{flex:1 1 0}.build-toggle{flex:1 1 0}.visual-fixture .tutorial{display:none}.visual-fixture .buildtray{transition:none}
-@media(max-width:560px){.mini:not(.hide){display:block}}
+/* panels.css hides the minimap on any small viewport, by width OR height.
+   HUD 2.0 gives it back - but the override has to match both conditions, or a
+   phone held sideways loses the map with no way to get it: the button toggles
+   .hide underneath a rule that keeps it display:none either way. */
+@media(max-width:560px),(max-height:560px){.mini:not(.hide){display:block}}
 .mini canvas{position:static;inset:auto}
 @media(max-width:520px){.commandbar>.build-toggle{flex:0 0 calc(20% - 4px)!important;width:auto!important}.commandbar>.modes{flex:0 0 calc(80% - 4px)}.commandbar>.modes .tool{width:auto!important}}
 @media(max-width:520px){.corner #b-sound,.corner #b-map,.corner #b-growth,.corner #b-ledger,.corner #b-new{display:none}.graphics-settings{top:calc(env(safe-area-inset-top,0px) + 220px);right:8px}.corner{bottom:calc(env(safe-area-inset-bottom,0px) + 94px)}}

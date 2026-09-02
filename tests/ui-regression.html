@@ -5,7 +5,11 @@ game.addEventListener('load',()=>setTimeout(async()=>{
   const w=game.contentWindow,d=game.contentDocument; d.getElementById('b-start').click();
   let postcard=''; const original=w.HTMLAnchorElement.prototype.click;
   w.HTMLAnchorElement.prototype.click=function(){postcard=this.href};
-  const sound=d.getElementById('b-sound'); sound.click(); const soundOn=!sound.classList.contains('off');
+  // Sound now starts on, so the button's absolute state is not the thing to
+  // assert - the toggle is. Read where it starts, then check each input moves
+  // it the other way.
+  const sound=d.getElementById('b-sound'), mutedAtBoot=sound.classList.contains('off');
+  sound.click(); const soundToggled=sound.classList.contains('off')!==mutedAtBoot;
   const mini=d.getElementById('mini'),map=d.getElementById('b-map'); const mapBefore=!mini.classList.contains('hide'); map.click(); const mapAfter=!mini.classList.contains('hide');
   d.getElementById('b-shot').click();
   // toBlob is async and slow under software rendering, so wait for the
@@ -14,7 +18,7 @@ game.addEventListener('load',()=>setTimeout(async()=>{
   w.dispatchEvent(new w.KeyboardEvent('keydown',{key:'s',bubbles:true})); const speed=d.getElementById('b-speed').textContent;
   w.dispatchEvent(new w.KeyboardEvent('keydown',{key:'m',bubbles:true}));
   w.HTMLAnchorElement.prototype.click=original;
-  const checks={soundOn,minimap:mapBefore!==mapAfter,postcard:postcard.startsWith('blob:')||postcard.startsWith('data:image/png'),keyboardSpeed:speed==='2×',keyboardSound:sound.classList.contains('off'),canvas:d.getElementById('c').width>0};
+  const checks={soundToggled,soundRestored:sound.classList.contains('off')===mutedAtBoot,minimap:mapBefore!==mapAfter,postcard:postcard.startsWith('blob:')||postcard.startsWith('data:image/png'),keyboardSpeed:speed==='2×',canvas:d.getElementById('c').width>0};
   const pass=Object.values(checks).every(Boolean); results.textContent=JSON.stringify({pass,checks},null,2); document.documentElement.dataset.result=pass?'pass':'fail';
 },500));
 </script>

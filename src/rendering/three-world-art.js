@@ -43,7 +43,16 @@ function lamp(parent,x,z){cyl(parent,x,.02,z,.025,.55,mat('#343b3c',.38,.5),7);c
 export function roadMask(x,y,type='road'){let m=0;if(isType(x,y-1,type))m|=1;if(isType(x+1,y,type))m|=2;if(isType(x,y+1,type))m|=4;if(isType(x-1,y,type))m|=8;return m;}
 export function roadKind(mask){const n=((mask&1)>0)+((mask&2)>0)+((mask&4)>0)+((mask&8)>0);if(n===4)return'cross';if(n===3)return'tee';if(n===2)return(mask===5||mask===10)?'straight':'corner';if(n===1)return'dead-end';return'isolated';}
 export function waterMask(x,y){let m=0;const water=(xx,yy)=>xx>=0&&yy>=0&&xx<W&&yy<H&&S.terr[idx(xx,yy)]===1;if(water(x,y-1))m|=1;if(water(x+1,y))m|=2;if(water(x,y+1))m|=4;if(water(x-1,y))m|=8;return m;}
-function road(parent,x,z,b){const mask=roadMask(x,z),kind=roadKind(mask),wet=S.wx?.k==='rain'&&(S.wx.amt||0)>.15,lift=isBridge(x,z)?.22:0,asphalt=mat(wet?C.wet:C.asphalt,wet?.5:.88,.04),walk=mat(C.sidewalk,.96),curb=mat(C.curb,.9),line=mat(C.line,.72);
+/* Whether the roads are drawn wet. The one definition of it: three-renderer's
+   signature() asks this too, so the world is rebuilt exactly when the answer
+   changes. It used to quantise the rain instead - Math.round(amt*4) - which
+   crosses at .125 while the road crosses at .15, so between those the roads
+   kept the old colour until something *else* forced a rebuild. Panning past
+   the zoom threshold was the usual something else, which is why the roads
+   appeared to change colour when the camera moved. */
+export function roadIsWet(){ return S.wx?.k==='rain'&&(S.wx.amt||0)>.15; }
+
+function road(parent,x,z,b){const mask=roadMask(x,z),kind=roadKind(mask),wet=roadIsWet(),lift=isBridge(x,z)?.22:0,asphalt=mat(wet?C.wet:C.asphalt,wet?.5:.88,.04),walk=mat(C.sidewalk,.96),curb=mat(C.curb,.9),line=mat(C.line,.72);
   if(lift){box(parent,x,-.02,z,.94,.2,.94,mat('#756f69',.9),true);for(const side of[-.43,.43])box(parent,x,lift+.015,z+side,.96,.12,.055,mat('#d9d7cf',.75),true);}
   box(parent,x,lift,z,.98,.045,.98,asphalt,false);
   const edge=(bit,dx,dz,w,d)=>{if(!(mask&bit)){box(parent,x+dx,lift+.045,z+dz,w,.055,d,walk,false);box(parent,x+dx*.9,lift+.098,z+dz*.9,w,.025,d,curb,false);}};
