@@ -1,7 +1,7 @@
 import { BUILDINGS } from '../src/buildings/registry.js';
 import { canPlace, erase, place } from '../src/buildings/buildings.js';
 import { touchIntent } from '../src/core/input-policy.js';
-import { applySave, KEY, KEY_OLD, KEY_V2, load, save, store } from '../src/core/save.js';
+import { applySave, KEY, KEY_OLD, KEY_V2, legacyShift, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
 import { developmentStats, resetProgression } from '../src/progression/city-growth.js';
 import { crossingBlockedByTrain, invalidateMobility, mobilitySnapshot, railCrossingCount, vehicleCap } from '../src/simulation/mobility.js';
@@ -21,7 +21,7 @@ function put(type,x,y,state={}){
   return b;
 }
 function reset(){
-  genWorld(24681357); resetProgression('parcel'); S.cityProgress.stage=4; S.coins=5000; S.pop=100; S.citizens=[]; S.vehicles=[]; S.trains=[]; invalidateMobility();
+  genWorld(24681357); resetProgression('legacy-open'); S.cityProgress.stage=4; S.coins=5000; S.pop=100; S.citizens=[]; S.vehicles=[]; S.trains=[]; invalidateMobility();
 }
 
 reset();
@@ -87,8 +87,12 @@ S.grid[idx(20,20)]=null;
 check('V3 reload restores crossing',load()&&isRoadRailCrossing(S.grid[idx(20,20)])&&isType(20,20,'road')&&isType(20,20,'rail'));
 
 // A pre-Roads V3 Road needs no migration charge or rebuild.
-applySave({v:3,seed:13579,coins:777,day:3,dayT:.3,b:[{type:'road',x:16,y:16}],woods:'0'.repeat(44*44),cityProgress:{mode:'legacy-open',stage:4,unlockedParcels:[],claimedMilestones:[]},wishes:[],log:[],history:[]});
-check('old Road save loads as upgraded Road semantics',isType(16,16,'road')&&S.grid[idx(16,16)].type==='road');
+// A save written on the old 44x44 valley is re-centred on load, so the tile
+// it comes back on is offset by the migration shift rather than being 16,16.
+const oldSave={v:3,seed:13579,coins:777,day:3,dayT:.3,b:[{type:'road',x:16,y:16}],woods:'0'.repeat(44*44),cityProgress:{mode:'legacy-open',stage:4,unlockedParcels:[],claimedMilestones:[]},wishes:[],log:[],history:[]};
+const oldShift=legacyShift(oldSave);
+applySave(oldSave);
+check('old Road save loads as upgraded Road semantics',isType(16+oldShift,16+oldShift,'road')&&S.grid[idx(16+oldShift,16+oldShift)].type==='road');
 check('old Road migration deducts no coins',S.coins===777);
 check('ambient vehicles are transient save state',!Object.prototype.hasOwnProperty.call(JSON.parse(store.get(KEY)||'{}'),'vehicles'));
 

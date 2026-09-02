@@ -124,3 +124,20 @@ export function stepCamera(dt){
   // at 30fps as on a desktop at 120.
   S.cam.rot=current+gap*(1-Math.exp(-dt*9));
 }
+
+/* The band of tiles the camera can currently see, clamped to the grid. With
+   16,384 tiles the sorted pass must not walk the whole grid every frame.
+   screen2world already accounts for the view rotation, so taking the four
+   screen corners gives a correct bound at any angle. */
+export function visibleBand(pad){
+  const m=pad||3;
+  const c=[screen2world(0,0),screen2world(innerWidth,0),
+           screen2world(0,innerHeight),screen2world(innerWidth,innerHeight)];
+  const xs=c.map(p=>p.x), ys=c.map(p=>p.y);
+  return {
+    x0:Math.max(0,Math.floor(Math.min(...xs))-m),
+    x1:Math.min(W,Math.ceil(Math.max(...xs))+m),
+    y0:Math.max(0,Math.floor(Math.min(...ys))-m),
+    y1:Math.min(H,Math.ceil(Math.max(...ys))+m)
+  };
+}

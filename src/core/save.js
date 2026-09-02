@@ -1,3 +1,4 @@
+import { H, W } from './constants.js';
 import { BUILDABLE, restoreFacilityOccupancy } from '../buildings/buildings.js';
 import { BUILDINGS, defaultBuildingState, getBuildingDefinition } from '../buildings/registry.js';
 import { S } from './state.js';
@@ -43,13 +44,32 @@ export function save(){
   // enter Save V3, so a 4×4 Town Park is still one saved building.
   const b=[]; for(const x of S.grid||[]) if(x&&!isFacilityPart(x)&&BUILDABLE[x.type]) b.push(packBuilding(x));
   let woods=''; for(let i=0;i<S.natTree.length;i++) woods+=S.natTree[i]?'1':'0';
-  const payload=JSON.stringify({v:3,seed:S.seed,coins:Math.floor(S.coins),day:S.day,dayT:S.dayT,b,woods,terrain:packTerrain(),tutorial:S.tutorial,municipal:S.municipal,quality:S.quality,rendererMode:S.rendererMode,muted:!!S.muted,cityProgress:sanitizeProgression(S.cityProgress,false),mile:mileHit,granted:S.granted||0,wishes:S.wishes.map(w=>({k:w.k,slot:w.slot,t:w.t,g:w.g,r:w.r})),log:S.log.slice(0,40),history:S.history.slice(-40)});
+  const payload=JSON.stringify({v:3,w:W,h:H,seed:S.seed,coins:Math.floor(S.coins),day:S.day,dayT:S.dayT,b,woods,terrain:packTerrain(),tutorial:S.tutorial,municipal:S.municipal,quality:S.quality,rendererMode:S.rendererMode,muted:!!S.muted,cityProgress:sanitizeProgression(S.cityProgress,false),mile:mileHit,granted:S.granted||0,wishes:S.wishes.map(w=>({k:w.k,slot:w.slot,t:w.t,g:w.g,r:w.r})),log:S.log.slice(0,40),history:S.history.slice(-40)});
   if(S.diagnostics) S.diagnostics.saveBytes=payload.length; store.set(KEY,payload);
 }
 function unpackEntry(entry){ if(Array.isArray(entry)){ const[type,x,y,pop]=entry; return {type,x,y,pop,state:defaultBuildingState(type)}; } if(!entry||typeof entry!=='object') return null; return {type:entry.type,x:entry.x,y:entry.y,pop:entry.pop,state:cleanState(entry.type,entry.state)}; }
+// A save written before the valley grew was laid out on a smaller grid. Its
+// tiles are shifted into the middle of the current map rather than being
+// dropped for falling outside the starting parcel.
+export function savedWidth(d){
+  if(Number.isFinite(d.w)&&d.w>0) return d.w;
+  if(typeof d.woods==='string'&&d.woods.length>0){
+    const side=Math.round(Math.sqrt(d.woods.length));
+    if(side*side===d.woods.length) return side;
+  }
+  return W;
+}
+
+// How far a save's tiles move when it was written on a different-sized map.
+export function legacyShift(d){
+  const savedW=savedWidth(d);
+  return savedW===W?0:Math.round((W-savedW)/2);
+}
+
 export function applySave(d){
+  const shift=legacyShift(d);
   genWorld(Number.isFinite(d.seed)?d.seed:S.seed); S.coins=Number.isFinite(d.coins)?d.coins:340; S.day=Number.isFinite(d.day)?Math.max(1,Math.floor(d.day)):1; S.dayT=Number.isFinite(d.dayT)?Math.max(0,Math.min(1,d.dayT)):.24;
-  restoreTerrain(d.terrain); S.tutorial=d.tutorial&&typeof d.tutorial==='object'?{completed:!!d.tutorial.completed,skipped:!!d.tutorial.skipped,step:Math.max(0,Math.floor(d.tutorial.step||0))}:{completed:false,skipped:false,step:0};
+  if(!shift) restoreTerrain(d.terrain); S.tutorial=d.tutorial&&typeof d.tutorial==='object'?{completed:!!d.tutorial.completed,skipped:!!d.tutorial.skipped,step:Math.max(0,Math.floor(d.tutorial.step||0))}:{completed:false,skipped:false,step:0};
   if(d.municipal&&typeof d.municipal==='object') S.municipal={...S.municipal,...d.municipal};
   if(['auto','high','balanced','battery'].includes(d.quality)) S.quality=d.quality;
   if(['auto','gpu','compatibility'].includes(d.rendererMode)) S.rendererMode=d.rendererMode;
@@ -62,7 +82,8 @@ export function applySave(d){
   if(typeof d.woods==='string'&&d.woods.length===S.natTree.length) for(let i=0;i<d.woods.length;i++) S.natTree[i]=d.woods[i]==='1'?1:0;
   let cityHallSeen=false;
   for(const raw of d.b||[]){
-    const e=unpackEntry(raw); if(!e) continue; const{type,x,y}=e;
+    const e=unpackEntry(raw); if(!e) continue; const{type}=e;
+    const x=Number.isInteger(e.x)?e.x+shift:e.x, y=Number.isInteger(e.y)?e.y+shift:e.y;
     if(typeof type!=='string'||!Number.isInteger(x)||!Number.isInteger(y)||!inBounds(x,y)||!BUILDABLE[type]) continue;
     if(type==='cityHall'){ if(cityHallSeen) continue; cityHallSeen=true; }
     const def=getBuildingDefinition(type),fp=def?.placement?.footprint||[1,1];

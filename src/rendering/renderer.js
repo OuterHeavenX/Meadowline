@@ -1,6 +1,6 @@
 import { canPlace } from '../buildings/buildings.js';
 import { getBuildingDefinition } from '../buildings/registry.js';
-import { H, W, clamp, lerp, mix } from '../core/constants.js';
+import { clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { drawBakery, drawCafe, drawDock, drawLamp, drawMarket, drawPark, drawSchool, drawStation, drawWindmill } from './buildings.js';
 import { drawRecreationFacility } from './recreation.js';
@@ -14,7 +14,7 @@ import { drawBoat, drawCitizen, drawTrain } from './entities.js';
 import { drawVehicle } from './vehicles.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
 import { SPANS } from '../transport/bridges.js';
-import { proj, viewDepth } from '../world/map.js';
+import { proj, viewDepth, visibleBand } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
 import { facilityFootprint, footprintCells, idx, inBounds, isFacilityPart } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
@@ -82,15 +82,19 @@ export function render(){
   drawGhost();
 
   const items=[];
-  for(let i=0;i<S.grid.length;i++){
-    const b=S.grid[i]; if(!b||isFacilityPart(b)) continue;
-    if(S.terr[i]===1&&SPANS[b.type]) items.push({d:viewDepth(b.x,b.y)-0.05,k:5,b});
-    else if(b.type!=="road"&&b.type!=="rail"){
-      const fp=facilityFootprint(b);
-      items.push({d:viewDepth(b.x,b.y)+(fp[0]+fp[1]-2)*0.48,k:0,b});
+  // only what the camera can see: the grid is 16,384 tiles
+  const band=visibleBand(4);
+  for(let y=band.y0;y<band.y1;y++) for(let x=band.x0;x<band.x1;x++){
+    const i=idx(x,y), b=S.grid[i];
+    if(b&&!isFacilityPart(b)){
+      if(S.terr[i]===1&&SPANS[b.type]) items.push({d:viewDepth(b.x,b.y)-0.05,k:5,b});
+      else if(b.type!=="road"&&b.type!=="rail"){
+        const fp=facilityFootprint(b);
+        items.push({d:viewDepth(b.x,b.y)+(fp[0]+fp[1]-2)*0.48,k:0,b});
+      }
     }
+    if(S.natTree[i]) items.push({d:viewDepth(x,y),k:1,x,y});
   }
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++) if(S.natTree[idx(x,y)]) items.push({d:viewDepth(x,y),k:1,x,y});
   for(const c of S.citizens){
     const fx=c.facilityLocal?.x??lerp(c.x,c.nx,c.p),fy=c.facilityLocal?.y??lerp(c.y,c.ny,c.p);
     items.push({d:viewDepth(fx,fy)+0.05,k:2,c});

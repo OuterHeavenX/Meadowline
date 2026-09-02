@@ -1,3 +1,5 @@
+import { L } from './grid-fixture.js';
+import { H, W } from '../src/core/constants.js';
 import { canPlace } from '../src/buildings/buildings.js';
 import { BUILDINGS } from '../src/buildings/registry.js';
 import { KEY, KEY_OLD, KEY_V2, load, save, store } from '../src/core/save.js';
@@ -12,6 +14,7 @@ import { idx } from '../src/world/tiles.js';
 const checks=[];
 function check(name,condition,detail=''){ checks.push({name,pass:Boolean(condition),detail}); }
 function put(type,x,y,pop=0,state={}){
+  x=L(x); y=L(y);
   S.terr[idx(x,y)]=0;
   S.natTree[idx(x,y)]=0;
   S.grid[idx(x,y)]={type,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop,grow:0,mood:50,linked:false,state};
@@ -26,8 +29,8 @@ check('four meaningful city stages',CITY_STAGES.length===4&&CITY_STAGES[0].name=
 check('deterministic parcel registry covers nine sectors',LAND_PARCELS.length===9&&LAND_PARCELS[0].id==='center');
 check('new progression starts at Settlement',S.cityProgress.stage===1&&S.cityProgress.mode==='parcel');
 check('new progression starts with center only',S.cityProgress.unlockedParcels.length===1&&S.cityProgress.unlockedParcels[0]==='center');
-check('center is roughly one fifth of map',LAND_PARCELS[0].w*LAND_PARCELS[0].h===400);
-check('center tile is buildable',isTileUnlocked(20,20));
+check('center is roughly one fifth of map',Math.abs(LAND_PARCELS[0].w*LAND_PARCELS[0].h/(W*H)-0.2)<0.03);
+check('center tile is buildable',isTileUnlocked(L(20),L(20)));
 check('outer tile starts locked',!isTileUnlocked(2,2));
 check('whole footprint blocks partial locked placement',!isFootprintUnlocked(31,20,2,1));
 S.coins=1000;
@@ -47,7 +50,7 @@ check('Township any-two group accepts two paths',townshipTwo.complete);
 // Drive the real evaluator by giving it a compact qualifying city context.
 S.ctx.houses=[]; S.grid.fill(null); S.pop=16;
 for(let i=0;i<4;i++){
-  const h={type:'house',x:15+i,y:20,pop:4,grow:0,mood:70,linked:true,state:{education:0,housingTier:1,upgradeProgress:0,desirability:45}};
+  const h={type:'house',x:L(15+i),y:L(20),pop:4,grow:0,mood:70,linked:true,state:{education:0,housingTier:1,upgradeProgress:0,desirability:45}};
   S.grid[idx(h.x,h.y)]=h; S.ctx.houses.push(h);
 }
 for(let x=12;x<22;x++) put('road',x,18);
@@ -62,7 +65,7 @@ check('North Meadow available by stage but short on coins',parcelStatus('north')
 S.coins=500;
 const beforeNorth=S.coins;
 const north=unlockParcel('north');
-check('player-confirmed parcel action succeeds when eligible',north.ok&&isTileUnlocked(20,2)&&S.coins===beforeNorth-320);
+check('player-confirmed parcel action succeeds when eligible',north.ok&&isTileUnlocked(L(20),LAND_PARCELS[1].y+2)&&S.coins===beforeNorth-320);
 check('duplicate parcel unlock is impossible',!unlockParcel('north').ok);
 
 // Legacy mode must never lock an established city or its tools.
@@ -78,7 +81,7 @@ S.cityProgress.stage=3;
 S.coins=1000;
 put('school',20,20,0,{level:1});
 recompute(); invalidateServices(); recomputeServices(true);
-const school=S.grid[idx(20,20)];
+const school=S.grid[idx(L(20),L(20))];
 check('School Level 1 baseline is 28 / radius 7',schoolStats(school).capacity===28&&schoolStats(school).radius===7);
 const up=civicUpgradeStatus(school);
 check('School Level 2 metadata is 44 / radius 7 / 650 coins',up.next?.capacity===44&&up.next?.radius===7&&up.next?.cost===650);
@@ -100,14 +103,14 @@ check('V3 progression mode persists',S.cityProgress.mode==='parcel');
 check('V3 city stage persists',S.cityProgress.stage===3);
 check('V3 unlocked parcels persist',S.cityProgress.unlockedParcels.includes('center')&&S.cityProgress.unlockedParcels.includes('east'));
 check('V3 claimed milestones persist',S.cityProgress.claimedMilestones.includes('village'));
-check('V3 School Level 2 persists',S.grid[idx(20,20)]?.state?.level===2);
+check('V3 School Level 2 persists',S.grid[idx(L(20),L(20))]?.state?.level===2);
 
 // A Housing-era V3 save has no cityProgress field: migration must be fully open.
-store.set(KEY,JSON.stringify({v:3,seed:111,coins:321,day:5,dayT:.2,b:[{type:'road',x:1,y:1},{type:'rail',x:42,y:42},{type:'school',x:30,y:30,state:{level:1}}],woods:''}));
+store.set(KEY,JSON.stringify({v:3,seed:111,coins:321,day:5,dayT:.2,b:[{type:'road',x: L(1), y: L(1)},{type:'rail',x: L(42), y: L(42)},{type:'school',x: L(30), y: L(30),state:{level:1}}],woods:''}));
 store.set(KEY_V2,''); store.set(KEY_OLD,'');
 check('pre-City-Growth V3 loads',load());
 check('pre-City-Growth V3 migrates legacy-open',isLegacyOpen());
-check('legacy road and rail remain across map',S.grid[idx(1,1)]?.type==='road'&&S.grid[idx(42,42)]?.type==='rail');
+check('legacy road and rail remain across map',S.grid[idx(L(1),L(1))]?.type==='road'&&S.grid[idx(L(42),L(42))]?.type==='rail');
 check('legacy developed tiles remain usable',isTileUnlocked(1,1)&&isTileUnlocked(42,42));
 
 // Malformed progression metadata repairs safely without crashing.

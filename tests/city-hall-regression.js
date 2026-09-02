@@ -1,3 +1,4 @@
+import { L } from './grid-fixture.js';
 import { BUILDINGS, getUpgradeDefinition } from '../src/buildings/registry.js';
 import { canPlace, erase, removalIntent } from '../src/buildings/buildings.js';
 import { touchIntent, isOneShotTool } from '../src/core/input-policy.js';
@@ -12,7 +13,8 @@ import { idx } from '../src/world/tiles.js';
 
 const checks = [];
 const check = (name, value) => checks.push({ name, pass: Boolean(value) });
-function put(type, x, y, state = {}, pop = 0) {
+function put(type, rx, ry, state = {}, pop = 0) {
+  const x = L(rx), y = L(ry);
   S.terr[idx(x, y)] = 0;
   const building = { type, x, y, seed: 1, pop, grow: 0, mood: 50, linked: true, state };
   S.grid[idx(x, y)] = building;
@@ -46,9 +48,9 @@ check('City Hall touch tap resolves to one intentional action', touchIntent({ to
 check('City Hall touch drag resolves to pan', touchIntent({ tool: 'cityHall', movedPx: 12, heldMs: 0, pointers: 1 }) === 'pan');
 check('City Hall second pointer resolves to pinch', touchIntent({ tool: 'cityHall', movedPx: 0, heldMs: 0, pointers: 2 }) === 'pinch');
 
-check('first City Hall can be placed on legal land', canPlace('cityHall', 16, 16).ok);
+check('first City Hall can be placed on legal land', canPlace('cityHall', L(16), L(16)).ok);
 const hall = put('cityHall', 16, 16, { level: 1 });
-check('second City Hall is rejected', !canPlace('cityHall', 17, 16).ok);
+check('second City Hall is rejected', !canPlace('cityHall', L(17), L(16)).ok);
 
 S.cityProgress.stage = 1;
 check('level 2 waits for Village', !civicUpgradeStatus(hall).stageOk);
@@ -71,13 +73,13 @@ check('no fake level 5', civicUpgradeStatus(hall).maxed === true);
 
 // Removing the civic centre is a deliberate decision, asked in-shell rather
 // than through a native dialog, so the test states the intent directly.
-const hallIntent = removalIntent(16, 16);
+const hallIntent = removalIntent(L(16), L(16));
 check('City Hall removal asks first', hallIntent.needsConfirm === true);
 check('the question explains what survives', /City Growth/.test(hallIntent.body || ''));
-check('an unconfirmed City Hall removal changes nothing', !erase(16, 16) && cityHalls().length === 1);
-const removed = erase(16, 16, { confirmed: true });
+check('an unconfirmed City Hall removal changes nothing', !erase(L(16), L(16)) && cityHalls().length === 1);
+const removed = erase(L(16), L(16), { confirmed: true });
 check('confirmed City Hall removal succeeds', removed && cityHalls().length === 0);
-check('removal allows a legal rebuild', canPlace('cityHall', 16, 16).ok);
+check('removal allows a legal rebuild', canPlace('cityHall', L(16), L(16)).ok);
 const rebuiltHall = put('cityHall', 16, 16, { level: 4 });
 
 const h1 = put('house', 17, 17, { housingTier: 1, education: 10, desirability: 45 }, 4);
@@ -98,7 +100,7 @@ check('summary uses real payday categories', summary.finances.residentialTax ===
 
 S.cityProgress.stage = 1;
 S.ctx.houses = [h1, h2];
-S.grid[idx(16, 16)] = null;
+S.grid[idx(L(16), L(16))] = null;
 for (let x = 16; x < 20; x++) put('road', x, 18, {});
 S.pop = 10;
 const settlementGoals = getEligibleGoals('primary');
@@ -116,7 +118,7 @@ applySave({
   coins: 777,
   day: 6,
   dayT: .3,
-  b: [{ type: 'house', x: 16, y: 16, pop: 4, state: { housingTier: 2, education: 18, desirability: 52 } }],
+  b: [{ type: 'house', x: L(16), y: L(16), pop: 4, state: { housingTier: 2, education: 18, desirability: 52 } }],
   cityProgress: { mode: 'parcel', stage: 3, unlockedParcels: ['center', 'north'], claimedMilestones: [] },
   wishes: []
 });
@@ -131,8 +133,8 @@ applySave({
   day: 8,
   dayT: .4,
   b: [
-    { type: 'cityHall', x: 16, y: 16, state: { level: 99 } },
-    { type: 'cityHall', x: 17, y: 16, state: { level: 2 } }
+    { type: 'cityHall', x: L(16), y: L(16), state: { level: 99 } },
+    { type: 'cityHall', x: L(17), y: L(16), state: { level: 2 } }
   ],
   cityProgress: { mode: 'parcel', stage: 4, unlockedParcels: ['center', 'north', 'east'], claimedMilestones: [] },
   wishes: []

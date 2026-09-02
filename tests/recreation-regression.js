@@ -1,7 +1,7 @@
 import { BUILDINGS } from '../src/buildings/registry.js';
 import { canPlace, erase, place, restoreFacilityOccupancy } from '../src/buildings/buildings.js';
 import { touchIntent } from '../src/core/input-policy.js';
-import { applySave, KEY, KEY_OLD, KEY_V2, load, save, store } from '../src/core/save.js';
+import { applySave, KEY, KEY_OLD, KEY_V2, load, save, store, legacyShift } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
 import { resetProgression } from '../src/progression/city-growth.js';
 import { evalHouse, recompute } from '../src/simulation/mood.js';
@@ -92,8 +92,13 @@ check('V3 reload reconstructs Town Park footprint',load()&&facilityRootAt(21,21)
 check('reloaded child tile is reconstructed marker',isFacilityPart(S.grid[idx(21,21)]));
 
 // Legacy 1×1 Park and treasury survive migration exactly where they were.
-applySave({v:3,seed:111,coins:777,day:3,dayT:.3,b:[{type:'park',x:16,y:16}],woods:'0'.repeat(44*44),cityProgress:{mode:'legacy-open',stage:4,unlockedParcels:[],claimedMilestones:[]},wishes:[],log:[],history:[]});
-check('legacy Park remains on its original single tile',S.grid[idx(16,16)]?.type==='park'&&!S.grid[idx(17,16)]&&!S.grid[idx(16,17)]);
+// A save from the old 44x44 valley is re-centred on load, so the Park comes
+// back one tile wide at its migrated position rather than at 16,16.
+const legacyPark={v:3,seed:111,coins:777,day:3,dayT:.3,b:[{type:'park',x:16,y:16}],woods:'0'.repeat(44*44),cityProgress:{mode:'legacy-open',stage:4,unlockedParcels:[],claimedMilestones:[]},wishes:[],log:[],history:[]};
+const parkShift=legacyShift(legacyPark);
+applySave(legacyPark);
+const px=16+parkShift, py=16+parkShift;
+check('legacy Park remains on its original single tile',S.grid[idx(px,py)]?.type==='park'&&!S.grid[idx(px+1,py)]&&!S.grid[idx(px,py+1)]);
 check('legacy Park migration deducts no coins',S.coins===777);
 
 // Goal eligibility is demand-aware, not unlock-only spam.

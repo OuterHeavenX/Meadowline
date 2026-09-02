@@ -35,7 +35,8 @@ export function mix(h1,h2,t){
 }
 
 /* ---------- constants ---------- */
-export const W=44,H=44;
+export const W=128,H=128;            // grid size
+export const LEGACY_W=44;            // the size saves from before the big valley used
 export const TW=64,TH=32;
 export const DAY=100;
 export const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];

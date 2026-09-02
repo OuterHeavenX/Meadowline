@@ -10,16 +10,24 @@ export const CITY_STAGES = Object.freeze([
   { id: 4, key: 'growing-town', name: 'Growing Town' }
 ]);
 
+// The nine parcels tile the map as a 3x3 ring in fixed proportions, derived
+// from W/H rather than written out, so the valley can change size without the
+// land progression having to be re-authored. At 44x44 this reproduces the
+// original hand-written layout exactly (edge 12, centre 20).
+const EDGE_W = Math.round(W * 12 / 44), EDGE_H = Math.round(H * 12 / 44);
+const MID_W = W - EDGE_W * 2, MID_H = H - EDGE_H * 2;
+const FAR_X = EDGE_W + MID_W, FAR_Y = EDGE_H + MID_H;
+
 export const LAND_PARCELS = Object.freeze([
-  { id: 'center', name: 'Meadowline Center', x: 12, y: 12, w: 20, h: 20, starting: true, cost: 0, stage: 1, requires: [] },
-  { id: 'north', name: 'North Meadow', x: 12, y: 0, w: 20, h: 12, cost: 320, stage: 2, requires: ['center'] },
-  { id: 'east', name: 'East Meadow', x: 32, y: 12, w: 12, h: 20, cost: 360, stage: 2, requires: ['center'] },
-  { id: 'south', name: 'South Meadow', x: 12, y: 32, w: 20, h: 12, cost: 420, stage: 3, requires: ['center'] },
-  { id: 'west', name: 'West Meadow', x: 0, y: 12, w: 12, h: 20, cost: 380, stage: 3, requires: ['center'] },
-  { id: 'northwest', name: 'Northwest Fields', x: 0, y: 0, w: 12, h: 12, cost: 520, stage: 4, requires: ['north', 'west'] },
-  { id: 'northeast', name: 'Northeast Fields', x: 32, y: 0, w: 12, h: 12, cost: 540, stage: 4, requires: ['north', 'east'] },
-  { id: 'southwest', name: 'Southwest Fields', x: 0, y: 32, w: 12, h: 12, cost: 560, stage: 4, requires: ['south', 'west'] },
-  { id: 'southeast', name: 'Southeast Fields', x: 32, y: 32, w: 12, h: 12, cost: 580, stage: 4, requires: ['south', 'east'] }
+  { id: 'center', name: 'Meadowline Center', x: EDGE_W, y: EDGE_H, w: MID_W, h: MID_H, starting: true, cost: 0, stage: 1, requires: [] },
+  { id: 'north', name: 'North Meadow', x: EDGE_W, y: 0, w: MID_W, h: EDGE_H, cost: 320, stage: 2, requires: ['center'] },
+  { id: 'east', name: 'East Meadow', x: FAR_X, y: EDGE_H, w: EDGE_W, h: MID_H, cost: 360, stage: 2, requires: ['center'] },
+  { id: 'south', name: 'South Meadow', x: EDGE_W, y: FAR_Y, w: MID_W, h: EDGE_H, cost: 420, stage: 3, requires: ['center'] },
+  { id: 'west', name: 'West Meadow', x: 0, y: EDGE_H, w: EDGE_W, h: MID_H, cost: 380, stage: 3, requires: ['center'] },
+  { id: 'northwest', name: 'Northwest Fields', x: 0, y: 0, w: EDGE_W, h: EDGE_H, cost: 520, stage: 4, requires: ['north', 'west'] },
+  { id: 'northeast', name: 'Northeast Fields', x: FAR_X, y: 0, w: EDGE_W, h: EDGE_H, cost: 540, stage: 4, requires: ['north', 'east'] },
+  { id: 'southwest', name: 'Southwest Fields', x: 0, y: FAR_Y, w: EDGE_W, h: EDGE_H, cost: 560, stage: 4, requires: ['south', 'west'] },
+  { id: 'southeast', name: 'Southeast Fields', x: FAR_X, y: FAR_Y, w: EDGE_W, h: EDGE_H, cost: 580, stage: 4, requires: ['south', 'east'] }
 ]);
 
 // Registry unlock metadata is authoritative. This compatibility export remains
