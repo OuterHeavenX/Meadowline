@@ -61,14 +61,13 @@ const cache=new Map();
 
 export function hasLandmark(key){ return !!MESHES[key]; }
 
-function build(mesh){
+function slice(mesh,from,count){
   const geometry=new THREE.BufferGeometry();
-  geometry.setAttribute('position',new THREE.BufferAttribute(mesh.POSITIONS,3));
-  geometry.setAttribute('normal',new THREE.BufferAttribute(mesh.NORMALS,3));
-  for(const[start,count,material]of mesh.GROUPS) geometry.addGroup(start,count,material);
+  geometry.setAttribute('position',new THREE.BufferAttribute(mesh.POSITIONS.slice(from*3,(from+count)*3),3));
+  geometry.setAttribute('normal',new THREE.BufferAttribute(mesh.NORMALS.slice(from*3,(from+count)*3),3));
   // The renderer's disposeGroup() frees anything it does not recognise as
-  // shared. These are shared - one geometry serves every copy of a building,
-  // and there is only ever one of each anyway - so they are marked as cached.
+  // shared. These are shared - one geometry serves every copy of a building -
+  // so they are marked as cached.
   geometry.userData.meadowlineCached=true;
   return geometry;
 }
@@ -87,16 +86,20 @@ function materialFor(hex,lit){
   return materials.get(key);
 }
 
-export function landmarkAsset(type){
-  if(cache.has(type)) return cache.get(type);
-  const mesh=MESHES[type];
+/* One geometry per colour rather than one per building, which is what lets a
+   street of homes draw in as many calls as a home has colours instead of as
+   many as the street has homes. Same trick the trees use, for the same
+   reason. */
+export function landmarkAsset(key){
+  if(cache.has(key)) return cache.get(key);
+  const mesh=MESHES[key];
   if(!mesh) return null;
-  const asset={
-    geometry:build(mesh),
-    materials:mesh.COLORS.map((hex,i)=>materialFor(hex,!!mesh.LIT?.[i])),
-    triangles:mesh.TRIANGLES
-  };
-  cache.set(type,asset);
+  const parts=mesh.GROUPS.map(([from,count,material])=>({
+    geometry:slice(mesh,from,count),
+    material:materialFor(mesh.COLORS[material],!!mesh.LIT?.[material])
+  }));
+  const asset={parts,triangles:mesh.TRIANGLES};
+  cache.set(key,asset);
   return asset;
 }
 

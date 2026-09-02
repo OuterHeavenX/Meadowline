@@ -15,7 +15,13 @@ const C={
   asphalt:'#50575b',wet:'#3f494f',sidewalk:'#d6d1c4',curb:'#b8b5ac',line:'#eee6c9',foundation:'#9c9990',
   glass:'#59879a',lit:'#ffd783',trunk:'#624632',hedge:'#3f7d4d',white:'#e8e5dc',red:'#a94940',blue:'#3f6985'
 };
-function mat(hex,rough=.82,metal=0,emissive=''){const key=[hex,rough,metal,emissive].join('/');if(!materials.has(key))materials.set(key,new THREE.MeshStandardMaterial({color:hex,roughness:rough,metalness:metal,emissive:emissive||'#000000',emissiveIntensity:emissive?.7:0}));return materials.get(key);}
+function mat(hex,rough=.82,metal=0,emissive=''){const key=[hex,rough,metal,emissive].join('/');if(!materials.has(key)){const m=new THREE.MeshStandardMaterial({color:hex,roughness:rough,metalness:metal,emissive:emissive||'#000000',emissiveIntensity:emissive?.7:0});if(emissive)lit.push(m);materials.set(key,m);}return materials.get(key);}
+/* Every material that emits: lamp bulbs, lit windows. They were fixed at .7
+   and so glowed at noon as brightly as at midnight, which reads as a town
+   that forgot to turn the lights off rather than one settling into evening.
+   syncLighting() drives them on the same curve as everything else. */
+const lit=[];
+export function litMaterials(){ return lit; }
 function basicMat(hex){const key=`basic:${hex}`;if(!materials.has(key))materials.set(key,new THREE.MeshBasicMaterial({color:hex}));return materials.get(key);}
 function geo(key,make){if(!geometries.has(key)){const g=make();g.userData.meadowlineCached=true;geometries.set(key,g);}return geometries.get(key);}
 function mesh(parent,geometry,material,x,y,z,cast=true){const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m;}
@@ -29,7 +35,10 @@ function window(parent,x,y,z,axis='z',lit=false,w=.18,h=.22){const material=lit?
 function door(parent,x,y,z,w=.18,h=.3,color='#725342'){box(parent,x,y,z,w,h,.035,mat(color,.72),false);}
 function path(parent,x,z,w,d,color=C.sidewalk){box(parent,x,.015,z,w,.028,d,mat(color,.94),false);}
 function hedge(parent,x,z,w,d=.08,h=.16){box(parent,x,.02,z,w,h,d,mat(C.hedge,.92),true);}
-function lamp(parent,x,z){cyl(parent,x,.02,z,.025,.55,mat('#343b3c',.38,.5),7);sphere(parent,x,.62,z,.065,mat(C.lit,.3,0,C.lit));}
+// A lamp's glass is lantern-coloured rather than the full lit white: unlit at
+// noon it was a white bead on a stick, which read as a bollard with a ball on
+// it. The emissive is what makes it a lamp after dark.
+function lamp(parent,x,z){cyl(parent,x,.02,z,.025,.55,mat('#343b3c',.38,.5),7);cyl(parent,x,.55,z,.055,.03,mat('#2c3234',.4,.4),7);sphere(parent,x,.62,z,.06,mat('#e6d7a8',.34,0,C.lit));}
 
 export function roadMask(x,y,type='road'){let m=0;if(isType(x,y-1,type))m|=1;if(isType(x+1,y,type))m|=2;if(isType(x,y+1,type))m|=4;if(isType(x-1,y,type))m|=8;return m;}
 export function roadKind(mask){const n=((mask&1)>0)+((mask&2)>0)+((mask&4)>0)+((mask&8)>0);if(n===4)return'cross';if(n===3)return'tee';if(n===2)return(mask===5||mask===10)?'straight':'corner';if(n===1)return'dead-end';return'isolated';}
@@ -208,23 +217,29 @@ function greatLibrary(g,fp){const w=fp[0]*.94,d=fp[1]*.94;box(g,0,.005,0,w,.06,d
   sphere(g,0,1.78,0,.07,mat(C.lit,.3,0,C.lit));
   for(let i=-1;i<=1;i++)window(g,i*.4,.5,d*.345,'z',true,.22,.4);
   door(g,0,.2,d*.35,.3,.42);}
-/* An authored building, straight from its Blender mesh. It is tried before the
-   hand-built recipes below, which stay as the fallback for everything that has
-   not been modelled - and as the thing the models were matched against, so the
-   two sit in one frame without a style break. */
-function landmark(g,key){
-  const asset=landmarkAsset(key);
-  if(!asset) return false;
-  const mesh=new THREE.Mesh(asset.geometry,asset.materials);
-  mesh.castShadow=true; mesh.receiveShadow=true;
-  g.add(mesh);
-  return true;
+/* The authored buildings, instanced by model and by colour. Every copy of a
+   model shares one geometry per colour, so a valley of sixty homes draws in
+   the seven calls one home takes rather than four hundred. The hand-built
+   recipes below stay as the fallback for everything not yet modelled - and as
+   the thing the models were matched against, so the two sit in one frame
+   without a style break. */
+function emitLandmarks(parent,placements){
+  const matrix=new THREE.Matrix4();
+  for(const[key,spots]of placements){
+    const asset=landmarkAsset(key);
+    if(!asset) continue;
+    for(const part of asset.parts){
+      const inst=new THREE.InstancedMesh(part.geometry,part.material,spots.length);
+      for(let i=0;i<spots.length;i++){ matrix.makeTranslation(spots[i].x,0,spots[i].z); inst.setMatrixAt(i,matrix); }
+      inst.castShadow=true; inst.receiveShadow=true;
+      parent.add(inst);
+    }
+  }
 }
 function building(parent,b){const def=getBuildingDefinition(b.type),fp=def?.placement?.footprint||[1,1],cx=b.x+(fp[0]-1)/2,cz=b.y+(fp[1]-1)/2,g=groupAt(parent,cx,cz);
-  const authored=landmarkKey(b);
-  if(hasLandmark(authored)&&landmark(g,authored)){
-    // The windmill's sails turn, so they are not in its mesh: they are added
-    // here against the hub the model leaves at the front.
+  // Authored buildings are collected and instanced in one pass at the end
+  // rather than built here, so a street of homes costs what one home does.
+  if(hasLandmark(landmarkKey(b))){
     // The windmill's sails turn, so they are not in its mesh. They are hung
     // here on the hub the model leaves proud of the tower's front face.
     if(b.type==='mill'){const spin=S.t*.35;for(let k=0;k<4;k++){const a=spin+k*Math.PI/2;
@@ -255,7 +270,18 @@ export function buildCohesiveWorld(parent){
       visibleTrees++;
     }
   }
-  for(const b of S.grid)if(b&&!isFacilityPart(b)&&b.type!=='road'&&b.type!=='rail')building(parent,b);
+  const authored=new Map();
+  for(const b of S.grid){
+    if(!b||isFacilityPart(b)||b.type==='road'||b.type==='rail') continue;
+    const key=landmarkKey(b);
+    if(hasLandmark(key)){
+      const fp=getBuildingDefinition(b.type)?.placement?.footprint||[1,1];
+      if(!authored.has(key)) authored.set(key,[]);
+      authored.get(key).push({x:b.x+(fp[0]-1)/2,z:b.y+(fp[1]-1)/2});
+    }
+    building(parent,b);
+  }
+  emitLandmarks(parent,authored);
   emitTrees(parent);
   S.diagnostics.rendererMaterials=materials.size;
   S.diagnostics.visibleTrees=visibleTrees;

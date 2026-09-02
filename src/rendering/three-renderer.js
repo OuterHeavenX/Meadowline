@@ -6,7 +6,7 @@ import { graphicsProfile,effectiveQuality } from './capabilities.js';
 import { darkness } from '../world/time.js';
 import { screen2world, viewRotation } from '../world/map.js';
 import { footprintCells,idx,inBounds,isFacilityPart,isType } from '../world/tiles.js';
-import { buildCohesiveWorld, artMetrics } from './three-world-art.js';
+import { buildCohesiveWorld, artMetrics, litMaterials } from './three-world-art.js';
 import { landmarkGlowMaterials } from './landmark-assets.js';
 import { canPlace } from '../buildings/buildings.js';
 import { hover } from './interaction-state.js';
@@ -76,7 +76,8 @@ function syncLighting(){const dark=clamp(darkness()/.62,0,1),rain=S.wx?.k==='rai
   // The authored landmarks carry their own emissive materials - the clock
   // faces, the lighthouse lantern - and have to follow the same night curve or
   // a wonder would be the only thing in the valley lit at noon.
-  for(const m of landmarkGlowMaterials()) m.emissiveIntensity=.08+dark*1.2;}
+  for(const m of landmarkGlowMaterials()) m.emissiveIntensity=.08+dark*1.2;
+  for(const m of litMaterials()) m.emissiveIntensity=.06+dark*1.15;}
 export function renderThreeScene(){if(!ensure())return false;try{const sig=signature();if(sig!==lastSignature)rebuild();rebuildDynamic();syncCamera();syncLighting();renderer.render(scene,camera);S.diagnostics.rendererDrawCalls=renderer.info.render.calls;S.diagnostics.rendererTriangles=renderer.info.render.triangles;S.diagnostics.rendererTextures=renderer.info.memory.textures;S.diagnostics.rendererGeometries=renderer.info.memory.geometries;S.diagnostics.rendererDpr=renderer.getPixelRatio();return true;}catch(e){failed=true;canvas.hidden=true;S.diagnostics.rendererBackend='canvas2d-fallback';S.diagnostics.rendererError=String(e.message||e);return false;}}
 /* Where the GPU camera actually puts a world point on screen, in CSS pixels.
    The shared projection in map.js is supposed to agree with this exactly - it
