@@ -1,5 +1,5 @@
 import { BUILDINGS } from '../buildings/registry.js';
-import { H, W } from '../core/constants.js';
+import { H, LEGACY_W, W } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { countType } from '../world/tiles.js';
 
@@ -14,20 +14,30 @@ export const CITY_STAGES = Object.freeze([
 // from W/H rather than written out, so the valley can change size without the
 // land progression having to be re-authored. At 44x44 this reproduces the
 // original hand-written layout exactly (edge 12, centre 20).
+// Land is priced against the valley, not written out flat. A parcel of the big
+// map is eight times the ground a parcel of the old one was, and at the old
+// price the whole map was pocket change - which is most of why a city could be
+// finished in an afternoon. The price grows with the square root of the area
+// rather than with the area, so opening the second parcel is still a few days
+// of a young town's income instead of a month of it. At 44x44 this is exactly
+// 1, so the original prices are unchanged.
+const LAND_PRICE = Math.max(1, Math.round(Math.sqrt(W * H / (LEGACY_W * LEGACY_W)) * 1.4));
+const price = (coins) => coins * LAND_PRICE;
+
 const EDGE_W = Math.round(W * 12 / 44), EDGE_H = Math.round(H * 12 / 44);
 const MID_W = W - EDGE_W * 2, MID_H = H - EDGE_H * 2;
 const FAR_X = EDGE_W + MID_W, FAR_Y = EDGE_H + MID_H;
 
 export const LAND_PARCELS = Object.freeze([
-  { id: 'center', name: 'Meadowline Center', x: EDGE_W, y: EDGE_H, w: MID_W, h: MID_H, starting: true, cost: 0, stage: 1, requires: [] },
-  { id: 'north', name: 'North Meadow', x: EDGE_W, y: 0, w: MID_W, h: EDGE_H, cost: 320, stage: 2, requires: ['center'] },
-  { id: 'east', name: 'East Meadow', x: FAR_X, y: EDGE_H, w: EDGE_W, h: MID_H, cost: 360, stage: 2, requires: ['center'] },
-  { id: 'south', name: 'South Meadow', x: EDGE_W, y: FAR_Y, w: MID_W, h: EDGE_H, cost: 420, stage: 3, requires: ['center'] },
-  { id: 'west', name: 'West Meadow', x: 0, y: EDGE_H, w: EDGE_W, h: MID_H, cost: 380, stage: 3, requires: ['center'] },
-  { id: 'northwest', name: 'Northwest Fields', x: 0, y: 0, w: EDGE_W, h: EDGE_H, cost: 520, stage: 4, requires: ['north', 'west'] },
-  { id: 'northeast', name: 'Northeast Fields', x: FAR_X, y: 0, w: EDGE_W, h: EDGE_H, cost: 540, stage: 4, requires: ['north', 'east'] },
-  { id: 'southwest', name: 'Southwest Fields', x: 0, y: FAR_Y, w: EDGE_W, h: EDGE_H, cost: 560, stage: 4, requires: ['south', 'west'] },
-  { id: 'southeast', name: 'Southeast Fields', x: FAR_X, y: FAR_Y, w: EDGE_W, h: EDGE_H, cost: 580, stage: 4, requires: ['south', 'east'] }
+  { id: 'center', name: 'Meadowline Center', x: EDGE_W, y: EDGE_H, w: MID_W, h: MID_H, starting: true, cost: price(0), stage: 1, requires: [] },
+  { id: 'north', name: 'North Meadow', x: EDGE_W, y: 0, w: MID_W, h: EDGE_H, cost: price(320), stage: 2, requires: ['center'] },
+  { id: 'east', name: 'East Meadow', x: FAR_X, y: EDGE_H, w: EDGE_W, h: MID_H, cost: price(360), stage: 2, requires: ['center'] },
+  { id: 'south', name: 'South Meadow', x: EDGE_W, y: FAR_Y, w: MID_W, h: EDGE_H, cost: price(420), stage: 3, requires: ['center'] },
+  { id: 'west', name: 'West Meadow', x: 0, y: EDGE_H, w: EDGE_W, h: MID_H, cost: price(380), stage: 3, requires: ['center'] },
+  { id: 'northwest', name: 'Northwest Fields', x: 0, y: 0, w: EDGE_W, h: EDGE_H, cost: price(520), stage: 4, requires: ['north', 'west'] },
+  { id: 'northeast', name: 'Northeast Fields', x: FAR_X, y: 0, w: EDGE_W, h: EDGE_H, cost: price(540), stage: 4, requires: ['north', 'east'] },
+  { id: 'southwest', name: 'Southwest Fields', x: 0, y: FAR_Y, w: EDGE_W, h: EDGE_H, cost: price(560), stage: 4, requires: ['south', 'west'] },
+  { id: 'southeast', name: 'Southeast Fields', x: FAR_X, y: FAR_Y, w: EDGE_W, h: EDGE_H, cost: price(580), stage: 4, requires: ['south', 'east'] }
 ]);
 
 // Registry unlock metadata is authoritative. This compatibility export remains

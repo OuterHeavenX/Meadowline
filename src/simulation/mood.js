@@ -8,6 +8,8 @@ import { MARKET_MOOD } from '../buildings/markets.js';
 import { BAKERY_MOOD } from '../buildings/bakeries.js';
 import { SCHOOL_MOOD } from '../buildings/schools.js';
 import { DOCK_MOOD } from '../buildings/docks.js';
+import { FARM_MOOD } from '../buildings/farms.js';
+import { wonderMood } from '../buildings/wonders.js';
 import { getBuildingDefinition } from '../buildings/registry.js';
 import { DIRS, clamp } from '../core/constants.js';
 import { services } from '../core/services.js';
@@ -68,6 +70,10 @@ export function evalHouse(h,out){
   const bake=near(c.bakeries,BAKERY_MOOD.r,BAKERY_MOOD.per,BAKERY_MOOD.cap); if(bake.v){ m+=bake.v; if(out) out.push(["The smell of baking",bake.v]); }
   const sch =near(c.schools,SCHOOL_MOOD.r,SCHOOL_MOOD.per,SCHOOL_MOOD.cap); if(sch.v){ m+=sch.v; if(out) out.push(["A school within reach",sch.v]); }
   const dock=near(c.docks,DOCK_MOOD.r,DOCK_MOOD.per,DOCK_MOOD.cap);         if(dock.v){ m+=dock.v; if(out) out.push(["Boats at the dock",dock.v]); }
+  const farm=near(c.farms,FARM_MOOD.r,FARM_MOOD.per,FARM_MOOD.cap);         if(farm.v){ m+=farm.v; if(out) out.push(["Open fields nearby",farm.v]); }
+
+  // A wonder is felt everywhere in the valley, not only on its own street.
+  m+=wonderMood(c,out);
 
   const lampMul=1+clamp(darkness()/0.62,0,1);
   const lamp=near(c.lamps,LAMP_MOOD.r,LAMP_MOOD.per,LAMP_MOOD.cap);
@@ -98,7 +104,7 @@ export function evalHouse(h,out){
 }
 
 export function recompute(){
-  const parks=[],recreation=[],cafes=[],stations=[],houses=[],lamps=[],mills=[],markets=[],bakeries=[],schools=[],docks=[];
+  const parks=[],recreation=[],cafes=[],stations=[],houses=[],lamps=[],mills=[],markets=[],bakeries=[],schools=[],docks=[],farms=[],wonders=[];
   for(let i=0;i<S.grid.length;i++){
     const b=S.grid[i]; if(!b||isFacilityPart(b)) continue;
     const rec=getBuildingDefinition(b.type)?.service?.type==='recreation';
@@ -113,8 +119,10 @@ export function recompute(){
     else if(b.type==="bakery") bakeries.push(b);
     else if(b.type==="school") schools.push(b);
     else if(b.type==="dock") docks.push(b);
+    else if(b.type==="farm") farms.push(b);
+    if(getBuildingDefinition(b.type)?.category==='wonder') wonders.push(b);
   }
-  S.ctx={parks,recreation,cafes,stations,houses,lamps,mills,markets,bakeries,schools,docks};
+  S.ctx={parks,recreation,cafes,stations,houses,lamps,mills,markets,bakeries,schools,docks,farms,wonders};
 
   // Population/demand is authoritative at households. Establish the real
   // household totals first, then compute Recreation assignment, then Mood.

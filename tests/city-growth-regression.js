@@ -60,12 +60,15 @@ check('Village unlocks School',isBuildingUnlocked('school'));
 check('Village unlocks Market and Bakery',isBuildingUnlocked('market')&&isBuildingUnlocked('bakery'));
 
 // Parcel requires both progress and coins and cannot be bought twice.
-S.coins=319;
+// Land is priced from the size of the valley, so the fixture reads the parcel's
+// own cost rather than the number the 44x44 map happened to charge.
+const northCost=LAND_PARCELS[1].cost;
+S.coins=northCost-1;
 check('North Meadow available by stage but short on coins',parcelStatus('north').state==='available'&&!parcelStatus('north').canUnlock);
-S.coins=500;
+S.coins=northCost+180;
 const beforeNorth=S.coins;
 const north=unlockParcel('north');
-check('player-confirmed parcel action succeeds when eligible',north.ok&&isTileUnlocked(L(20),LAND_PARCELS[1].y+2)&&S.coins===beforeNorth-320);
+check('player-confirmed parcel action succeeds when eligible',north.ok&&isTileUnlocked(L(20),LAND_PARCELS[1].y+2)&&S.coins===beforeNorth-northCost);
 check('duplicate parcel unlock is impossible',!unlockParcel('north').ok);
 
 // Legacy mode must never lock an established city or its tools.

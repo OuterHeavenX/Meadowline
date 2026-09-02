@@ -12,6 +12,7 @@ import { drawSchoolUpgradeDetails } from './school-upgrades.js';
 import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
 import { drawBoat, drawCitizen, drawTrain } from './entities.js';
 import { drawVehicle } from './vehicles.js';
+import { drawFarm, drawWonder, isWonder } from './wonders.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
 import { SPANS } from '../transport/bridges.js';
 import { proj, viewDepth, visibleBand } from '../world/map.js';
@@ -123,6 +124,8 @@ export function render(){
       else if(t==="school"){ drawSchool(it.b,p,dark); drawSchoolUpgradeDetails(it.b,p,dark); }
       else if(t==="cityHall") drawCityHall(it.b,p,dark);
       else if(t==="dock") drawDock(it.b,p,dark);
+      else if(t==="farm") drawFarm(it.b,dark);
+      else if(isWonder(t)) drawWonder(it.b,dark);
       else if(['policeStation','fireStation','clinic','hospital'].includes(t)) drawMunicipalBuilding(it.b,dark);
       else if(t==="tree") drawTree(p.x,p.y,it.b.seed,1);
     } else if(it.k===1){

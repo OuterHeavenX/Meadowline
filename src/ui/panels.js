@@ -1,6 +1,10 @@
 import { HOUSE_NAMES, residents } from '../buildings/houses.js';
 import { capFor } from '../buildings/houses.js';
 import { getBuildingDefinition } from '../buildings/registry.js';
+import { FARM_MILL_R, FARM_YIELD } from '../buildings/farms.js';
+import { BAKERY_MILL_R } from '../buildings/bakeries.js';
+import { wonderEffect } from '../buildings/wonders.js';
+import { upkeepOf } from '../simulation/upkeep.js';
 import { outFrom } from '../simulation/citizens.js';
 import { educationAssignment, educationProvider, educationStatus, educationTier, getEducationLevel, schoolStats } from '../simulation/civic-services.js';
 import { desirabilityDetails, desirabilityLabel, evaluateHousingReadiness, getDesirability, housingTier } from '../simulation/housing.js';
@@ -161,7 +165,42 @@ function municipalCard(b){
   const demand=type==='safety'?city.active:type==='fire'?city.active:city.demand;
   return card(def.name,label+' · '+(def.placement?.footprint||[1,1]).join('×'),'<dl class="service"><dt>Capacity</dt><dd>'+cap+'</dd><dt>City demand</dt><dd>'+demand+'</dd><dt>Vehicles active</dt><dd>'+calls+'</dd><dt>Jobs</dt><dd>'+(def.jobs||0)+'</dd><dt>Status</dt><dd class="'+(calls>=cap?'dn':'up')+'">'+(calls>=cap?'Busy':'Ready')+'</dd></dl>');
 }
-function businessCard(b){const def=getBuildingDefinition(b.type),work=S.municipal.employment,jobs=def?.jobs||0,share=work.jobs?Math.min(jobs,Math.round(work.employed*jobs/work.jobs)):0;return card(def?.name||'Business','Business','<dl class="service"><dt>Jobs filled</dt><dd>'+share+' / '+jobs+'</dd><dt>Road access</dt><dd class="'+(b.linked===false?'dn':'up')+'">'+(b.linked===false?'Disconnected':'Connected')+'</dd><dt>City prosperity</dt><dd>'+work.prosperity+' / 100</dd></dl>');}
+// Where a trade's raw material comes from, for the two links of the food chain
+// that have one. A supplier out of reach halves the yield, so it is the first
+// thing worth telling the player about the building they just tapped.
+function supplyRow(b){
+  const near=(list,r)=>(list||[]).some(o=>Math.abs(o.x-b.x)<=r&&Math.abs(o.y-b.y)<=r);
+  if(b.type==='mill') return {label:'Grain from a farm',ok:near(S.ctx.farms,FARM_MILL_R),r:FARM_MILL_R,what:'farm'};
+  if(b.type==='bakery') return {label:'Flour from a mill',ok:near(S.ctx.mills,BAKERY_MILL_R),r:BAKERY_MILL_R,what:'windmill'};
+  return null;
+}
+function businessCard(b){
+  const def=getBuildingDefinition(b.type),work=S.municipal.employment,jobs=def?.jobs||0,share=work.jobs?Math.min(jobs,Math.round(work.employed*jobs/work.jobs)):0;
+  const sup=supplyRow(b);
+  let html='';
+  if(sup) html+='<p>'+(sup.ok?'A '+sup.what+' is within <b>'+sup.r+' tiles</b>, so it runs at <b>full tilt</b>.':'No '+sup.what+' within <b>'+sup.r+' tiles</b>, so it runs at <b>half</b>.')+'</p>';
+  html+='<dl class="service">';
+  if(sup) html+='<dt>'+sup.label+'</dt><dd class="'+(sup.ok?'up':'dn')+'">'+(sup.ok?'Good':'Short')+'</dd>';
+  html+='<dt>Jobs filled</dt><dd>'+share+' / '+jobs+'</dd><dt>Road access</dt><dd class="'+(b.linked===false?'dn':'up')+'">'+(b.linked===false?'Disconnected':'Connected')+'</dd><dt>City prosperity</dt><dd>'+work.prosperity+' / 100</dd>';
+  if(upkeepOf(b)) html+='<dt>Upkeep</dt><dd class="dn">\u2212'+upkeepOf(b)+' a day</dd>';
+  return card(def?.name||'Business','Business',html+'</dl>');
+}
+
+// A wonder is worth explaining in full: it is the most expensive thing in the
+// game and everything it does happens somewhere other than its own tile.
+function wonderCard(b){
+  const def=getBuildingDefinition(b.type),e=wonderEffect(b.type)||{};
+  let dl='<dl class="service">';
+  if(e.mood) dl+='<dt>Mood, everywhere</dt><dd class="up">+'+e.mood+'</dd>';
+  if(e.trade) dl+='<dt>Every till in the valley</dt><dd class="up">+'+Math.round(e.trade*100)+'%</dd>';
+  if(e.dock) dl+='<dt>Every dock</dt><dd class="up">×'+e.dock+'</dd>';
+  if(b.type==='greatLibrary'){
+    const st=schoolStats(b);
+    dl+='<dt>Pupils taught</dt><dd>'+st.served+' / '+st.capacity+'</dd>';
+  }
+  dl+='<dt>Upkeep</dt><dd class="dn">−'+upkeepOf(b)+' a day</dd></dl>';
+  return card(def?.name||'Wonder','Wonder','<p>'+(def?.description||'')+'</p>'+dl);
+}
 
 export function describe(x,y){
   const root=facilityRootAt(x,y),rx=root?.x??x,ry=root?.y??y;
@@ -189,8 +228,13 @@ export function describe(x,y){
   if(b){
     if(getBuildingDefinition(b.type)?.service?.type==='recreation') return recreationCard(b);
     if(['safety','fire','healthcare'].includes(getBuildingDefinition(b.type)?.service?.type)) return municipalCard(b);
+    if(getBuildingDefinition(b.type)?.category==='wonder') return wonderCard(b);
     if(['cafe','market','bakery','mill'].includes(b.type)&&getBuildingDefinition(b.type)?.jobs) return businessCard(b);
     switch(b.type){
+      case "farm": {
+        const feeds=(S.ctx.mills||[]).filter(w=>Math.abs(w.x-rx)<=FARM_MILL_R&&Math.abs(w.y-ry)<=FARM_MILL_R).length;
+        return card("The Farm","Farm",'<p>Grows the grain the windmills grind. Brings in <b>'+Math.round(FARM_YIELD+(PAL.yield||0))+' coins</b> a day at this time of year.</p><dl><dt>Mills it supplies</dt><dd class="'+(feeds?'up':'dn')+'">'+feeds+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,5)+'</dd></dl>');
+      }
       case "cafe": return card("The Corner Café","Café",'<p>Trades for <b>9 coins</b> a day and lifts every home within <b>5 tiles</b>.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,5)+'</dd></dl>');
       case "station": return card("Meadowline Halt","Station",'<p>Worth <b>16</b> to every home within <b>6 tiles</b>, whether or not a train has come yet.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,6)+'</dd><dt>Trains running</dt><dd>'+S.trains.length+'</dd></dl>');
       case "lamp": return card("Street Lamp","Lamp",'<p>A small lift within <b>2 tiles</b> that <b>doubles</b> once the light goes.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,2)+'</dd><dt>Right now</dt><dd>'+(darkness()>0.2?"Lit":"Waiting for dusk")+'</dd></dl>');

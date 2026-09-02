@@ -79,15 +79,15 @@ export function canPlace(kind,x,y){
   const issue=footprintIssue(kind,x,y);
   if(issue) return {ok:false,why:issue};
 
-  if(kind==="station"){
-    let touching=false;
-    for(const[dx,dy]of DIRS) if(isType(x+dx,y+dy,"rail")) touching=true;
-    if(!touching) return {ok:false,why:"Stations have to touch a rail tile."};
+  // Adjacency is declared in the registry rather than named here, so the
+  // Lighthouse gets the Dock's waterside rule without this growing a branch
+  // per building. The whole footprint counts, which matters for the 2x2.
+  const adj=def?.placement?.requiresAdjacent;
+  if(adj&&!footprintCells(kind,x,y).some(c=>DIRS.some(([dx,dy])=>isType(c.x+dx,c.y+dy,adj)))){
+    return {ok:false,why:(def.name||"This")+" has to touch a "+adj+" tile."};
   }
-  if(kind==="dock"){
-    let touching=false;
-    for(const[dx,dy]of DIRS) if(isWater(x+dx,y+dy)) touching=true;
-    if(!touching) return {ok:false,why:"A dock has to stand at the water's edge."};
+  if(def?.placement?.requiresAdjacentWater&&!footprintCells(kind,x,y).some(c=>DIRS.some(([dx,dy])=>isWater(c.x+dx,c.y+dy)))){
+    return {ok:false,why:kind==="dock"?"A dock has to stand at the water's edge.":(def.name||"This")+" has to stand at the water's edge."};
   }
   const c=costOf(kind,x,y);
   if(S.coins<c){
@@ -104,7 +104,12 @@ const NOTE_NAMES={cafe:"The first café opened",park:"The first pocket green was
   station:"The first station opened",mill:"The first windmill turned",
   market:"The first market day",bakery:"The first bakery lit its oven",
   school:"The first school took pupils",cityHall:"Meadowline established its civic center",dock:"The first dock was built",
-  rail:"The first rail was laid",house:"The first house went up"};
+  rail:"The first rail was laid",house:"The first house went up",
+  farm:"The first furrow was ploughed",
+  statue:"Meadowline raised a statue over the valley",
+  clockTower:"The clock tower struck its first hour",
+  lighthouse:"The lighthouse lit for the first time",
+  greatLibrary:"The Great Library opened its doors"};
 
 function rootObject(kind,x,y){
   return {type:kind,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:0,grow:0,mood:50,linked:false,state:defaultBuildingState(kind)};

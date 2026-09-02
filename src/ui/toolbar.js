@@ -30,7 +30,7 @@ function button(t,compact){
   b.className='tool'+(t.id===S.tool?' on':'')+(locked?' locked':''); b.dataset.id=t.id; b.disabled=locked;
   const unlock=locked?' · unlocks at '+CITY_STAGES[buildingUnlockStage(t.id)-1].name:'';
   const fp=t.cat==='mode'?'':footprintLabel(t.id);
-  b.title=t.name+(fp?' · '+fp:'')+(t.cost?' · '+t.cost:'')+unlock+' ('+t.key.toUpperCase()+')'; b.setAttribute('aria-label',b.title); b.setAttribute('aria-pressed',t.id===S.tool?'true':'false');
+  b.title=t.name+(fp?' · '+fp:'')+(t.cost?' · '+t.cost:'')+unlock+(t.key?' ('+(t.key!==t.key.toLowerCase()?'Shift+'+t.key:t.key.toUpperCase())+')':''); b.setAttribute('aria-label',b.title); b.setAttribute('aria-pressed',t.id===S.tool?'true':'false');
   const meta=locked?'At '+CITY_STAGES[buildingUnlockStage(t.id)-1].name:((fp&&fp!=='1×1'?fp+' · ':'')+(t.cost?t.cost:'Free'));
   b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[t.id]+'</svg>'+(compact?'<i>'+t.name+'</i>':'<i>'+t.name+'</i><u>'+meta+'</u>');
   b.addEventListener('click',()=>pickTool(t.id)); return b;

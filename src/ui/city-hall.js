@@ -41,10 +41,22 @@ function landRows(summary){
   }
   return html;
 }
+const CATEGORY_LABEL={ways:'Ways',homes:'Homes',civic:'Civic',safety:'Safety',health:'Health',trade:'Trade',recreation:'Recreation',green:'Green',wonder:'Wonders'};
 function financeRows(f){
   let html='<dl class="service">'+row('Treasury',f.treasury+' coins');
   if(f.total===null){ html+='</dl><p class="muted">The income breakdown appears after the next payday.</p>'; return html; }
-  html+=row('Residential taxes','+'+f.residentialTax)+row('Trade','+'+f.trade)+row('Milling','+'+f.milling)+row('Town grant','+'+f.grant)+row('Last payday','+'+f.total,'up')+'</dl>';
+  html+=row('Residential taxes','+'+f.residentialTax)+row('Trade','+'+f.trade)+row('Milling','+'+f.milling);
+  if(f.farming) html+=row('Farming','+'+f.farming);
+  if(f.harbour) html+=row('Harbour','+'+f.harbour);
+  html+=row('Town grant','+'+f.grant);
+  if(f.relief) html+=row('County relief','+'+f.relief,'dn');
+  if(f.upkeep) html+=row('Income','+'+(f.income+(f.relief||0)),'up')+row('Upkeep','\u2212'+f.upkeep,'dn');
+  html+=row('Last payday',(f.total<0?'\u2212'+Math.abs(f.total):'+'+f.total),f.total<0?'dn':'up')+'</dl>';
+  // Which part of the town is expensive to run is the actionable half of the
+  // number, so the split follows the total rather than getting its own panel.
+  const parts=Object.entries(f.upkeepBy||{}).sort((a,b)=>b[1]-a[1]);
+  if(parts.length) html+='<p class="muted">Upkeep: '+parts.map(([k,v])=>(CATEGORY_LABEL[k]||k)+' '+v).join(' \u00b7 ')+'</p>';
+  if(f.relief) html+='<p class="muted">Meadowline could not meet its upkeep. Remove what the town cannot afford to run, or grow the income to match it.</p>';
   return html;
 }
 function upgradeBlock(b){

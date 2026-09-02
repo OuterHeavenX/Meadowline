@@ -40,7 +40,16 @@ function addBuilding(b){const def=getBuildingDefinition(b.type),fp=def?.placemen
   if(civic){const accent=type==='fireStation'?'#b5302b':type==='policeStation'?'#2f6594':type==='hospital'||type==='clinic'?'#c9444b':'#d3b05d';box(0,.3,d*.43,w*.32,.34,.04,mat(accent),group,false);}
   if(type==='mill'){cylinder(0,.12+h*.65,0,.055,.55,mat('#53483d'),group,8);}
 }
+/* What the static world is made of, as a string to compare against the last
+   frame's. It walks all 16,384 tiles every frame, which is eight times the
+   work it was on the old valley. A numeric hash was tried in its place and
+   measured slower - the cost is the walk, not the concatenation, and V8's
+   ropes make the string nearly free - so this stays as it is. Deriving it from
+   a revision counter instead would need every writer of S.grid, S.terr,
+   S.natTree and the upgrade levels to bump it, and a missed one shows up as a
+   world that stops redrawing; walking is correct by construction. */
 function signature(){let s=`${S.seed}:${Math.floor(S.day/7)%4}:${S.wx?.k}:${Math.round((S.wx?.amt||0)*4)}:${S.cam.z<.72?'far':'near'}:${(S.cityProgress?.unlockedParcels||[]).join(',')}:`;for(let i=0;i<S.grid.length;i++){const b=S.grid[i];if(b&&!isFacilityPart(b))s+=`${b.type[0]}${b.x},${b.y},${b.state?.level||b.state?.housingTier||0};`;if(S.terr[i]===1)s+=`w${i};`;if(S.natTree[i])s+=`t${i};`;}return s;}
+
 function tileInstances(cells,material,height,y,colors){if(!cells.length)return;const geometry=geo(`tiles:${height}`,()=>new THREE.BoxGeometry(.99,height,.99)),inst=new THREE.InstancedMesh(geometry,material,cells.length),matrix=new THREE.Matrix4();for(let i=0;i<cells.length;i++){const c=cells[i];matrix.makeTranslation(c.x,y+height/2,c.z);inst.setMatrixAt(i,matrix);if(colors)inst.setColorAt(i,color(colors[i]));}inst.receiveShadow=true;inst.castShadow=false;world.add(inst);}
 function rebuild(){lastSignature=signature();disposeGroup(world);world=new THREE.Group();scene.add(world);buildCohesiveWorld(world);}
 function addVehicle(v,service=false){const lane=laneOffset(v),x=lerp(v.x,v.nx,v.p)+lane.x,z=lerp(v.y,v.ny,v.p)+lane.y,kind=v.type||'',col=kind==='fireEngine'?'#d74738':kind==='ambulance'?'#e9ece9':kind==='police'?'#3e6f9c':v.color||'#d58b45',group=new THREE.Group();group.position.set(x,.1,z);group.rotation.y=headingAngle(v);dynamic.add(group);box(0,0,0,.42,.18,.24,mat(col),group,true);box(-.04,.18,0,.2,.11,.21,mat('#9fc1c9',.25,.1),group,true);for(const dx of[-.14,.14])for(const dz of[-.13,.13])cylinder(dx,-.01,dz,.045,.035,mat('#292c2d'),group,8).rotation.z=Math.PI/2;if(kind==='ambulance')box(.12,.19,.122,.1,.06,.015,mat('#d33f45'),group,false);if((v.state==='EN_ROUTE'||v.state==='DISPATCHED')&&service){const pulse=Math.sin(S.t*8)>0;box(-.08,.29,0,.08,.035,.05,mat(pulse?'#ed4d4d':'#4d80ed',.2),group,false);box(.08,.29,0,.08,.035,.05,mat(pulse?'#4d80ed':'#ed4d4d',.2),group,false);}}

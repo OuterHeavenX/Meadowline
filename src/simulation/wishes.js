@@ -6,6 +6,8 @@ import { schoolStats } from './civic-services.js';
 import { recreationFacilities, recreationSnapshot } from './recreation.js';
 import { note } from './chronicle.js';
 import { countBridges } from '../transport/bridges.js';
+import { WONDERS } from '../buildings/registry.js';
+import { FARM_MILL_R } from '../buildings/farms.js';
 import { countType, inBounds, isWater, idx } from '../world/tiles.js';
 
 export function ladder(cur,steps){ for(const v of steps) if(v>cur) return v; return Math.round(steps[steps.length-1]*1.6); }
@@ -25,6 +27,8 @@ const cityHallLevel=()=>Math.max(0,Math.floor(Number(cityHall()?.state?.level)||
 const recreation=()=>recreationSnapshot();
 const recreationCount=()=>recreationFacilities().length;
 const employment=()=>S.municipal?.employment||{workers:0,jobs:0,employed:0,unemployed:0};
+const wonderCount=()=>WONDERS.reduce((n,id)=>n+count(id),0);
+const suppliedMills=()=>(S.ctx?.mills||[]).filter(w=>(S.ctx?.farms||[]).some(f=>Math.abs(f.x-w.x)<=FARM_MILL_R&&Math.abs(f.y-w.y)<=FARM_MILL_R)).length;
 
 export function hasUsableUnlockedWaterfront(){
   if(!isBuildingUnlocked('dock')) return false;
@@ -83,11 +87,18 @@ export const GOAL_TYPES={
   station:fixed('station','Build your first <b>Station</b>',()=>count('station'),()=>1,115,()=>stage()>=3&&isBuildingUnlocked('station')&&count('rail')>=1&&count('station')<1),
   train:fixed('train','Get your first <b>train</b> running',()=>S.trains.length,()=>1,140,()=>stage()>=3&&hasFunctionalRailRoute()&&S.trains.length<1),
   mill:fixed('mill','Raise a <b>Windmill</b>',()=>count('mill'),()=>1,95,()=>stage()>=3&&isBuildingUnlocked('mill')&&count('mill')<1),
+  farm:fixed('farm','Break ground on a <b>Farm</b>',()=>count('farm'),()=>1,90,()=>stage()>=2&&isBuildingUnlocked('farm')&&count('farm')<1),
+  farmChain:fixed('farmChain','Put a <b>farm within reach of a windmill</b>',suppliedMills,()=>1,130,()=>stage()>=3&&count('mill')>0&&count('farm')>0&&suppliedMills()<1),
   established:fixed('established','Develop an <b>Established Home</b>',established,()=>1,150,()=>stage()>=3&&established()<1),
   dock:fixed('dock','Build your first <b>Dock</b>',()=>count('dock'),()=>1,135,()=>stage()>=4&&isBuildingUnlocked('dock')&&count('dock')<1&&hasUsableUnlockedWaterfront()),
   boats:fixed('boats','Put a <b>boat</b> on the water',()=>S.boats.length,()=>1,135,()=>stage()>=4&&maritimeReady()&&S.boats.length<1),
   lamp:dynamic('lamp',()=>{ const n=ladder(count('lamp'),[4,10,20]); return {t:'Light the streets with <b>'+n+'</b> lamps',g:n,r:30+n*5,at:()=>count('lamp')}; },()=>occupied()>=3&&isBuildingUnlocked('lamp')),
   tree:dynamic('tree',()=>{ const steps=stage()===1?[6,12]:stage()===2?[12,20]:stage()===3?[20,28]:[28,38]; const n=ladder(count('tree'),steps); return {t:'Plant <b>'+n+'</b> trees',g:n,r:30+n*3,at:()=>count('tree')}; },()=>isBuildingUnlocked('tree')),
+  // The long game. A wonder costs several paydays of a mature city, so these
+  // are the goals that are still ahead of a player who has built everything
+  // else - which is the point of them.
+  wonderFirst:fixed('wonderFirst','Raise Meadowline\u2019s first <b>Wonder</b>',wonderCount,()=>1,320,()=>stage()>=4&&wonderCount()<1&&WONDERS.some(id=>isBuildingUnlocked(id))),
+  wonderAll:dynamic('wonderAll',()=>{ const n=Math.min(WONDERS.length,wonderCount()+1); return {t:'Complete <b>'+n+'</b> of Meadowline\u2019s Wonders',g:n,r:180+n*140,at:wonderCount}; },()=>stage()>=4&&wonderCount()>=1&&wonderCount()<WONDERS.length),
   purse:dynamic('purse',()=>{ const n=ladder(Math.floor(S.coins),[250,600,1200]); return {t:'Put by <b>'+n+'</b> coins',g:n,r:Math.round(n*.12),at:()=>Math.floor(S.coins)}; },()=>S.day>=2)
 };
 export const WISH_TYPES=GOAL_TYPES;
@@ -95,14 +106,14 @@ export const WISH_TYPES=GOAL_TYPES;
 const PRIMARY_BY_STAGE={
   1:['roads','homes','cityhall','pop','recreationStart','cafe'],
   2:['school','students','cityhall2','police','jobs','townhome','recreationAccess','education','desirability','expansion','pop'],
-  3:['school2','cityhall3','fireService','healthcare','jobs','townhome','established','recreationCapacity','rail','station','train','expansion','pop'],
-  4:['cityhall4','townPark','police','fireService','healthcare','jobs','recreationAccess','dock','boats','expansion','education','desirability','pop']
+  3:['school2','cityhall3','fireService','healthcare','jobs','townhome','established','recreationCapacity','rail','station','train','farmChain','expansion','pop'],
+  4:['cityhall4','townPark','police','fireService','healthcare','jobs','recreationAccess','dock','boats','expansion','education','desirability','wonderFirst','wonderAll','pop']
 };
 const OPTIONAL_BY_STAGE={
   1:['recreationStart','cafe','tree','mood'],
-  2:['police','jobs','recreationAccess','market','bakery','tree','lamp','mood','purse'],
-  3:['fireService','healthcare','jobs','recreationCapacity','mill','market','bakery','tree','lamp','mood','purse'],
-  4:['police','fireService','healthcare','jobs','townPark','recreationAccess','dock','boats','tree','lamp','mood','purse']
+  2:['police','jobs','recreationAccess','market','bakery','farm','tree','lamp','mood','purse'],
+  3:['fireService','healthcare','jobs','recreationCapacity','mill','farm','farmChain','market','bakery','tree','lamp','mood','purse'],
+  4:['police','fireService','healthcare','jobs','townPark','recreationAccess','dock','boats','farm','farmChain','wonderFirst','wonderAll','tree','lamp','mood','purse']
 };
 
 function buildGoal(id,slot){ const def=GOAL_TYPES[id]; if(!def||!def.eligible()) return null; const made=def.make?def.make(slot):{t:def.label,g:def.target(),r:def.reward,at:def.at}; if(!made||!(made.g>0)) return null; return {k:id,slot,t:made.t,g:made.g,r:made.r|0}; }

@@ -1,4 +1,5 @@
 import { S } from '../core/state.js';
+import { upkeepBreakdown } from './upkeep.js';
 import { cityStage, developmentStats, LAND_PARCELS, nextStageProgress, parcelStatus } from '../progression/city-growth.js';
 import { mobilitySnapshot } from './mobility.js';
 import { recreationSnapshot } from './recreation.js';
@@ -10,7 +11,7 @@ function sig(){
   const last=S.lastPay||{};
   const mobility=mobilitySnapshot();
   const recreation=recreationSnapshot();
-  return [S.pop,S.homes,S.mood,S.coins,S.day,S.cityProgress?.stage,S.cityProgress?.mode,(S.cityProgress?.unlockedParcels||[]).join(','),S.wishes?.map(w=>w.k+':'+goalAt(w)+':'+w.g).join('|'),S.services?.education?.metrics?.served,S.services?.education?.metrics?.demand,last.tax,last.trade,last.milled,mobility.roadTiles,mobility.crossings,mobility.vehicles,recreation.facilities,recreation.demand,recreation.served,recreation.capacity,recreation.activeVisitors,JSON.stringify(S.municipal)].join(';');
+  return [S.pop,S.homes,S.mood,S.coins,S.day,S.cityProgress?.stage,S.cityProgress?.mode,(S.cityProgress?.unlockedParcels||[]).join(','),S.wishes?.map(w=>w.k+':'+goalAt(w)+':'+w.g).join('|'),S.services?.education?.metrics?.served,S.services?.education?.metrics?.demand,last.tax,last.trade,last.milled,last.grown,last.harbour,last.upkeep,last.relief,mobility.roadTiles,mobility.crossings,mobility.vehicles,recreation.facilities,recreation.demand,recreation.served,recreation.capacity,recreation.activeVisitors,JSON.stringify(S.municipal)].join(';');
 }
 function count(type){ let n=0; for(const b of S.grid||[]) if(b&&!isFacilityPart(b)&&b.type===type) n++; return n; }
 function hall(){ return (S.grid||[]).find(b=>b?.type==='cityHall')||null; }
@@ -36,7 +37,7 @@ export function getCitySummary(){
     goals:(S.wishes||[]).map(w=>({id:w.k,slot:w.slot,label:w.t,current:goalAt(w),target:w.g,reward:w.r})),
     growth:{stage:cityStage().name,next:nextStageProgress()},
     land:{opened,total:LAND_PARCELS.length,available:available.map(x=>({id:x.parcel.id,name:x.parcel.name,cost:x.parcel.cost,canUnlock:x.canUnlock})),parcels},
-    finances:{treasury:Math.floor(S.coins||0),residentialTax:last.tax??null,trade:last.trade??null,milling:last.milled??null,grant:last.grant??null,total:last.total??null},
+    finances:{treasury:Math.floor(S.coins||0),residentialTax:last.tax??null,trade:last.trade??null,milling:last.milled??null,farming:last.grown??null,harbour:last.harbour??null,grant:last.grant??null,relief:last.relief??null,income:last.income??null,upkeep:last.upkeep??null,upkeepBy:last.upkeep?upkeepBreakdown().by:null,total:last.total??null},
     services:{education:education(),recreation:recreationSnapshot(),safety:{...S.municipal.safety},fire:{...S.municipal.fire},healthcare:{...S.municipal.healthcare}},
     employment:{...S.municipal.employment},
     mobility:mobilitySnapshot()

@@ -56,7 +56,8 @@ export const CATEGORIES=[
   {id:"civic",name:"Civic"},
   {id:"trade",name:"Trade"},
   {id:"recreation",name:"Recreation"},
-  {id:"green",name:"Green"}
+  {id:"green",name:"Green"},
+  {id:"wonder",name:"Wonders"}
   ,{id:"safety",name:"Safety"},{id:"health",name:"Health"},{id:"landscaping",name:"Landscape"}
 ];
 
@@ -82,6 +83,11 @@ export const ICONS={
   school:'<path d="M12 3.5 21.5 8 12 12.5 2.5 8 12 3.5ZM6 10v5.5c0 1.9 2.7 3.4 6 3.4s6-1.5 6-3.4V10M21.5 8v5"/>',
   dock:'<path d="M12 4v13M12 17c-3.2 0-5.8-2-6.6-4.6h13.2C17.8 15 15.2 17 12 17ZM8.5 8.5h7M3 20.5c1.6 0 1.6 1 3.2 1s1.6-1 3.2-1 1.6 1 3.2 1 1.6-1 3.2-1 1.6 1 3.2 1"/>',
   look:'<path d="M12 5c5 0 8.5 4.2 9.5 7-1 2.8-4.5 7-9.5 7s-8.5-4.2-9.5-7C3.5 9.2 7 5 12 5Z"/><circle cx="12" cy="12" r="2.9"/>',
+  farm:'<path d="M3 20h18M5 20v-7l4-3 4 3v7M5 13h8M9 20v-4h2v4M15.5 20v-6M15.5 14c0-1.6 1.1-2.8 2.6-2.8M15.5 16.5c0-1.6 1.1-2.8 2.6-2.8M15.5 14c0-1.6-1.1-2.8-2.6-2.8"/>',
+  statue:'<path d="M12 3a1.6 1.6 0 1 1 0 3.2A1.6 1.6 0 0 1 12 3ZM12 6.2v7M12 8l-3.2 2M12 8l3.2 2M10.5 13.2 9.5 18M13.5 13.2l1 4.8M6.5 18h11l1 3h-13l1-3Z"/>',
+  clockTower:'<path d="M8 21V8l4-5 4 5v13M6.5 21h11M12 10.5v3l2 1"/><circle cx="12" cy="12.5" r="3.4"/>',
+  lighthouse:'<path d="M9.5 21 10.5 10h3l1 11M9 14h6M9.8 7.5h4.4v2.5H9.8V7.5ZM12 3v4.5M4 21h16M2.5 6l5 1.5M21.5 6l-5 1.5M2.5 11l5-1"/>',
+  greatLibrary:'<path d="M3 9.5 12 4l9 5.5M4 21h16M5.5 21V11M9 21V11M12 21V11M15 21V11M18.5 21V11M3.5 11h17"/>',
   erase:'<path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l1 13.2h9L17.5 7M10.5 10.8v6M13.5 10.8v6"/>'
   ,water:'<path d="M12 3C9 7 5.5 10.5 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 10.5 15 7 12 3Z"/>',
   policeStation:'<path d="M12 3 20 7v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4Zm0 5v8m-4-4h8"/>',

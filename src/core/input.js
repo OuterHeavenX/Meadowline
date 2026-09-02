@@ -193,7 +193,10 @@ addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
   // Shell shortcuts are resolved first so a future tool key can never shadow
   // one silently; conflictingToolKeys() keeps the two sets disjoint in CI.
-  const t=RESERVED_SHORTCUT_KEYS.has(k)?null:TOOLS.find(t=>t.key===k);
+  // A tool declaring an uppercase key lives on the Shift layer, so it is
+  // matched against the untouched e.key before the unshifted tools are.
+  const shifted=e.shiftKey?TOOLS.find(t=>t.key&&t.key===e.key&&t.key!==t.key.toLowerCase()):null;
+  const t=shifted||(RESERVED_SHORTCUT_KEYS.has(k)?null:TOOLS.find(t=>t.key&&t.key===k));
   if(t){ pickTool(t.id); return; }
   if(k==='m') toggleSound(); if(k==='s') toggleSpeed(); if(k==='b') toggleMap(); if(k==='p') postcard(); if(k==='l') toggleLedgerChip();
   if(k==='escape'){ closeLook(); pickTool('move'); }
