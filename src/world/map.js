@@ -10,14 +10,17 @@ export function genWorld(seed){
   S.natTree=new Uint8Array(W*H);
   S.grid=new Array(W*H).fill(null);
   const s=seed%9973;
+  // Feature size grows with the map, so a bigger valley gets bigger lakes and
+  // woods rather than the same small blobs repeated many more times.
+  const F=Math.sqrt(W/44);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     const i=idx(x,y);
     // ponds: organic blobs, kept away from the very centre so there's room to build
     const cd=Math.hypot(x-W/2,y-H/2)/(W/2);
-    const w=fbm(x/11,y/11,s);
+    const w=fbm(x/(11*F),y/(11*F),s);
     if(w>0.68+0.13*(1-cd)) S.terr[i]=1;
     // natural woodland in clusters
-    const f=fbm(x/6.5,y/6.5,s+404);
+    const f=fbm(x/(6.5*F),y/(6.5*F),s+404);
     if(!S.terr[i]&&f>0.585&&hash2(x,y,s+9)>0.45) S.natTree[i]=1;
   }
   S.citizens.length=0; S.trains.length=0; S.boats.length=0; S.puffs.length=0;
@@ -43,3 +46,18 @@ export function screen2world(sx,sy){
   return {x:(a+b)/2, y:(a-b)/2};
 }
 export function proj(x,y){const p=world2screen(x,y);return {x:p.x*S.cam.z+S.cam.x, y:p.y*S.cam.z+S.cam.y};}
+
+/* The band of tiles the camera can currently see, clamped to the grid. At
+   128x128 the sorted pass must not walk all 16,384 cells every frame. */
+export function visibleBand(pad){
+  const m=pad||2;
+  const c0=screen2world(0,0), c1=screen2world(innerWidth,0),
+        c2=screen2world(0,innerHeight), c3=screen2world(innerWidth,innerHeight);
+  return {
+    x0:Math.max(0,Math.floor(Math.min(c0.x,c1.x,c2.x,c3.x))-m),
+    x1:Math.min(W,Math.ceil(Math.max(c0.x,c1.x,c2.x,c3.x))+m),
+    y0:Math.max(0,Math.floor(Math.min(c0.y,c1.y,c2.y,c3.y))-m),
+    y1:Math.min(H,Math.ceil(Math.max(c0.y,c1.y,c2.y,c3.y))+m)
+  };
+}
+

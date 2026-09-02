@@ -6,7 +6,7 @@ import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, dr
 import { drawBoat, drawCitizen, drawTrain } from './entities.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
 import { SPANS } from '../transport/bridges.js';
-import { proj } from '../world/map.js';
+import { proj, visibleBand } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
 import { idx, inBounds } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
@@ -64,13 +64,15 @@ export function render(){
 
   // depth-sorted pass for everything with height
   const items=[];
-  for(let i=0;i<S.grid.length;i++){
-    const b=S.grid[i];
-    if(!b) continue;
-    if(S.terr[i]===1&&SPANS[b.type]) items.push({d:b.x+b.y-0.05,k:5,b});
-    else if(b.type!=="road"&&b.type!=="rail") items.push({d:b.x+b.y,k:0,b});
+  const band=visibleBand(3);
+  for(let y=band.y0;y<band.y1;y++) for(let x=band.x0;x<band.x1;x++){
+    const i=idx(x,y), b=S.grid[i];
+    if(b){
+      if(S.terr[i]===1&&SPANS[b.type]) items.push({d:b.x+b.y-0.05,k:5,b});
+      else if(b.type!=="road"&&b.type!=="rail") items.push({d:b.x+b.y,k:0,b});
+    }
+    if(S.natTree[i]) items.push({d:x+y,k:1,x,y});
   }
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++) if(S.natTree[idx(x,y)]) items.push({d:x+y,k:1,x,y});
   for(const c of S.citizens) items.push({d:lerp(c.x,c.nx,c.p)+lerp(c.y,c.ny,c.p)+0.05,k:2,c});
   for(const t of S.trains) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.1,k:3,t});
   for(const t of S.boats) items.push({d:(t.fx||t.x)+(t.fy||t.y)+0.08,k:6,t});

@@ -1,7 +1,7 @@
 import { DIRS, H, P, TAU, TH, TW, W, hash2 } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { isBridge } from '../transport/bridges.js';
-import { proj, screen2world } from '../world/map.js';
+import { proj, visibleBand } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
 import { idx, inBounds, isType } from '../world/tiles.js';
 
@@ -55,12 +55,9 @@ export const lights=[];   // window glow positions, drawn after the night tint
 
 export function drawGround(){
   const z=S.cam.z;
-  // visible band of the grid
-  const c0=screen2world(0,0), c1=screen2world(innerWidth,0), c2=screen2world(0,innerHeight), c3=screen2world(innerWidth,innerHeight);
-  const minX=Math.floor(Math.min(c0.x,c1.x,c2.x,c3.x))-1, maxX=Math.ceil(Math.max(c0.x,c1.x,c2.x,c3.x))+1;
-  const minY=Math.floor(Math.min(c0.y,c1.y,c2.y,c3.y))-1, maxY=Math.ceil(Math.max(c0.y,c1.y,c2.y,c3.y))+1;
-  for(let y=Math.max(0,minY);y<Math.min(H,maxY);y++){
-    for(let x=Math.max(0,minX);x<Math.min(W,maxX);x++){
+  const band=visibleBand(1);
+  for(let y=band.y0;y<band.y1;y++){
+    for(let x=band.x0;x<band.x1;x++){
       const i=idx(x,y), p=proj(x,y);
       const b=S.grid[i];
       if(S.terr[i]===1){

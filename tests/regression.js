@@ -1,6 +1,6 @@
 import { canPlace, erase, place } from '../src/buildings/buildings.js';
 import { COST, H, W } from '../src/core/constants.js';
-import { KEY, KEY_OLD, load, save, store } from '../src/core/save.js';
+import { KEY, KEY_OLD, KEY_PREV, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
 import { spawnCitizen } from '../src/simulation/citizens.js';
 import { evalHouse, recompute } from '../src/simulation/mood.js';
@@ -19,7 +19,7 @@ function firstTile(water){
   throw new Error('fixture tile unavailable');
 }
 
-store.set(KEY,''); store.set(KEY_OLD,'');
+store.set(KEY,''); store.set(KEY_PREV,''); store.set(KEY_OLD,'');
 genWorld(24681357); refreshPalette(); recompute(); rollWishes();
 check('new game',S.coins===340&&S.day===1&&S.grid.length===W*H);
 

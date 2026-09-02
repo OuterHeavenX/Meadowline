@@ -33,7 +33,8 @@ export function mix(h1,h2,t){
 }
 
 /* ---------- constants ---------- */
-export const W=44,H=44;              // grid size
+export const W=128,H=128;            // grid size
+export const LEGACY_W=44;            // the size saves from before the big map used
 export const TW=64,TH=32;            // iso tile footprint at zoom 1
 export const DAY=100;                // seconds per in-game day
 export const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];

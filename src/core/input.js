@@ -77,7 +77,7 @@ cv.addEventListener("pointerleave",e=>{ if(ptrs.size===0) hover.on=false; endPtr
 
 export function zoomAt(sx,sy,f){
   const anchor=screen2world(sx,sy);          // world point under the cursor
-  S.cam.z=clamp(S.cam.z*f,0.34,2.6);
+  S.cam.z=clamp(S.cam.z*f,0.12,2.6);
   const w=world2screen(anchor.x,anchor.y);   // keep it pinned there
   S.cam.x=sx-w.x*S.cam.z;
   S.cam.y=sy-w.y*S.cam.z;
