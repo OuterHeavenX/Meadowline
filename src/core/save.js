@@ -16,6 +16,23 @@ import { packTerrain, restoreTerrain } from '../world/landscaping.js';
 
 export const KEY='meadowline.v3', KEY_V2='meadowline.v2', KEY_OLD='meadowline.v1';
 export const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+let lifecycleSaveBlockedUntil=0;
+
+// Import, recovery and cloud-download flows replace the persisted city and
+// immediately reload. Browsers fire visibilitychange/pagehide during that
+// reload; without this guard those handlers save the still-running old city
+// over the replacement before the new document can load it.
+export function stageSaveForReload(raw){
+  let data;
+  try{ data=JSON.parse(raw); }catch(e){ throw new Error('The replacement save could not be read.'); }
+  if(!data||![1,2,3].includes(data.v)||!Array.isArray(data.b)) throw new Error('The replacement is not a compatible Meadowline save.');
+  store.set(KEY,raw);
+  if(store.get(KEY)!==raw) throw new Error('The replacement save could not be verified on this device.');
+  lifecycleSaveBlockedUntil=Date.now()+15000;
+  return data;
+}
+
+export function lifecycleSaveIsBlocked(){ return Date.now()<lifecycleSaveBlockedUntil; }
 function safeStateValue(v,depth=0){
   if(v===null||typeof v==='string'||typeof v==='boolean') return v;
   if(typeof v==='number') return Number.isFinite(v)?v:undefined;
@@ -111,4 +128,5 @@ export function applySave(d){
 }
 export function load(){ let raw=store.get(KEY),source=3; if(!raw){raw=store.get(KEY_V2);source=2;} if(!raw){raw=store.get(KEY_OLD);source=1;} if(!raw) return false; try{ const d=JSON.parse(raw); if(!d||!Array.isArray(d.b)||![1,2,3].includes(d.v)) return false; applySave(d); if(source<3) toast('Your valley carried over'); return true; }catch(e){ return false; } }
 export let saveT=0,lookT=0,miniT=0;
-addEventListener('visibilitychange',()=>{if(document.hidden)save();}); addEventListener('pagehide',save);
+addEventListener('visibilitychange',()=>{if(document.hidden&&!lifecycleSaveIsBlocked())save();});
+addEventListener('pagehide',()=>{if(!lifecycleSaveIsBlocked())save();});
