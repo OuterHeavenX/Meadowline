@@ -208,3 +208,7 @@ if(hallState){
 }
 
 const failed=checks.filter(c=>!c.pass);document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);document.documentElement.dataset.result=failed.length?'fail':'pass';
+// Tear down the booted game iframe after recording results. Its real frame
+// loop and recovery timers are useful during assertions but can keep some
+// headless Chrome builds alive after --dump-dom has all the evidence it needs.
+frame.remove();
