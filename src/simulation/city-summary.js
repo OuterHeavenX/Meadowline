@@ -11,7 +11,7 @@ function sig(){
   const last=S.lastPay||{};
   const mobility=mobilitySnapshot();
   const recreation=recreationSnapshot();
-  return [S.pop,S.homes,S.mood,S.coins,S.day,S.cityProgress?.stage,S.cityProgress?.mode,(S.cityProgress?.unlockedParcels||[]).join(','),S.wishes?.map(w=>w.k+':'+goalAt(w)+':'+w.g).join('|'),S.services?.education?.metrics?.served,S.services?.education?.metrics?.demand,last.tax,last.trade,last.milled,last.grown,last.harbour,last.upkeep,last.relief,mobility.roadTiles,mobility.crossings,mobility.vehicles,recreation.facilities,recreation.demand,recreation.served,recreation.capacity,recreation.activeVisitors,JSON.stringify(S.municipal)].join(';');
+  return [S.pop,S.homes,S.mood,S.coins,S.day,S.cityProgress?.stage,S.cityProgress?.mode,(S.cityProgress?.unlockedParcels||[]).join(','),S.wishes?.map(w=>w.k+':'+goalAt(w)+':'+w.g).join('|'),S.services?.education?.metrics?.served,S.services?.education?.metrics?.demand,last.tax,last.trade,last.milled,last.grown,last.harbour,last.upkeep,last.relief,mobility.roadTiles,mobility.crossings,mobility.signals,mobility.vehicles,recreation.facilities,recreation.demand,recreation.served,recreation.capacity,recreation.activeVisitors,JSON.stringify(S.municipal)].join(';');
 }
 function count(type){ let n=0; for(const b of S.grid||[]) if(b&&!isFacilityPart(b)&&b.type===type) n++; return n; }
 function hall(){ return (S.grid||[]).find(b=>b?.type==='cityHall')||null; }

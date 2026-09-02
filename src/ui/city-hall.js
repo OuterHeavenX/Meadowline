@@ -94,7 +94,7 @@ export function renderCityHall(){
     section('land','Land management',landRows(summary))+
     section('finances','Finances',financeRows(summary.finances))+
     section('services','Infrastructure & services','<div class="cityhall-grid">'+stat('Schools',ed.schools)+stat('Students',ed.served+' / '+ed.demand)+stat('Recreation facilities',rec.facilities)+stat('Police capacity',safe.capacity)+stat('Fire capacity',fire.capacity)+stat('Healthcare capacity',health.capacity)+stat('Workers',work.employed+' / '+work.workers)+stat('Jobs',work.jobs)+stat('Unemployed',work.unemployed)+'</div><p class="muted">These cards report real city systems. No future or normalized service score is invented.</p>')+
-    section('mobility','Mobility','<div class="cityhall-grid">'+stat('Road tiles',mob.roadTiles)+stat('Road components',mob.components)+stat('Rail crossings',mob.crossings)+stat('Vehicles active',mob.vehicles)+'</div><p class="muted">Vehicles represent town life and service movement, not a congestion score.</p>')+
+    section('mobility','Mobility','<div class="cityhall-grid">'+stat('Road tiles',mob.roadTiles)+stat('Road components',mob.components)+stat('Rail crossings',mob.crossings)+stat('Signalled junctions',mob.signals??0)+stat('Vehicles active',mob.vehicles)+'</div><p class="muted">Vehicles represent town life and service movement, not a congestion score.</p>')+
     '</main></div>';
   return true;
 }

@@ -11,8 +11,9 @@ import { drawLandAccess } from './land-overlays.js';
 import { drawSchoolUpgradeDetails } from './school-upgrades.js';
 import { drawBirds, drawCloudShadows, drawFireflies, drawLanterns, drawMotes, drawPuff, drawWeather } from './effects.js';
 import { drawBoat, drawCitizen, drawTrain } from './entities.js';
-import { drawVehicle } from './vehicles.js';
+import { drawSignal, drawVehicle } from './vehicles.js';
 import { drawFarm, drawWonder, isWonder } from './wonders.js';
+import { signalJunctions } from '../transport/signals.js';
 import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js';
 import { SPANS } from '../transport/bridges.js';
 import { proj, viewDepth, visibleBand } from '../world/map.js';
@@ -104,6 +105,12 @@ export function render(){
   for(const v of S.serviceVehicles||[]) items.push({d:viewDepth(lerp(v.x,v.nx,v.p),lerp(v.y,v.ny,v.p))+0.08,k:7,v});
   for(const t of S.trains) items.push({d:viewDepth(t.fx||t.x,t.fy||t.y)+0.1,k:3,t});
   for(const t of S.boats) items.push({d:viewDepth(t.fx||t.x,t.fy||t.y)+0.08,k:6,t});
+  // Signals stand at their junction and sort with it, so a car waiting at a
+  // red light passes in front of the pole rather than through it.
+  for(const s of signalJunctions()){
+    if(s.x<band.x0||s.x>=band.x1||s.y<band.y0||s.y>=band.y1) continue;
+    items.push({d:viewDepth(s.x,s.y)+0.12,k:8,x:s.x,y:s.y});
+  }
   for(const p of S.puffs) items.push({d:viewDepth(p.x,p.y)+0.2,k:4,p});
   items.sort((a,b)=>a.d-b.d);
 
@@ -135,6 +142,7 @@ export function render(){
     } else if(it.k===2) drawCitizen(it.c);
     else if(it.k===3) drawTrain(it.t);
     else if(it.k===6) drawBoat(it.t);
+    else if(it.k===8) drawSignal(it.x,it.y,dark);
     else if(it.k===7) drawVehicle(it.v);
     else if(it.k===5){
       const p=proj(it.b.x,it.b.y);

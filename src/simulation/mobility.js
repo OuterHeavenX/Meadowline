@@ -2,6 +2,7 @@ import { lerp } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { findPath } from '../transport/pathfinding.js';
 import { connectedRoadComponents, roadDegree, roadTiles, validRoadTile } from '../transport/roads.js';
+import { invalidateSignals, signalJunctions, signalStops } from '../transport/signals.js';
 import { idx, isRoadRailCrossing, isType } from '../world/tiles.js';
 
 const TYPES=['car','pickup','van'];
@@ -17,6 +18,7 @@ function passable(x,y){ return isType(x,y,'road'); }
 export function invalidateMobility(){
   networkVersion++;
   routeCache.clear();
+  invalidateSignals();
   diag('roadNetworkInvalidations');
   for(const v of S.vehicles||[]) v.routeVersion=0;
 }
@@ -33,6 +35,7 @@ export function mobilitySnapshot(){
     roadTiles:roadTiles().length,
     components:comps.length,
     crossings:railCrossingCount(),
+    signals:signalJunctions().length,
     vehicles:(S.vehicles||[]).length,
     activeRoutes:(S.vehicles||[]).filter(v=>v.route&&v.route.length).length,
     networkVersion
@@ -145,6 +148,12 @@ function shouldWait(v){
     diag('vehiclesWaitingAtRail');
     return true;
   }
+  if(signalStops(v.nx,v.ny,v.x,v.y)){
+    v.atRed=true;
+    diag('vehiclesWaitingAtSignal');
+    return true;
+  }
+  v.atRed=false;
   if(pedestrianConflict(v.nx,v.ny)) return true;
   return vehicleAhead(v);
 }
