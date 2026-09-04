@@ -6,11 +6,11 @@ import { graphicsProfile,effectiveQuality } from './capabilities.js';
 import { darkness } from '../world/time.js';
 import { cloudOpacity, clouds, storm } from '../world/weather.js';
 import { screen2world, viewRotation } from '../world/map.js';
-import { footprintCells,idx,inBounds,isFacilityPart,isType } from '../world/tiles.js';
+import { idx,inBounds,isFacilityPart,isType } from '../world/tiles.js';
 import { buildCohesiveWorld, artMetrics, litMaterials, roadIsWet } from './three-world-art.js';
 import { landmarkGlowMaterials } from './landmark-assets.js';
-import { canPlace } from '../buildings/buildings.js';
 import { hover } from './interaction-state.js';
+import { toolPreview } from '../buildings/preview.js';
 import { headingAngle, laneOffset, sidewalkOffset } from '../transport/lanes.js';
 import { signalJunctions, signalPhase } from '../transport/signals.js';
 
@@ -62,8 +62,10 @@ function addVehicle(v,service=false){const lane=laneOffset(v),x=lerp(v.x,v.nx,v.
 function addInteractionOverlay(){
   if(S.pick&&inBounds(S.pick.x,S.pick.y)){const pulse=.42+.16*Math.sin(S.t*3);box(S.pick.x,.12,S.pick.y,.94,.025,.94,overlayMat('#e5b75b',pulse),dynamic,false);}
   if(!hover.on||S.tool==='move'||S.tool==='look'||!inBounds(hover.x,hover.y))return;
-  const def=getBuildingDefinition(S.tool),cells=def?footprintCells(S.tool,hover.x,hover.y):[{x:hover.x,y:hover.y}],i=idx(hover.x,hover.y),ok=S.tool==='erase'?(!!S.grid[i]||!!S.natTree[i]):S.tool==='water'?(!S.grid[i]&&S.terr[i]!==1):canPlace(S.tool,hover.x,hover.y).ok,material=overlayMat(ok?'#dff1c5':'#d66050',ok ? .34 : .42);
-  for(const c of cells)if(inBounds(c.x,c.y))box(c.x,.13,c.y,.94,.025,.94,material,dynamic,false);
+  const preview=toolPreview(S.tool,hover.x,hover.y);
+  if(!preview)return;
+  const material=overlayMat(preview.ok?'#dff1c5':'#d66050',preview.ok?.34:.42);
+  for(const c of preview.cells)if(inBounds(c.x,c.y))box(c.x,.13,c.y,.94,.025,.94,material,dynamic,false);
 }
 function cloudMat(){
   const key='cloud:body';

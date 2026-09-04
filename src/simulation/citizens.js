@@ -5,7 +5,7 @@ import { educationProvider } from './civic-services.js';
 import { crossingBlockedByTrain } from './mobility.js';
 import { recreationDestinationForCitizen, recreationLocalPoint } from './recreation.js';
 import { findPath, stepFrom } from '../transport/pathfinding.js';
-import { roadNear } from '../transport/roads.js';
+import { roadNear, roadNearFacility } from '../transport/roads.js';
 import { facilityRootAt, idx, isType } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 
@@ -75,7 +75,7 @@ function chooseDest(c){
     c.linger=3+Math.random()*7;
     return null;
   }
-  const r=roadNear(b.x,b.y);
+  const r=roadNearFacility(b);
   if(!r) return null;
   c.carry=(b.type==="market"||b.type==="bakery")?1:0;
   c.at=b.type;

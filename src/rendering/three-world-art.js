@@ -5,6 +5,7 @@ import { getBuildingDefinition } from '../buildings/registry.js';
 import { isTileUnlocked } from '../progression/city-growth.js';
 import { isBridge } from '../transport/bridges.js';
 import { idx,isFacilityPart,isType } from '../world/tiles.js';
+import { facingAngle } from '../world/facing.js';
 import { CANOPY_GREENS, TREE_TRIANGLES, TRUNK_COLOR, treeAsset } from './tree-asset.js';
 import { hasLandmark, landmarkAsset, landmarkKey, landmarkMetrics, landmarkTint, landmarkVaries } from './landmark-assets.js';
 import { PAL } from '../world/seasons.js';
@@ -244,7 +245,7 @@ function emitLandmarks(parent,placements){
     const varies=landmarkVaries(key);
     for(const part of asset.parts){
       const inst=new THREE.InstancedMesh(part.geometry,part.material,spots.length);
-      for(let i=0;i<spots.length;i++){ matrix.makeTranslation(spots[i].x,0,spots[i].z); inst.setMatrixAt(i,matrix); }
+      for(let i=0;i<spots.length;i++){ matrix.makeRotationY(spots[i].rot||0); matrix.setPosition(spots[i].x,0,spots[i].z); inst.setMatrixAt(i,matrix); }
       // One mesh, many houses: the wall and the roof each carry a per-instance
       // tint off the building's own seed, so a terrace is a row of different
       // homes rather than the same one printed eight times.
@@ -262,13 +263,16 @@ function emitLandmarks(parent,placements){
   }
 }
 function building(parent,b){const def=getBuildingDefinition(b.type),fp=def?.placement?.footprint||[1,1],cx=b.x+(fp[0]-1)/2,cz=b.y+(fp[1]-1)/2,g=groupAt(parent,cx,cz);
+  // The group's origin is the middle of the footprint, so the turn happens
+  // about the plot rather than swinging the building off it.
+  g.rotation.y=facingAngle(b);
   // Authored buildings are collected and instanced in one pass at the end
   // rather than built here, so a street of homes costs what one home does.
   if(hasLandmark(landmarkKey(b))){
     // The windmill's sails turn, so they are not in its mesh. They are hung
     // here on the hub the model leaves proud of the tower's front face.
     if(b.type==='mill'){const spin=S.t*.35;for(let k=0;k<4;k++){const a=spin+k*Math.PI/2;
-      const blade=box(g,Math.cos(a)*.22,.62+Math.sin(a)*.22,-.36,.09,.05,.4,mat('#e2d4b8'),false);
+      const blade=box(g,Math.cos(a)*.22,.62+Math.sin(a)*.22,.36,.09,.05,.4,mat('#e2d4b8'),false);
       blade.rotation.z=a;}}
     return;
   }if(def?.service?.type==='recreation'||b.type==='park'){recreation(g,b.type,fp,b.seed||0);return;}if(b.type==='tree'){tree(g,0,0,b.seed||0,1);return;}if(b.type==='lamp'){lamp(g,0,0);return;}if(b.type==='dock'){box(g,0,.02,0,.8,.12,.8,mat('#80664e'));return;}if(b.type==='house'){house(g,b);return;}if(['cafe','market','bakery','station'].includes(b.type)){storefront(g,b.type,b.seed||0);return;}if(b.type==='farm'){farm(g,fp,b.seed||0);return;}if(b.type==='statue'){statue(g,fp);return;}if(b.type==='clockTower'){clockTower(g,fp);return;}if(b.type==='lighthouse'){lighthouse(g,fp);return;}if(b.type==='greatLibrary'){greatLibrary(g,fp);return;}if(b.type==='mill'){lotBase(g,.94,.94);box(g,0,.05,0,.55,.72,.55,mat('#d3c6aa'));gable(g,0,.77,0,.62,.62,.22,mat('#75594b'));cyl(g,0,.5,.3,.035,.45,mat('#5d4a3e'),7);for(const a of[0,Math.PI/2,Math.PI,Math.PI*1.5]){const blade=box(g,Math.cos(a)*.24,.68,Math.sin(a)*.24,.08,.05,.42,mat('#e2d4b8'),false);blade.rotation.y=-a;}return;}civic(g,b.type,b,fp);}
@@ -308,7 +312,7 @@ export function buildCohesiveWorld(parent){
     if(hasLandmark(key)){
       const fp=getBuildingDefinition(b.type)?.placement?.footprint||[1,1];
       if(!authored.has(key)) authored.set(key,[]);
-      authored.get(key).push({x:b.x+(fp[0]-1)/2,z:b.y+(fp[1]-1)/2,seed:(b.seed||0)>>>0});
+      authored.get(key).push({x:b.x+(fp[0]-1)/2,z:b.y+(fp[1]-1)/2,seed:(b.seed||0)>>>0,rot:facingAngle(b)});
     }
     building(parent,b);
   }

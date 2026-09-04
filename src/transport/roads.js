@@ -1,10 +1,23 @@
 import { DIRS, H, W } from '../core/constants.js';
 import { S } from '../core/state.js';
-import { idx, inBounds, isType } from '../world/tiles.js';
+import { footprintCells, idx, inBounds, isType } from '../world/tiles.js';
 
 /* ---------- shared street-network helpers ---------- */
 export function roadNear(x,y){
   for(const[dx,dy]of DIRS) if(isType(x+dx,y+dy,"road")) return {x:x+dx,y:y+dy};
+  return null;
+}
+
+/* The same question asked of a whole building rather than of one tile.
+   roadNear() looks at the four neighbours of the anchor tile, which is the
+   entire story for a cottage and wrong for everything bigger: a 2x3 Fire
+   Station or a 3x3 Hospital with a street running along its far side was
+   told no road reached it, because the street never touched the one corner
+   tile being asked about. Every tile of the footprint has a frontage. */
+export function roadNearFacility(b){
+  if(!b) return null;
+  for(const c of footprintCells(b.type,b.x,b.y))
+    for(const[dx,dy]of DIRS) if(isType(c.x+dx,c.y+dy,"road")) return {x:c.x+dx,y:c.y+dy};
   return null;
 }
 

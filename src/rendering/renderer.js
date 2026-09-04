@@ -1,4 +1,3 @@
-import { canPlace } from '../buildings/buildings.js';
 import { getBuildingDefinition } from '../buildings/registry.js';
 import { clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
@@ -18,7 +17,7 @@ import { diamond, drawGround, drawSpan, drawTree, g, lights } from './terrain.js
 import { SPANS } from '../transport/bridges.js';
 import { proj, viewDepth, visibleBand } from '../world/map.js';
 import { PAL } from '../world/seasons.js';
-import { facilityFootprint, footprintCells, idx, inBounds, isFacilityPart } from '../world/tiles.js';
+import { facilityFootprint, idx, inBounds, isFacilityPart } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 import { drawIncident, drawMunicipalBuilding } from './municipal.js';
 import { drawFeedback } from './feedback.js';
@@ -26,16 +25,18 @@ import { presentFrame } from './backend.js';
 import { renderThreeScene } from './three-renderer.js';
 import { clearJuiceOverlay, drawJuiceOverlay } from './overlay.js';
 import { hover } from './interaction-state.js';
+import { toolPreview } from '../buildings/preview.js';
 
 export { hover };
 export function drawGhost(){
   if(!hover.on||S.tool==="move"||S.tool==="look") return;
   const{x,y}=hover;
   if(!inBounds(x,y)) return;
-  const result=S.tool==="erase"||S.tool==='water'?null:canPlace(S.tool,x,y);
-  const ok=S.tool==="erase"?(!!S.grid[idx(x,y)]||!!S.natTree[idx(x,y)]):S.tool==='water'?(!S.grid[idx(x,y)]&&S.terr[idx(x,y)]!==1):result.ok;
-  const servicePreview=S.tool==='erase'?false:drawCivicPlacementPreview(S.tool,x,y);
-  const def=getBuildingDefinition(S.tool),cells=def?footprintCells(S.tool,x,y):[{x,y}];
+  const preview=toolPreview(S.tool,x,y);
+  if(!preview) return;
+  const ok=preview.ok,cells=preview.cells;
+  const servicePreview=S.tool==='erase'||S.tool==='relocate'?false:drawCivicPlacementPreview(S.tool,x,y);
+  const def=getBuildingDefinition(S.tool);
   for(const c of cells){
     if(!inBounds(c.x,c.y)) continue;
     const p=proj(c.x,c.y);

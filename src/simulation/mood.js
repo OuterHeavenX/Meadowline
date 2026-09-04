@@ -11,7 +11,7 @@ import { DOCK_MOOD } from '../buildings/docks.js';
 import { FARM_MOOD } from '../buildings/farms.js';
 import { wonderMood } from '../buildings/wonders.js';
 import { getBuildingDefinition } from '../buildings/registry.js';
-import { DIRS, clamp } from '../core/constants.js';
+import { clamp } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { recreationStatus, recomputeRecreation } from './recreation.js';
@@ -19,6 +19,7 @@ import { PAL, seasonName } from '../world/seasons.js';
 import { activeFestival } from '../world/festivals.js';
 import { idx, inBounds, isFacilityPart, isType } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
+import { roadNearFacility } from '../transport/roads.js';
 
 /* ---------- simulation ---------- */
 export let simT=0;
@@ -42,8 +43,7 @@ function recreationMood(h,out){
 // its reasoning, which is what the Look tool reads back to you.
 export function evalHouse(h,out){
   const c=S.ctx;
-  let onRoad=false;
-  for(const[dx,dy]of DIRS) if(isType(h.x+dx,h.y+dy,"road")) onRoad=true;
+  const onRoad=!!roadNearFacility(h);
   h.linked=onRoad;
   if(!onRoad){
     if(out) out.push(["A roof, but no road",14]);
@@ -107,6 +107,11 @@ export function recompute(){
   const parks=[],recreation=[],cafes=[],stations=[],houses=[],lamps=[],mills=[],markets=[],bakeries=[],schools=[],docks=[],farms=[],wonders=[];
   for(let i=0;i<S.grid.length;i++){
     const b=S.grid[i]; if(!b||isFacilityPart(b)) continue;
+    /* Road access used to be worked out inside evalHouse and nowhere else, so
+       every cafe, school and station in the valley reported Disconnected for
+       the whole game however many streets ran past the door. It is a reading
+       every building has, so every building gets it here. */
+    b.linked=!!roadNearFacility(b);
     const rec=getBuildingDefinition(b.type)?.service?.type==='recreation';
     if(rec) recreation.push(b);
     if(b.type==="park") parks.push(b);

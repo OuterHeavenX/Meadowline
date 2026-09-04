@@ -5,6 +5,7 @@ import { getBuildingDefinition } from '../buildings/registry.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { isPaintTool } from '../core/input-policy.js';
+import { carrying, putDown } from '../rendering/interaction-state.js';
 import { buildingUnlockStage,isBuildingUnlocked,CITY_STAGES } from '../progression/city-growth.js';
 import { hint } from './notify.js';
 
@@ -64,7 +65,7 @@ function renderCats(){ if(!elCats)return; elCats.replaceChildren(); CATEGORIES.f
   const b=document.createElement('button');b.className='cat'+(c.id===category?' on':'');b.dataset.cat=c.id;
   b.innerHTML=(CAT_ICON[c.id]?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+CAT_ICON[c.id]+'</svg>':'')+'<i>'+c.name+'</i>';
   b.addEventListener('click',()=>showCategory(c.id));elCats.appendChild(b);}); }
-function renderModes(){ if(!elModes)return; elModes.replaceChildren(...['look','move','erase','road'].map(toolDef).filter(Boolean).map(t=>button(t,true))); }
+function renderModes(){ if(!elModes)return; elModes.replaceChildren(...['look','move','relocate','erase','road'].map(toolDef).filter(Boolean).map(t=>button(t,true))); }
 /* The hint bar sits above the dock, which is where the catalogue's category
    row lands when the tray is open. The tray's height depends on its contents
    and the viewport, so it is measured and published rather than guessed at in
@@ -79,6 +80,9 @@ export function pickTool(id){
   const t=toolDef(id); if(!t)return;
   if(t.cat!=='mode'&&!isBuildingUnlocked(id)){ hint(t.name+' unlocks at '+CITY_STAGES[buildingUnlockStage(id)-1].name+'.',true); return; }
   if(id!=='look'&&S.tool==='look') services.closeLook();
+  // Leaving the Move tool sets down whatever it was carrying, so a building
+  // is never held by a tool that is no longer selected.
+  if(id!=='relocate') putDown();
   S.tool=id;
   if(t.cat!=='mode'&&t.cat!==category) showCategory(t.cat);
   paintTools(); hint(t.desc); services.blip(430,.05,'triangle');
@@ -96,6 +100,11 @@ export function paintActiveTool(){
   const show=!!t&&S.tool!=='move'&&S.tool!=='look';
   active.classList.toggle('show',show); active.classList.toggle('danger',S.tool==='erase');
   if(!show)return;
+  if(S.tool==='relocate'){
+    if(activeName)activeName.textContent=carrying.on?'Carrying a building':'Move a building';
+    if(activeMeta)activeMeta.textContent=carrying.on?'Tap where it should go':'Tap a building to pick it up';
+    return;
+  }
   const fp=footprintLabel(S.tool);
   if(activeName)activeName.textContent=t.name+(fp&&fp!=='1×1'?' · '+fp:'')+(t.cost?' · '+t.cost+' coins':'');
   if(activeMeta)activeMeta.textContent=isPaintTool(S.tool)?'Tap once · Hold + drag to paint':(fp&&fp!=='1×1'?'Tap anchor to place full footprint · Drag to move':'Tap to place · Drag to move');

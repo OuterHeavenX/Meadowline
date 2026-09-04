@@ -1,10 +1,10 @@
-import { BUILDABLE, erase, place, removalIntent } from '../buildings/buildings.js';
+import { BUILDABLE, erase, isMovable, place, relocate, removalIntent } from '../buildings/buildings.js';
 import { TOOLS, clamp } from './constants.js';
 import { getBuildingDefinition } from '../buildings/registry.js';
 import { S } from './state.js';
 import { isPaintTool, isTextEntryTarget, RESERVED_SHORTCUT_KEYS, TOUCH_DRAG_THRESHOLD, TOUCH_PAINT_HOLD_MS } from './input-policy.js';
 import { toggleMap } from '../rendering/minimap.js';
-import { hover } from '../rendering/interaction-state.js';
+import { carrying, hover, pickUp, putDown } from '../rendering/interaction-state.js';
 import { cv } from '../rendering/terrain.js';
 import { recompute } from '../simulation/mood.js';
 import { checkWishes } from '../simulation/wishes.js';
@@ -63,6 +63,29 @@ export function applyTool(gp,{touch=false,paint=false}={}){
   if(S.tool==='look'){
     const root=facilityRootAt(gp.x,gp.y),x=root?.x??gp.x,y=root?.y??gp.y;
     if(!inspectCityHall(x,y)) inspect(x,y);
+    return true;
+  }
+  /* Move: the first tap picks a building up, the second sets it down. Two
+     taps rather than a drag because a drag on the map is already a pan on
+     touch, and because a building the size of a hospital needs to be aimed
+     rather than flung. */
+  if(S.tool==='relocate'){
+    const root=facilityRootAt(gp.x,gp.y);
+    if(!carrying.on){
+      if(!root){ hint('Tap a building to pick it up.',true); return false; }
+      if(!isMovable(root)){ hint('Ways are laid and cleared rather than carried about.',true); return false; }
+      pickUp(root.x,root.y);
+      hint('Carrying the '+buildingName(root.type)+'. Tap where it should go.');
+      paintActiveTool();
+      return true;
+    }
+    const held=facilityRootAt(carrying.x,carrying.y);
+    if(!held){ putDown(); hint('That building is no longer there.',true); paintActiveTool(); return false; }
+    const moved=relocate(held,gp.x,gp.y);
+    if(!moved.ok) return false;
+    putDown();
+    if(S.pick&&S.pick.x===moved.from.x&&S.pick.y===moved.from.y) S.pick={x:gp.x,y:gp.y};
+    recompute(); checkWishes(); paintActiveTool();
     return true;
   }
   if(S.tool==='erase'){
@@ -199,7 +222,7 @@ addEventListener('keydown',e=>{
   const t=shifted||(RESERVED_SHORTCUT_KEYS.has(k)?null:TOOLS.find(t=>t.key&&t.key===k));
   if(t){ pickTool(t.id); return; }
   if(k==='m') toggleSound(); if(k==='s') toggleSpeed(); if(k==='b') toggleMap(); if(k==='p') postcard(); if(k==='l') toggleLedgerChip();
-  if(k==='escape'){ closeLook(); pickTool('move'); }
+  if(k==='escape'){ closeLook(); putDown(); pickTool('move'); }
   if(k===' '){ e.preventDefault(); S.running=!S.running; hint(S.running?'Resumed':'Paused',true); }
   // Quarter turns, which both renderers can show: the fallback snaps rotation
   // to quarters because its tiles are drawn as fixed diamonds, so a smaller
