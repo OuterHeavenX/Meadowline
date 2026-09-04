@@ -1,4 +1,6 @@
 import { CATEGORIES,COST,ICONS,TOOLS } from '../core/constants.js';
+import { buildingThumbnail } from '../rendering/thumbnails.js';
+import { landmarkKey } from '../rendering/landmark-assets.js';
 import { getBuildingDefinition } from '../buildings/registry.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
@@ -31,13 +33,47 @@ function button(t,compact){
   const unlock=locked?' · unlocks at '+CITY_STAGES[buildingUnlockStage(t.id)-1].name:'';
   const fp=t.cat==='mode'?'':footprintLabel(t.id);
   b.title=t.name+(fp?' · '+fp:'')+(t.cost?' · '+t.cost:'')+unlock+(t.key?' ('+(t.key!==t.key.toLowerCase()?'Shift+'+t.key:t.key.toUpperCase())+')':''); b.setAttribute('aria-label',b.title); b.setAttribute('aria-pressed',t.id===S.tool?'true':'false');
-  const meta=locked?'At '+CITY_STAGES[buildingUnlockStage(t.id)-1].name:((fp&&fp!=='1×1'?fp+' · ':'')+(t.cost?t.cost:'Free'));
-  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[t.id]+'</svg>'+(compact?'<i>'+t.name+'</i>':'<i>'+t.name+'</i><u>'+meta+'</u>');
+  /* A picture of the actual building where there is one. A wall of similar
+     line glyphs told the player almost nothing about what they were choosing
+     between; the mesh does. Anything without an authored model - roads, trees,
+     lamps, the park lots - keeps its glyph. */
+  const art=compact?null:buildingThumbnail(landmarkKey({type:t.id,state:{}}));
+  const face=art
+    ? '<span class="tool-art"><img src="'+art+'" alt="" draggable="false"></span>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+ICONS[t.id]+'</svg>';
+  const chips=locked
+    ? '<u class="tool-locked">At '+CITY_STAGES[buildingUnlockStage(t.id)-1].name+'</u>'
+    : '<u>'+(t.cost?'<span class="chip-cost">'+t.cost+'</span>':'<span class="chip-cost">Free</span>')
+      +(fp?'<span class="chip-fp">'+fp+'</span>':'')+'</u>';
+  b.innerHTML=face+(compact?'<i>'+t.name+'</i>':'<i>'+t.name+'</i>'+chips);
   b.addEventListener('click',()=>pickTool(t.id)); return b;
 }
-function renderCats(){ if(!elCats)return; elCats.replaceChildren(); CATEGORIES.forEach(c=>{const b=document.createElement('button');b.className='cat'+(c.id===category?' on':'');b.dataset.cat=c.id;b.textContent=c.name;b.addEventListener('click',()=>showCategory(c.id));elCats.appendChild(b);}); }
+const CAT_ICON={
+  ways:'<path d="M7 21 4.5 3M17 21l2.5-18M12 4.5v3M12 11v3M12 17.5v3"/>',
+  homes:'<path d="M3.5 11.5 12 4l8.5 7.5M6 10.5V20h12v-9.5M10 20v-5h4v5"/>',
+  civic:'<path d="M3 9.5 12 4l9 5.5M5 10h14M6.5 10v8M10 10v8M14 10v8M17.5 10v8M4 20h16"/>',
+  trade:'<path d="M4 9.5h16l-1.2-4H5.2L4 9.5ZM5.5 9.5V20h13V9.5M3 20h18"/>',
+  recreation:'<path d="M4 19h16M6 16c2-4 3-8 6-11 3 3 4 7 6 11M12 7v12"/>',
+  green:'<path d="M12 3.5c3 0 5.2 2.4 5.2 5.2S15 13.5 12 13.5 6.8 11.5 6.8 8.7 9 3.5 12 3.5ZM12 13.5V20M8 20h8"/>',
+  wonder:'<path d="M12 3a1.6 1.6 0 1 1 0 3.2A1.6 1.6 0 0 1 12 3ZM12 6.2v7M12 8l-3.2 2M12 8l3.2 2M10.5 13.2 9.5 18M13.5 13.2l1 4.8M6.5 18h11l1 3h-13Z"/>',
+  safety:'<path d="M12 3 20 7v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4Z"/>',
+  health:'<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6V3Z"/>',
+  landscaping:'<path d="M12 3C9 7 5.5 10.5 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 10.5 15 7 12 3Z"/>'
+};
+function renderCats(){ if(!elCats)return; elCats.replaceChildren(); CATEGORIES.forEach(c=>{
+  const b=document.createElement('button');b.className='cat'+(c.id===category?' on':'');b.dataset.cat=c.id;
+  b.innerHTML=(CAT_ICON[c.id]?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+CAT_ICON[c.id]+'</svg>':'')+'<i>'+c.name+'</i>';
+  b.addEventListener('click',()=>showCategory(c.id));elCats.appendChild(b);}); }
 function renderModes(){ if(!elModes)return; elModes.replaceChildren(...['look','move','erase','road'].map(toolDef).filter(Boolean).map(t=>button(t,true))); }
-export function toggleBuildTray(force){ if(!buildTray)return false; const open=typeof force==='boolean'?force:!buildTray.classList.contains('open'); buildTray.classList.toggle('open',open); elDock?.classList.toggle('catalog-open',open); buildToggle?.classList.toggle('on',open); buildToggle?.setAttribute('aria-expanded',open?'true':'false'); return open; }
+/* The hint bar sits above the dock, which is where the catalogue's category
+   row lands when the tray is open. The tray's height depends on its contents
+   and the viewport, so it is measured and published rather than guessed at in
+   CSS, and the hint rides above whatever the tray actually is. */
+function publishTrayHeight(open){
+  const h=open&&buildTray?Math.round(buildTray.getBoundingClientRect().height):0;
+  document.documentElement.style.setProperty('--tray-h',h+'px');
+}
+export function toggleBuildTray(force){ if(!buildTray)return false; const open=typeof force==='boolean'?force:!buildTray.classList.contains('open'); buildTray.classList.toggle('open',open); elDock?.classList.toggle('catalog-open',open); buildToggle?.classList.toggle('on',open); requestAnimationFrame(()=>publishTrayHeight(open)); buildToggle?.setAttribute('aria-expanded',open?'true':'false'); return open; }
 export function showCategory(id){ category=id; renderCats(); if(elTools) elTools.replaceChildren(...TOOLS.filter(t=>t.cat===id).map(t=>button(t,false))); paintTools(); }
 export function pickTool(id){
   const t=toolDef(id); if(!t)return;

@@ -17,9 +17,11 @@ import { COLORS, GROUPS, NORMALS, POSITIONS, TRIANGLES } from './assets/tree-low
 export const TREE_TRIANGLES=TRIANGLES;
 export const TRUNK_COLOR=COLORS[0];
 
-/* The canopy greens the procedural trees used, kept so an authored tree drops
-   into a stand of them without standing out. */
-export const CANOPY_GREENS=['#397b4f','#4b9158','#62a05d','#2f6c4b'];
+/* The canopy greens. Widened from the four the procedural trees used: a stand
+   of trees in four near-identical greens reads as one shrub repeated, so there
+   are lighter and warmer ones in here now - new growth, and the olive of a
+   tree that catches more sun - alongside the deep originals. */
+export const CANOPY_GREENS=['#3f8a52','#57a55e','#74b566','#2f6c4b','#8cc06a','#4d7f4a','#a8b95c','#6aa86e'];
 
 let cache=null;
 
