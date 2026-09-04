@@ -148,7 +148,9 @@ check('City Hall reads real municipal sections',hall.getElementById('look-body')
 // actually does, so a future break anywhere along the path still fails.
 const hallWin=frame.contentWindow,hallState=hallWin.__MEADOWLINE_STATE__;
 if(hallState){
-  hallState.coins=1914;
+  // Fund both the Level 4 upgrade and one current-map parcel. The 128x128
+  // valley prices land above the historical 44x44 fixture's 1,914 coins.
+  hallState.coins=4000;
   hallState.cityProgress.stage=4;
   const civic=hallState.grid.find(b=>b&&b.type==='cityHall');
   if(civic) civic.state.level=3;
@@ -206,3 +208,7 @@ if(hallState){
 }
 
 const failed=checks.filter(c=>!c.pass);document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);document.documentElement.dataset.result=failed.length?'fail':'pass';
+// Tear down the booted game iframe after recording results. Its real frame
+// loop and recovery timers are useful during assertions but can keep some
+// headless Chrome builds alive after --dump-dom has all the evidence it needs.
+frame.remove();

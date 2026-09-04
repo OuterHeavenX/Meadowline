@@ -1,4 +1,4 @@
-import { KEY, save, store } from '../core/save.js';
+import { KEY, save, stageSaveForReload, store } from '../core/save.js';
 import { cloudClient, getSession } from './supabase.js';
 
 const REVISION_KEY='meadowline.cloud.revision.slot1';
@@ -78,8 +78,7 @@ export async function downloadCloudSave(){
   if(!data) return {status:'empty'};
   if(!data.payload||Number(data.payload.v)!==3||!Array.isArray(data.payload.b)) throw new Error('Cloud save failed Meadowline validation.');
   const raw=JSON.stringify(data.payload);
-  store.set(KEY,raw);
-  if(store.get(KEY)!==raw) throw new Error('The cloud city downloaded, but this device could not verify the local write.');
+  stageSaveForReload(raw);
   writeRevision(Number(data.revision)||0);
   return {status:'downloaded',revision:Number(data.revision)||0,updatedAt:data.updated_at||null,payload:data.payload};
 }

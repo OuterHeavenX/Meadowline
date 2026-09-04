@@ -64,6 +64,11 @@ The account panel supports:
 
 No automatic cloud upload or automatic cloud download is enabled.
 
+Cloud replacement is staged through the Save V3 lifecycle guard before reload.
+This prevents `visibilitychange` and `pagehide` from autosaving the old device's
+in-memory city over the newly downloaded payload during navigation. The same
+guard protects imported files and local recovery restores.
+
 ## Cloudflare
 
 Production Pages URL:

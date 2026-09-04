@@ -17,6 +17,10 @@ The milestone makes local saving visible, verifiable, portable and recoverable.
 - `Export city` downloads the current Save V3 JSON so a city can move between origins, browsers or devices.
 - `Import city` accepts only structurally compatible Meadowline V1/V2/V3 JSON, preserves the current city as a backup, writes the imported city to `meadowline.v3`, verifies the write and reloads.
 - `Restore` preserves the current city before replacing it with the selected recovery snapshot.
+- Replacement saves are protected across the reload lifecycle. The normal
+  `visibilitychange`/`pagehide` save is temporarily suppressed after a verified
+  cloud load, import or recovery restore so the previous in-memory city cannot
+  overwrite the replacement during navigation.
 
 ## Storage keys
 
