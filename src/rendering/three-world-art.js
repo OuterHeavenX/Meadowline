@@ -29,7 +29,44 @@ const lit=[];
 export function litMaterials(){ return lit; }
 function basicMat(hex){const key=`basic:${hex}`;if(!materials.has(key))materials.set(key,new THREE.MeshBasicMaterial({color:hex}));return materials.get(key);}
 function geo(key,make){if(!geometries.has(key)){const g=make();g.userData.meadowlineCached=true;geometries.set(key,g);}return geometries.get(key);}
-function mesh(parent,geometry,material,x,y,z,cast=true){const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m;}
+/* ---------- ground furniture, in batches ----------
+   A road tile is a slab, up to four kerbs and pavements, and its centre line:
+   a dozen boxes, each of them its own mesh. Six hundred road tiles and a
+   shoreline came to eight thousand objects and two and a half thousand draw
+   calls, rebuilt from nothing every time the player put down a single house -
+   a tenth of a second of hitch per tap, and per tile while dragging a road.
+
+   None of it is unique. They are boxes and cylinders in a handful of sizes in
+   four colours, all sitting flat on the ground, so they instance exactly the
+   way the trees already do: one mesh per size-and-colour instead of one per
+   piece. Anything handed a batch instead of a group is collected rather than
+   added, and gets no mesh back - callers that need the object keep passing a
+   group. */
+function batch(){
+  const buckets=new Map();
+  return {
+    isBatch:true,
+    take(geometry,material,x,y,z,cast){
+      const key=geometry.uuid+'|'+material.uuid+'|'+(cast?1:0);
+      let bucket=buckets.get(key);
+      if(!bucket) buckets.set(key,bucket={geometry,material,cast,at:[]});
+      bucket.at.push(x,y,z);
+    },
+    flush(parent){
+      const matrix=new THREE.Matrix4();
+      for(const b of buckets.values()){
+        const count=b.at.length/3;
+        // One of a kind is cheaper as a plain mesh than as an instance buffer.
+        if(count===1){ mesh(parent,b.geometry,b.material,b.at[0],b.at[1],b.at[2],b.cast); continue; }
+        const inst=new THREE.InstancedMesh(b.geometry,b.material,count);
+        for(let i=0;i<count;i++){ matrix.makeTranslation(b.at[i*3],b.at[i*3+1],b.at[i*3+2]); inst.setMatrixAt(i,matrix); }
+        inst.castShadow=b.cast; inst.receiveShadow=true; parent.add(inst);
+      }
+      buckets.clear();
+    }
+  };
+}
+function mesh(parent,geometry,material,x,y,z,cast=true){if(parent.isBatch){parent.take(geometry,material,x,y,z,cast);return null;}const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m;}
 function box(parent,x,y,z,w,h,d,material,cast=true){return mesh(parent,geo(`box:${w}:${h}:${d}`,()=>new THREE.BoxGeometry(w,h,d)),material,x,y+h/2,z,cast);}
 function cyl(parent,x,y,z,r,h,material,sides=8){return mesh(parent,geo(`cyl:${r}:${h}:${sides}`,()=>new THREE.CylinderGeometry(r,r,h,sides)),material,x,y+h/2,z,true);}
 function cone(parent,x,y,z,r,h,material,sides=6){const m=mesh(parent,geo(`cone:${r}:${h}:${sides}`,()=>new THREE.ConeGeometry(r,h,sides)),material,x,y+h/2,z,true);m.rotation.y=Math.PI/4;return m;}
@@ -64,7 +101,7 @@ function road(parent,x,z,b){const mask=roadMask(x,z),kind=roadKind(mask),wet=roa
   edge(1,0,-.44,.98,.12);edge(4,0,.44,.98,.12);edge(8,-.44,0,.12,.98);edge(2,.44,0,.12,.98);
   if(kind==='straight'){if(mask===10)for(const q of[-.3,0,.3])box(parent,x+q,lift+.048,z,.12,.012,.025,line,false);else for(const q of[-.3,0,.3])box(parent,x,lift+.048,z+q,.025,.012,.12,line,false);}
   if(kind==='dead-end'){const bit=[1,2,4,8].find(q=>mask&q),cap=bit===1?[0,.32,.72,.12]:bit===4?[0,-.32,.72,.12]:bit===2?[-.32,0,.12,.72]:[.32,0,.12,.72];box(parent,x+cap[0],lift+.048,z+cap[1],cap[2],.018,cap[3],line,false);}
-  if(kind==='tee'||kind==='cross')for(const [bit,dx,dz,rot]of[[1,0,-.28,0],[2,.28,0,1],[4,0,.28,0],[8,-.28,0,1]])if(mask&bit)for(let q=-2;q<=2;q++){const stripe=box(parent,x+(rot?dx:q*.08),lift+.049,z+(rot?q*.08:dz),rot?.035:.035,.014,rot?.055:.055,line,false);stripe.rotation.y=0;}
+  if(kind==='tee'||kind==='cross')for(const [bit,dx,dz,rot]of[[1,0,-.28,0],[2,.28,0,1],[4,0,.28,0],[8,-.28,0,1]])if(mask&bit)for(let q=-2;q<=2;q++)box(parent,x+(rot?dx:q*.08),lift+.049,z+(rot?q*.08:dz),.035,.014,.055,line,false);
   if(isBridge(x,z))for(const side of[-.43,.43])box(parent,x,lift+.04,z+side,.96,.11,.035,mat('#e1ded3',.7),true);
   if(b?.state?.roadRailCrossing){for(const q of[-.28,.28]){box(parent,x+q,lift+.052,z,.035,.02,.86,mat('#ddd5c5'),false);box(parent,x+q,lift+.075,z,.035,.035,.86,mat('#676b6d',.35,.5),false);}}
 }
@@ -285,7 +322,9 @@ function terrain(parent){box(parent,(W-1)/2,-.6,(H-1)/2,W+.8,.48,H+.8,mat('#455a
       fine=((x*29+y*17+S.seed)%37)<3?1:0,
       v=(patch%6+fine)%6,mask=water?waterMask(x,y):0,key=water?(mask===15?'water-deep':'water-edge'):open?`grass:${v}`:`locked:${v%2}`;if(!batches.has(key))batches.set(key,[]);batches.get(key).push({x,y});}
   for(const [key,cells]of batches){const water=key.startsWith('water'),hex=water?C.water:key.startsWith('locked')?C.locked[+key.at(-1)]:C.grass[+key.at(-1)],height=water?.045:.09,g=geo(`terrain:${water?'water':'land'}`,()=>new THREE.BoxGeometry(1,height,1)),surface=water?basicMat(key==='water-deep'?'#245f7b':'#3f829c'):mat(hex,.93),inst=new THREE.InstancedMesh(g,surface,cells.length);for(let i=0;i<cells.length;i++){matrix.makeTranslation(cells[i].x,water?-.105:-.14,cells[i].y);inst.setMatrixAt(i,matrix);}inst.receiveShadow=true;parent.add(inst);}
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(S.terr[idx(x,y)]===1){const mask=waterMask(x,y),shore=mat(C.shore,.95);for(const [bit,dx,dz,w,d]of[[1,0,-.47,.96,.07],[2,.47,0,.07,.96],[4,0,.47,.96,.07],[8,-.47,0,.07,.96]])if(!(mask&bit))box(parent,x+dx,-.07,y+dz,w,.055,d,shore,false);for(const [a,b,dx,dz]of[[1,8,-.46,-.46],[1,2,.46,-.46],[4,8,-.46,.46],[4,2,.46,.46]])if(!(mask&a)&&!(mask&b))cyl(parent,x+dx,-.072,y+dz,.105,.058,shore,10);if((x*13+y*7+S.seed)%11===0){for(const q of[-.035,.035])cyl(parent,x+.32+q,-.05,y+.3,.012,.2,mat('#547750'),5);}}
+  const edges=batch();
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(S.terr[idx(x,y)]===1){const mask=waterMask(x,y),shore=mat(C.shore,.95);for(const [bit,dx,dz,w,d]of[[1,0,-.47,.96,.07],[2,.47,0,.07,.96],[4,0,.47,.96,.07],[8,-.47,0,.07,.96]])if(!(mask&bit))box(edges,x+dx,-.07,y+dz,w,.055,d,shore,false);for(const [a,b,dx,dz]of[[1,8,-.46,-.46],[1,2,.46,-.46],[4,8,-.46,.46],[4,2,.46,.46]])if(!(mask&a)&&!(mask&b))cyl(edges,x+dx,-.072,y+dz,.105,.058,shore,10);if((x*13+y*7+S.seed)%11===0){for(const q of[-.035,.035])cyl(edges,x+.32+q,-.05,y+.3,.012,.2,mat('#547750'),5);}}
+  edges.flush(parent);
 }
 
 export function buildCohesiveWorld(parent){
@@ -296,10 +335,11 @@ export function buildCohesiveWorld(parent){
   // the count, so the cap only exists now to bound the instance buffers.
   const treeLimit=900;
   let visibleTrees=0;
+  const ways=batch();
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     const i=idx(x,y),b=S.grid[i],treeHash=(x*19+y*31+S.seed);
-    if(b?.type==='road')road(parent,x,y,b);
-    else if(b?.type==='rail')rail(parent,x,y);
+    if(b?.type==='road')road(ways,x,y,b);
+    else if(b?.type==='rail')rail(ways,x,y);
     if(S.natTree[i]&&visibleTrees<treeLimit&&(isTileUnlocked(x,y)?treeHash%4!==0:treeHash%3!==0)){
       tree(parent,x,y,i,.65+((i*17)%20)/100);
       visibleTrees++;
@@ -316,6 +356,7 @@ export function buildCohesiveWorld(parent){
     }
     building(parent,b);
   }
+  ways.flush(parent);
   emitLandmarks(parent,authored);
   emitTrees(parent);
   S.diagnostics.rendererMaterials=materials.size;
