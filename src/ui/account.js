@@ -5,7 +5,16 @@ import { toast } from './notify.js';
 
 const style=document.createElement('style');
 style.textContent=`
-.cloud-account{position:fixed;left:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:35}
+/* The dock owns the bottom of the screen, and its first button is Build. This
+   used to sit at bottom:12px on top of it, covering the Build icon and half
+   its label on every phone. It clears the dock now, and the dock's own height
+   is what it clears by. */
+.cloud-account{position:fixed;left:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 96px);z-index:35}
+@media(min-width:700px){.cloud-account{bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}}
+/* The build catalogue takes the whole lower half of the screen and its
+   category row lands exactly here, so the account button stands down while it
+   is open rather than sitting on top of the tabs. */
+body:has(.buildtray.open) .cloud-account{opacity:0;pointer-events:none}
 .cloud-account>.cloud-toggle{width:42px;height:42px;border:0;border-radius:14px;background:rgba(29,43,38,.9);color:#f4f0e2;box-shadow:0 7px 22px rgba(0,0,0,.25);font:700 18px system-ui;backdrop-filter:blur(8px)}
 .cloud-account section{position:absolute;left:0;bottom:52px;width:min(350px,calc(100vw - 20px));max-height:min(72vh,620px);overflow:auto;padding:16px;border-radius:18px;background:rgba(29,43,38,.97);color:#f4f0e2;box-shadow:0 18px 48px rgba(0,0,0,.35);font:14px/1.4 system-ui}
 .cloud-account section[hidden]{display:none}.cloud-account h3{margin:0 32px 4px 0;font-size:18px}.cloud-account h4{margin:16px 0 7px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#e5c45b}.cloud-account p{margin:6px 0 12px;color:#c9c9bd}.cloud-account .x{position:absolute;right:10px;top:8px;border:0;background:none;color:#f4f0e2;font-size:24px}.cloud-account input{box-sizing:border-box;width:100%;padding:11px 12px;margin-top:8px;border:1px solid rgba(244,240,226,.2);border-radius:11px;background:#13201c;color:#fff;font:inherit}.cloud-account .row{display:flex;gap:8px;margin-top:9px}.cloud-account button.action{flex:1;padding:10px;border:0;border-radius:11px;background:#e5c45b;color:#1d2b26;font:800 13px system-ui}.cloud-account button.secondary{background:#344940;color:#f4f0e2}.cloud-account button.danger{background:#493936;color:#f4f0e2}.cloud-account button.linkish{background:transparent;color:#d8ddd7;border:1px solid rgba(244,240,226,.14)}.cloud-account button:disabled{opacity:.5}.cloud-account small{display:block;color:#aeb7b0;margin-top:8px;word-break:break-word}.cloud-history{display:grid;gap:7px}.cloud-history-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid rgba(244,240,226,.11);border-radius:12px;background:rgba(10,20,16,.28)}.cloud-history-item>div{min-width:0;flex:1}.cloud-history-item b{display:block;font-size:13px}.cloud-history-item span{display:block;font-size:11px;color:#adb8b1}.cloud-history-item button{border:0;border-radius:9px;padding:8px 9px;background:#344940;color:#f4f0e2;font:800 11px system-ui;white-space:nowrap}

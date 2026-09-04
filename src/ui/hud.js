@@ -97,13 +97,27 @@ document.getElementById("b-start").addEventListener("click",()=>{
 document.getElementById('b-stage')?.addEventListener('click',()=>document.getElementById('b-growth')?.click());
 document.getElementById('menu-new')?.addEventListener('click',()=>bNew.click());
 document.getElementById('menu-save')?.addEventListener('click',()=>{save();toast('City saved','gold');});
-document.getElementById('menu-settings')?.addEventListener('click',()=>document.querySelector('.settings-toggle')?.click());
+// Both the gear in the corner and the Settings button in the menu open the
+// same panel, so they are bound by attribute rather than by id.
+document.querySelectorAll('[data-menu-settings]').forEach(b=>b.addEventListener('click',()=>document.querySelector('.settings-toggle')?.click()));
 const credits=document.getElementById('credits-dialog');
 document.getElementById('menu-credits')?.addEventListener('click',()=>credits?.showModal());
 credits?.querySelector('button')?.addEventListener('click',()=>credits.close());
 
 function paintMenuPresentation(){
-  document.querySelectorAll('[data-menu-renderer]').forEach(b=>b.classList.toggle('on',b.dataset.menuRenderer===(S.rendererMode||'auto')));
+  /* On 'auto' - the default, and so what most players see - no tile matched
+     any mode and the whole row read as switched off, with no way to tell what
+     the game was actually drawing with. Auto resolves to whichever renderer is
+     really running. */
+  const mode=S.rendererMode||'auto';
+  /* Auto picks the GPU path and only drops to Canvas if it cannot have it, so
+     that is what the row shows. Reading the live backend instead would say
+     'Classic Canvas' on the title screen, where the 3D renderer has not been
+     started yet - true of that instant, and wrong about what you are about to
+     get. */
+  const fellBack=S.diagnostics?.rendererBackend==='canvas2d-fallback';
+  const shown=mode==='auto'?(fellBack?'compatibility':'gpu'):mode;
+  document.querySelectorAll('[data-menu-renderer]').forEach(b=>b.classList.toggle('on',b.dataset.menuRenderer===shown));
   document.querySelectorAll('[data-menu-quality]').forEach(b=>b.classList.toggle('on',b.dataset.menuQuality===(S.quality||'auto')));
 }
 document.querySelectorAll('[data-menu-renderer]').forEach(b=>b.addEventListener('click',()=>{

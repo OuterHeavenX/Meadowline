@@ -57,6 +57,53 @@ export function landmarkKey(b){
   return b.type;
 }
 
+/* ---------- colour variety ----------
+   A street of homes built from one mesh is one house repeated, and that is
+   what the valley looked like: every cottage the same sand wall under the same
+   navy roof. The geometry is already split per colour group, so each group can
+   be instanced with its own per-instance tint - the same instanceColor trick
+   the trees use for their canopy greens - and one mesh becomes a street.
+
+   instanceColor multiplies the material colour, so the tint stored per
+   instance is the ratio between the colour wanted and the one the model was
+   authored with. */
+const WALLS=['#f0e2c4','#e7d0a6','#efe7da','#d3ddc8','#eecab8','#d2dee7','#f2e0a8','#e4d3bd'];
+const ROOFS=['#44607f','#a8503f','#c26a44','#417054','#4c515a','#6d4c60','#7d5642','#8a4a44'];
+
+// Which group of which model takes which palette. Group indices come from the
+// generated mesh module's COLORS array: for every house tier, 2 is the wall
+// and 3 is the roof.
+const TINTS={
+  'house-1':{2:WALLS,3:ROOFS},
+  'house-2':{2:WALLS,3:ROOFS},
+  'house-3':{2:WALLS,3:ROOFS}
+};
+
+const ratios=new Map();
+function tintRatio(base,target){
+  const key=base+'>'+target;
+  if(!ratios.has(key)){
+    const b=new THREE.Color(base),t=new THREE.Color(target);
+    ratios.set(key,new THREE.Color(t.r/(b.r||1),t.g/(b.g||1),t.b/(b.b||1)));
+  }
+  return ratios.get(key);
+}
+
+/* The tint for one instance of one colour group, or null when that group is
+   not varied. Driven by the building's own seed, so a house keeps its colours
+   for the life of the city instead of changing every time the world is
+   rebuilt. */
+export function landmarkTint(key,groupIndex,baseHex,seed){
+  const palette=TINTS[key]?.[groupIndex];
+  if(!palette) return null;
+  // Wall and roof are drawn from different points in the seed so a house is
+  // not limited to matched pairs.
+  const spread=groupIndex===3?7:3;
+  return tintRatio(baseHex,palette[Math.abs(Math.floor(seed/spread))%palette.length]);
+}
+
+export function landmarkVaries(key){ return !!TINTS[key]; }
+
 const cache=new Map();
 
 export function hasLandmark(key){ return !!MESHES[key]; }
@@ -96,7 +143,9 @@ export function landmarkAsset(key){
   if(!mesh) return null;
   const parts=mesh.GROUPS.map(([from,count,material])=>({
     geometry:slice(mesh,from,count),
-    material:materialFor(mesh.COLORS[material],!!mesh.LIT?.[material])
+    material:materialFor(mesh.COLORS[material],!!mesh.LIT?.[material]),
+    group:material,
+    hex:mesh.COLORS[material]
   }));
   const asset={parts,triangles:mesh.TRIANGLES};
   cache.set(key,asset);

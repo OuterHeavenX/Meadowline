@@ -6,14 +6,18 @@ import { isTileUnlocked } from '../progression/city-growth.js';
 import { isBridge } from '../transport/bridges.js';
 import { idx,isFacilityPart,isType } from '../world/tiles.js';
 import { CANOPY_GREENS, TREE_TRIANGLES, TRUNK_COLOR, treeAsset } from './tree-asset.js';
-import { hasLandmark, landmarkAsset, landmarkKey, landmarkMetrics } from './landmark-assets.js';
+import { hasLandmark, landmarkAsset, landmarkKey, landmarkMetrics, landmarkTint, landmarkVaries } from './landmark-assets.js';
 import { PAL } from '../world/seasons.js';
 
 const materials=new Map(), geometries=new Map();
 const C={
-  grass:['#78aa62','#74a65d','#7eaf68','#70a158'],locked:['#708b68','#748f6d'],water:'#4384a0',shore:'#9ab77a',
-  asphalt:'#50575b',wet:'#3f494f',sidewalk:'#d6d1c4',curb:'#b8b5ac',line:'#eee6c9',foundation:'#9c9990',
-  glass:'#59879a',lit:'#ffd783',trunk:'#624632',hedge:'#3f7d4d',white:'#e8e5dc',red:'#a94940',blue:'#3f6985'
+  /* Six meadow tones, not four, and spread far enough apart to read as a
+     meadow rather than one green. Two are warm - dry grass and clover - and
+     one is the deep shade along the hedgerows, which is what stops a big open
+     field from looking like a painted floor. */
+  grass:['#7cb05e','#77ab5b','#83b664','#72a457','#8bbb69','#6d9d56'],locked:['#708b68','#748f6d'],water:'#2f7f9e',shore:'#a8c07c',
+  asphalt:'#4a4f56',wet:'#39424b',sidewalk:'#ddd7c8',curb:'#c2bdb1',line:'#f6efd6',foundation:'#9c9990',
+  glass:'#5b93aa',lit:'#ffd071',trunk:'#664833',hedge:'#3c8450',white:'#f0ede2',red:'#bb4f42',blue:'#3c6f95'
 };
 function mat(hex,rough=.82,metal=0,emissive=''){const key=[hex,rough,metal,emissive].join('/');if(!materials.has(key)){const m=new THREE.MeshStandardMaterial({color:hex,roughness:rough,metalness:metal,emissive:emissive||'#000000',emissiveIntensity:emissive?.7:0});if(emissive)lit.push(m);materials.set(key,m);}return materials.get(key);}
 /* Every material that emits: lamp bulbs, lit windows. They were fixed at .7
@@ -237,9 +241,21 @@ function emitLandmarks(parent,placements){
   for(const[key,spots]of placements){
     const asset=landmarkAsset(key);
     if(!asset) continue;
+    const varies=landmarkVaries(key);
     for(const part of asset.parts){
       const inst=new THREE.InstancedMesh(part.geometry,part.material,spots.length);
       for(let i=0;i<spots.length;i++){ matrix.makeTranslation(spots[i].x,0,spots[i].z); inst.setMatrixAt(i,matrix); }
+      // One mesh, many houses: the wall and the roof each carry a per-instance
+      // tint off the building's own seed, so a terrace is a row of different
+      // homes rather than the same one printed eight times.
+      if(varies){
+        let tinted=false;
+        for(let i=0;i<spots.length;i++){
+          const tint=landmarkTint(key,part.group,part.hex,spots[i].seed);
+          if(tint){ inst.setColorAt(i,tint); tinted=true; }
+        }
+        if(tinted&&inst.instanceColor) inst.instanceColor.needsUpdate=true;
+      }
       inst.castShadow=true; inst.receiveShadow=true;
       parent.add(inst);
     }
@@ -257,7 +273,13 @@ function building(parent,b){const def=getBuildingDefinition(b.type),fp=def?.plac
     return;
   }if(def?.service?.type==='recreation'||b.type==='park'){recreation(g,b.type,fp,b.seed||0);return;}if(b.type==='tree'){tree(g,0,0,b.seed||0,1);return;}if(b.type==='lamp'){lamp(g,0,0);return;}if(b.type==='dock'){box(g,0,.02,0,.8,.12,.8,mat('#80664e'));return;}if(b.type==='house'){house(g,b);return;}if(['cafe','market','bakery','station'].includes(b.type)){storefront(g,b.type,b.seed||0);return;}if(b.type==='farm'){farm(g,fp,b.seed||0);return;}if(b.type==='statue'){statue(g,fp);return;}if(b.type==='clockTower'){clockTower(g,fp);return;}if(b.type==='lighthouse'){lighthouse(g,fp);return;}if(b.type==='greatLibrary'){greatLibrary(g,fp);return;}if(b.type==='mill'){lotBase(g,.94,.94);box(g,0,.05,0,.55,.72,.55,mat('#d3c6aa'));gable(g,0,.77,0,.62,.62,.22,mat('#75594b'));cyl(g,0,.5,.3,.035,.45,mat('#5d4a3e'),7);for(const a of[0,Math.PI/2,Math.PI,Math.PI*1.5]){const blade=box(g,Math.cos(a)*.24,.68,Math.sin(a)*.24,.08,.05,.42,mat('#e2d4b8'),false);blade.rotation.y=-a;}return;}civic(g,b.type,b,fp);}
 
-function terrain(parent){box(parent,(W-1)/2,-.6,(H-1)/2,W+.8,.48,H+.8,mat('#455a45'),false);const batches=new Map(),matrix=new THREE.Matrix4();for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=idx(x,y),water=S.terr[i]===1,open=isTileUnlocked(x,y),broad=Math.floor(x/5)+Math.floor(y/5),speck=((x*13+y*7+S.seed)%17===0?1:0),v=Math.abs((broad+speck)%4),mask=water?waterMask(x,y):0,key=water?(mask===15?'water-deep':'water-edge'):open?`grass:${v}`:`locked:${v%2}`;if(!batches.has(key))batches.set(key,[]);batches.get(key).push({x,y});}
+function terrain(parent){box(parent,(W-1)/2,-.6,(H-1)/2,W+.8,.48,H+.8,mat('#455a45'),false);const batches=new Map(),matrix=new THREE.Matrix4();for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=idx(x,y),water=S.terr[i]===1,open=isTileUnlocked(x,y),/* Meadow tone. floor(x/n)+floor(y/n) was the obvious way to get patches and
+         the wrong one: a sum of two ramps is constant along a diagonal, so the
+         ground came out in stripes. Hashing the patch coordinate instead gives
+         irregular blobs, and a sparse per-tile term breaks their edges up. */
+      patch=((Math.floor(x/6)*73856093)^(Math.floor(y/6)*19349663)^S.seed)>>>0,
+      fine=((x*29+y*17+S.seed)%37)<3?1:0,
+      v=(patch%6+fine)%6,mask=water?waterMask(x,y):0,key=water?(mask===15?'water-deep':'water-edge'):open?`grass:${v}`:`locked:${v%2}`;if(!batches.has(key))batches.set(key,[]);batches.get(key).push({x,y});}
   for(const [key,cells]of batches){const water=key.startsWith('water'),hex=water?C.water:key.startsWith('locked')?C.locked[+key.at(-1)]:C.grass[+key.at(-1)],height=water?.045:.09,g=geo(`terrain:${water?'water':'land'}`,()=>new THREE.BoxGeometry(1,height,1)),surface=water?basicMat(key==='water-deep'?'#245f7b':'#3f829c'):mat(hex,.93),inst=new THREE.InstancedMesh(g,surface,cells.length);for(let i=0;i<cells.length;i++){matrix.makeTranslation(cells[i].x,water?-.105:-.14,cells[i].y);inst.setMatrixAt(i,matrix);}inst.receiveShadow=true;parent.add(inst);}
   for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(S.terr[idx(x,y)]===1){const mask=waterMask(x,y),shore=mat(C.shore,.95);for(const [bit,dx,dz,w,d]of[[1,0,-.47,.96,.07],[2,.47,0,.07,.96],[4,0,.47,.96,.07],[8,-.47,0,.07,.96]])if(!(mask&bit))box(parent,x+dx,-.07,y+dz,w,.055,d,shore,false);for(const [a,b,dx,dz]of[[1,8,-.46,-.46],[1,2,.46,-.46],[4,8,-.46,.46],[4,2,.46,.46]])if(!(mask&a)&&!(mask&b))cyl(parent,x+dx,-.072,y+dz,.105,.058,shore,10);if((x*13+y*7+S.seed)%11===0){for(const q of[-.035,.035])cyl(parent,x+.32+q,-.05,y+.3,.012,.2,mat('#547750'),5);}}
 }
@@ -286,7 +308,7 @@ export function buildCohesiveWorld(parent){
     if(hasLandmark(key)){
       const fp=getBuildingDefinition(b.type)?.placement?.footprint||[1,1];
       if(!authored.has(key)) authored.set(key,[]);
-      authored.get(key).push({x:b.x+(fp[0]-1)/2,z:b.y+(fp[1]-1)/2});
+      authored.get(key).push({x:b.x+(fp[0]-1)/2,z:b.y+(fp[1]-1)/2,seed:(b.seed||0)>>>0});
     }
     building(parent,b);
   }

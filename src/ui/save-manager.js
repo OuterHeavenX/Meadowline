@@ -226,7 +226,9 @@ function build(){
   });
   document.body.appendChild(root);
   fileInput=document.createElement('input'); fileInput.type='file'; fileInput.accept='application/json,.json'; fileInput.hidden=true; fileInput.addEventListener('change',()=>{importFile(fileInput.files?.[0]);fileInput.value='';}); document.body.appendChild(fileInput);
-  const menuSave=document.getElementById('menu-save'); if(menuSave){menuSave.textContent='Save Manager'; menuSave.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openSaveManager();},true);}
+  // The menu buttons carry an icon beside their label now, so the label is its
+// own element: setting textContent on the button would throw the icon away.
+const menuSave=document.getElementById('menu-save'); if(menuSave){(menuSave.querySelector('.menu-label')||menuSave).textContent='Save Manager'; menuSave.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openSaveManager();},true);}
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&root.classList.contains('open'))close();});
   lastObservedRaw=store.get(KEY);
   setInterval(()=>{const raw=store.get(KEY); if(raw&&raw!==lastObservedRaw&&parseSave(raw)){if(lastObservedRaw&&parseSave(lastObservedRaw))writeBackup(lastObservedRaw,'autosave-recovery');lastObservedRaw=raw;const check=verifyCurrent();if(check.ok)setMeta({savedAt:Date.now(),bytes:raw.length,lastError:null});}},30000);
