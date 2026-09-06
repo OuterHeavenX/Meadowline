@@ -94,11 +94,22 @@ function paintBuildDetail(){
   const fp=footprintLabel(t.id)||'1×1',stage=CITY_STAGES[buildingUnlockStage(t.id)-1]?.name||'Settlement';
   buildDetail.innerHTML='<b>'+t.name+'</b><span>'+t.cost+' coins · '+fp+' · '+stage+'</span><p>'+(d?.description||t.desc)+'</p>';
 }
+/* The hint rides above the dock, and so does the active tool bar, so a hint
+   raised while a tool was armed landed on top of it. The bar's height depends
+   on whether its second line wraps, so it is measured and published the way
+   the tray's is rather than guessed at in CSS. */
+function publishActiveToolHeight(show){
+  requestAnimationFrame(()=>{
+    const h=show&&active?Math.round(active.getBoundingClientRect().height)+8:0;
+    document.documentElement.style.setProperty('--active-h',h+'px');
+  });
+}
 export function paintActiveTool(){
   if(!active)return;
   const t=toolDef(S.tool);
   const show=!!t&&S.tool!=='move'&&S.tool!=='look';
   active.classList.toggle('show',show); active.classList.toggle('danger',S.tool==='erase');
+  publishActiveToolHeight(show);
   if(!show)return;
   if(S.tool==='relocate'){
     if(activeName)activeName.textContent=carrying.on?'Carrying a building':'Move a building';

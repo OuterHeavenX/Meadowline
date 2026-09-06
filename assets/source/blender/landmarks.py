@@ -14,7 +14,9 @@ drifting. See assets/ASSETS.md.
 
 Authoring convention, from that document: Blender is Z-up, one Meadowline tile
 is one unit, the origin is the middle of the footprint at ground level, and the
-front of a building faces +Y here (which the Y-up conversion turns into +Z).
+front of a building faces -Y here (which the Y-up conversion turns into +Z:
+the exporter writes three.js z as -y, so -Y in Blender is the +z the renderer
+turns towards the street).
 Everything is deterministic - no randomness anywhere in this file - so a
 regenerated asset diffs cleanly or not at all.
 
@@ -305,8 +307,14 @@ GLASS = "#9fc0cc"
 
 
 def _lot(w=0.94, d=0.94):
+    """The plot, and the short path across it from the street to the door.
+
+    The path was on +Y, which is the side away from the door every model on
+    this lot puts on -Y. It did not show while every building in the valley
+    faced the same way; now that a building turns to the street it does, as a
+    paving slab stranded in the back garden."""
     box(GRASS_LOT, 0, 0, 0, w, d, 0.05)
-    box(SIDEWALK, 0, d * 0.34, 0.05, 0.22, d * 0.3, 0.012)
+    box(SIDEWALK, 0, -d * 0.34, 0.05, 0.22, d * 0.3, 0.012)
 
 
 def _house(storeys, wall, roof, chimney):
