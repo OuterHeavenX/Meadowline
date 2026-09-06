@@ -18,6 +18,7 @@ import { civicUpgradeStatus, upgradeCivic } from '../progression/civic-upgrades.
 import { evalHouse } from '../simulation/mood.js';
 import { PAL } from '../world/seasons.js';
 import { facilityFootprint, facilityRootAt, idx, inBounds, isWater } from '../world/tiles.js';
+import { roadNearFacility } from '../transport/roads.js';
 import { darkness } from '../world/time.js';
 import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
@@ -123,6 +124,19 @@ function lockedLandCard(x,y){
   return card(parcel.name,"Undeveloped land",'<p>'+terrain+'</p>'+status+'<p class="muted">You can still pan across and enjoy this part of Meadowline before building reaches it.</p>');
 }
 
+/* Whether a street reaches this building. Asked of the building rather than
+   read back off `linked`, so the row is right on the very first paint, before
+   the simulation has run a pass.
+
+   It goes on what actually walks or drives: the trades, the school and the
+   station people travel to, the dock the boats put out from, and the stations
+   that dispatch an engine. A statue does not care, and a row telling you so
+   would be noise. Recreation keeps its own Street access row, which reports
+   the entrance its route was found through. */
+function roadRow(b){
+  const linked=!!roadNearFacility(b);
+  return '<dt>Road access</dt><dd class="'+(linked?'up':'dn')+'">'+(linked?'Connected':'Disconnected')+'</dd>';
+}
 function schoolCard(b){
   const st=schoolStats(b);
   const label=st.overloaded?"At capacity":st.utilization>=75?"Busy":"Good";
@@ -140,7 +154,7 @@ function schoolCard(b){
   }
   return card("Meadowline School","School · Level "+level+" · Education service",
     '<p>Education grows gradually for households this school can serve. Knowledge already gained is kept if coverage changes.</p>'+
-    '<dl><dt>Students served</dt><dd>'+st.served+' / '+st.capacity+'</dd><dt>Demand in reach</dt><dd>'+st.demand+'</dd><dt>Utilization</dt><dd>'+st.utilization+'%</dd><dt>Homes served</dt><dd>'+st.homesCovered+'</dd><dt>Coverage radius</dt><dd>'+st.radius+' tiles</dd><dt>Status</dt><dd class="'+(st.overloaded?'dn':'up')+'">'+label+'</dd></dl>'+
+    '<dl><dt>Students served</dt><dd>'+st.served+' / '+st.capacity+'</dd><dt>Demand in reach</dt><dd>'+st.demand+'</dd><dt>Utilization</dt><dd>'+st.utilization+'%</dd><dt>Homes served</dt><dd>'+st.homesCovered+'</dd><dt>Coverage radius</dt><dd>'+st.radius+' tiles</dd>'+roadRow(b)+'<dt>Status</dt><dd class="'+(st.overloaded?'dn':'up')+'">'+label+'</dd></dl>'+
     (st.overloaded?'<p><b>Some nearby demand is waiting.</b> Build another School or add classroom capacity.</p>':'<p>There is room for this neighborhood to keep learning.</p>')+upgradeHtml);
 }
 
@@ -163,7 +177,7 @@ function municipalCard(b){
   const label=type==='safety'?'Police service':type==='fire'?'Fire response':'Healthcare';
   const city=type==='safety'?S.municipal.safety:type==='fire'?S.municipal.fire:S.municipal.healthcare;
   const demand=type==='safety'?city.active:type==='fire'?city.active:city.demand;
-  return card(def.name,label+' · '+(def.placement?.footprint||[1,1]).join('×'),'<dl class="service"><dt>Capacity</dt><dd>'+cap+'</dd><dt>City demand</dt><dd>'+demand+'</dd><dt>Vehicles active</dt><dd>'+calls+'</dd><dt>Jobs</dt><dd>'+(def.jobs||0)+'</dd><dt>Status</dt><dd class="'+(calls>=cap?'dn':'up')+'">'+(calls>=cap?'Busy':'Ready')+'</dd></dl>');
+  return card(def.name,label+' · '+(def.placement?.footprint||[1,1]).join('×'),'<dl class="service"><dt>Capacity</dt><dd>'+cap+'</dd><dt>City demand</dt><dd>'+demand+'</dd><dt>Vehicles active</dt><dd>'+calls+'</dd><dt>Jobs</dt><dd>'+(def.jobs||0)+'</dd>'+roadRow(b)+'<dt>Status</dt><dd class="'+(calls>=cap?'dn':'up')+'">'+(calls>=cap?'Busy':'Ready')+'</dd></dl>');
 }
 // Where a trade's raw material comes from, for the two links of the food chain
 // that have one. A supplier out of reach halves the yield, so it is the first
@@ -181,7 +195,7 @@ function businessCard(b){
   if(sup) html+='<p>'+(sup.ok?'A '+sup.what+' is within <b>'+sup.r+' tiles</b>, so it runs at <b>full tilt</b>.':'No '+sup.what+' within <b>'+sup.r+' tiles</b>, so it runs at <b>half</b>.')+'</p>';
   html+='<dl class="service">';
   if(sup) html+='<dt>'+sup.label+'</dt><dd class="'+(sup.ok?'up':'dn')+'">'+(sup.ok?'Good':'Short')+'</dd>';
-  html+='<dt>Jobs filled</dt><dd>'+share+' / '+jobs+'</dd><dt>Road access</dt><dd class="'+(b.linked===false?'dn':'up')+'">'+(b.linked===false?'Disconnected':'Connected')+'</dd><dt>City prosperity</dt><dd>'+work.prosperity+' / 100</dd>';
+  html+='<dt>Jobs filled</dt><dd>'+share+' / '+jobs+'</dd>'+roadRow(b)+'<dt>City prosperity</dt><dd>'+work.prosperity+' / 100</dd>';
   if(upkeepOf(b)) html+='<dt>Upkeep</dt><dd class="dn">\u2212'+upkeepOf(b)+' a day</dd>';
   return card(def?.name||'Business','Business',html+'</dl>');
 }
@@ -236,7 +250,7 @@ export function describe(x,y){
         return card("The Farm","Farm",'<p>Grows the grain the windmills grind. Brings in <b>'+Math.round(FARM_YIELD+(PAL.yield||0))+' coins</b> a day at this time of year.</p><dl><dt>Mills it supplies</dt><dd class="'+(feeds?'up':'dn')+'">'+feeds+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,5)+'</dd></dl>');
       }
       case "cafe": return card("The Corner Café","Café",'<p>Trades for <b>9 coins</b> a day and lifts every home within <b>5 tiles</b>.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,5)+'</dd></dl>');
-      case "station": return card("Meadowline Halt","Station",'<p>Worth <b>16</b> to every home within <b>6 tiles</b>, whether or not a train has come yet.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,6)+'</dd><dt>Trains running</dt><dd>'+S.trains.length+'</dd></dl>');
+      case "station": return card("Meadowline Halt","Station",'<p>Worth <b>16</b> to every home within <b>6 tiles</b>, whether or not a train has come yet.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,6)+'</dd>'+roadRow(b)+'<dt>Trains running</dt><dd>'+S.trains.length+'</dd></dl>');
       case "lamp": return card("Street Lamp","Lamp",'<p>A small lift within <b>2 tiles</b> that <b>doubles</b> once the light goes.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,2)+'</dd><dt>Right now</dt><dd>'+(darkness()>0.2?"Lit":"Waiting for dusk")+'</dd></dl>');
       case "mill": return card("The Windmill","Windmill",'<p>Grinds coin every day, and best of all at harvest.</p><dl><dt>Today’s yield</dt><dd>'+Math.round(9+(PAL.yield||0))+'</dd><dt>Charm within 3</dt><dd class="up">+4</dd></dl>');
       case "market": return card("The Market","Market",'<p>Lifts what every café and bakery takes, and cheers the streets within <b>5 tiles</b>.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,5)+'</dd><dt>Trades lifted</dt><dd>'+(S.ctx.cafes.length+S.ctx.bakeries.length)+'</dd></dl>');
@@ -245,7 +259,7 @@ export function describe(x,y){
         return card("The Bakery","Bakery",'<p>Bakes what the windmills grind. '+(supplied?'A mill is in reach, so it runs at <b>full tilt</b>.':'No mill within <b>4 tiles</b>, so it runs at <b>half</b>.')+'</p><dl><dt>Flour supply</dt><dd class="'+(supplied?'up':'dn')+'">'+(supplied?'Good':'Short')+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,4)+'</dd></dl>');
       }
       case "school": return schoolCard(b);
-      case "dock": return card("The Dock","Dock",'<p>Boats put out from here and sail the open water. Homes with a view of it are cheered for <b>4 tiles</b>.</p><dl><dt>Boats afloat</dt><dd>'+S.boats.length+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,4)+'</dd></dl>');
+      case "dock": return card("The Dock","Dock",'<p>Boats put out from here and sail the open water. Homes with a view of it are cheered for <b>4 tiles</b>.</p><dl><dt>Boats afloat</dt><dd>'+S.boats.length+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,4)+'</dd>'+roadRow(b)+'</dl>');
       case "tree": return card("Planted Trees","Trees",'<p>A small lift to any home with a view of them, out to <b>3 tiles</b>.</p>');
       case "road": return card(isWater(rx,ry)?"Road Bridge":"Road",isWater(rx,ry)?"Span":"Road",'<p>Homes fill up only when a road runs alongside. Citizens walk wherever it leads.</p>');
       case "rail": return card(isWater(rx,ry)?"Rail Bridge":"Rail",isWater(rx,ry)?"Span":"Rail",'<p>Trains appear once <b>6 tiles</b> of rail exist, and one more for every 13 after.</p>');

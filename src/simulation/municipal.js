@@ -3,6 +3,7 @@ import { DIRS } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { findPath } from '../transport/pathfinding.js';
+import { roadNearFacility } from '../transport/roads.js';
 import { emitFeedback } from './feedback.js';
 import { crossingBlockedByTrain } from './mobility.js';
 import { recomputeEmployment } from './employment.js';
@@ -15,7 +16,7 @@ const INCIDENT_LIMIT=12,SERVICE_VEHICLE_LIMIT=6;
 // silence Police, Fire or Healthcare for the rest of the session.
 const INCIDENT_TIMEOUT=90;
 function roots(type){return(S.grid||[]).filter(b=>b&&!isFacilityPart(b)&&b.type===type);}
-function entry(b){const fp=getBuildingDefinition(b.type)?.placement?.footprint||[1,1];for(let y=b.y;y<b.y+fp[1];y++)for(let x=b.x;x<b.x+fp[0];x++)for(const[dx,dy]of DIRS)if(isType(x+dx,y+dy,'road'))return{x:x+dx,y:y+dy};return null;}
+const entry=roadNearFacility;
 function capacity(types){return types.reduce((n,t)=>n+roots(t).reduce((a,b)=>a+(getBuildingDefinition(b.type)?.service?.capacity||0),0),0);}
 function targetBuilding(){const pool=(S.grid||[]).filter(b=>b&&!isFacilityPart(b)&&['house','cafe','market','bakery'].includes(b.type)&&entry(b));return pool[(Math.random()*pool.length)|0]||null;}
 function path(a,b){return a&&b?findPath(a.x,a.y,b.x,b.y,(x,y)=>isType(x,y,'road'),4000):null;}

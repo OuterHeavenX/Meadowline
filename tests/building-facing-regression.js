@@ -6,6 +6,7 @@ import { roadNear, roadNearFacility } from '../src/transport/roads.js';
 import { facingAngle } from '../src/world/facing.js';
 import { genWorld } from '../src/world/map.js';
 import { facilityRootAt, idx } from '../src/world/tiles.js';
+import { describe } from '../src/ui/panels.js';
 import { COLORS as HOUSE_COLORS, GROUPS as HOUSE_GROUPS, POSITIONS as HOUSE_POSITIONS } from '../src/rendering/assets/house-1.mesh.js';
 
 const checks=[];
@@ -144,6 +145,33 @@ check('a building cannot be moved into the water',!canRelocate(shop,25,25).ok,ca
 check('a building cannot be moved outside the valley',!canRelocate(shop,-3,20).ok,canRelocate(shop,-3,20).why);
 check('a building cannot be moved onto the tile it already stands on',!canRelocate(shop,20,20).ok);
 check('every refusal still leaves it standing where it was',S.grid[idx(20,20)]===shop&&shop.x===20&&shop.y===20);
+
+/* ---------- the panel says so ----------
+   The reading was computed correctly and then shown on one card out of six, so
+   a Hospital or a School could not be checked at all and a Bakery was the only
+   building that ever admitted to being cut off. A road is only worth reporting
+   where one does something: the trades and the school people walk to, the
+   station and the dock they set out from, and the stations that dispatch an
+   engine. */
+function roadReading(x,y){
+  const m=describe(x,y).match(/Road access[\s\S]{0,90}?(Connected|Disconnected)/);
+  return m?m[1]:'(no row)';
+}
+for(const [type,fp] of [['school',1],['hospital',3],['fireStation',2],['bakery',1],['cafe',1],['market',1]]){
+  reset();
+  place(type,20,20);
+  recompute();
+  check(type+' with no street reads Disconnected',roadReading(20,20)==='Disconnected',roadReading(20,20));
+  // The street goes along the far side, which the anchor tile never touches.
+  for(let x=19;x<=20+fp;x++) place('road',x,20+fp);
+  recompute();
+  check(type+' with a street on its far side reads Connected',roadReading(20,20)==='Connected',roadReading(20,20));
+}
+// Things a road does nothing for do not get a row telling you so.
+for(const type of ['statue','farm','tree']){
+  reset(); place(type,20,20); recompute();
+  check(type+' has no road access row',roadReading(20,20)==='(no row)',roadReading(20,20));
+}
 
 const failed=checks.filter(c=>!c.pass);
 document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);
