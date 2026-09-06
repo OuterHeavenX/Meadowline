@@ -24,7 +24,32 @@ const homes=[root('house',6,6,{housingTier:1}),root('house',8,6,{housingTier:2})
 check('residential tiers have distinct archetypes',new Set(homes.map(h=>visualDescriptor(h).archetype)).size===3,homes.map(h=>visualDescriptor(h).archetype));
 const before=homes.map(h=>JSON.stringify(h.state)).join('|');for(const h of homes)check('visual variation is deterministic',visualDescriptor(h).variant===visualDescriptor(h).variant);check('visual descriptors do not mutate Housing',before===homes.map(h=>JSON.stringify(h.state)).join('|'));
 for(const type of Object.keys(BUILDINGS))check(`${type} has a visual archetype`,!!visualDescriptor({type,seed:7,state:{}})?.archetype);
-S.rendererMode='gpu';S.quality='balanced';resetThreeRenderer();const rendered=renderThreeScene(),snap=threeSnapshot();check('cohesive Three scene initializes',rendered,snap.error);if(rendered){check('art kit creates shared materials',artMetrics().materials>8,artMetrics());check('world creates real geometry',snap.geometries>0,snap);check('draw calls remain bounded',snap.drawCalls<1100,snap.drawCalls);check('visual tree count is bounded',snap.visibleTrees<=900,snap.visibleTrees);{const treesBefore=snap.visibleTrees,callsBefore=snap.drawCalls;for(let x=2;x<40;x++)S.natTree[idx(L(x),L(41))]=1;renderThreeScene();const grown=threeSnapshot();check('more trees do not cost more draw calls',grown.visibleTrees>=treesBefore&&grown.drawCalls<=callsBefore+2,{trees:treesBefore+'->'+grown.visibleTrees,calls:callsBefore+'->'+grown.drawCalls});check('authored tree geometry reaches the scene',(S.diagnostics.treeTriangles||0)>=grown.visibleTrees*184,S.diagnostics.treeTriangles);}const gridBefore=JSON.stringify(S.grid);S.tool='house';hover.x=Math.round(LAND_PARCELS[0].x+LAND_PARCELS[0].w/2);hover.y=Math.round(LAND_PARCELS[0].y+LAND_PARCELS[0].h/2);hover.on=true;renderThreeScene();const overlay=threeSnapshot();check('GPU placement overlay renders without mutating grid',overlay.drawCalls>snap.drawCalls&&JSON.stringify(S.grid)===gridBefore,{base:snap.drawCalls,overlay:overlay.drawCalls});hover.on=false;S.tool='move';}
+S.rendererMode='gpu';S.quality='balanced';resetThreeRenderer();const rendered=renderThreeScene(),snap=threeSnapshot();check('cohesive Three scene initializes',rendered,snap.error);if(rendered){check('art kit creates shared materials',artMetrics().materials>8,artMetrics());check('world creates real geometry',snap.geometries>0,snap);check('draw calls remain bounded',snap.drawCalls<1100,snap.drawCalls);check('visual tree count is bounded',snap.visibleTrees<=900,snap.visibleTrees);{const treesBefore=snap.visibleTrees,callsBefore=snap.drawCalls;for(let x=2;x<40;x++)S.natTree[idx(L(x),L(41))]=1;renderThreeScene();const grown=threeSnapshot();check('more trees do not cost more draw calls',grown.visibleTrees>=treesBefore&&grown.drawCalls<=callsBefore+2,{trees:treesBefore+'->'+grown.visibleTrees,calls:callsBefore+'->'+grown.drawCalls});check('authored tree geometry reaches the scene',(S.diagnostics.treeTriangles||0)>=grown.visibleTrees*184,S.diagnostics.treeTriangles);}
+  /* A road tile is a slab, its kerbs, its pavements and its centre line: a
+     dozen boxes. Drawn one mesh each, six hundred tiles of street came to
+     thousands of draw calls and a tenth of a second of rebuild on every tap.
+     Batched, a street costs what one street costs however long it is - the
+     same bargain the trees strike above, and the same test. */
+  {
+    // The first street introduces one batch per piece and colour - asphalt,
+    // kerb, pavement, centre line - and every street after that is free. So
+    // the number to watch is not what the first road costs but what the next
+    // forty tiles cost on top of it, which should be nothing.
+    const bare=threeSnapshot().drawCalls;
+    for(let x=4;x<24;x++) road(L(x),L(30));
+    renderThreeScene();
+    const oneStreet=threeSnapshot().drawCalls;
+    for(let x=4;x<44;x++){ road(L(x),L(34)); road(L(x),L(38)); }
+    for(let y=30;y<=38;y++){ road(L(24),L(y)); road(L(34),L(y)); }
+    renderThreeScene();
+    const paved=threeSnapshot();
+    check('a street costs a fixed number of draw calls, not one per tile',oneStreet-bare<=20,
+      {calls:bare+'->'+oneStreet});
+    check('four times the road costs no more draw calls',paved.drawCalls<=oneStreet+4,
+      {calls:oneStreet+'->'+paved.drawCalls});
+    check('a paved map stays well inside the draw-call budget',paved.drawCalls<400,paved.drawCalls);
+  }
+  {const gridBefore=JSON.stringify(S.grid);S.tool='house';hover.x=Math.round(LAND_PARCELS[0].x+LAND_PARCELS[0].w/2);hover.y=Math.round(LAND_PARCELS[0].y+LAND_PARCELS[0].h/2);hover.on=true;renderThreeScene();const overlay=threeSnapshot();check('GPU placement overlay renders without mutating grid',overlay.drawCalls>snap.drawCalls&&JSON.stringify(S.grid)===gridBefore,{base:snap.drawCalls,overlay:overlay.drawCalls});hover.on=false;S.tool='move';}}
 // Cafe, Market, Bakery and Station shared one storefront box with a different
 // paint colour, so four trades read as the same shop four times over at play
 // distance. Each now carries a silhouette cue, which means measurably different

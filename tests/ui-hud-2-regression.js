@@ -16,7 +16,7 @@ check('four-stage badge uses an authoritative stage',['Settlement','Village','To
 check('build catalog opens',d.getElementById('build-tray').classList.contains('open'));
 check('registry cards render',d.querySelectorAll('#tools .tool').length>0);
 check('selected building detail uses footprint',d.getElementById('build-detail').textContent.includes('1×1'));
-check('five command actions render',d.querySelectorAll('.commandbar>button,.commandbar .modes>.tool').length===5);
+check('six command actions render',d.querySelectorAll('.commandbar>button,.commandbar .modes>.tool').length===6,[...d.querySelectorAll('.commandbar>button,.commandbar .modes>.tool')].map(b=>b.dataset.id||b.id).join(','));
 check('safe-area dock exists',getComputedStyle(d.querySelector('.dock')).position==='fixed');
 check('no Level 5 text exists',!d.body.textContent.includes('Level 5'));
 check('main menu has real actions',!!d.getElementById('b-start')&&!!d.getElementById('menu-new')&&!!d.getElementById('menu-settings'));
@@ -169,6 +169,12 @@ if(hallState){
         'level '+levelBefore+'->'+civic.state.level+' coins '+coinsBefore+'->'+Math.round(hallState.coins));
     }
   }
+  // The upgrade above spends from the same purse. 1914 coins covered the
+  // upgrade and a parcel back when a parcel cost 320; parcel prices scale with
+  // the valley and the cheapest is 1280 now, so the two checks were quietly
+  // competing for the money and land always lost. Each step gets a purse that
+  // can pay for it.
+  hallState.coins=Math.max(hallState.coins||0,6000);
   hall.querySelector('[data-cityhall-nav="land"]')?.click();
   const parcelBtn=hall.querySelector('[data-cityhall-parcel]:not([disabled])');
   check('City Hall offers a live land purchase',!!parcelBtn,parcelBtn?.textContent?.trim()||'(none available)');

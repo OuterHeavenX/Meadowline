@@ -6,11 +6,11 @@ import { graphicsProfile,effectiveQuality } from './capabilities.js';
 import { darkness } from '../world/time.js';
 import { cloudOpacity, clouds, storm } from '../world/weather.js';
 import { screen2world, viewRotation } from '../world/map.js';
-import { footprintCells,idx,inBounds,isFacilityPart,isType } from '../world/tiles.js';
+import { idx,inBounds,isFacilityPart,isType } from '../world/tiles.js';
 import { buildCohesiveWorld, artMetrics, litMaterials, roadIsWet } from './three-world-art.js';
 import { landmarkGlowMaterials } from './landmark-assets.js';
-import { canPlace } from '../buildings/buildings.js';
 import { hover } from './interaction-state.js';
+import { toolPreview } from '../buildings/preview.js';
 import { headingAngle, laneOffset, sidewalkOffset } from '../transport/lanes.js';
 import { signalJunctions, signalPhase } from '../transport/signals.js';
 
@@ -26,7 +26,7 @@ function box(x,y,z,w,h,d,material,parent=world,shadow=true){return mesh(geo(`box
 function cylinder(x,y,z,r,h,material,parent=world,sides=8){return mesh(geo(`cyl:${r}:${h}:${sides}`,()=>new THREE.CylinderGeometry(r,r,h,sides)),material,x,y+h/2,z,parent,true);}
 function pyramid(x,y,z,r,h,material,parent=world,sides=4){const m=mesh(geo(`cone:${r}:${h}:${sides}`,()=>new THREE.ConeGeometry(r,h,sides)),material,x,y+h/2,z,parent,true);m.rotation.y=Math.PI/4;return m;}
 function roof(x,y,z,w,d,h,material,parent=world){const shape=new THREE.BufferGeometry(),v=new Float32Array([-w/2,0,-d/2,w/2,0,-d/2,0,h,-d/2,-w/2,0,d/2,0,h,d/2,w/2,0,d/2,-w/2,0,-d/2,-w/2,0,d/2,0,h,d/2,0,h,-d/2,w/2,0,-d/2,0,h,-d/2,0,h,d/2,w/2,0,d/2,-w/2,0,-d/2,w/2,0,-d/2,w/2,0,d/2,-w/2,0,d/2]);shape.setAttribute('position',new THREE.BufferAttribute(v,3));shape.computeVertexNormals();return mesh(shape,material,x,y,z,parent,true);}
-function disposeGroup(group){if(!group)return;const cached=new Set(geos.values());scene.remove(group);group.traverse(o=>{if(o.geometry&&!cached.has(o.geometry)&&!o.geometry.userData?.meadowlineCached)o.geometry.dispose?.();});}
+function disposeGroup(group){if(!group)return;const cached=new Set(geos.values());scene.remove(group);group.traverse(o=>{if(o.isInstancedMesh)o.dispose?.();if(o.geometry&&!cached.has(o.geometry)&&!o.geometry.userData?.meadowlineCached)o.geometry.dispose?.();});}
 function addWindow(parent,x,y,z,axis='z',lit=false){const m=lit?glowMat('#ffd98c'):mat('#6aa1b1',.35,.08),w=axis==='z'?.22:.04,d=axis==='z'?.04:.22;box(x,y,z,w,.28,d,m,parent,false);}
 function tree(x,z,seed=1,scale=1,parent=world){const trunk=mat('#704d35'),greens=['#3f8b55','#55a85d','#72b65e','#3d7753'],g=greens[Math.abs(seed)%greens.length];cylinder(x,0,z,.09*scale,.52*scale,trunk,parent,7);if(seed%3===0){pyramid(x,.42*scale,z,.48*scale,1.25*scale,mat(g),parent,7);}else{const canopy=mesh(geo('dodeca',()=>new THREE.DodecahedronGeometry(.52,0)),mat(g),x,.95*scale,z,parent,true);canopy.scale.set(scale,.92*scale,scale);}}
 function buildingPalette(type,seed){const palettes={house:['#e8d5b8','#d8c0a5','#c7d4c5','#e5c0ad'],cafe:['#d39b73'],market:['#c8d1c8'],bakery:['#e6c890'],mill:['#d7ccb2'],school:['#d9c59f'],cityHall:['#d9d6ca'],policeStation:['#9fc1cf'],fireStation:['#d99182'],clinic:['#e8e9e2'],hospital:['#e7e9e7'],station:['#b7b3a9']};const a=palettes[type]||['#c9c6b7'];return a[Math.abs(seed||0)%a.length];}
@@ -62,8 +62,10 @@ function addVehicle(v,service=false){const lane=laneOffset(v),x=lerp(v.x,v.nx,v.
 function addInteractionOverlay(){
   if(S.pick&&inBounds(S.pick.x,S.pick.y)){const pulse=.42+.16*Math.sin(S.t*3);box(S.pick.x,.12,S.pick.y,.94,.025,.94,overlayMat('#e5b75b',pulse),dynamic,false);}
   if(!hover.on||S.tool==='move'||S.tool==='look'||!inBounds(hover.x,hover.y))return;
-  const def=getBuildingDefinition(S.tool),cells=def?footprintCells(S.tool,hover.x,hover.y):[{x:hover.x,y:hover.y}],i=idx(hover.x,hover.y),ok=S.tool==='erase'?(!!S.grid[i]||!!S.natTree[i]):S.tool==='water'?(!S.grid[i]&&S.terr[i]!==1):canPlace(S.tool,hover.x,hover.y).ok,material=overlayMat(ok?'#dff1c5':'#d66050',ok ? .34 : .42);
-  for(const c of cells)if(inBounds(c.x,c.y))box(c.x,.13,c.y,.94,.025,.94,material,dynamic,false);
+  const preview=toolPreview(S.tool,hover.x,hover.y);
+  if(!preview)return;
+  const material=overlayMat(preview.ok?'#dff1c5':'#d66050',preview.ok?.34:.42);
+  for(const c of preview.cells)if(inBounds(c.x,c.y))box(c.x,.13,c.y,.94,.025,.94,material,dynamic,false);
 }
 function cloudMat(){
   const key='cloud:body';

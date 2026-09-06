@@ -44,7 +44,8 @@ export const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 export const TOOLS=[
   ...buildingToolDefinitions(),
   {id:"water",name:"Water",cost:6,key:"w",desc:"Hold and drag to shape a pond on clear, opened land.",cat:"landscaping"},
-  {id:"move",name:"Move",cost:0,key:"1",desc:"Drag to pan the valley. Scroll or pinch to zoom.",cat:"mode"},
+  {id:"move",name:"Pan",cost:0,key:"1",desc:"Drag to pan the valley. Scroll or pinch to zoom.",cat:"mode"},
+  {id:"relocate",name:"Move",cost:0,key:"o",desc:"Tap a building to pick it up, then tap where it should go.",cat:"mode"},
   {id:"look",name:"Look",cost:0,key:"i",desc:"Tap anything to ask how it's doing, and why.",cat:"mode"},
   {id:"erase",name:"Remove",cost:0,key:"e",desc:"Clears a tile and refunds half the cost.",cat:"mode"}
 ];
@@ -62,7 +63,8 @@ export const CATEGORIES=[
 ];
 
 export const ICONS={
-  move:'<path d="M12 3v18M3 12h18M12 3l-2.4 2.4M12 3l2.4 2.4M12 21l-2.4-2.4M12 21l2.4-2.4M3 12l2.4-2.4M3 12l2.4 2.4M21 12l-2.4-2.4M21 12l2.4 2.4"/>',
+  move:'<path d="M6.5 11V6.2a1.5 1.5 0 0 1 3 0V5a1.5 1.5 0 0 1 3 0v.8a1.5 1.5 0 0 1 3 0V7a1.5 1.5 0 0 1 3 0v6.5a6.5 6.5 0 0 1-6.5 6.5h-1a5 5 0 0 1-3.6-1.5L3 14.6a1.6 1.6 0 0 1 2.2-2.3l1.3 1.1"/>',
+  relocate:'<path d="M12 3v18M3 12h18M12 3l-2.4 2.4M12 3l2.4 2.4M12 21l-2.4-2.4M12 21l2.4-2.4M3 12l2.4-2.4M3 12l2.4 2.4M21 12l-2.4-2.4M21 12l2.4 2.4"/>',
   road:'<path d="M7 21 4.5 3M17 21l2.5-18M12 4.5v3M12 11v3M12 17.5v3"/>',
   rail:'<path d="M8 3v18M16 3v18M5 7.5h14M5 12h14M5 16.5h14"/>',
   house:'<path d="M3.5 11.5 12 4l8.5 7.5M6 10.5V20h12v-9.5M10 20v-5h4v5"/>',

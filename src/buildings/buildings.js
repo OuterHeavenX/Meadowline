@@ -170,6 +170,62 @@ export function place(kind,x,y){
   return true;
 }
 
+/* ---------- moving a building ----------
+   Getting a building one tile wrong meant demolishing it and paying for a new
+   one, which lost its level, its residents and its name. A building can be
+   picked up and set down instead. It is the same building afterwards - the
+   seed that gives it its colours and its name travels with it - so this is a
+   move, not a rebuild, and it costs nothing: nothing was built.
+
+   The footprint is lifted out of the grid before the destination is tested,
+   so a building can shuffle one tile sideways without its own tiles being
+   what blocks it. */
+function relocationIssue(root,x,y){
+  if(!inBounds(x,y)) return 'That is outside the valley.';
+  const fp=getBuildingDefinition(root.type)?.placement?.footprint||[1,1];
+  if(!isFootprintUnlocked(x,y,fp[0],fp[1])) return 'This land has not been opened yet.';
+  const issue=footprintIssue(root.type,x,y);
+  if(issue) return issue;
+  const def=getBuildingDefinition(root.type);
+  const adj=def?.placement?.requiresAdjacent;
+  if(adj&&!footprintCells(root.type,x,y).some(c=>DIRS.some(([dx,dy])=>isType(c.x+dx,c.y+dy,adj))))
+    return (def.name||'This')+' has to touch a '+adj+' tile.';
+  if(def?.placement?.requiresAdjacentWater&&!footprintCells(root.type,x,y).some(c=>DIRS.some(([dx,dy])=>isWater(c.x+dx,c.y+dy))))
+    return root.type==='dock'?"A dock has to stand at the water's edge.":(def?.name||'This')+" has to stand at the water's edge.";
+  return '';
+}
+// Ways are painted a tile at a time and cleared the same way, so carrying one
+// about is neither useful nor meaningful. Everything else in the valley moves.
+export function isMovable(root){
+  if(!root||isFacilityPart(root)||!BUILDABLE[root.type]) return false;
+  return root.type!=='road'&&root.type!=='rail'&&!isRoadRailCrossing(root);
+}
+export function canRelocate(root,x,y){
+  if(!root||isFacilityPart(root)||!BUILDABLE[root.type]) return {ok:false,why:'There is nothing here to move.'};
+  if(!isMovable(root)) return {ok:false,why:'Ways are laid and cleared rather than carried about.'};
+  if(root.x===x&&root.y===y) return {ok:false,why:'It is already there.'};
+  clearFacility(root);
+  const issue=relocationIssue(root,x,y);
+  restoreFacilityOccupancy(root);
+  return issue?{ok:false,why:issue}:{ok:true};
+}
+export function relocate(root,x,y){
+  const check=canRelocate(root,x,y);
+  if(!check.ok){ if(check.why) services.hint(check.why,true); return check; }
+  const from={x:root.x,y:root.y};
+  clearFacility(root);
+  root.x=x; root.y=y;
+  if(!restoreFacilityOccupancy(root)){
+    root.x=from.x; root.y=from.y; restoreFacilityOccupancy(root);
+    services.hint('That facility could not be moved safely.',true);
+    return {ok:false,why:'unsafe'};
+  }
+  invalidateServices(); invalidateCitySummary(); invalidateRecreation(); invalidateMobility();
+  services.puff(x,y); services.blip(470,0.06,'triangle');
+  if(S.diagnostics) S.diagnostics.buildingsMoved=(S.diagnostics.buildingsMoved||0)+1;
+  return {ok:true,from};
+}
+
 // A tap should never quietly destroy something expensive. The old gate was
 // footprint area, which asked about a 3×3 Picnic Green but not about a
 // 520-coin Fire Station at 2×3. Value is what the player actually loses, so
