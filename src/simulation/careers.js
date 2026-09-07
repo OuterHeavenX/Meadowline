@@ -56,6 +56,8 @@ export const CAREERS={
   millWorker:    {at:['mill'],           label:'mill worker',      lean:['discipline',.4]},
   baker:         {at:['bakery'],         label:'baker',            lean:['creativity',.4]},
   marketTrader:  {at:['market'],         label:'market trader',    lean:['sociability',.6]},
+  shopkeeper:    {at:['generalStore','teaHouse'],label:'shopkeeper', lean:['entrepreneurship',.6]},
+  bookseller:    {at:['bookshop'],       label:'bookseller',       lean:['creativity',.5]},
   cafeOwner:     {at:['cafe'],           label:'café owner',       lean:['entrepreneurship',.9],owner:true},
   cafeWorker:    {at:['cafe'],           label:'café worker',      lean:['sociability',.4]},
   teacher:       {at:['school','greatLibrary'],label:'teacher',    lean:['compassion',.5],edu:35},

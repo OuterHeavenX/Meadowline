@@ -308,7 +308,7 @@ function describeTile(x,y){
     if(getBuildingDefinition(b.type)?.service?.type==='recreation') return recreationCard(b);
     if(['safety','fire','healthcare'].includes(getBuildingDefinition(b.type)?.service?.type)) return municipalCard(b);
     if(getBuildingDefinition(b.type)?.category==='wonder') return wonderCard(b);
-    if(['cafe','market','bakery','mill'].includes(b.type)&&getBuildingDefinition(b.type)?.jobs) return businessCard(b);
+    if((['cafe','market','bakery','mill'].includes(b.type)||getBuildingDefinition(b.type)?.trade)&&getBuildingDefinition(b.type)?.jobs) return businessCard(b);
     switch(b.type){
       case "farm": {
         const feeds=(S.ctx.mills||[]).filter(w=>Math.abs(w.x-rx)<=FARM_MILL_R&&Math.abs(w.y-ry)<=FARM_MILL_R).length;

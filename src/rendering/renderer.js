@@ -1,7 +1,7 @@
 import { getBuildingDefinition } from '../buildings/registry.js';
 import { clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
-import { drawBakery, drawCafe, drawDock, drawLamp, drawMarket, drawPark, drawSchool, drawStation, drawWindmill } from './buildings.js';
+import { drawBakery, drawCafe, drawDock, drawLamp, drawMarket, drawPark, drawSchool, drawShop, drawStation, drawWindmill } from './buildings.js';
 import { drawRecreationFacility } from './recreation.js';
 import { drawCityHall } from './city-hall.js';
 import { drawHousingHouse } from './housing.js';
@@ -124,6 +124,7 @@ export function render(){
       else if(t==="park") drawPark(it.b,p);
       else if(getBuildingDefinition(t)?.service?.type==='recreation') drawRecreationFacility(it.b,dark);
       else if(t==="cafe") drawCafe(it.b,p,dark);
+      else if(t==="generalStore"||t==="teaHouse"||t==="bookshop") drawShop(it.b,p,dark);
       else if(t==="station") drawStation(it.b,p,dark);
       else if(t==="lamp") drawLamp(it.b,p,dark);
       else if(t==="mill") drawWindmill(it.b,p,dark);

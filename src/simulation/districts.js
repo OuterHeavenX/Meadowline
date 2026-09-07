@@ -43,7 +43,7 @@ const NOT_DEVELOPMENT=new Set(['road','rail','tree','lamp']);
 
 const SECTOR={
   farm:'agriculture',mill:'agriculture',
-  cafe:'trade',market:'trade',bakery:'trade',
+  cafe:'trade',market:'trade',bakery:'trade',generalStore:'trade',teaHouse:'trade',bookshop:'trade',
   school:'civic',cityHall:'civic',policeStation:'civic',fireStation:'civic',clinic:'civic',hospital:'civic',
   station:'transport',dock:'transport',
   park:'recreation',pocketPark:'recreation',playground:'recreation',picnicGreen:'recreation',sportsCourt:'recreation',townPark:'recreation',

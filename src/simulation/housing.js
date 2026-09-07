@@ -93,6 +93,11 @@ export function desirabilityDetails(h){
   const cafes=countNear(c.cafes,h,5), cafe=Math.min(6,cafes*2);
   if(cafe){ total+=cafe; rows.push({label:"Cafés nearby",value:cafe}); }
 
+  // Shops do the same job as a café for a street, and are capped the same way
+  // so a parade of them cannot carry a home to a Mansion on its own.
+  const shops=countNear(c.shops,h,5), shop=Math.min(6,shops*2);
+  if(shop){ total+=shop; rows.push({label:"Shops nearby",value:shop}); }
+
   const stations=countNear(c.stations,h,6);
   if(stations){ total+=8; rows.push({label:"Station access",value:8}); }
 

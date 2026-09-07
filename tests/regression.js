@@ -207,9 +207,16 @@ check('the threshold is value, not footprint',BUILDINGS.fireStation.cost>=CONFIR
 const clashes=conflictingToolKeys(TOOLS);
 check('no tool key shadows a shell shortcut',clashes.length===0,clashes.join(','));
 check('the postcard key stays reserved',RESERVED_SHORTCUT_KEYS.has('p')&&!TOOLS.some(t=>t.key==='p'));
-check('every tool still has a key',TOOLS.every(t=>typeof t.key==='string'&&t.key.length>0));
-const keys=TOOLS.map(t=>t.key);
-check('tool keys remain unique',new Set(keys).size===keys.length);
+/* Not every tool has a key any more. The letters ran out: the alphabet is
+   twenty-six long, the shell owns several of them and the build menu passed
+   that count with the trade shops. A tool without a key is reachable from the
+   Build menu like any other; what must never happen is two tools answering to
+   the same letter. */
+check('every tool declares a key, even if it is the empty one',
+  TOOLS.every(t=>typeof t.key==='string'));
+const keys=TOOLS.map(t=>t.key).filter(k=>k.length>0);
+check('tool keys remain unique',new Set(keys).size===keys.length,
+  keys.filter((k,i)=>keys.indexOf(k)!==i).join(','));
 /* Every key the shell listens for must be reserved, or the tool that owns that
    letter swallows it and the shortcut silently does nothing. The newspaper was
    bound to 'n', which is the Farm's key, and never once opened from the

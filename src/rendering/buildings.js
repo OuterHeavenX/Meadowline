@@ -95,6 +95,38 @@ export function drawHouse(b,p,dark){
   }
 }
 
+const SHOP={
+  generalStore:{wall:"#e9e0cc",trim:"#c2b393",dark:"#a3906a",sign:"#6d5b3d",awning:"#9c8a63"},
+  teaHouse:    {wall:"#efe6f0",trim:"#c6b3cf",dark:"#a892b4",sign:"#6a4d78",awning:"#8d6fa0"},
+  bookshop:    {wall:"#e3ecf3",trim:"#a9c0d3",dark:"#8aa4bb",sign:"#3f5a76",awning:"#5b7f9f"}
+};
+/* The shops share the café's massing and differ in their front: a painted
+   sign board over the door and an awning in the trade's own colour. At play
+   distance that is what tells a bookshop from a tea house. */
+export function drawShop(b,p,dark){
+  const z=S.cam.z, c=SHOP[b.type]||SHOP.generalStore;
+  groundShadow(p.x,p.y,18*z,8*z);
+  const topY=box(p.x,p.y,0.66,14,c.wall,c.dark,c.trim);
+  snowCap(p.x,topY,0.66);
+  const hw=TW/2*0.66*z;
+  // Sign board across the front, then a scalloped awning below it.
+  g.fillStyle=c.sign;
+  g.fillRect(p.x-hw*0.86,p.y-11.5*z,hw*1.72,3.2*z);
+  for(let i=0;i<5;i++){
+    g.fillStyle=i%2?c.awning:c.wall;
+    g.fillRect(p.x-hw+i*(hw*2/5),p.y-8*z,hw*2/5,3*z);
+  }
+  // Window, lit after dark like every other trade.
+  g.fillStyle="rgba(120,140,150,.5)";
+  g.fillRect(p.x-hw*0.5,topY+6*z,5*z,5*z);
+  if(dark>0.12) lights.push({x:p.x-hw*0.5,y:topY+6*z,w:5*z,h:5*z});
+  // A crate outside the general store, a bench at the tea house, a rack of
+  // books at the bookshop: one small prop each, which is enough.
+  if(b.type==='generalStore'){ g.fillStyle="#b08d5c"; g.fillRect(p.x+hw*0.45,p.y-2*z,4.5*z,4*z); }
+  else if(b.type==='teaHouse'){ g.fillStyle="#8d7a5f"; g.fillRect(p.x+hw*0.4,p.y-1*z,6*z,1.6*z); g.fillRect(p.x+hw*0.4,p.y+0.6*z,1.4*z,2.4*z); g.fillRect(p.x+hw*0.4+4.6*z,p.y+0.6*z,1.4*z,2.4*z); }
+  else { for(let i=0;i<3;i++){ g.fillStyle=["#9c5a4c","#4f6f8d","#b08b3f"][i]; g.fillRect(p.x+hw*0.42+i*1.7*z,p.y-3*z,1.4*z,4.2*z); } }
+}
+
 export function drawCafe(b,p,dark){
   const z=S.cam.z;
   groundShadow(p.x,p.y,18*z,8*z);

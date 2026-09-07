@@ -104,7 +104,7 @@ export function evalHouse(h,out){
 }
 
 export function recompute(){
-  const parks=[],recreation=[],cafes=[],stations=[],houses=[],lamps=[],mills=[],markets=[],bakeries=[],schools=[],docks=[],farms=[],wonders=[];
+  const parks=[],recreation=[],cafes=[],stations=[],houses=[],lamps=[],mills=[],markets=[],bakeries=[],schools=[],docks=[],farms=[],wonders=[],shops=[];
   for(let i=0;i<S.grid.length;i++){
     const b=S.grid[i]; if(!b||isFacilityPart(b)) continue;
     /* Road access used to be worked out inside evalHouse and nowhere else, so
@@ -125,9 +125,11 @@ export function recompute(){
     else if(b.type==="school") schools.push(b);
     else if(b.type==="dock") docks.push(b);
     else if(b.type==="farm") farms.push(b);
+    // Every shop that declares a trade yield, so a new one needs no code here.
+    else if(getBuildingDefinition(b.type)?.trade) shops.push(b);
     if(getBuildingDefinition(b.type)?.category==='wonder') wonders.push(b);
   }
-  S.ctx={parks,recreation,cafes,stations,houses,lamps,mills,markets,bakeries,schools,docks,farms,wonders};
+  S.ctx={parks,recreation,cafes,stations,houses,lamps,mills,markets,bakeries,schools,docks,farms,wonders,shops};
   // The house list the recreation signature describes has just been rebuilt.
   markRecreationPopulation();
 

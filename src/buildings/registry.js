@@ -74,6 +74,22 @@ export const BUILDINGS={
   market:{id:"market",name:"Market",category:"trade",cost:130,key:"r",upkeep:6,unlockStage:2,description:"A hub for trade — lifts what every café and bakery nearby takes.",renderKey:"market",jobs:8,placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
   bakery:{id:"bakery",name:"Bakery",category:"trade",cost:80,key:"k",upkeep:4,unlockStage:2,description:"Bakes what the windmills grind. Wants a mill within four tiles.",renderKey:"bakery",jobs:6,placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
   farm:{id:"farm",name:"Farm",category:"trade",cost:90,upkeep:3,key:"n",unlockStage:2,description:"3×3 · Grows the grain the windmills grind. Wants open ground and room to spread.",renderKey:"farm",jobs:6,placement:{footprint:[3,3]},destination:{work:true},saveDefaults:{}},
+  /* ---------- shops ----------
+     Everything below carries `trade:{yield}` and nothing else has to know
+     about it: economy.js sums the yield over S.ctx.shops and lifts it with the
+     markets, and housing.js counts shops within reach toward a street's
+     desirability. Adding another shop later means a registry entry and some
+     art, not a change to either. */
+  generalStore:{id:"generalStore",name:"General Store",category:"trade",cost:70,key:"",upkeep:3,unlockStage:1,
+    description:"Sells a little of everything. Steady trade, and a street with shops on it is a street people want to live on.",
+    renderKey:"generalStore",jobs:4,trade:{yield:7},placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
+  teaHouse:{id:"teaHouse",name:"Tea House",category:"trade",cost:95,key:"",upkeep:4,unlockStage:2,
+    description:"Somewhere to sit. Takes more than the general store and does more for the neighbourhood around it.",
+    renderKey:"teaHouse",jobs:4,trade:{yield:9},placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
+  bookshop:{id:"bookshop",name:"Bookshop",category:"trade",cost:130,key:"",upkeep:5,unlockStage:2,
+    description:"Trades modestly and teaches quietly \u2014 a small education reach of its own, which is how a street without a school starts learning.",
+    renderKey:"bookshop",jobs:3,trade:{yield:6},placement:{footprint:[1,1]},
+    service:{type:"education",radius:4,capacity:12,visual:{boundary:"green"}},destination:{work:true,visit:true},saveDefaults:{}},
   mill:{id:"mill",name:"Windmill",category:"trade",cost:95,key:"9",upkeep:4,unlockStage:3,description:"Grinds coin every day — most of all at harvest. Wants open ground.",renderKey:"mill",jobs:5,placement:{footprint:[1,1]},destination:{work:true},saveDefaults:{}},
 
   // The production `park` ID stays 1×1 forever so old V3 cities remain intact.
