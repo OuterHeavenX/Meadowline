@@ -5,10 +5,9 @@ organized crime, fame and family legacies.
 
 ## Status
 
-**All six slices are production at `1c02801`.** Every slice of the milestone's
-first scope is built. Political influence and the PART 22 visual storytelling
-cues (reporters near celebrity venues, tourists at landmarks) remain future
-work and are out of this milestone's scope.
+**Complete and production at `024444c`.** All six slices, plus influence and
+petitions, plus the PART 22 visual storytelling cues — nothing this milestone
+named is outstanding.
 
 This document is canonical for Social Fabric and is maintained as the milestone
 lands. It records what is built, what is deliberately deferred and what must

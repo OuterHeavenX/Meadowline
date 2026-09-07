@@ -6,7 +6,7 @@ Meadowline is a calm, mobile-first isometric living-city builder. It remains a l
 
 Current production `main`: `1d192f92aaaa3c09f69ac5a983cdcd32baa64ced`. Everything from Recreation 2.0 through UI / HUD 2.0, Save Manager 2.0, the 128×128 valley, authored Blender models, weather, the street/sim performance work and Social Fabric slice 1 is merged. `ROADMAP.md` carries the merge-order table.
 
-**Social Fabric 1.0 is production** — emergent districts, notable families, careers and standing, organisations nobody built, bosses and fronts, autonomous enforcement, and fame. The player builds the city; the citizens decide what it becomes. See `docs/SOCIAL_FABRIC.md`. Current development: **The Meadowline Post 1.0**, the valley's daily newspaper; see `docs/MEADOWLINE_POST.md`. UI / HUD 2.0 is production (PR #11); see `docs/UI_HUD_2.md`.
+**Social Fabric 1.0 is production** — emergent districts, notable families, careers and standing, organisations nobody built, bosses and fronts, autonomous enforcement, and fame. The player builds the city; the citizens decide what it becomes. See `docs/SOCIAL_FABRIC.md`. **The Meadowline Post 1.0 is production** — the valley's daily newspaper, which reports what happened and keeps the mob a mystery until the police make a case; see `docs/MEADOWLINE_POST.md`. UI / HUD 2.0 is production (PR #11); see `docs/UI_HUD_2.md`.
 
 Historical production `main` at the start of Recreation 2.0:
 
@@ -191,8 +191,8 @@ Production:
 
 Living City / School → Housing 2.0 → City Growth 1.0 / 1.1 → City Hall 1.0 → Roads & Mobility 2.0
 
-Current development:
+Most recently shipped:
 
 **The Meadowline Post 1.0** — see `docs/MEADOWLINE_POST.md`. Social Fabric 1.0
-is complete and production. `ROADMAP.md` is the authoritative status record and
-lists every merge since PR #10.
+is complete and production, including influence and petitions. `ROADMAP.md` is
+the authoritative status record and lists every merge since PR #10.

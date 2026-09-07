@@ -5,8 +5,8 @@ rumour, citizen voices, arrivals and departures, and civic reporting.
 
 ## Status
 
-**Slice 1 (the daily paper) is production at `1c02801`. Slice 2 (emergent
-nicknames, PARTS 16–24) is on `claude/game-upgrade-3o2630`.**
+**Both slices are production at `024444c`** — the daily paper and emergent
+nicknames.
 
 This document is canonical for the Post. Where an older document disagrees
 with production code, the code wins and the disagreement is noted here.

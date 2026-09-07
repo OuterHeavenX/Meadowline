@@ -1,11 +1,13 @@
 # Meadowline Roadmap
 
-## Status as of production `main` at `1c02801b924ec92cec1fa0626ded896442f10da5`
+## Status as of production `main` at `024444c7119820bb5f984a7ee75fffb187a960dc`
 
-**Social Fabric 1.0 is complete and production at `1c02801`** — all six
-slices. **The Meadowline Post 1.0 slice 1** is production at the same commit;
-its slice 2 (emergent nicknames) is not built. Canonical documents:
+**Social Fabric 1.0 and The Meadowline Post 1.0 are both complete and
+production.** Social Fabric's six slices plus influence and petitions; the
+Post's daily paper plus emergent nicknames. Canonical documents:
 `docs/SOCIAL_FABRIC.md`, `docs/MEADOWLINE_POST.md`.
+
+No milestone is currently in development.
 
 **UI / HUD 2.0 is production**, merged through PR #11 (`da5698c`). Earlier
 copies of this file and `README.md` listed it as current development long after
@@ -55,6 +57,7 @@ Everything below is on `main`. Each landed with its regression suite green.
 | `c50e458` | **Social Fabric slice 6** — performing careers, renown from talent, crowd and occasion, Entertainment and Nightlife identities. |
 | `af1be49` | **Social Fabric slice 5** — bosses who are existing citizens, fronts that stay businesses, police who open and work cases on their own. |
 | `49cc362` | **GPU actor parity** — the low-poly scene now draws walking people, typed emergency vehicles with a working hose, burning roofs, burglars, patients and stretchers, boats and three-car trains, as the Canvas path always did. |
+| `024444c` | **Influence and petitions**, **emergent nicknames**, and onlookers with notepads and cameras — everything the two milestones had left open. |
 | `1c02801` | **The Meadowline Post 1.0** — a daily newspaper written from a ledger of real events, with a strict boundary between what the simulation knows and what the public hears. |
 
 ## Milestone 7 — Social Fabric 1.0
@@ -92,7 +95,7 @@ Slices, in order:
 The milestone brief contradicts itself on naming (PART 7/8 worked examples vs
 PART 27); PART 27 wins and the resolution is structural. See the document.
 
-Since completed beyond the original six slices, all on the branch:
+Since completed beyond the original six slices, all production at `024444c`:
 
 - **Influence and petitions** — who the valley listens to, and what a
   neighbourhood asks the town for. A voice, never a control: no vote, no
@@ -104,8 +107,8 @@ Since completed beyond the original six slices, all on the branch:
 
 ## Milestone 8 — The Meadowline Post 1.0
 
-**Current development. Slice 1 is production at `1c02801`; slice 2 is not
-built.** Canonical document: `docs/MEADOWLINE_POST.md`.
+**Complete and production at `024444c`.** Canonical document:
+`docs/MEADOWLINE_POST.md`.
 
 A daily local newspaper that reports what actually happened. The permanent
 rule:
@@ -128,7 +131,7 @@ Slices:
    *Production, `1c02801`.*
 2. **Emergent nicknames** (brief PARTS 16–24) — aliases that emerge from
    citizen history and spread from associates to district to police to press.
-   *On the branch.*
+   *Production, `024444c`.*
 
 ## Production baseline
 
