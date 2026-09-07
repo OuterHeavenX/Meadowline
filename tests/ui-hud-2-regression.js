@@ -132,10 +132,10 @@ if(dlg?.open){
 }
 
 frame.src='../?uitest=cityhall';
-const hallReady=await waitFor(()=>frame.contentDocument?.querySelectorAll('[data-cityhall-nav]')?.length===7);
+const hallReady=await waitFor(()=>frame.contentDocument?.querySelectorAll('[data-cityhall-nav]')?.length===8);
 check('the City Hall fixture finishes rendering',hallReady);
 const hall=frame.contentDocument;
-check('City Hall uses responsive section navigation',hall.querySelectorAll('[data-cityhall-nav]').length===7);
+check('City Hall uses responsive section navigation',hall.querySelectorAll('[data-cityhall-nav]').length===8,hall.querySelectorAll('[data-cityhall-nav]').length);
 check('City Hall maximum is Level 4',hall.querySelector('.cityhall-hero')?.textContent.includes('Level 4'));
 check('City Hall never advertises Level 5',!hall.getElementById('look-body')?.textContent.includes('Level 5'));
 check('City Hall reads real municipal sections',hall.getElementById('look-body')?.textContent.includes('Services')&&hall.getElementById('look-body')?.textContent.includes('Mobility'));

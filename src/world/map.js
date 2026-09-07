@@ -2,6 +2,7 @@ import { H, TH, TW, W, fbm, hash2 } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { invalidateMobility } from '../simulation/mobility.js';
 import { invalidateRecreation } from '../simulation/recreation.js';
+import { invalidateDistricts } from '../simulation/districts.js';
 import { idx } from './tiles.js';
 import { drops, seedBirds, seedClouds } from './weather.js';
 
@@ -33,7 +34,7 @@ export function genWorld(seed){
   S.natWater=S.terr.slice();
   S.citizens.length=0; S.trains.length=0; S.boats.length=0; S.puffs.length=0;
   S.vehicles.length=0; S.serviceVehicles.length=0; S.incidents.length=0; S.feedback.length=0;
-  invalidateMobility(); invalidateRecreation();
+  invalidateMobility(); invalidateRecreation(); invalidateDistricts();
   S.coins=340; S.day=1; S.dayT=0.24; S.t=0;
   S.wx={k:"clear",amt:0,target:0,next:70}; drops.length=0;
   S.wishes.length=0; S.log.length=0; S.history.length=0;

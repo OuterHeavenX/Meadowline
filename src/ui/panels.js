@@ -19,6 +19,7 @@ import { evalHouse } from '../simulation/mood.js';
 import { PAL } from '../world/seasons.js';
 import { facilityFootprint, facilityRootAt, idx, inBounds, isWater } from '../world/tiles.js';
 import { roadNearFacility } from '../transport/roads.js';
+import { districtAt } from '../simulation/districts.js';
 import { darkness } from '../world/time.js';
 import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
@@ -216,7 +217,24 @@ function wonderCard(b){
   return card(def?.name||'Wonder','Wonder','<p>'+(def?.description||'')+'</p>'+dl);
 }
 
+/* Which part of town this is, under whatever the card said. It goes on every
+   card rather than on a chosen few, because a district is a property of the
+   place and not of the building standing on it - the meadow you are about to
+   build on is in Southbank too.
+
+   Extends the permanent rule rather than breaking it: the building still
+   explains itself, City Hall still explains the city, and the district
+   explains the neighbourhood. */
+function districtFooter(x,y){
+  const d=districtAt(x,y);
+  if(!d) return '';
+  const held=(d.identities||[]).map(i=>i.label).join(' · ');
+  return '<div class="district-line"><b>'+d.name+'</b>'+(held?'<span>'+held+'</span>':'<span class="muted">still taking shape</span>')+'</div>';
+}
 export function describe(x,y){
+  return describeTile(x,y)+districtFooter(x,y);
+}
+function describeTile(x,y){
   const root=facilityRootAt(x,y),rx=root?.x??x,ry=root?.y??y;
   const i=idx(rx,ry), b=root||S.grid[i];
   if(b&&b.type==="house"){

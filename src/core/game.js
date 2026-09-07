@@ -35,6 +35,7 @@ import { seedBirds, seedClouds, updateBirds, updateClouds, updateDrops, updateMo
 import { cityStage, evaluateCityGrowth, resetProgression } from '../progression/city-growth.js';
 import { paintGrowthPanel } from '../ui/growth.js';
 import { updateMunicipal } from '../simulation/municipal.js';
+import { advanceDistricts } from '../simulation/districts.js';
 import { updateFeedback } from '../simulation/feedback.js';
 import { tickTutorial } from '../ui/tutorial.js';
 
@@ -121,6 +122,13 @@ function step(now){
         paintGrowthPanel();
       }
       checkMiles(); checkWishes();
+      /* What a neighbourhood is changes over months, not frames, so it is read
+         on its own slow clock. When a place becomes something, the valley
+         remembers it. */
+      advanceDistricts(step,(district,held)=>{
+        if(!held.length) return;
+        note(district.name+' became known as '+held.map(h=>h.label.toLowerCase()).join(' and '));
+      });
     }
     growth(sdt);
     updateCitizens(sdt);

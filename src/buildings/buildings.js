@@ -6,6 +6,7 @@ import { invalidateServices } from '../simulation/civic-services.js';
 import { invalidateCitySummary } from '../simulation/city-summary.js';
 import { invalidateMobility } from '../simulation/mobility.js';
 import { invalidateRecreation } from '../simulation/recreation.js';
+import { invalidateDistricts } from '../simulation/districts.js';
 import { BUILDABLE, BUILDING_COST, defaultBuildingState, getBuildingDefinition } from './registry.js';
 import { SPANS } from '../transport/bridges.js';
 import { facilityRootAt, footprintCells, idx, inBounds, isFacilityPart, isType, isWater, isRoadRailCrossing } from '../world/tiles.js';
@@ -149,7 +150,7 @@ export function place(kind,x,y){
     const cur=S.grid[i];
     S.coins-=costOf(kind,x,y);
     cur.state={...(cur.state||{}),roadRailCrossing:true,crossingBase:cur.type};
-    invalidateServices(); invalidateCitySummary(); invalidateMobility(); invalidateRecreation();
+    invalidateServices(); invalidateCitySummary(); invalidateMobility(); invalidateRecreation(); invalidateDistricts();
     services.puff(x,y); services.blip(360);
     if(S.diagnostics) S.diagnostics.railCrossings=(S.diagnostics.railCrossings||0)+1;
     return true;
@@ -162,7 +163,7 @@ export function place(kind,x,y){
     services.hint('That facility could not be placed safely.',true);
     return false;
   }
-  invalidateServices(); invalidateCitySummary(); invalidateRecreation();
+  invalidateServices(); invalidateCitySummary(); invalidateRecreation(); invalidateDistricts();
   if(kind==='road'||kind==='rail') invalidateMobility();
   if(NOTE_NAMES[kind]&&!NOTED[kind]){ NOTED[kind]=1; note(NOTE_NAMES[kind]); }
   services.puff(x,y);
@@ -220,7 +221,7 @@ export function relocate(root,x,y){
     services.hint('That facility could not be moved safely.',true);
     return {ok:false,why:'unsafe'};
   }
-  invalidateServices(); invalidateCitySummary(); invalidateRecreation(); invalidateMobility();
+  invalidateServices(); invalidateCitySummary(); invalidateRecreation(); invalidateDistricts(); invalidateMobility();
   services.puff(x,y); services.blip(470,0.06,'triangle');
   if(S.diagnostics) S.diagnostics.buildingsMoved=(S.diagnostics.buildingsMoved||0)+1;
   return {ok:true,from};
@@ -292,7 +293,7 @@ export function erase(x,y,{confirmed=false}={}){
     const overlay=b.type==='rail'?'road':'rail';
     S.coins+=Math.floor((BUILDING_COST[overlay]||0)/2);
     b.state={...(b.state||{})}; delete b.state.roadRailCrossing; delete b.state.crossingBase;
-    invalidateServices(); invalidateCitySummary(); invalidateMobility(); invalidateRecreation();
+    invalidateServices(); invalidateCitySummary(); invalidateMobility(); invalidateRecreation(); invalidateDistricts();
     services.puff(b.x,b.y); services.blip(230);
     return true;
   }
@@ -303,7 +304,7 @@ export function erase(x,y,{confirmed=false}={}){
   for(const c of S.citizens||[]){
     if(c.recreationRoot&&c.recreationRoot.x===b.x&&c.recreationRoot.y===b.y){ c.recreationRoot=null; c.recreationEntry=null; c.facilityLocal=null; c.path=null; c.linger=0; c.at=null; }
   }
-  invalidateServices(); invalidateCitySummary(); invalidateRecreation();
+  invalidateServices(); invalidateCitySummary(); invalidateRecreation(); invalidateDistricts();
   if(b.type==='road'||b.type==='rail') invalidateMobility();
   services.puff(b.x,b.y);
   services.blip(220);

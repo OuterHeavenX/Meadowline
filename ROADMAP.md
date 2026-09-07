@@ -14,6 +14,23 @@ Meadowline is evolving from a calm small city builder into a deeper living-city 
 
 Status labels remain deliberate: **production**, **historical implementation**, **automatically validated**, **physically validated**, **current development**, and **roadmap only** are not interchangeable.
 
+## Milestone 7 — Social Fabric 1.0
+
+**Slice 1 in development.** Branch: `claude/game-upgrade-3o2630`.
+
+Emergent citizen culture, district identity, careers, social classes, factions,
+organized crime, fame and family legacies. The permanent rule:
+
+**The player builds the city. The citizens decide what the city becomes.**
+
+Slice 1 lands emergent districts: derived from where the player built and what
+divides it, named and described by what actually stands in them, and never
+drawn, named or classified by the player. Later slices add notable citizens,
+families, careers, class, organisations and fame.
+
+Canonical document: `docs/SOCIAL_FABRIC.md`, which also records where this file
+and the other older records have gone stale.
+
 ## Production baseline
 
 Verified `main` at the start of Recreation 2.0:

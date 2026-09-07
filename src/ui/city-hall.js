@@ -6,6 +6,7 @@ import { civicUpgradeStatus, upgradeCivic } from '../progression/civic-upgrades.
 import { getCitySummary } from '../simulation/city-summary.js';
 import { idx } from '../world/tiles.js';
 import { buildingThumbnail } from '../rendering/thumbnails.js';
+import { recomputeDistricts } from '../simulation/districts.js';
 import { landmarkKey } from '../rendering/landmark-assets.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
@@ -30,7 +31,8 @@ const NAV_ICON={
   land:'<path d="M4 8.5 9.5 5.5 14.5 8.5 20 5.5v10L14.5 18.5 9.5 15.5 4 18.5v-10ZM9.5 5.5v10M14.5 8.5v10"/>',
   finances:'<path d="M12 4v16M8.5 7.5h6.2a2.4 2.4 0 0 1 0 4.8H9.3a2.4 2.4 0 0 0 0 4.8h6.2"/>',
   services:'<path d="M12 3.5 19.5 7v5.5c0 4.4-3.1 7.3-7.5 8-4.4-.7-7.5-3.6-7.5-8V7L12 3.5ZM9.5 12l1.8 1.9 3.4-3.6"/>',
-  mobility:'<path d="M5 16.5h14M6.5 16.5v-4l1.8-4h7.4l1.8 4v4M8 16.5v2H6v-2m12 0v2h-2v-2M8.5 12.5h7"/>'
+  mobility:'<path d="M5 16.5h14M6.5 16.5v-4l1.8-4h7.4l1.8 4v4M8 16.5v2H6v-2m12 0v2h-2v-2M8.5 12.5h7"/>',
+  districts:'<path d="M4 7.5 9.5 5l5 2.5L20 5v11.5L14.5 19l-5-2.5L4 19V7.5ZM9.5 5v11.5M14.5 7.5V19"/>'
 };
 const I={
   people:'<path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5 8c0-3 2.4-5 5-5s5 2 5 5M16 6.2a2.7 2.7 0 0 1 0 5.4m1 2.6c2 .6 3.4 2.3 3.4 4.8"/>',
@@ -59,6 +61,26 @@ function tone(part,whole){
   if(!(whole>0)) return '';
   const r=part/whole;
   return r>=0.95?'good':r>=0.7?'warn':'bad';
+}
+/* What the city has become, which is not something City Hall decided. The
+   districts are derived from where the player built; their identities are
+   derived from what is actually there. City Hall reports them and owns
+   neither, the same way it reports Recreation without owning it. */
+function districtRows(){
+  const list=recomputeDistricts();
+  if(!list.length) return '<p class="muted">Meadowline has not grown into distinct neighbourhoods yet. They appear on their own as the city fills in.</p>';
+  let html='<p class="muted">'+list.length+' neighbourhood'+(list.length===1?'':'s')+', named and described by what stands in them. Nobody drew these lines.</p>';
+  for(const d of list){
+    const held=(d.identities||[]).map(i=>i.label);
+    const m=d.measured||{};
+    html+=card(d.name,NAV_ICON.districts,
+      (held.length?'<ul class="ch-benefits">'+held.map(h=>'<li class="yes">'+icon(I.tick)+'<span>'+h+'</span></li>').join('')+'</ul>'
+        :'<p class="muted">Still taking shape.</p>')+
+      '<div class="ch-grid">'+stat('Buildings',m.buildings||0,I.home)+stat('Residents',m.pop||0,I.people)+
+      stat('Jobs here',m.jobs||0,I.work)+'</div>'+
+      '<small class="muted">Since day '+(d.born||1)+'</small>');
+  }
+  return html;
 }
 function stat(label,value,glyph,cls=''){
   return '<div class="ch-stat '+cls+'">'+icon(glyph)+'<span>'+label+'</span><b>'+value+'</b></div>';
@@ -178,7 +200,7 @@ export function renderCityHall(){
   const name=getUpgradeDefinition('cityHall',level)?.name||'Town Office';
   const o=summary.overview, ed=summary.services.education, rec=summary.services.recreation, mob=summary.mobility;
   const safe=summary.services.safety,fire=summary.services.fire,health=summary.services.healthcare,work=summary.employment;
-  const nav=[['overview','Overview'],['goals','Town Goals'],['growth','Growth'],['land','Land'],['finances','Finances'],['services','Services'],['mobility','Mobility']];
+  const nav=[['overview','Overview'],['goals','Town Goals'],['growth','Growth'],['districts','Districts'],['land','Land'],['finances','Finances'],['services','Services'],['mobility','Mobility']];
   const crime=safe.pressure===0?'Low':safe.pressure<35?'Limited':'Elevated',fireRisk=fire.risk===0?'Low':fire.risk<30?'Limited':'Elevated';
   const crimeTone=safe.pressure===0?'good':safe.pressure<35?'warn':'bad',fireTone=fire.risk===0?'good':fire.risk<30?'warn':'bad';
   // The building you are standing in, drawn from the same authored mesh the
@@ -206,6 +228,7 @@ export function renderCityHall(){
     section('goals','Town Goals',goalRows(summary.goals))+
     section('growth','City Growth',stageCard(o.stage)+growthRows(summary.growth.next)+'<div class="ch-grid">'+
       stat('Cottages',o.cottages,I.home)+stat('Town Homes',o.townHomes,I.home)+stat('Established',o.establishedHomes,I.home)+'</div>')+
+    section('districts','Neighbourhoods',districtRows())+
     section('land','Land management',landRows(summary))+
     section('finances','Finances',financeRows(summary.finances))+
     section('services','Infrastructure & services','<div class="ch-grid">'+
