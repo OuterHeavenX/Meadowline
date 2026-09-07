@@ -218,7 +218,7 @@ export function addBoat(parent,t){
 function roofOf(x,z){
   if(!inBounds(x,z)) return .5;
   const b=S.grid[idx(x,z)]; if(!b) return .4;
-  if(b.type==='house') return .55+.3*clamp((b.state?.housingTier||1)-1,0,2);
+  if(b.type==='house') return .55+.3*clamp((b.state?.housingTier||1)-1,0,4);
   return ['hospital'].includes(b.type)?1.6:['cityHall','school','clinic','policeStation','fireStation'].includes(b.type)?1:.75;
 }
 export function addIncident(parent,inc,people){

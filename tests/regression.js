@@ -2,7 +2,7 @@ import { CONFIRM_REMOVAL_COST, canPlace, erase, place, removalIntent } from '../
 import { BUILDINGS, BUILDABLE } from '../src/buildings/registry.js';
 import { COST, H, TOOLS, W } from '../src/core/constants.js';
 import { WATER_COST, paintWater, playerWaterAt, removePlayerWater } from '../src/world/landscaping.js';
-import { conflictingToolKeys, isTextEntryTarget, RESERVED_SHORTCUT_KEYS } from '../src/core/input-policy.js';
+import { conflictingToolKeys, isTextEntryTarget, RESERVED_SHORTCUT_KEYS, SHELL_SHORTCUTS} from '../src/core/input-policy.js';
 import { KEY, KEY_OLD, KEY_V2, applySave, load, save, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
 import { AC, amb, armAmbient } from '../src/audio/audio.js';
@@ -35,7 +35,7 @@ check('new game',S.coins===340&&S.day===1&&S.grid.length===W*H);
 
 check('building registry school exists',BUILDINGS.school?.service?.type==='education'&&BUILDABLE.school===1);
 check('school civic radius has neighborhood reach',BUILDINGS.school.service.radius===7);
-check('housing registry has three tiers',BUILDINGS.house?.housing?.tiers?.length===3);
+check('housing registry has five tiers, the last two grand',BUILDINGS.house?.housing?.tiers?.length===5&&BUILDINGS.house.housing.tiers[3].name==='Mansion'&&BUILDINGS.house.housing.tiers[4].name==='Estate');
 check('building registry costs remain correct',BUILDINGS.road.cost===3&&BUILDINGS.house.cost===24&&BUILDINGS.school.cost===145&&COST.school===145);
 
 const boundary=serviceBoundaryGeometry('school',20,20);
@@ -101,7 +101,7 @@ home.mood=evalHouse(home);
 check('tier 1 capacity correct',housingBaseCapacity(home)===4);
 home.state.housingTier=2; check('tier 2 capacity correct',housingBaseCapacity(home)===6&&housingTaxMultiplier(home)>1);
 home.state.housingTier=3; check('tier 3 capacity correct',housingBaseCapacity(home)===8&&housingTaxMultiplier(home)>1.25);
-home.state.housingTier=99; check('invalid housing tier repaired safely',housingTierIndex(home)===3);
+home.state.housingTier=99; check('invalid housing tier repaired safely',housingTierIndex(home)===5);
 home.state.housingTier=1;
 check('grandfathered residents are never evicted by new tier cap',(()=>{home.pop=6;const c=housingCapacity(home);home.pop=4;return c===6;})());
 const desirability=getDesirability(home);
@@ -153,7 +153,9 @@ check('v1 migration',load()&&S.coins===222&&S.grid[idx(5,5)]?.type==='house'&&S.
 
 store.set(KEY,JSON.stringify({v:3,seed:2468,coins:111,day:2,dayT:.2,b:[{type:'house',x:8,y:8,pop:2,state:{housingTier:99,upgradeProgress:9,education:-5}},{type:'school',x:9,y:8,state:{level:'bad'}},{type:'not-real',x:10,y:8},{nonsense:true}]}));
 store.set(KEY_V2,''); store.set(KEY_OLD,'');
-check('malformed optional v3 state is defensive',load()&&S.grid[idx(8,8)]?.type==='house'&&getEducationLevel(S.grid[idx(8,8)])===0&&S.grid[idx(8,8)]?.state?.housingTier===3&&S.grid[idx(8,8)]?.state?.upgradeProgress===1&&S.grid[idx(9,8)]?.state?.level===1&&!S.grid[idx(10,8)]);
+// A tier off the end of the ladder is clamped to the top of it, which is now
+// the Estate rather than the Established Home.
+check('malformed optional v3 state is defensive',load()&&S.grid[idx(8,8)]?.type==='house'&&getEducationLevel(S.grid[idx(8,8)])===0&&S.grid[idx(8,8)]?.state?.housingTier===5&&S.grid[idx(8,8)]?.state?.upgradeProgress===1&&S.grid[idx(9,8)]?.state?.level===1&&!S.grid[idx(10,8)]);
 
 // Sound was forced off at boot, so the procedural ambience, dispatch cues and
 // rain never reached a player who did not find the sound chip. It is on by
@@ -208,6 +210,16 @@ check('the postcard key stays reserved',RESERVED_SHORTCUT_KEYS.has('p')&&!TOOLS.
 check('every tool still has a key',TOOLS.every(t=>typeof t.key==='string'&&t.key.length>0));
 const keys=TOOLS.map(t=>t.key);
 check('tool keys remain unique',new Set(keys).size===keys.length);
+/* Every key the shell listens for must be reserved, or the tool that owns that
+   letter swallows it and the shortcut silently does nothing. The newspaper was
+   bound to 'n', which is the Farm's key, and never once opened from the
+   keyboard. */
+{
+  const swallowed=SHELL_SHORTCUTS.filter(k=>TOOLS.some(t=>String(t.key).toLowerCase()===k));
+  check('no shell shortcut is swallowed by a build tool',swallowed.length===0,swallowed.join(','));
+  check('and every shell shortcut is reserved so it reaches the shell',
+    SHELL_SHORTCUTS.every(k=>RESERVED_SHORTCUT_KEYS.has(k)),SHELL_SHORTCUTS.join(','));
+}
 
 // Typing into a field must not reach the map. Without this the account panel's
 // email and password inputs retyped the build tool letter by letter.

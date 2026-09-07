@@ -93,3 +93,57 @@ Housing remains inside `meadowline.v3`; per-house state includes Education, Hous
 Existing saves keep Housing, residents, progress and money. No old city is forced to rebuild Parks or Recreation before loading successfully.
 
 Physical regression requirements remain in `docs/IPHONE_ACCEPTANCE.md`.
+
+
+## Mansions and Estates
+
+Two more rungs above Established Home, and two ways to reach one.
+
+| rung | houses | tax | upkeep | needs |
+|---|---|---|---|---|
+| Cottage | 4 | ×1 | — | — |
+| Town Home | 6 | ×1.25 | — | mood 65, education 15, desirability 45 |
+| Established Home | 8 | ×1.55 | — | mood 78, education 35, desirability 62 |
+| **Mansion** | 10 | ×2.1 | 9 | mood 86, education 55, desirability 78 |
+| **Estate** | 12 | ×2.9 | 16 | mood 92, education 70, desirability 88 |
+
+**Grown.** A good enough neighbourhood reaches them on its own. Desirability
+tops out near 98, so 78 wants a schooled, well-moodied street with cafés and
+lighting, and 88 wants very nearly everything a street can have — a station
+included. The regression builds exactly that street and drives a home all the
+way to Estate, because a rung nobody can climb would be a worse bug than a
+rung that renders badly.
+
+**Bought.** Mansion and Estate also appear in the Build menu at 940 and 1850.
+They are **not building types of their own**: placing one puts down an
+ordinary house that starts at the top of the ladder. That is the whole
+mechanism, and it is why they need no simulation — a bought mansion is
+schooled, taxed, made desirable, counted by its district and noticed by the
+Social Fabric exactly like any other home, because it is one.
+
+**Expensive in both senses.** They are the only homes that cost anything to
+keep. Everything below them is free, which is what stops a valley simply being
+paved in estates once it can afford the first one; the tax they pay is
+generous enough that they remain worth having.
+
+### What `paid` is for
+
+Refunds would be wrong in both directions without it. A mansion bought for 940
+and pulled down would refund half a cottage; a home the valley *grew* into an
+estate would refund half an estate, which is a money printer — place a cottage,
+wait, bulldoze. So each building records what was actually paid for it, and
+`buildingValue()` falls back to the catalogue price for anything from before
+this existed. It reads `costOf()` rather than the catalogue directly, because a
+way laid over water costs three times as much and refunding a third of that
+would be its own swindle — which the bridge-refund regression caught.
+
+### Things that quietly assumed three rungs
+
+Six places did: the GPU archetype list, its house builder, the roof-height
+table, the flame anchor height, the authored-model key, and the Canvas
+size/height/shadow ternaries. All six now read the ladder's real length.
+Tiers 1–3 keep their authored models; 4 and 5 fall through to the procedural
+path, where they are built with two storeys, wings under a parapet, a portico
+with columns, chimneys and walled grounds — deliberately taller than the
+authored Established Home, since a mansion that merely sprawls reads as the
+poorer building.

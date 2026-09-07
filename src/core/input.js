@@ -222,7 +222,7 @@ addEventListener('keydown',e=>{
   const shifted=e.shiftKey?TOOLS.find(t=>t.key&&t.key===e.key&&t.key!==t.key.toLowerCase()):null;
   const t=shifted||(RESERVED_SHORTCUT_KEYS.has(k)?null:TOOLS.find(t=>t.key&&t.key===k));
   if(t){ pickTool(t.id); return; }
-  if(k==='m') toggleSound(); if(k==='s') toggleSpeed(); if(k==='b') toggleMap(); if(k==='p') postcard(); if(k==='l') toggleLedgerChip(); if(k==='n') togglePost();
+  if(k==='m') toggleSound(); if(k==='s') toggleSpeed(); if(k==='b') toggleMap(); if(k==='p') postcard(); if(k==='l') toggleLedgerChip();
   if(k==='escape'){ closeLook(); putDown(); pickTool('move'); }
   if(k===' '){ e.preventDefault(); S.running=!S.running; hint(S.running?'Resumed':'Paused',true); }
   // Quarter turns, which both renderers can show: the fallback snaps rotation

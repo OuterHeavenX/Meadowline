@@ -13,6 +13,16 @@ import { isFacilityPart } from '../world/tiles.js';
    2 School or a City Hall is a commitment rather than a free improvement. */
 export function upkeepOf(b){
   if(!b||isFacilityPart(b)) return 0;
+  /* A home is free to keep until it is a grand one. Cottages through
+     Established Homes cost the town nothing; a Mansion and an Estate are a
+     standing bill, which is what stops a valley from simply being paved in
+     them once it can afford the first. The figure lives on the tier in the
+     registry beside the tax it pays, so the two are read together. */
+  if(b.type==='house'){
+    const tiers=getBuildingDefinition('house')?.housing?.tiers||[];
+    const tier=tiers[Math.max(0,Math.min(tiers.length-1,(Math.floor(Number(b.state?.housingTier)||1))-1))];
+    return Math.max(0,Math.floor(Number(tier?.upkeep)||0));
+  }
   const base=BUILDING_UPKEEP[b.type]||0;
   if(!base) return 0;
   const def=getBuildingDefinition(b.type);

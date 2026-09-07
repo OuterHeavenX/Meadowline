@@ -51,7 +51,11 @@ const MESHES={statue,clockTower,lighthouse,greatLibrary,farm,mill,
    whose tier is what decides which of the three it is. */
 export function landmarkKey(b){
   if(!b) return '';
-  if(b.type==='house') return 'house-'+Math.max(1,Math.min(3,Math.floor(Number(b.state?.housingTier)||1)));
+  /* Only the first three rungs have an authored model. A Mansion and an
+     Estate deliberately return a key nothing answers to, so they fall through
+     to the procedural path in three-world-art.js, which is where their extra
+     storey, wings and grounds are built. */
+  if(b.type==='house') return 'house-'+Math.max(1,Math.floor(Number(b.state?.housingTier)||1));
   // The civic centre grows through four buildings, not one that gets taller.
   if(b.type==='cityHall') return 'cityHall-'+Math.max(1,Math.min(4,Math.floor(Number(b.state?.level)||1)));
   return b.type;

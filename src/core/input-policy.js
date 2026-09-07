@@ -2,7 +2,14 @@
 // the keydown handler resolves tools first, so a colliding tool key silently
 // kills the shell shortcut. Pocket Park took 'p' and the postcard button kept
 // advertising it. `regression.js` asserts this set stays disjoint from TOOLS.
-export const RESERVED_SHORTCUT_KEYS=new Set(['m','s','b','p','l','escape',' ','arrowleft','arrowright','arrowup','arrowdown',',','.']);
+/* The keys the shell itself acts on. Every one of these MUST also be reserved,
+   or the build tool that happens to own the letter matches first and the
+   shortcut silently does nothing — which is exactly what happened when the
+   newspaper was bound to 'n', the Farm's key, and never once opened from the
+   keyboard. Keeping the list here as data is what lets the regression check
+   the two sets agree instead of reading the handler's source. */
+export const SHELL_SHORTCUTS=Object.freeze(['m','s','b','p','l']);
+export const RESERVED_SHORTCUT_KEYS=new Set([...SHELL_SHORTCUTS,'escape',' ','arrowleft','arrowright','arrowup','arrowdown',',','.']);
 // Text fields own their own keystrokes. Without this the account panel's
 // email and password inputs retyped the build tool letter by letter and the
 // space bar paused the game mid-word.

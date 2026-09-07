@@ -113,8 +113,37 @@ const NOTE_NAMES={cafe:"The first café opened",park:"The first pocket green was
   lighthouse:"The lighthouse lit for the first time",
   greatLibrary:"The Great Library opened its doors"};
 
+/* What actually goes into the grid.
+
+   A Mansion and an Estate are not building types of their own: they place an
+   ordinary house that starts life at the top of the housing ladder. That is
+   the whole mechanism, and it is why they need no simulation - a bought
+   mansion is schooled, taxed, made desirable, counted by its district and
+   noticed by the Social Fabric exactly like any other home, because it IS
+   one. What the player pays for is the head start.
+
+   `paid` remembers the price. Without it, putting up a mansion for 940 and
+   pulling it down again would refund half of a cottage, while a home that
+   grew into an estate on its own would refund half of an estate - a money
+   printer at one end and a swindle at the other. */
 function rootObject(kind,x,y){
-  return {type:kind,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:0,grow:0,mood:50,linked:false,state:defaultBuildingState(kind)};
+  const def=getBuildingDefinition(kind);
+  const type=def?.homeTier?'house':kind;
+  const state=defaultBuildingState(type);
+  if(def?.homeTier) state.housingTier=def.homeTier;
+  // costOf, not the catalogue price: a way laid over water costs three times
+  // as much, and refunding a third of that would be a swindle.
+  state.paid=costOf(kind,x,y);
+  return {type,x,y,seed:((x*73856093)^(y*19349663))>>>0,pop:0,grow:0,mood:50,linked:false,state};
+}
+/* What a building is worth back. What was actually paid for it, when that is
+   recorded, and the catalogue price otherwise - so an old save, or a home the
+   valley grew by itself, still behaves the way it always did. */
+export function buildingValue(b){
+  if(!b) return 0;
+  const paid=Number(b.state?.paid);
+  if(Number.isFinite(paid)&&paid>0) return paid;
+  return costOf(b.type,b.x,b.y);
 }
 
 export function restoreFacilityOccupancy(root){
@@ -290,7 +319,7 @@ export function removalIntent(x,y){
     title:'Remove Meadowline’s civic center?',
     body:'City Growth, Town Goals and opened land all remain. You can build a new one later.',
     confirmLabel:'Remove'};
-  const cost=costOf(b.type,b.x,b.y);
+  const cost=buildingValue(b);
   if(cost>=CONFIRM_REMOVAL_COST){
     const fp=getBuildingDefinition(b.type)?.placement?.footprint||[1,1];
     const size=fp[0]>1||fp[1]>1?' Its whole '+fp[0]+'×'+fp[1]+' footprint goes with it.':'';
@@ -334,7 +363,7 @@ export function erase(x,y,{confirmed=false}={}){
     services.puff(b.x,b.y); services.blip(230);
     return true;
   }
-  S.coins+=Math.floor(costOf(b.type,b.x,b.y)/2);
+  S.coins+=Math.floor(buildingValue(b)/2);
   ledgerBuilding('closed',b);
   clearFacility(b);
   // Visitors hold only soft references and Recreation invalidation causes them

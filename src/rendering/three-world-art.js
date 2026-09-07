@@ -158,10 +158,62 @@ function emitTrees(parent){
 }
 
 function lotBase(g,w,d){box(g,0,.005,0,w,.055,d,mat('#78a961'),false);path(g,0,d*.32,.22,d*.32);}
-function house(g,b){const seed=b.seed||0,tier=clamp(b.state?.housingTier||1,1,3),district=Math.abs(Math.floor(b.x/4)+Math.floor(b.y/4)),walls=['#ead8b8','#d8c7a9','#c8d4c7','#e4bea8'][Math.abs(seed)%4],roofs=['#8c5042','#50637a','#745649','#a5654d'],roof=mat(roofs[(district+Math.abs(seed)%2)%roofs.length],.88);lotBase(g,.94,.94);
+const HOME_ARCHETYPE=['cottage','town-home','established-home','mansion','estate'];
+function house(g,b){const seed=b.seed||0,tier=clamp(b.state?.housingTier||1,1,HOME_ARCHETYPE.length),district=Math.abs(Math.floor(b.x/4)+Math.floor(b.y/4)),walls=['#ead8b8','#d8c7a9','#c8d4c7','#e4bea8'][Math.abs(seed)%4],roofs=['#8c5042','#50637a','#745649','#a5654d'],roof=mat(roofs[(district+Math.abs(seed)%2)%roofs.length],.88);lotBase(g,.94,.94);
   if(tier===1){box(g,0,.06,-.05,.7,.46,.62,mat(walls));gable(g,0,.52,-.05,.76,.68,.25,roof);box(g,-.2,.52,.02,.09,.26,.09,mat('#74564a'));path(g,0,.34,.2,.24);box(g,0,.06,.31,.4,.08,.16,mat('#b99b76'));door(g,0,.14,.397);window(g,-.22,.2,.267,'z',seed%2===0);window(g,.22,.2,.267,'z',seed%3===0);hedge(g,-.35,.28,.25);}
   if(tier===2){box(g,-.07,.06,-.04,.72,.7,.64,mat(walls));gable(g,-.07,.76,-.04,.78,.7,.28,roof,seed%2===0);box(g,.29,.06,.15,.25,.42,.3,mat(walls));gable(g,.29,.48,.15,.29,.34,.14,roof);path(g,.2,.35,.22,.22);door(g,.2,.14,.39);for(const x of[-.25,.02,.27])window(g,x,.22,.285,'z',(seed+x*10)%3>0);for(const x of[-.22,.12])window(g,x,.52,.285,'z',seed%2===0);hedge(g,-.37,.31,.3);hedge(g,.37,-.25,.25);}
   if(tier===3){box(g,-.08,.06,-.04,.78,.76,.68,mat(walls));box(g,.29,.06,.12,.28,.56,.38,mat(walls));gable(g,-.08,.82,-.04,.84,.74,.3,roof);gable(g,.29,.62,.12,.34,.44,.2,roof,true);box(g,-.28,.82,.02,.1,.28,.1,mat('#6c5246'));path(g,.14,.38,.25,.2);box(g,.13,.06,.32,.52,.09,.18,mat('#b79b7c'));door(g,.14,.15,.415,.2,.32,'#634839');for(const y of[.24,.55])for(const x of[-.3,-.04,.25])window(g,x,y,.305,'z',(seed+Math.round(x*10)+Math.round(y*10))%3!==0);hedge(g,-.4,.34,.35);hedge(g,.4,-.28,.3);for(const x of[-.43,.43])box(g,x,.03,.05,.035,.22,.7,mat('#d7d0bd'),false);}
+  /* The two bought rungs. Tiers one to three are authored models; these are
+     built here, so they have to read as unmistakably grander than a model at
+     play distance rather than merely taller. What does that work is silhouette:
+     two full storeys, wings that break the square plan, a portico with real
+     columns, chimneys, and grounds with a wall and a gate. */
+  if(tier>=4){
+    // Pale dressed stone rather than the render of a smaller house, which is
+    // most of what says "this is a different class of building" at a glance.
+    const stone=mat(['#efe6d4','#e8e2d2','#e4dcc9','#f0e8d8'][Math.abs(seed)%4],.86), trim=mat('#f7f2e6',.8);
+    const grand=tier===5;
+    // Grounds first, so everything else sits within them.
+    box(g,0,.004,0,grand?.99:.95,.05,grand?.99:.95,mat('#7ca85e',.95),false);
+    for(const sx of[-1,1]) box(g,sx*(grand?.46:.44),.02,0,.04,.14,grand?.96:.9,mat('#cfc7b2',.9));
+    box(g,0,.02,grand?-.47:-.45,grand?.96:.9,.14,.04,mat('#cfc7b2',.9));
+    /* Height first. The rung below this is an authored two-storey model and a
+       mansion that merely sprawls reads as the poorer building; it has to out-
+       mass it plainly. Wings are kept low and flat-roofed with a parapet
+       rather than gabled, because three competing ridgelines at this size read
+       as clutter rather than as grandeur. */
+    const w=grand?.64:.58,d=grand?.52:.48,h=grand?1.32:1.12;
+    box(g,0,.06,-.06,w,h,d,stone);
+    for(const sx of[-1,1]){
+      const wx=sx*(w/2+(grand?.15:.13)),wh=h*.52;
+      box(g,wx,.06,-.02,grand?.32:.28,wh,d*.84,stone);
+      box(g,wx,.06+wh,-.02,grand?.35:.31,.05,d*.88,trim,false);
+    }
+    /* A parapet and a low roof slab rather than a ridge. A gable at this size
+       fought the chimneys and read as a dark jagged mass; a flat crown gives
+       the clean rectangular silhouette that says "big" the way the civic
+       buildings do, and leaves the portico as the one pointed thing on it. */
+    box(g,0,.06+h,-.06,w+.09,.06,d+.07,trim,false);
+    box(g,0,.12+h,-.06,w+.01,.05,d-.01,roof,false);
+    // Portico: steps, columns, pediment.
+    const pz=d/2-.06+(grand?.2:.17);
+    box(g,0,.05,pz+.06,grand?.34:.3,.05,.14,mat('#e6e0d2',.9),false);
+    const colH=grand?.62:.54;
+    for(const cx of(grand?[-.13,-.045,.045,.13]:[-.11,0,.11])) cyl(g,cx,.1,pz,.03,colH,trim,8);
+    box(g,0,.1+colH,pz,grand?.4:.36,.07,.17,trim,false);
+    gable(g,0,.17+colH,pz,grand?.42:.38,.19,.11,roof);
+    door(g,0,.12,d/2-.055,.17,.34,'#5d4132');
+    // Three storeys of windows on the estate, two on the mansion.
+    for(const y of(grand?[.22,.6,.98]:[.22,.66])) for(const x of(grand?[-.24,-.09,.09,.24]:[-.2,0,.2]))
+      window(g,x,y,d/2-.05,'z',(seed+Math.round(x*20)+Math.round(y*20))%3!==0,.13,.2);
+    // Chimneys stand on the crown at the back corners, clear of the parapet.
+    for(const sx of(grand?[-1,1]:[-1])) box(g,sx*(w/2-.1),.17+h,-.16,.1,.26,.1,mat('#6c5246'));
+    // The estate gets a little more ground: a pair of trees and a pond.
+    if(grand){ tree(g,-.36,.34,seed+3,.42); tree(g,.36,.34,seed+7,.42);
+      cyl(g,0,.05,.36,.11,.02,mat('#6fa8c4',.4,.1),12); }
+    else tree(g,.34,.32,seed+5,.4);
+    return;
+  }
 }
 function storefront(g,type,seed){const colors={cafe:'#c98666',market:'#9db7a5',bakery:'#d8b56f',station:'#aaa99e'},wall=colors[type]||'#c8c3b2',accent=type==='cafe'?'#7e3f36':type==='market'?'#4f765e':type==='bakery'?'#9a633d':'#576b76';
   // Four trades used to share one box with a different paint colour, which read
@@ -362,5 +414,5 @@ export function buildCohesiveWorld(parent){
   S.diagnostics.rendererMaterials=materials.size;
   S.diagnostics.visibleTrees=visibleTrees;
 }
-export function visualDescriptor(b){if(!b)return null;if(b.type==='house')return{archetype:['cottage','town-home','established-home'][clamp((b.state?.housingTier||1)-1,0,2)],variant:Math.abs(b.seed||0)%4};return{archetype:b.type,variant:Math.abs(b.seed||0)%4};}
+export function visualDescriptor(b){if(!b)return null;if(b.type==='house')return{archetype:HOME_ARCHETYPE[clamp((b.state?.housingTier||1)-1,0,HOME_ARCHETYPE.length-1)],variant:Math.abs(b.seed||0)%4};return{archetype:b.type,variant:Math.abs(b.seed||0)%4};}
 export function artMetrics(){const authored=landmarkMetrics();return{materials:materials.size+authored.materials,geometries:geometries.size,authoredModels:authored.models,authoredTriangles:authored.triangles};}

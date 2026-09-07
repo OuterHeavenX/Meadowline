@@ -159,8 +159,14 @@ check('legacy Pocket Green is no longer the cheapest per resident',
 check('Housing tier thresholds are unchanged',
   RESIDENTIAL_TIERS[1].requirements.mood===65&&RESIDENTIAL_TIERS[1].requirements.desirability===45&&
   RESIDENTIAL_TIERS[2].requirements.mood===78&&RESIDENTIAL_TIERS[2].requirements.desirability===62);
-check('Housing capacities and tax multipliers are unchanged',
-  RESIDENTIAL_TIERS.map(t=>t.capacity).join(',')==='4,6,8'&&RESIDENTIAL_TIERS.map(t=>t.taxMultiplier).join(',')==='1,1.25,1.55');
+/* The three original rungs are untouched; the two grand ones were added above
+   them, which is what makes this safe for a valley built before they existed. */
+check('the original three rungs are exactly as they were',
+  RESIDENTIAL_TIERS.slice(0,3).map(t=>t.capacity).join(',')==='4,6,8'&&
+  RESIDENTIAL_TIERS.slice(0,3).map(t=>t.taxMultiplier).join(',')==='1,1.25,1.55');
+check('and the grand rungs sit above them',
+  RESIDENTIAL_TIERS.map(t=>t.capacity).join(',')==='4,6,8,10,12'&&
+  RESIDENTIAL_TIERS.map(t=>t.taxMultiplier).join(',')==='1,1.25,1.55,2.1,2.9');
 
 /* ---------- the cost of asking ----------
    recreationStatus() is asked once per home, and each ask used to rebuild a

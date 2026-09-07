@@ -28,9 +28,13 @@ function growthMark(b,p,topY,peak){
 export function drawHousingHouse(b,p,dark){
   const z=S.cam.z, r=hash2(b.seed,1,3);
   const tier=housingTierIndex(b);
-  const scale=tier===1?0.60:tier===2?0.72:0.84;
-  const hgt=tier===1?(16+r*3):tier===2?(23+r*3):(30+r*3);
-  const shadow=tier===1?17:tier===2?20:23;
+  /* Five rungs, so the ternaries became tables. A Mansion and an Estate are
+     wider and markedly taller than an Established Home, because on the Canvas
+     path silhouette is the only thing that carries at play distance. */
+  const i=Math.max(0,Math.min(4,tier-1));
+  const scale=[0.60,0.72,0.84,0.94,1.02][i];
+  const hgt=[16,23,30,42,50][i]+r*3;
+  const shadow=[17,20,23,27,30][i];
   groundShadow(p.x,p.y,shadow*z,(7+tier)*z,0.16+tier*0.015);
 
   const wall=P.wall[(hash2(b.seed,2,4)*3)|0];

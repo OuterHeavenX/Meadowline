@@ -13,9 +13,36 @@ export const BUILDINGS={
     housing:{tiers:[
       {id:1,name:"Cottage",capacity:4,taxMultiplier:1,upgradeSeconds:0,requirements:{}},
       {id:2,name:"Town Home",capacity:6,taxMultiplier:1.25,upgradeSeconds:50,requirements:{road:true,mood:65,education:15,desirability:45}},
-      {id:3,name:"Established Home",capacity:8,taxMultiplier:1.55,upgradeSeconds:85,requirements:{road:true,mood:78,education:35,desirability:62}}
+      {id:3,name:"Established Home",capacity:8,taxMultiplier:1.55,upgradeSeconds:85,requirements:{road:true,mood:78,education:35,desirability:62}},
+      /* The two grand rungs. A neighbourhood can reach these on its own, but
+         only a very good one: the requirements are steep, they take a long
+         while to grow into, and unlike every rung below them they cost real
+         money to keep standing. That upkeep is what makes a street of estates
+         a decision rather than a reward - the tax they pay is generous, and a
+         valley that builds nothing but mansions still has to afford them. */
+      {id:4,name:"Mansion",capacity:10,taxMultiplier:2.1,upgradeSeconds:150,upkeep:9,
+        requirements:{road:true,mood:86,education:55,desirability:78}},
+      {id:5,name:"Estate",capacity:12,taxMultiplier:2.9,upgradeSeconds:230,upkeep:16,
+        requirements:{road:true,mood:92,education:70,desirability:88}}
     ]},
-    saveDefaults:{education:0,housingTier:1,upgradeProgress:0,desirability:0,recreationSatisfaction:0}
+    saveDefaults:{education:0,housingTier:1,upgradeProgress:0,desirability:0,recreationSatisfaction:0,paid:0}
+  },
+  /* Bought outright rather than grown. Both place an ordinary home that simply
+     starts life at the top of the ladder, which is why they need no simulation
+     of their own: a bought mansion is schooled, taxed, made desirable, noticed
+     by the Social Fabric and grown out of exactly like any other house. What
+     the player is paying for is the head start. `homeTier` is the whole
+     mechanism, and `paid` remembers the price so bulldozing one refunds what
+     it cost rather than what a cottage costs. */
+  mansion:{
+    id:"mansion",name:"Mansion",category:"homes",cost:940,key:"t",upkeep:0,unlockStage:3,homeTier:4,
+    description:"A grand home, built rather than grown. Expensive to put up and expensive to keep.",
+    renderKey:"house",placement:{footprint:[1,1]},destination:{home:true},saveDefaults:{}
+  },
+  estate:{
+    id:"estate",name:"Estate",category:"homes",cost:1850,key:"z",upkeep:0,unlockStage:4,homeTier:5,
+    description:"The finest address in the valley. Houses twelve, pays handsomely, and costs a fortune to run.",
+    renderKey:"house",placement:{footprint:[1,1]},destination:{home:true},saveDefaults:{}
   },
   school:{
     id:"school",name:"School",category:"homes",cost:145,key:"c",upkeep:12,unlockStage:2,
