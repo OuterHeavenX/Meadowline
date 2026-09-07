@@ -4,9 +4,9 @@ Meadowline is a calm, mobile-first isometric living-city builder. It remains a l
 
 ## Production status
 
-Current verified production `main`: `daee74c246d9c4c3cecca942a367c18e002bced7`. Recreation 2.0, Living City 3.0, Living City 3.1 and Visual Cohesion 3.1.1 are merged through PR #10.
+Current production `main`: `1d192f92aaaa3c09f69ac5a983cdcd32baa64ced`. Everything from Recreation 2.0 through UI / HUD 2.0, Save Manager 2.0, the 128×128 valley, authored Blender models, weather, the street/sim performance work and Social Fabric slice 1 is merged. `ROADMAP.md` carries the merge-order table.
 
-Current development: **UI / HUD 2.0** on `feature/ui-hud-2-premium-interface`. It rebuilds the normal HUD, Build catalog, City Hall and title screen around the owner-approved mobile/tablet mockups while preserving real registry/simulation values, Save V3, safe touch and both renderers. See `docs/UI_HUD_2.md`.
+Current development: **Social Fabric 1.0** on `claude/game-upgrade-3o2630` — emergent districts, families, careers, organisations. The player builds the city; the citizens decide what it becomes. See `docs/SOCIAL_FABRIC.md`. UI / HUD 2.0 is production (PR #11); see `docs/UI_HUD_2.md`.
 
 Historical production `main` at the start of Recreation 2.0:
 
@@ -53,11 +53,11 @@ Living City 3.1 now adds a true orthographic Three.js low-poly world with real g
 
 Visual Cohesion 3.1.1 adds distinct registry-driven building archetypes, topology-derived streets/intersections, muted locked-land terrain, shallow/deep pond banks, a diorama world edge and composition-aware vegetation without changing gameplay truth. See `docs/VISUAL_COHESION_3_1_1.md`.
 
-The milestone makes public space a real resident need and introduces reusable multi-tile facility architecture without enlarging the 44×44 world or replacing Meadowline's lightweight pathfinding/rendering stack.
+The milestone makes public space a real resident need and introduces reusable multi-tile facility architecture without replacing Meadowline's lightweight pathfinding/rendering stack.
 
 ## Permanent product architecture
 
-World: **44×44**.
+World: **128×128** since `d7c6b00`. Older documents that say 44×44 describe the valley as it was; `ROADMAP.md` records the change.
 
 Progression cities begin in the 20×20 Meadowline Center and can open eight additional parcels without regenerating terrain.
 
@@ -193,6 +193,4 @@ Living City / School → Housing 2.0 → City Growth 1.0 / 1.1 → City Hall 1.0
 
 Current development:
 
-**UI / HUD 2.0 premium interface candidate**
-
-See `docs/UI_HUD_2.md` for the current milestone and the earlier technical records for production architecture.
+**Social Fabric 1.0** — see `docs/SOCIAL_FABRIC.md`. `ROADMAP.md` is the authoritative status record and lists every merge since PR #10.

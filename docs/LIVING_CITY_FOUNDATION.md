@@ -10,7 +10,7 @@ Verified Recreation starting production SHA: `6ed2225ba008a91610715c63aca44e4cd0
 
 ## Static-browser architecture
 
-Meadowline remains native ES modules + Canvas 2D/isometric rendering. No React/Vue application, server runtime, or gameplay build process is required during normal play. The world remains 44×44.
+Meadowline remains native ES modules + Canvas 2D/isometric rendering. No React/Vue application, server runtime, or gameplay build process is required during normal play. The world was 44×44 when this was written; it is 128×128 since `d7c6b00` (see `ROADMAP.md`).
 
 ## Authoritative building registry
 
@@ -130,6 +130,6 @@ Recreation 2.0 received owner release authorization and is merged; granular hist
 
 ## Current consumer / next handoff
 
-Current development consumer: `feature/ui-hud-2-premium-interface`.
+Current development consumer at the time of writing: `feature/ui-hud-2-premium-interface`, since shipped as PR #11. Current development is Social Fabric 1.0; see `ROADMAP.md`.
 
 Likely next major system after Recreation acceptance is Safety / Police / Crime, but that remains roadmap-only and must not start automatically. Future Police/Fire/Healthcare facilities should reuse the multi-tile occupancy foundation and Roads route infrastructure without owning or duplicating those systems.

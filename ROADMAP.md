@@ -1,35 +1,82 @@
 # Meadowline Roadmap
 
-## Current development — UI / HUD 2.0
+## Status as of production `main` at `1d192f92aaaa3c09f69ac5a983cdcd32baa64ced`
 
-Branch: `feature/ui-hud-2-premium-interface`, based on production `main` at `daee74c246d9c4c3cecca942a367c18e002bced7`.
+**Current development — Social Fabric 1.0**, on `claude/game-upgrade-3o2630`.
+Slice 1 (emergent districts) is production at `1d192f9`; slice 2 (families,
+notable citizens, traits) is on the branch at `a598f9e`. Canonical document:
+`docs/SOCIAL_FABRIC.md`.
 
-This presentation milestone rebuilds the normal map HUD, Town Goals, minimap frame, five-action command dock, Build catalog, City Hall management view, title screen and graphics/settings presentation. It adds no simulation, economy, stage, map, renderer or save-system expansion. Real registry and city-summary values remain authoritative. See `docs/UI_HUD_2.md`.
+**UI / HUD 2.0 is production**, merged through PR #11 (`da5698c`). Earlier
+copies of this file and `README.md` listed it as current development long after
+it shipped; that is corrected here.
 
-## Production — Visual Cohesion 3.1.1
+**The world is 128×128**, since `d7c6b00` ("Grow the valley to 128x128 and cull
+the sorted pass to the camera"). Every older document that says 44×44 — this
+file, `README.md`, `docs/LIVING_CITY_FOUNDATION.md`, the performance figures in
+`docs/IMPROVEMENT_REVIEW.md` §3 — describes the valley as it was. The
+"Explicitly deferred architecture changes" section below records that this
+superseded an earlier permanent-sounding decision, deliberately and by owner
+direction, rather than pretending the decision was never made.
 
-Visual Cohesion and its Recreation/Living City dependencies are merged to production through PR #10 at `daee74c246d9c4c3cecca942a367c18e002bced7`. It adds a modular procedural building kit, topology-derived premium streets, natural terrain/locked-parcel/water presentation and composition-aware vegetation. See `docs/VISUAL_COHESION_3_1_1.md`.
+Meadowline is evolving from a calm small city builder into a deeper living-city
+simulation while preserving its static browser architecture, native ES modules,
+isometric identity, complete Canvas compatibility path, mobile-first interaction
+and low-stress character. Nothing in this file changes that.
 
-Meadowline is evolving from a calm small city builder into a deeper living-city simulation while preserving its static browser architecture, native ES modules, isometric identity, complete Canvas compatibility path, mobile-first interaction, and low-stress character.
+Status labels remain deliberate: **production**, **historical implementation**,
+**automatically validated**, **physically validated**, **current development**,
+and **roadmap only** are not interchangeable.
 
-Status labels remain deliberate: **production**, **historical implementation**, **automatically validated**, **physically validated**, **current development**, and **roadmap only** are not interchangeable.
+## Production since PR #10 — in merge order
+
+Everything below is on `main`. Each landed with its regression suite green.
+
+| Landed | What |
+| --- | --- |
+| PR #11 `da5698c` | **UI / HUD 2.0** — rebuilt HUD, Build catalog, City Hall, title screen. |
+| PR #13, #14 | In-app email OTP and email + password authentication. |
+| PR #15 | Improvement review fixes B1–B6, B8–B10, B14, B15 (`docs/IMPROVEMENT_REVIEW.md`). |
+| `fa9ab95`…`ed6c49b` | **Save Manager 2.0** with cloud sync (`docs/SAVE_MANAGER_2.md`). |
+| `d7c6b00` | **The valley grows to 128×128**; the sorted draw pass is culled to the camera. |
+| `146adee` | Running costs (upkeep, county relief), the farm → mill → bakery food chain, four Wonders. |
+| `606d05a` | Pedestrians on the pavements; signalled crossroads. |
+| `d83ed36`, `5718f99`, `68fec3b` | **Authored models**: the Blender → GLB → ES-module pipeline (`assets/ASSETS.md`); Wonders, then the whole town; instanced on the GPU renderer. |
+| `2e48a42` | Weather merged in: drifting clouds, real rain, storms. |
+| `d921b20` | Three pre-existing test failures fixed; roads no longer repaint as the camera moves. |
+| PR #17 `80ba559` | **Visual upgrade**: per-house colour variety, hashed meadow, warmer light; title screen rebuilt; real build-card thumbnails; City Hall panel reworked. |
+| `8f3282e` | Road access reported for every building that needs one (was houses only, and anchor-tile only); **buildings face the street**; **Move tool** relocates buildings. |
+| `a8e4f41` | **Streets instanced**: 8,382 → 387 scene objects, 2,714 → 264 draw calls, rebuild 109 → 28 ms. |
+| `e4b8834` | Road access on every card; lot path moved to the door; hint bar clears the tool bar. |
+| `f0cf125` | **Sim performance**: a recreation cache check that cost 19× the work it guarded, once per home, removed. 0.9 s tick at 1,120 pop: ~61 → ~5 ms. |
+| `1d192f9` | **Social Fabric slice 1 — emergent districts.** |
 
 ## Milestone 7 — Social Fabric 1.0
 
-**Slice 1 in development.** Branch: `claude/game-upgrade-3o2630`.
+**Current development.** Canonical document: `docs/SOCIAL_FABRIC.md`.
 
 Emergent citizen culture, district identity, careers, social classes, factions,
 organized crime, fame and family legacies. The permanent rule:
 
 **The player builds the city. The citizens decide what the city becomes.**
 
-Slice 1 lands emergent districts: derived from where the player built and what
-divides it, named and described by what actually stands in them, and never
-drawn, named or classified by the player. Later slices add notable citizens,
-families, careers, class, organisations and fame.
+No UI may ever offer a social outcome as a control. The regression asserts the
+exported surface carries no setter.
 
-Canonical document: `docs/SOCIAL_FABRIC.md`, which also records where this file
-and the other older records have gone stale.
+Slices, in order:
+
+1. **Districts** — derived from where the player built and what divides it,
+   named and described by what stands in them. *Production, `1d192f9`.*
+2. **Families, notable citizens, traits** — bounded households the valley
+   comes to know, surnames drawn outcome-blind from one shared pool. *On the
+   branch, `a598f9e`.*
+3. Careers and class.
+4. Organisations: formation, staged growth, decline.
+5. Bosses, fronts, autonomous enforcement.
+6. Fame and entertainment culture.
+
+The milestone brief contradicts itself on naming (PART 7/8 worked examples vs
+PART 27); PART 27 wins and the resolution is structural. See the document.
 
 ## Production baseline
 
@@ -155,9 +202,9 @@ A separate Civic Park was deliberately not added; the milestone stays focused on
 
 See `docs/RECREATION_2.md`.
 
-## Likely next milestone — Safety / Police / Crime
+## Historical — Safety / Police / Crime as the likely next milestone
 
-**Superseded by the owner's Living City 3 integration direction.** The historical reasoning below is retained as architectural memory; the current implementation status is recorded at the top of this file and in `docs/LIVING_CITY_3.md`.
+**Superseded: shipped inside Living City 3.0 (PR #8) as Police, Fire and Healthcare dispatch.** The historical reasoning below is retained as architectural memory; the current implementation status is recorded at the top of this file and in `docs/LIVING_CITY_3.md`.
 
 Recreation establishes reusable multi-tile municipal-facility architecture while Roads already provides representative route infrastructure. Together they make Police a natural likely next milestone, but its exact scope remains a separate owner decision after Recreation physical acceptance.
 
@@ -192,9 +239,17 @@ The exact sequence after Recreation remains playtest-sensitive.
 
 ## Explicitly deferred architecture changes
 
-Do not enlarge the world, introduce chunk streaming, rewrite global pathfinding, replace Canvas 2D, add an ECS, or add a backend merely because future municipal systems exist.
+Do not introduce chunk streaming, rewrite global pathfinding, replace Canvas 2D,
+add an ECS, or add a backend merely because future systems exist.
 
-The 44×44 map remains the production proving ground.
+**Superseded:** this section previously said "do not enlarge the world" and
+"the 44×44 map remains the production proving ground." The valley was enlarged
+to 128×128 at `d7c6b00` by owner direction, without chunk streaming, without a
+pathfinding rewrite and without a save version. That decision stands and the
+old wording is kept here so the change is visible rather than silent. The
+performance work at `a8e4f41` and `f0cf125` is what made the larger valley
+cheap enough on a phone; `docs/IMPROVEMENT_REVIEW.md` §3's figures predate it
+and should be read as eight times smaller than the map they now apply to.
 
 ## Permanent design principles
 
