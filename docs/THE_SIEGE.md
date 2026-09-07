@@ -5,8 +5,8 @@ finally has somewhere to put its money.
 
 ## Status
 
-**Production.** Slice 1: the calendar, the horde, the Garrison and Watchtower,
-deaths, and the Post reporting them.
+**Production.** The calendar, the horde, the Garrison and Watchtower, the
+militia who go out, deaths, and the Post reporting them.
 
 ## The problem it solves
 
@@ -43,9 +43,7 @@ where it arrives — which is the first time street lighting has been worth
 anything tactical.
 
 They walk to the nearest home that has somebody in it, preferring one nobody
-else is already at. Towers kill one thing per volley within 5 tiles; the
-Garrison reaches 9 and reloads faster. **Anything that reaches a door gets one
-hit and is spent.**
+else is already at. **Anything that reaches a door gets one hit and is spent.**
 
 That last rule is the whole balance, and it was not in the first draft. A
 walker that reached a door struck every four seconds until dawn, so a single
@@ -56,6 +54,51 @@ towers stop that many, the rest get one hit each.*
 
 A hit is a home knocked back a housing tier, a resident gone and the street's
 mood with it. **About a third of the time it is a person instead.**
+
+## Two things to buy, and they do different jobs
+
+**A Watchtower shoots.** One kill per volley within 5 tiles, from where it
+stands, reloading every 1.9 seconds. Static reach.
+
+**A Garrison sends people.** Up to four militia muster there at nightfall, walk
+out at 0.95 tiles a second, and settle it at arm's length — a duel takes 2
+seconds and about one in five goes badly enough that the guard is out of the
+night. How many go out is **how many guards the town actually employs**, capped
+at four and floored at two: the building is the licence, the people are the
+strength. There is a `guard` trade now, held at either building.
+
+The Garrison **does not shoot**, and that was a real bug rather than a design
+choice at first. It had a longer reach and a faster reload than a tower, so it
+killed everything before its own militia could walk to it — every guard on the
+map was ornamental and not one ever landed a blow. The regression now checks
+that a garrison with nobody out of it kills nothing at all.
+
+### The leash is what makes a Garrison a *place*
+
+Militia will not go more than 10 tiles from their garrison. Without that they
+follow the fighting wherever it goes, and one garrison covers a whole valley —
+which makes towers pointless. With it, a garrison holds its own quarter and the
+far end of a long town is somebody else's problem. **A garrison parked away
+from the homes defends nothing**, so where you put it is a real decision.
+
+Getting a test for that to mean anything took two goes. The first version
+watched militia during an ordinary night and asserted none strayed — which
+passed with the leash deleted, because in that fixture nothing ever strayed far
+enough to tempt anybody. It now parks a garrison out in the fields and checks it
+kills nothing while the town is overrun.
+
+### What that buys, measured
+
+A 38-home town, 26 attackers, on a real ~35-second night:
+
+| | brought down | lives lost | homes damaged |
+|---|---:|---:|---:|
+| nothing | 0 | 4 | 21 |
+| Garrison only | 8 | 1 | 17 |
+| Garrison + 8 towers | 26 | 0 | 0 |
+
+A watch roughly halves what a night costs. It does not hold a town. That gap is
+what the towers are for, and it is why the bill keeps growing as the city does.
 
 ## What a death costs, in code
 
@@ -100,14 +143,20 @@ the regression now catches.
 
 ## Testing
 
-`tests/siege-regression.html`, 67 checks. Sabotages confirmed to fail: a walker
+`tests/siege-regression.html`, 88 checks. Sabotages confirmed to fail: a walker
 that strikes for ever; a death that renumbers the survivors; the dead keeping
 their trade; the paper printing a nickname the street never used; towers
-ignoring their range; and a tower that needs no Garrison.
+ignoring their range; a tower that needs no Garrison; the Garrison shooting as
+well as sending people; the militia leash removed; and guards who are never
+hurt.
 
 ## Still to come
 
-Not built: militia who leave the Garrison and fight in the street (towers and
-the Garrison both shoot from where they stand), walls or gates, and any way for
-the player to fight directly. The player funds a watch and places towers; what
+Not built: walls or gates, and any way for the player to fight directly. The
+player funds a watch, places towers and decides where the garrison stands; what
 they are really deciding is which streets they were willing to leave dark.
+
+Militia are also not named people — they are the watch, and a guard who comes
+off badly is out of the night rather than dead. Naming them would mean a death
+every time a fight went wrong, and that is a bigger decision than this slice
+should make on its own.

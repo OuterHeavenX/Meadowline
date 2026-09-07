@@ -1,7 +1,7 @@
 import { getBuildingDefinition } from '../buildings/registry.js';
 import { clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
-import { drawArrow, drawBakery, drawBusker, drawBuskerPitch, drawCafe, drawDock, drawGarrison, drawLamp, drawMarket, drawPark, drawSchool, drawShop, drawVendor, drawStation, drawWalker, drawWatchtower, drawWindmill } from './buildings.js';
+import { drawArrow, drawBakery, drawBusker, drawBuskerPitch, drawCafe, drawDock, drawGarrison, drawLamp, drawMilitia, drawMarket, drawPark, drawSchool, drawShop, drawVendor, drawStation, drawWalker, drawWatchtower, drawWindmill } from './buildings.js';
 import { drawRecreationFacility } from './recreation.js';
 import { drawCityHall } from './city-hall.js';
 import { drawHousingHouse } from './housing.js';
@@ -114,8 +114,9 @@ export function render(){
   }
   // Whoever is on the pavement today, sorting with the tile they stand on.
   for(const bk of S.buskers||[]) items.push({d:viewDepth(bk.x,bk.y)+0.06,k:9,bk});
-  // And whatever is walking towards it tonight.
+  // And whatever is walking towards it tonight, and whoever went out to meet it.
   for(const z of S.horde||[]) items.push({d:viewDepth(z.fx,z.fy)+0.07,k:10,z});
+  for(const m of S.militia||[]) items.push({d:viewDepth(m.fx,m.fy)+0.075,k:11,m});
   for(const p of S.puffs) items.push({d:viewDepth(p.x,p.y)+0.2,k:4,p});
   items.sort((a,b)=>a.d-b.d);
 
@@ -162,6 +163,11 @@ export function render(){
       const p=proj(it.z.fx,it.z.fy);
       if(p.x<-80||p.x>innerWidth+80||p.y<-120||p.y>innerHeight+80) continue;
       drawWalker(it.z,p,dark);
+    }
+    else if(it.k===11){
+      const p=proj(it.m.fx,it.m.fy);
+      if(p.x<-80||p.x>innerWidth+80||p.y<-120||p.y>innerHeight+80) continue;
+      drawMilitia(it.m,p,dark);
     }
     else if(it.k===7) drawVehicle(it.v);
     else if(it.k===5){

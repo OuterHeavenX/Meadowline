@@ -32,7 +32,7 @@ import { paintGrowthPanel } from './growth.js';
 import { askConfirm } from './confirm.js';
 import { varietyOf, varietyReason } from '../simulation/trade.js';
 import { actOf, buskersAt, liveliness } from '../simulation/buskers.js';
-import { GARRISON_RANGE, TOWER_RANGE, siegeSnapshot } from '../simulation/siege.js';
+import { GARRISON_RANGE, TOWER_RANGE, guardsEmployed, militiaStrength, siegeSnapshot } from '../simulation/siege.js';
 
 /* ---------- the Look card ---------- */
 export const elLook=document.getElementById("look"), elLookBody=document.getElementById("look-body");
@@ -331,11 +331,13 @@ function describeTile(x,y){
           : (manned?'<p>Archers on the platform, and a lantern that burns all night.</p>'
                    :'<p><b>Nobody mans this.</b> The Garrison is gone, and a tower without one is a tall empty building.</p>');
         body+='<dl class="service">'
-          +'<dt>Reach</dt><dd>'+(isG?GARRISON_RANGE:TOWER_RANGE)+' tiles</dd>'
+          +'<dt>'+(isG?'Its people go out':'Archers reach')+'</dt><dd>'+(isG?GARRISON_RANGE:TOWER_RANGE)+' tiles</dd>'
           +'<dt>Towers standing</dt><dd class="'+(snap.towers?'up':'dn')+'">'+snap.towers+'</dd>'
           +'<dt>Next dark night</dt><dd class="'+(snap.nextIn!==null&&snap.nextIn<=2?'dn':'')+'">'
             +(snap.nextIn===null?'None expected':snap.nextIn<=0?'Tonight':'in '+snap.nextIn+' days')+'</dd>'
           +'<dt>What is coming</dt><dd>'+snap.size+'</dd>'
+          +(isG?'<dt>Guards on the books</dt><dd class="'+(guardsEmployed()?'up':'dn')+'">'+guardsEmployed()+'</dd>'
+               +'<dt>Goes out at night</dt><dd class="'+(militiaStrength()?'up':'dn')+'">'+militiaStrength()+'</dd>':'')
           +(upkeepOf(b)?'<dt>Upkeep</dt><dd class="dn">\u2212'+upkeepOf(b)+' a day</dd>':'')
           +'</dl>';
         /* The number that actually tells the player whether they have bought

@@ -2,7 +2,7 @@ import { H, W, hash2 } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { services } from '../core/services.js';
 import { getBuildingDefinition } from '../buildings/registry.js';
-import { familyAt, familyMembers } from './families.js';
+import { families as familiesList, familyAt, familyMembers } from './families.js';
 import { takeLife } from './mortality.js';
 import { emitFeedback } from './feedback.js';
 import { record } from './ledger.js';
@@ -33,12 +33,36 @@ export const NIGHT_GAP=9;               // days between dark nights, plus a seed
 export const HORDE_CAP=26;
 export const TOWER_RANGE=5;
 export const TOWER_RELOAD=1.9;          // seconds between volleys
-export const GARRISON_RANGE=9;
+// How far the garrison's own people will go out. Named for the Look card.
+export const GARRISON_RANGE=10;
 export const WALK=0.55;                 // tiles a second
 export const SIEGE_DAWN=0.30;           // darkness below this and the night is over
 const ATTACK_TIME=4.2;                  // seconds at a door before it costs something
+/* ---------- the militia ----------
+   The towers shoot from where they stand; these are the ones who go out. How
+   many depends on how many guards the town actually employs, so a garrison
+   nobody works at fields a token watch — the building is the licence, the
+   people are the strength. */
+export const MILITIA_SPEED=0.95;        // enough faster that they can actually cut something off
+export const MILITIA_REACH=1.15;
+export const MILITIA_MAX=4;
+export const MILITIA_MIN=2;
+/* How far from the garrison they will go. This is the lever that decides what
+   a garrison is *for*: at sixteen tiles four of them swept a fifteen-strong
+   night on their own and every tower in the game was ornamental. At ten they
+   hold their own quarter and the far end of a long town is somebody else's
+   problem — which is what towers are, and why a town that spreads has to keep
+   buying them. */
+export const MILITIA_LEASH=GARRISON_RANGE;
+/* A real fight rather than a swat. At the first setting six of them cleared a
+   horde of fifteen with no towers standing at all, which made every tower in
+   the game ornamental — the whole design is that a garrison alone does not
+   hold a town. */
+const DUEL_TIME=2.0;
+const RECOVER_TIME=26;
 
 export function horde(){ if(!Array.isArray(S.horde)) S.horde=[]; return S.horde; }
+export function militia(){ if(!Array.isArray(S.militia)) S.militia=[]; return S.militia; }
 export function siegeState(){
   if(!S.siege||typeof S.siege!=='object') S.siege={active:false,night:0,killed:0,lost:0,damaged:0,strikes:0,arrows:[]};
   if(!Array.isArray(S.siege.arrows)) S.siege.arrows=[];
@@ -115,13 +139,38 @@ function nearestHome(x,y,taken){
   return best||fallback;
 }
 
+/* Guards on the books, which is what decides how many go out. A garrison with
+   nobody working in it still fields the minimum — somebody always turns out —
+   but a town that has the people to staff it fields a real watch. */
+export function guardsEmployed(){
+  let n=0;
+  for(const f of familiesList()) for(const c of Object.values(f.careers||{})) if(c==='guard') n++;
+  return n;
+}
+export function militiaStrength(){
+  if(!hasGarrison()) return 0;
+  return Math.max(MILITIA_MIN,Math.min(MILITIA_MAX,guardsEmployed()));
+}
+function muster(){
+  const list=militia(); list.length=0;
+  const g=garrisons()[0]; if(!g) return list;
+  const want=militiaStrength();
+  for(let i=0;i<want;i++){
+    const x=g.x+(i%2), y=g.y+((i>>1)%2);
+    list.push({x,y,fx:x,fy:y,home:{x:g.x,y:g.y},state:'OUT',duel:0,hurt:0,
+      seed:((g.seed>>>0)^(i*2654435761))>>>0});
+  }
+  return list;
+}
+
 export function beginNight(note=()=>{}){
   const st=siegeState(), list=horde();
   list.length=0; st.arrows.length=0;
   const ways=approaches();
   if(!ways.length) return list;
+  muster();
   const want=hordeSize();
-  st.active=true; st.night=(st.night|0)+1; st.killed=0; st.lost=0; st.damaged=0; st.strikes=0;
+  st.active=true; st.night=(st.night|0)+1; st.killed=0; st.lost=0; st.damaged=0; st.strikes=0; st.hurt=0;
   for(let i=0;i<want;i++){
     const w=ways[i%ways.length];
     const jitter=Math.floor(hash2(i,st.night,(S.seed>>>0)+13)*5)-2;
@@ -130,7 +179,7 @@ export function beginNight(note=()=>{}){
     list.push({x,y,fx:x,fy:y,tx:x,ty:y,p:0,atDoor:0,target:null,
       seed:((x*73856093)^(y*19349663)^(i*2654435761))>>>0});
   }
-  record('siege_night',{night:st.night,size:list.length,towers:towers().length,garrison:hasGarrison()});
+  record('siege_night',{night:st.night,size:list.length,towers:towers().length,garrison:hasGarrison(),militia:militia().length});
   services.toast(list.length+' came out of the woods tonight');
   note('Something came out of the woods');
   return list;
@@ -140,8 +189,8 @@ export function endNight(note=()=>{}){
   const st=siegeState(), list=horde();
   if(!st.active) return;
   const survived=list.length;
-  list.length=0; st.arrows.length=0; st.active=false;
-  record('siege_dawn',{night:st.night,killed:st.killed|0,lost:st.lost|0,damaged:st.damaged|0,survived});
+  list.length=0; st.arrows.length=0; militia().length=0; st.active=false;
+  record('siege_dawn',{night:st.night,killed:st.killed|0,lost:st.lost|0,damaged:st.damaged|0,hurt:st.hurt|0,survived});
   if(st.lost) note('Meadowline counted its losses at first light');
   else if(st.killed) note('The valley held through the night');
   services.toast(st.lost?'Dawn. '+st.lost+(st.lost===1?' life':' lives')+' lost':'Dawn. The town held');
@@ -153,10 +202,14 @@ export function endNight(note=()=>{}){
    itself from where it stands, not an army. */
 function volley(dt){
   const st=siegeState(), list=horde();
-  for(const t of towers().concat(garrisons())){
-    const isGarrison=!!getBuildingDefinition(t.type)?.defence?.garrison;
-    const range=isGarrison?GARRISON_RANGE:TOWER_RANGE;
-    const reload=isGarrison?TOWER_RELOAD*0.6:TOWER_RELOAD;
+  /* Towers only. The garrison used to shoot too, with a longer reach and a
+     faster reload, and the result was that it killed everything before its own
+     militia could walk to it — every guard on the map was ornamental and not
+     one of them ever landed a blow. A garrison sends people; it does not fire.
+     That split is what makes the two purchases different things to own. */
+  for(const t of towers()){
+    const range=getBuildingDefinition(t.type)?.defence?.range||TOWER_RANGE;
+    const reload=TOWER_RELOAD;
     t.cool=(t.cool||0)-dt;
     if(t.cool>0) continue;
     let best=-1,bd=Infinity;
@@ -173,6 +226,70 @@ function volley(dt){
     emitFeedback(z.fx,z.fy,'service','✦');
   }
   for(let i=st.arrows.length-1;i>=0;i--){ st.arrows[i].age+=dt; if(st.arrows[i].age>=st.arrows[i].life) st.arrows.splice(i,1); }
+}
+
+/* ---------- the ones who go out ----------
+   They pick the nearest thing to the town, walk out to meet it, and settle it
+   at arm's length. They will not follow one past the leash: a militia that
+   chases a straggler across the valley leaves the street it was standing in
+   open, which is exactly the mistake the player is being asked not to make. */
+function patrol(dt){
+  const st=siegeState(), list=horde(), guard=militia();
+  for(const m of guard){
+    if(m.hurt>0){
+      // Hurt: back to the garrison, and out of the night until they have sat down.
+      m.hurt-=dt;
+      const dx=Math.sign(m.home.x-m.fx), dy=Math.sign(m.home.y-m.fy);
+      if(Math.abs(m.home.x-m.fx)>0.4) m.fx+=dx*MILITIA_SPEED*dt;
+      else if(Math.abs(m.home.y-m.fy)>0.4) m.fy+=dy*MILITIA_SPEED*dt;
+      m.state='RETURNING';
+      m.x=Math.round(m.fx); m.y=Math.round(m.fy);
+      continue;
+    }
+    // The nearest one, so long as it is still the town they are standing in.
+    let best=-1,bd=Infinity;
+    for(let i=0;i<list.length;i++){
+      const z=list[i];
+      if(Math.max(Math.abs(z.fx-m.home.x),Math.abs(z.fy-m.home.y))>MILITIA_LEASH) continue;
+      const d=Math.hypot(z.fx-m.fx,z.fy-m.fy);
+      if(d<bd){ bd=d; best=i; }
+    }
+    if(best<0){
+      // Nothing in reach: back towards the garrison and wait.
+      m.state='RETURNING'; m.duel=0;
+      const dx=Math.sign(m.home.x-m.fx), dy=Math.sign(m.home.y-m.fy);
+      if(Math.abs(m.home.x-m.fx)>0.4) m.fx+=dx*MILITIA_SPEED*dt;
+      else if(Math.abs(m.home.y-m.fy)>0.4) m.fy+=dy*MILITIA_SPEED*dt;
+      m.x=Math.round(m.fx); m.y=Math.round(m.fy);
+      continue;
+    }
+    const z=list[best];
+    m.face={x:z.fx,y:z.fy};
+    if(bd<=MILITIA_REACH){
+      m.state='FIGHTING'; m.duel+=dt;
+      if(m.duel>=DUEL_TIME){
+        m.duel=0;
+        list.splice(best,1);
+        st.killed=(st.killed|0)+1;
+        emitFeedback(z.fx,z.fy,'service','\u2694');
+        /* It is not free. Roughly one in six goes badly and that guard is out
+           of the night, which is why a garrison alone does not hold a town —
+           the towers have to be there too. */
+        if(hash2(m.seed,st.killed*7+guard.indexOf(m),(S.seed>>>0)+29)<0.22){
+          m.hurt=RECOVER_TIME;
+          st.hurt=(st.hurt|0)+1;
+          if(S.diagnostics) S.diagnostics.militiaHurt=(S.diagnostics.militiaHurt||0)+1;
+          record('militia_hurt',{night:st.night,x:Math.round(m.fx),y:Math.round(m.fy)});
+        }
+      }
+      continue;
+    }
+    m.state='OUT'; m.duel=0;
+    const ang=Math.atan2(z.fy-m.fy,z.fx-m.fx);
+    m.fx+=Math.cos(ang)*MILITIA_SPEED*dt;
+    m.fy+=Math.sin(ang)*MILITIA_SPEED*dt;
+    m.x=Math.round(m.fx); m.y=Math.round(m.fy);
+  }
 }
 
 /* ---------- and the rest keep walking ---------- */
@@ -262,6 +379,7 @@ export function advanceSiege(dt,note=()=>{}){
   if(dark<=SIEGE_DAWN||!(S.ctx?.houses||[]).some(h=>(h.pop|0)>0)){ endNight(note); return; }
   clock+=dt;
   volley(dt);
+  patrol(dt);
   march(dt);
   if(!horde().length&&clock>1){ endNight(note); clock=0; }
 }
@@ -271,5 +389,6 @@ export function siegeSnapshot(){
   return {active:!!st.active,night:st.night|0,here:horde().length,
     towers:towers().length,garrison:hasGarrison(),
     killed:st.killed|0,lost:st.lost|0,damaged:st.damaged|0,
+    militia:militia().length,outThere:militia().filter(m=>m.hurt<=0).length,hurt:st.hurt|0,
     nextIn:nightsAway(),size:hordeSize()};
 }

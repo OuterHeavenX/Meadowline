@@ -15,12 +15,14 @@
    anybody else into a dead person's job.
    ============================================================ */
 import * as siegeMod from '../src/simulation/siege.js';
-import { FIRST_NIGHT, GARRISON_RANGE, TOWER_RANGE, advanceSiege, approaches, beginNight, endNight,
-  hordeSize, horde, nextNight, nightsOf, siegeSnapshot, siegeState } from '../src/simulation/siege.js';
+import { FIRST_NIGHT, GARRISON_RANGE, MILITIA_LEASH, MILITIA_MAX, MILITIA_MIN, TOWER_RANGE, advanceSiege,
+  approaches, guardsEmployed, hordeSize, horde, militia, militiaStrength, nextNight, nightsOf,
+  siegeSnapshot, siegeState } from '../src/simulation/siege.js';
 import { takeLife, deathsSoFar, isLost } from '../src/simulation/mortality.js';
 import { BUILDINGS } from '../src/buildings/registry.js';
 import { canPlace, place, erase } from '../src/buildings/buildings.js';
 import { families, familyMembers, familyAt, lostOf, memberEver, evaluateFamilies } from '../src/simulation/families.js';
+import { CAREERS, evaluateCareers } from '../src/simulation/careers.js';
 import { aliases } from '../src/simulation/aliases.js';
 import { fame } from '../src/simulation/fame.js';
 import { organisations } from '../src/simulation/organisations.js';
@@ -48,7 +50,7 @@ function town({homes=17,settle=140}={}){
   for(let x=42;x<42+homes+3;x++) place('road',x,46);
   for(let x=43;x<43+homes;x++){ if(place('house',x,45)){ const h=S.grid[idx(x,45)]; h.pop=5; h.mood=70; h.state.housingTier=2; } }
   recompute();
-  for(let d=0;d<settle;d++){ S.day++; for(let s=0;s<8;s++){ S.dayT=s/8+0.01; evaluateFamilies(note); } }
+  for(let d=0;d<settle;d++){ S.day++; for(let s=0;s<8;s++){ S.dayT=s/8+0.01; evaluateFamilies(note); evaluateCareers(note); } }
   S.dayT=DAY_T; recompute();
 }
 const at=(x,y)=>S.grid[idx(x,y)];
@@ -75,7 +77,8 @@ function runNight(limit=20000){
   check('both declare what they can reach, so siege.js names no building',
     g.defence?.garrison===true&&w.defence?.range>0&&!/watchtower|garrison/.test(String(siegeMod.advanceSiege)),
     JSON.stringify([g.defence,w.defence]));
-  check('a garrison reaches further than a tower',GARRISON_RANGE>TOWER_RANGE,GARRISON_RANGE+' vs '+TOWER_RANGE);
+  check('a garrison’s people go further than a tower can shoot',GARRISON_RANGE>TOWER_RANGE,
+    GARRISON_RANGE+' vs '+TOWER_RANGE);
 }
 
 /* ---------- towers need somewhere to come from ---------- */
@@ -179,6 +182,134 @@ function runNight(limit=20000){
   const far=runNight();
   check('towers too far from the homes stop nothing',far.killed<5&&far.lost+far.damaged>0,
     JSON.stringify({killed:far.killed,lost:far.lost,damaged:far.damaged}));
+}
+
+/* ---------- the ones who go out ---------- */
+{
+  check('there is a guard’s trade, held at the watch',
+    CAREERS.guard&&CAREERS.guard.at.includes('garrison')&&CAREERS.guard.at.includes('watchtower'));
+  town();
+  check('a town with no garrison sends nobody out',militiaStrength()===0&&guardsEmployed()===0);
+  place('garrison',52,48); recompute();
+  /* Let people actually take the posts, so the strength is the town's and not
+     the building's — the building is the licence, the people are the watch. */
+  for(let d=0;d<160;d++){ S.day++; for(let s=0;s<8;s++){ S.dayT=s/8+0.01; evaluateFamilies(note); evaluateCareers(note); } }
+  S.dayT=DAY_T; recompute();
+  check('people take the guard’s post once there is somewhere to hold it',guardsEmployed()>0,guardsEmployed());
+  check('and what goes out is bounded either way',
+    militiaStrength()>=MILITIA_MIN&&militiaStrength()<=MILITIA_MAX,militiaStrength());
+  S.day=nextNight(1); S.dayT=NIGHT;
+  advanceSiege(0.1,note);
+  check('they muster when the night starts',militia().length===militiaStrength(),militia().length);
+  check('and they start at the garrison',
+    militia().every(m=>Math.max(Math.abs(m.fx-52),Math.abs(m.fy-48))<=2),
+    JSON.stringify(militia().map(m=>[m.x,m.y])));
+  const states=new Set();
+  let t=0,fought=false;
+  while(horde().length&&t<3000){ advanceSiege(0.05,note);
+    for(const m of militia()){ states.add(m.state); if(m.state==='FIGHTING') fought=true; }
+    t++; }
+  check('they walk out and they fight',states.has('OUT')&&fought,[...states].join(','));
+  check('and it is them doing the killing, not the building',siegeSnapshot().killed>0,siegeSnapshot().killed);
+  /* The garrison used to shoot as well, with a longer reach and a faster
+     reload, so it killed everything before its own people could reach it and
+     not one guard ever landed a blow. A garrison sends people; it does not
+     fire. */
+  town();
+  place('garrison',52,48); recompute();
+  S.day=nextNight(1); S.dayT=NIGHT;
+  advanceSiege(0.1,note);
+  militia().length=0;                       // the building, and nobody in it
+  let u=0; while(horde().length&&u<600){ advanceSiege(0.05,note); u++; }
+  check('a garrison with nobody out of it kills nothing by itself',
+    siegeSnapshot().killed===0,siegeSnapshot().killed);
+  // They hold their own quarter rather than the whole valley.
+  /* The leash. This has to prove two things at once, and the first draft only
+     proved the second: that there was genuinely something out beyond the
+     quarter worth chasing, and that nobody went after it. Without the first
+     half the check passed with the leash deleted, because in that fixture
+     nothing ever strayed far enough to tempt anybody. */
+  town({homes:30});
+  place('garrison',44,48); recompute();
+  S.day=nextNight(1); S.dayT=NIGHT;
+  advanceSiege(0.1,note);
+  const G={x:44,y:48}, far=(o)=>Math.max(Math.abs(o.fx-G.x),Math.abs(o.fy-G.y));
+  let tempted=0,strayed=0,v=0;
+  while(horde().length&&v<3000){
+    advanceSiege(0.05,note); v++;
+    tempted=Math.max(tempted,...horde().map(far));
+    strayed=Math.max(strayed,0,...militia().map(far));
+  }
+  check('fixture: there was something well outside the quarter to be drawn to',
+    tempted>MILITIA_LEASH+4,tempted.toFixed(1));
+  check('and they were not drawn past it',strayed<=MILITIA_LEASH+2,
+    strayed.toFixed(1)+' vs leash '+MILITIA_LEASH);
+  /* Where the leash actually decides something: a garrison parked away from
+     the homes. Its people hold the ground they were given and the town is
+     somebody else's problem — so a garrison in the wrong place is money spent
+     on nothing, which is the point of being able to place it. */
+  town({homes:30});
+  place('garrison',70,58); recompute();
+  for(let d=0;d<160;d++){ S.day++; for(let s=0;s<8;s++){ S.dayT=s/8+0.01; evaluateFamilies(note); evaluateCareers(note); } }
+  S.dayT=DAY_T; recompute();
+  check('fixture: it is parked well away from any home',
+    S.ctx.houses.every(h=>Math.max(Math.abs(h.x-70),Math.abs(h.y-58))>MILITIA_LEASH),
+    Math.min(...S.ctx.houses.map(h=>Math.max(Math.abs(h.x-70),Math.abs(h.y-58)))));
+  const parked=runNight();
+  check('a garrison in the wrong place defends nothing',parked.killed===0&&parked.lost+parked.damaged>0,
+    JSON.stringify({killed:parked.killed,lost:parked.lost,damaged:parked.damaged}));
+}
+
+/* ---------- going out is not free ---------- */
+{
+  town({homes:30});
+  place('garrison',52,48); recompute();
+  for(let d=0;d<160;d++){ S.day++; for(let s=0;s<8;s++){ S.dayT=s/8+0.01; evaluateFamilies(note); evaluateCareers(note); } }
+  S.dayT=DAY_T; recompute();
+  /* One night is a coin flip, so this runs a season of them: over that many
+     fights somebody has to come off worse, or the watch is free and a garrison
+     would simply be better than a tower at everything. */
+  let hurt=0,nights=0,kills=0;
+  for(let n=0;n<8;n++){
+    const r=runNight();
+    hurt+=r.hurt|0; kills+=r.killed|0; nights++;
+    // put the town back on its feet between nights so the fixture keeps its shape
+    for(const h of S.ctx.houses){ h.pop=5; h.mood=70; }
+    recompute();
+  }
+  check('fixture: there were real fights across the season',kills>=10,kills+' over '+nights+' nights');
+  check('and going out costs the watch something',hurt>0,hurt+' hurt over '+kills+' fights');
+  check('a hurt guard is out of the night rather than dead',
+    ledger().filter(e=>e.type==='militia_hurt').length>0
+    &&!ledger().some(e=>e.type==='death'&&e.cause==='the watch'));
+}
+
+/* ---------- a garrison is not enough on its own ---------- */
+{
+  /* The shape the whole purchase depends on: a watch helps and does not hold.
+     If this ever inverts, one of the two buildings has become ornamental. */
+  town({homes:30});
+  const bare=runNight();
+  town({homes:30});
+  place('garrison',52,48); recompute();
+  for(let d=0;d<160;d++){ S.day++; for(let s=0;s<8;s++){ S.dayT=s/8+0.01; evaluateFamilies(note); evaluateCareers(note); } }
+  S.dayT=DAY_T; recompute();
+  const watched=runNight();
+  check('fixture: the same night came for both towns',bare.came===watched.came,bare.came+' / '+watched.came);
+  check('a garrison brings some of them down where nothing did',
+    watched.killed>0&&bare.killed===0,bare.killed+' -> '+watched.killed);
+  check('and the town pays less for the night than it would have',
+    watched.lost+watched.damaged<bare.lost+bare.damaged,
+    (bare.lost+bare.damaged)+' -> '+(watched.lost+watched.damaged));
+  check('but a garrison alone does not hold a town, which is what towers are for',
+    watched.lost+watched.damaged>0,JSON.stringify({lost:watched.lost,damaged:watched.damaged}));
+  town({homes:30});
+  place('garrison',52,48); recompute();
+  for(const x of [38,42,46,50,54,58,62,66]) place('watchtower',x,47);
+  recompute();
+  const full=runNight();
+  check('and a town that bought both holds',full.lost===0&&full.killed>=watched.killed,
+    JSON.stringify({killed:full.killed,lost:full.lost,damaged:full.damaged}));
 }
 
 /* ---------- dawn ---------- */

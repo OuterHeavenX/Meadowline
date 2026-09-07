@@ -169,6 +169,33 @@ export function drawGarrison(b,p,dark){
   if(lit) lights.push({x:p.x+hw*0.7-3*z,y:p.y-6*z,w:6*z,h:6*z});
 }
 
+/* The ones who went out. Same size as everybody else on the map, in the
+   watch's green, with a spear — the silhouette has to read as "one of ours"
+   from across the valley or the whole fight is a scrum of dots. */
+export function drawMilitia(m,p,dark){
+  const z=S.cam.z;
+  const swing=m.state==='FIGHTING'?Math.sin((S.t||0)*11+(m.seed%53))*0.9:0;
+  const step=m.state==='OUT'?Math.sin((S.t||0)*7+(m.seed%97))*0.6:0;
+  groundShadow(p.x,p.y,5*z,2.4*z,0.24);
+  const hurt=m.hurt>0;
+  g.fillStyle="#3b4450";
+  g.fillRect(p.x-1.5*z+step*0.6*z,p.y-5*z,1.2*z,5*z); g.fillRect(p.x+0.3*z-step*0.6*z,p.y-5*z,1.2*z,5*z);
+  g.fillStyle=hurt?"#8a7f63":"#4e6b52";
+  g.fillRect(p.x-2*z,p.y-11*z,4*z,6.4*z);
+  g.fillStyle=SKIN[m.seed%SKIN.length];
+  g.beginPath(); g.arc(p.x,p.y-13*z,2*z,0,TAU); g.fill();
+  // helmet, so a guard is not mistaken for a resident out after dark
+  g.fillStyle="#8d9199";
+  g.beginPath(); g.arc(p.x,p.y-13.6*z,2.1*z,Math.PI,TAU); g.fill();
+  // spear, levelled when they are in it and shouldered when they are not
+  g.strokeStyle="#8a6a45"; g.lineWidth=Math.max(1,1.1*z);
+  g.beginPath();
+  if(m.state==='FIGHTING'){ g.moveTo(p.x+1*z,p.y-9*z); g.lineTo(p.x+8*z,p.y-9.5*z+swing*z); }
+  else { g.moveTo(p.x+1.6*z,p.y-4*z); g.lineTo(p.x+3.4*z,p.y-15*z); }
+  g.stroke();
+  if(dark>0.12) lights.push({x:p.x-2*z,y:p.y-12*z,w:4*z,h:4*z});
+}
+
 /* What comes for the town. Deliberately not gruesome: a hunched, grey-green
    figure that walks the way the little people walk, so it reads as wrong
    rather than as horror on a map this gentle. */

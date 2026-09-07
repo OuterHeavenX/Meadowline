@@ -120,7 +120,7 @@ function addPeople(parent,people){
     put(hairs,part.copy(base).multiply(T.makeTranslation(0,HEAD+.012,p.lean*.06-.008)).multiply(SC.makeScale(1,.72,1)),p.hair);
     // A basket, a reporter's pale notepad, or the dark body of a camera.
     if(p.carry) put(carries,part.copy(base).multiply(T.makeTranslation(.09,HIP+.03,.02)),
-      p.carryKind==='notebook'?'#f4f0e2':p.carryKind==='camera'?'#3b4147':'#b98d5c');
+      p.carryKind==='notebook'?'#f4f0e2':p.carryKind==='camera'?'#3b4147':p.carryKind==='spear'?'#8a6a45':'#b98d5c');
   }
   for(const inst of [legs,arms,torsos,heads,hairs,carries]){ inst.instanceMatrix.needsUpdate=true; if(inst.instanceColor) inst.instanceColor.needsUpdate=true; }
 }
@@ -257,6 +257,15 @@ export function addIncident(parent,inc,people){
    everybody else — same seven pieces, same gait — because that is what makes
    it unsettling on a map this gentle: it is shaped like the little people and
    it is the wrong colour, walking the wrong way, at the wrong hour. */
+/* One of ours: the watch's green, a helmet and a spear, through the same
+   instanced figure as everybody else. */
+function militiaFigure(m){
+  const heading=m.face?Math.atan2(m.face.x-m.fx,m.face.y-m.fy):0;
+  const step=reduceMotion||m.state!=='OUT'?0:Math.sin((S.t||0)*7+(m.seed%97))*.6;
+  return {x:m.fx,z:m.fy,heading,stride:step,bob:0,lean:m.state==='FIGHTING'?.2:.1,
+    col:m.hurt>0?'#8a7f63':'#4e6b52',skin:SKIN[m.seed%SKIN.length],hair:'#8d9199',
+    carry:true,carryKind:'spear',lying:false};
+}
 function walkerFigure(z){
   const sway=reduceMotion?0:Math.sin((S.t||0)*3.4+(z.seed%97))*.5;
   const heading=Math.atan2((z.target?z.target.x:z.fx)-z.fx,(z.target?z.target.y:z.fy)-z.fy);
@@ -309,6 +318,7 @@ export function addActors(parent){
   const people=S.citizens.map(pose);
   for(const bk of S.buskers||[]){ people.push(buskerFigure(bk)); addBuskerProp(parent,bk); }
   for(const z of S.horde||[]) people.push(walkerFigure(z));
+  for(const m of S.militia||[]) people.push(militiaFigure(m));
   for(const a of S.siege?.arrows||[]) addVolley(parent,a);
   for(const inc of S.incidents||[]) addIncident(parent,inc,people);
   addPeople(parent,people);
