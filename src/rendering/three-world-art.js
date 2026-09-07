@@ -279,6 +279,41 @@ function buskerPitch(g){
   box(g,-.3,.03,-.26,.16,.14,.16,mat('#a98c63'),false);
   box(g,.28,.03,.24,.14,.11,.14,mat('#8d7a5f'),false);
 }
+/* Stone, where the rest of the valley is timber. A tower is tall and thin so
+   it breaks the skyline from across the map, and the garrison is the only
+   crenellated roofline in the game. */
+function watchtower(g,b){
+  lotBase(g,.9,.9);
+  box(g,0,.05,0,.46,1.5,.46,mat('#b9b3a4'));
+  box(g,0,1.55,0,.66,.07,.66,mat('#8a8377'));
+  for(const[x,z]of[[-.28,-.28],[.28,-.28],[-.28,.28],[.28,.28]])cyl(g,x,1.62,z,.022,.24,mat('#6f6a60'),6);
+  box(g,0,1.86,0,.66,.05,.66,mat('#8a8377'),false);
+  // the lantern that burns all night
+  box(g,0,1.63,0,.12,.16,.12,mat('#ffd98a',.4,0,'#ffd98a'));
+  // and somebody on the platform
+  box(g,.16,1.62,.04,.12,.3,.12,mat('#4b5a44'));
+  sphere(g,.16,1.98,.04,.075,mat('#e6c39c'));
+  for(let i=1;i<4;i++)box(g,0,.05+i*.36,.235,.12,.16,.02,mat(C.glass,.25,.08),false);
+}
+function garrison(g,fp){
+  const w=fp[0]*.86,d=fp[1]*.86;
+  lotBase(g,fp[0]*.94,fp[1]*.94);
+  box(g,0,.06,0,w,.92,d,mat('#a9a396'));
+  box(g,0,.98,0,w*1.04,.08,d*1.04,mat('#8d8779'));
+  // crenellations, the one roofline here that is not a gable
+  for(let i=-3;i<=3;i++){
+    box(g,i*w/7,1.06,-d*.5,w/16,.14,.07,mat('#8d8779'),false);
+    box(g,i*w/7,1.06,d*.5,w/16,.14,.07,mat('#8d8779'),false);
+  }
+  for(const x of[-w*.5,w*.5])for(let i=-2;i<=2;i++)box(g,x,1.06,i*d/6,.07,.14,d/14,mat('#8d8779'),false);
+  // corner turrets, gate and banner
+  for(const[x,z]of[[-w*.46,-d*.46],[w*.46,-d*.46],[-w*.46,d*.46],[w*.46,d*.46]])
+    cyl(g,x,.06,z,.13,1.16,mat('#b4aea1'),8);
+  door(g,0,.06,d*.5,.3,.44,'#4a3f36');
+  box(g,0,.72,d*.52,.14,.4,.02,mat('#8c4a3f'),false);
+  cyl(g,w*.32,.06,d*.42,.09,.12,mat('#ffb765',.4,0,'#ffb765'),10);
+  path(g,0,d*.5,.42,.4);
+}
 function vendorPitch(g,b){
   const id=b.state?.variety||'foodCart',
     canopy=id==='flowerStall'?'#7a9b60':id==='newsstand'?'#4b6f8d':'#c85c46',
@@ -399,7 +434,7 @@ function building(parent,b){const def=getBuildingDefinition(b.type),fp=def?.plac
       const blade=box(g,Math.cos(a)*.22,.62+Math.sin(a)*.22,.36,.09,.05,.4,mat('#e2d4b8'),false);
       blade.rotation.z=a;}}
     return;
-  }if(def?.service?.type==='recreation'||b.type==='park'){recreation(g,b.type,fp,b.seed||0);return;}if(b.type==='tree'){tree(g,0,0,b.seed||0,1);return;}if(b.type==='lamp'){lamp(g,0,0);return;}if(b.type==='dock'){box(g,0,.02,0,.8,.12,.8,mat('#80664e'));return;}if(b.type==='house'){house(g,b);return;}if(['cafe','market','bakery','station','generalStore','teaHouse','bookshop'].includes(b.type)){storefront(g,b.type,b.seed||0);return;}if(b.type==='buskerPitch'){buskerPitch(g);return;}if(b.type==='vendor'){vendorPitch(g,b);return;}if(b.type==='farm'){farm(g,fp,b.seed||0);return;}if(b.type==='statue'){statue(g,fp);return;}if(b.type==='clockTower'){clockTower(g,fp);return;}if(b.type==='lighthouse'){lighthouse(g,fp);return;}if(b.type==='greatLibrary'){greatLibrary(g,fp);return;}if(b.type==='mill'){lotBase(g,.94,.94);box(g,0,.05,0,.55,.72,.55,mat('#d3c6aa'));gable(g,0,.77,0,.62,.62,.22,mat('#75594b'));cyl(g,0,.5,.3,.035,.45,mat('#5d4a3e'),7);for(const a of[0,Math.PI/2,Math.PI,Math.PI*1.5]){const blade=box(g,Math.cos(a)*.24,.68,Math.sin(a)*.24,.08,.05,.42,mat('#e2d4b8'),false);blade.rotation.y=-a;}return;}civic(g,b.type,b,fp);}
+  }if(def?.service?.type==='recreation'||b.type==='park'){recreation(g,b.type,fp,b.seed||0);return;}if(b.type==='tree'){tree(g,0,0,b.seed||0,1);return;}if(b.type==='lamp'){lamp(g,0,0);return;}if(b.type==='dock'){box(g,0,.02,0,.8,.12,.8,mat('#80664e'));return;}if(b.type==='house'){house(g,b);return;}if(['cafe','market','bakery','station','generalStore','teaHouse','bookshop'].includes(b.type)){storefront(g,b.type,b.seed||0);return;}if(b.type==='watchtower'){watchtower(g,b);return;}if(b.type==='garrison'){garrison(g,fp);return;}if(b.type==='buskerPitch'){buskerPitch(g);return;}if(b.type==='vendor'){vendorPitch(g,b);return;}if(b.type==='farm'){farm(g,fp,b.seed||0);return;}if(b.type==='statue'){statue(g,fp);return;}if(b.type==='clockTower'){clockTower(g,fp);return;}if(b.type==='lighthouse'){lighthouse(g,fp);return;}if(b.type==='greatLibrary'){greatLibrary(g,fp);return;}if(b.type==='mill'){lotBase(g,.94,.94);box(g,0,.05,0,.55,.72,.55,mat('#d3c6aa'));gable(g,0,.77,0,.62,.62,.22,mat('#75594b'));cyl(g,0,.5,.3,.035,.45,mat('#5d4a3e'),7);for(const a of[0,Math.PI/2,Math.PI,Math.PI*1.5]){const blade=box(g,Math.cos(a)*.24,.68,Math.sin(a)*.24,.08,.05,.42,mat('#e2d4b8'),false);blade.rotation.y=-a;}return;}civic(g,b.type,b,fp);}
 
 function terrain(parent){box(parent,(W-1)/2,-.6,(H-1)/2,W+.8,.48,H+.8,mat('#455a45'),false);const batches=new Map(),matrix=new THREE.Matrix4();for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=idx(x,y),water=S.terr[i]===1,open=isTileUnlocked(x,y),/* Meadow tone. floor(x/n)+floor(y/n) was the obvious way to get patches and
          the wrong one: a sum of two ramps is constant along a diagonal, so the

@@ -253,6 +253,24 @@ export function addIncident(parent,inc,people){
 }
 
 /* Everything that moves, into the dynamic group, once per frame. */
+/* What walks in at night. It goes through the same instanced figure as
+   everybody else — same seven pieces, same gait — because that is what makes
+   it unsettling on a map this gentle: it is shaped like the little people and
+   it is the wrong colour, walking the wrong way, at the wrong hour. */
+function walkerFigure(z){
+  const sway=reduceMotion?0:Math.sin((S.t||0)*3.4+(z.seed%97))*.5;
+  const heading=Math.atan2((z.target?z.target.x:z.fx)-z.fx,(z.target?z.target.y:z.fy)-z.fy);
+  return {x:z.fx,z:z.fy,heading,stride:sway,bob:0,lean:.28,col:'#6d7f5e',
+    skin:'#9db07f',hair:'#41503f',carry:false,carryKind:'basket',lying:false};
+}
+// The volley, as a thin bright line from the tower to what it hit.
+function addVolley(parent,a){
+  const dx=a.x1-a.x0, dz=a.y1-a.y0, len=Math.hypot(dx,dz)||0.001;
+  const shaft=box(parent,(a.x0+a.x1)/2,.5,(a.y0+a.y1)/2,len,.035,.035,
+    mat('#fff6d6',.4,{emissive:'#fff6d6',glow:1.3}),'volley',false);
+  shaft.rotation.y=-Math.atan2(dz,dx);
+}
+
 const ACT_COLOR={juggler:'#d4738f',clown:'#e0574f',fiddler:'#8d6fa0',puppeteer:'#4f8b8d',chalkArtist:'#c9a35e'};
 /* An entertainer is one of the little people standing still, so they are posed
    through the same instanced figure everything else uses and cost nothing
@@ -290,6 +308,8 @@ function addBuskerProp(parent,bk){
 export function addActors(parent){
   const people=S.citizens.map(pose);
   for(const bk of S.buskers||[]){ people.push(buskerFigure(bk)); addBuskerProp(parent,bk); }
+  for(const z of S.horde||[]) people.push(walkerFigure(z));
+  for(const a of S.siege?.arrows||[]) addVolley(parent,a);
   for(const inc of S.incidents||[]) addIncident(parent,inc,people);
   addPeople(parent,people);
   for(const v of S.vehicles||[]) addVehicle(parent,v);

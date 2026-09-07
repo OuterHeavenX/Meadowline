@@ -111,6 +111,22 @@ export const BUILDINGS={
     description:"A cleared square of pavement with a chalk ring on it. Who stands in it is the street\u2019s business \u2014 an empty pitch on a dead street stays empty.",
     renderKey:"buskerPitch",jobs:1,performance:{},placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
 
+  /* ---------- the watch ----------
+     The valley's answer to what comes out of the woods, and the reason a rich
+     town has anywhere to put its money. Both are expensive to raise and
+     expensive to keep, deliberately: the horde is sized by how big the town
+     has grown, so this is a running bill against a growing problem rather than
+     a box to tick once. `defence` is what siege.js looks for — neither is
+     named anywhere in that module. */
+  garrison:{id:"garrison",name:"Garrison",category:"civic",cost:4200,key:"",upkeep:45,unlockStage:3,unique:true,
+    description:"2\u00d72 \u00b7 A standing watch, and the only way to raise towers. Costly to keep, and the reason anything can be kept at all.",
+    renderKey:"garrison",jobs:12,defence:{garrison:true,range:9},placement:{footprint:[2,2]},
+    destination:{work:true},saveDefaults:{}},
+  watchtower:{id:"watchtower",name:"Watchtower",category:"civic",cost:380,key:"",upkeep:7,unlockStage:3,
+    description:"Archers, and a lantern that burns all night. Needs a Garrison standing before anyone will man it.",
+    renderKey:"watchtower",jobs:2,defence:{range:5},requiresBuilding:"garrison",
+    placement:{footprint:[1,1]},destination:{work:true},saveDefaults:{}},
+
   // The production `park` ID stays 1×1 forever so old V3 cities remain intact.
   // Recreation 2.0 treats it as a generous legacy small green rather than
   // expanding it into neighboring player property.

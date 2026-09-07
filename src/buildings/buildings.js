@@ -56,6 +56,14 @@ export function canPlace(kind,x,y){
     return {ok:false,why:(def?.name||'This building')+' unlocks as Meadowline grows beyond '+cityStage().name+'.'};
   }
   const def=getBuildingDefinition(kind);
+  /* Some things cannot be built until something else is standing. The registry
+     names the prerequisite, so a new one of these is an entry rather than a
+     branch here — and pulling the prerequisite down does not remove what it
+     allowed, which is right: the towers stay, and nobody mans them. */
+  if(def?.requiresBuilding&&!(S.grid||[]).some(b=>b?.type===def.requiresBuilding)){
+    const need=getBuildingDefinition(def.requiresBuilding);
+    return {ok:false,why:(def.name||'This')+' needs a '+(need?.name||def.requiresBuilding)+' standing first.'};
+  }
   if(def?.unique&&(S.grid||[]).some(b=>b?.type===kind)){
     return {ok:false,why:kind==='cityHall'?'Meadowline already has a civic center.':'Only one of these may be active.'};
   }
@@ -181,6 +189,7 @@ function clearFacility(root){
 const NEWS_KIND={cafe:'business',bakery:'business',market:'business',mill:'business',farm:'business',dock:'business',generalStore:'business',teaHouse:'business',bookshop:'business',vendor:'business',
   school:'service',clinic:'service',hospital:'service',policeStation:'service',fireStation:'service',station:'service',cityHall:'service',
   townPark:'amenity',picnicGreen:'amenity',playground:'amenity',sportsCourt:'amenity',pocketPark:'amenity',buskerPitch:'amenity',
+  garrison:'service',watchtower:'service',
   statue:'landmark',clockTower:'landmark',lighthouse:'landmark',greatLibrary:'landmark'};
 function ledgerBuilding(what,b){
   const cls=NEWS_KIND[b.type]; if(!cls) return;

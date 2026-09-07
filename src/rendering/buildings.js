@@ -128,6 +128,71 @@ export function drawShop(b,p,dark){
   else { for(let i=0;i<3;i++){ g.fillStyle=["#9c5a4c","#4f6f8d","#b08b3f"][i]; g.fillRect(p.x+hw*0.42+i*1.7*z,p.y-3*z,1.4*z,4.2*z); } }
 }
 
+/* The two things a rich town buys. Both read as stone where everything else in
+   the valley is timber and render, which is the point: they are the only
+   buildings here that are not for living in. */
+export function drawWatchtower(b,p,dark){
+  const z=S.cam.z, hw=TW/2*0.5*z;
+  groundShadow(p.x,p.y,14*z,6*z);
+  const topY=box(p.x,p.y,0.5,30,"#b9b3a4","#918b7d","#a7a094");
+  snowCap(p.x,topY,0.5);
+  // A railed platform, and the lantern that burns on it all night.
+  g.fillStyle="#8a8377"; g.fillRect(p.x-hw*1.2,topY+1*z,hw*2.4,2.6*z);
+  g.fillStyle="#6f6a60";
+  for(let i=0;i<5;i++) g.fillRect(p.x-hw*1.1+i*(hw*2.2/5),topY-3*z,1*z,4*z);
+  const lit=dark>0.12;
+  g.fillStyle=lit?"#ffd98a":"#cfc7b4";
+  g.fillRect(p.x-1.2*z,topY-6.4*z,2.4*z,3.4*z);
+  if(lit) lights.push({x:p.x-2.4*z,y:topY-7.4*z,w:5*z,h:5*z});
+  // An archer on the platform, facing out.
+  g.fillStyle="#4b5a44"; g.fillRect(p.x+hw*0.4,topY-6*z,2.4*z,4.4*z);
+  g.fillStyle=SKIN[(b.seed||0)%SKIN.length];
+  g.beginPath(); g.arc(p.x+hw*0.4+1.2*z,topY-7.4*z,1.5*z,0,TAU); g.fill();
+  g.strokeStyle="#7a6242"; g.lineWidth=Math.max(1,0.9*z);
+  g.beginPath(); g.arc(p.x+hw*0.4+3.4*z,topY-5.4*z,2.6*z,-1.1,1.1); g.stroke();
+}
+
+export function drawGarrison(b,p,dark){
+  const z=S.cam.z, hw=TW/2*0.92*z;
+  groundShadow(p.x,p.y,26*z,12*z);
+  const topY=box(p.x,p.y,0.92,20,"#a9a396","#847e72","#98917f");
+  snowCap(p.x,topY,0.92);
+  // A crenellated parapet: the one roofline in the valley that is not a gable.
+  g.fillStyle="#8d8779";
+  for(let i=0;i<7;i++) g.fillRect(p.x-hw+i*(hw*2/7),topY-3.4*z,hw*2/7*0.6,3.4*z);
+  // Gate, banner and a brazier by the door.
+  g.fillStyle="#4a3f36"; g.fillRect(p.x-3*z,p.y-9*z,6*z,9*z);
+  g.fillStyle="#8c4a3f"; g.fillRect(p.x-1.2*z,topY+2*z,2.4*z,7*z);
+  const lit=dark>0.12;
+  g.fillStyle=lit?"#ffb765":"#6f6a60";
+  g.beginPath(); g.arc(p.x+hw*0.7,p.y-3*z,2*z,0,TAU); g.fill();
+  if(lit) lights.push({x:p.x+hw*0.7-3*z,y:p.y-6*z,w:6*z,h:6*z});
+}
+
+/* What comes for the town. Deliberately not gruesome: a hunched, grey-green
+   figure that walks the way the little people walk, so it reads as wrong
+   rather than as horror on a map this gentle. */
+export function drawWalker(z_,p,dark){
+  const z=S.cam.z;
+  const sway=Math.sin((S.t||0)*3.4+(z_.seed%97))*0.5;
+  groundShadow(p.x,p.y,5*z,2.4*z,0.26);
+  g.fillStyle="#41503f"; g.fillRect(p.x-1.5*z,p.y-4.6*z,1.2*z,4.6*z); g.fillRect(p.x+0.3*z,p.y-4.6*z,1.2*z,4.6*z);
+  g.fillStyle="#6d7f5e"; g.fillRect(p.x-2*z+sway*0.4*z,p.y-10.4*z,4*z,6*z);
+  // Arms out in front, which is most of what makes the silhouette read.
+  g.fillStyle="#5d6f50"; g.fillRect(p.x+1.6*z,p.y-9.6*z,3.4*z,1.5*z);
+  g.fillStyle="#9db07f";
+  g.beginPath(); g.arc(p.x+sway*0.6*z,p.y-12*z,2*z,0,TAU); g.fill();
+  if(dark>0.1) lights.push({x:p.x-2*z,y:p.y-12*z,w:4*z,h:3*z});
+}
+
+// The volley: a line from the tower to whatever it hit, fading fast.
+export function drawArrow(a,from,to){
+  const z=S.cam.z, k=1-a.age/a.life;
+  g.strokeStyle="rgba(255,246,214,"+(0.15+k*0.75).toFixed(3)+")";
+  g.lineWidth=Math.max(1,1.3*z);
+  g.beginPath(); g.moveTo(from.x,from.y); g.lineTo(to.x,to.y); g.stroke();
+}
+
 const VENDOR={
   foodCart:    {body:"#c26a4a",dark:"#93472f",canopy:"#f0e2c8",stripe:"#c85c46"},
   flowerStall: {body:"#8fae72",dark:"#6b8955",canopy:"#f5efe0",stripe:"#7a9b60"},

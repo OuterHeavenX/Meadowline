@@ -32,6 +32,11 @@ import { record } from './ledger.js';
 // Bounded, per the milestone's performance rules. Tens, not thousands.
 export const MAX_FAMILIES=12;
 export const MAX_MEMBERS=5;
+/* How far back the roster is dealt. The living list is still capped at
+   MAX_MEMBERS, but the deal has to run past it or a household that lost
+   somebody could never be five again: the dead keep their seat in the deal
+   for ever, so their index is never reissued to anybody. */
+export const ROSTER_CAP=MAX_MEMBERS*2;
 // How often the valley looks around, in simulated seconds. Not per frame.
 export const SOCIAL_INTERVAL=12;
 // A generation is a long stretch of days; a family that stays that long has
@@ -106,16 +111,41 @@ export function familyAt(h){
    Everything below is derived. The record holds only who they are, where they
    settled and when; the people, their leanings and what they are known for are
    worked out from that and the city as it stands. */
+/* Who a person is, is (homeSeed, index) — nothing anywhere stores a list of
+   people. That is why the dead are recorded as the indices they had rather
+   than by being removed: every survivor keeps the index their career, their
+   renown and their nickname are filed under. The roster is dealt for the
+   household this home has *ever* held, and the lost are taken out of it, so a
+   death never renumbers the living.
+
+   When the home grows again the new resident takes the next index, not the one
+   that came free. Somebody new moved in; nobody came back. */
+export function lostOf(f){ return Array.isArray(f?.lost)?f.lost:[]; }
 export function familyMembers(f){
   const h=houseBySeed(f.homeSeed);
-  const firsts=h?residents(h).slice(0,MAX_MEMBERS):[];
+  const lost=lostOf(f);
+  const ever=h?Math.min(ROSTER_CAP,(h.pop|0)+lost.length):0;
+  const firsts=h?residents({...h,pop:ever}):[];
   // A family that has been here for generations has a name or two its founders
   // did not: each generation deals one more from the same house seed.
   for(let g=1;g<(f.generation||1)&&firsts.length<MAX_MEMBERS;g++){
     const n=FIRSTS[Math.floor(hash2(f.homeSeed>>>0,g*53,S.seed>>>0)*FIRSTS.length)];
     if(!firsts.includes(n)) firsts.push(n);
   }
-  return firsts.map((first,i)=>({name:first+' '+f.surname,first,traits:memberTraits(f.id,i),index:i}));
+  /* Cap the living, not the deal, and cap it after the dead are taken out —
+     otherwise every death permanently lowered how many people a household
+     could ever have again, and a home of five showed four. */
+  return firsts.map((first,i)=>({name:first+' '+f.surname,first,traits:memberTraits(f.id,i),index:i}))
+    .filter(m=>!lost.includes(m.index)).slice(0,MAX_MEMBERS);
+}
+// The roster including the dead, for anything that has to speak about them.
+export function memberEver(f,index){
+  const h=houseBySeed(f?.homeSeed); if(!h) return null;
+  const lost=lostOf(f);
+  const ever=Math.min(ROSTER_CAP,(h.pop|0)+lost.length);
+  const firsts=residents({...h,pop:ever});
+  const first=firsts[index];
+  return first?{name:first+' '+f.surname,first,traits:memberTraits(f.id,index),index}:null;
 }
 export function familyKnownFor(f){
   const h=houseBySeed(f.homeSeed);
@@ -234,7 +264,8 @@ export function packFamilies(){
       notes:(f.notes||[]).slice(0,MAX_NOTES).map(n=>({day:Math.max(1,n.day|0),text:String(n.text).slice(0,80)})),
       // Careers and standing are plain strings here; careers.js validates them
       // after load, so this module need not know what a career is.
-      careers:Object.fromEntries(Object.entries(f.careers||{}).slice(0,MAX_MEMBERS).map(([i,c])=>[i,String(c).slice(0,32)])),
+      careers:Object.fromEntries(Object.entries(f.careers||{}).slice(0,ROSTER_CAP).map(([i,c])=>[i,String(c).slice(0,32)])),
+      lost:lostOf(f).slice(0,ROSTER_CAP).map(i=>i|0),
       standing:f.standing?String(f.standing).slice(0,24):undefined
     }))
   };
@@ -257,6 +288,10 @@ export function restoreFamilies(raw){
       notes:(Array.isArray(f.notes)?f.notes:[]).slice(0,MAX_NOTES).filter(n=>n&&typeof n.text==='string')
         .map(n=>({day:Math.max(1,Math.floor(Number(n.day)||1)),text:n.text.slice(0,80)})),
       careers:f.careers&&typeof f.careers==='object'?{...f.careers}:{},
+      /* A save may not invent people to have lost: an index off the roster, or
+         a repeat, is dropped rather than trusted. */
+      lost:[...new Set((Array.isArray(f.lost)?f.lost:[])
+        .map(i=>Math.floor(Number(i))).filter(i=>Number.isFinite(i)&&i>=0&&i<ROSTER_CAP))].slice(0,ROSTER_CAP),
       standing:typeof f.standing==='string'?f.standing:undefined
     });
   }

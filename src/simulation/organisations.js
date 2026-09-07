@@ -188,7 +188,10 @@ export function frontAt(b){
 function tend(o,d,note,day,slot){
   if(o.boss){
     const f=families().find(x=>x.id===o.boss.familyId);
-    if(!f||!o.families.includes(f.id)||o.boss.index>=familyMembers(f).length) o.boss=null;
+    /* By whether that person is still there, not by how many people the
+       household has. Once a household can lose someone the two stopped being
+       the same question: the survivor at index 3 of a family of two is real. */
+    if(!f||!o.families.includes(f.id)||!familyMembers(f).some(m=>m.index===o.boss.index)) o.boss=null;
   }
   o.fronts=(o.fronts||[]).filter(seed=>buildingBySeed(seed));
   if(!d) return;

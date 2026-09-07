@@ -48,6 +48,7 @@ import { record } from '../simulation/ledger.js';
 import { updateFeedback } from '../simulation/feedback.js';
 import { tickTutorial } from '../ui/tutorial.js';
 import { advanceBuskers } from '../simulation/buskers.js';
+import { advanceSiege } from '../simulation/siege.js';
 
 /* ---------- reaching a new stage ----------
    Advancing a city stage is the largest thing that happens in Meadowline and it
@@ -165,6 +166,9 @@ function step(now){
        rebuilt from a seeded roll rather than accumulated, so it costs one pass
        and is never saved. */
     advanceBuskers(sdt);
+    /* And whether tonight is one of the nights. Its own clock and its own
+       frame rate: a night happens over minutes, not over a season. */
+    advanceSiege(sdt,note);
     growth(sdt);
     updateCitizens(sdt);
     updateMobility(sdt);

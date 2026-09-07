@@ -18,9 +18,16 @@ with production code, the code wins and the disagreement is noted here.
 
 The Post is an observer, not an authority. It may summarise, contextualise,
 speculate cautiously and report rumour. It may never create an event because a
-template wanted content. If nobody was arrested there is no arrest. There is no
-death mechanic in Meadowline, so there are no obituaries and no deaths. If no
+template wanted content. If nobody was arrested there is no arrest. If no
 family moved, nothing moved.
+
+**On deaths, this rule changed once, deliberately.** It used to read "there is
+no death mechanic in Meadowline, so there are no obituaries and no deaths",
+which was true until the siege made it false — see `THE_SIEGE.md`. The rule it
+was protecting is unchanged: an obituary is printed when `mortality.js`
+recorded a death and never otherwise, the name is the person's own, and an
+obituary the simulation did not earn is exactly the invention the whole design
+forbids. Obituaries use a nickname only at `public`, like every other story.
 
 Two structural facts enforce this rather than good intentions:
 
@@ -284,8 +291,7 @@ ladder falls back to private, and the same name twice is taken only once.
 
 ## What is deliberately not built yet
 
-Not built, and not required by any current system: obituaries (no death
-mechanic exists, and the brief forbids inventing one) and a generative-AI prose
+Not built, and not required by any current system: a generative-AI prose
 layer (PART 26 explicitly makes it optional and presentation-only).
 
 A newspaper stand does now exist, as one of the three things a Street Vendor's

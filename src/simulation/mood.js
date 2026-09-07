@@ -113,7 +113,7 @@ export function evalHouse(h,out){
 }
 
 export function recompute(){
-  const parks=[],recreation=[],cafes=[],stations=[],houses=[],lamps=[],mills=[],markets=[],bakeries=[],schools=[],docks=[],farms=[],wonders=[],shops=[],stages=[];
+  const parks=[],recreation=[],cafes=[],stations=[],houses=[],lamps=[],mills=[],markets=[],bakeries=[],schools=[],docks=[],farms=[],wonders=[],shops=[],stages=[],towers=[],garrisons=[];
   for(let i=0;i<S.grid.length;i++){
     const b=S.grid[i]; if(!b||isFacilityPart(b)) continue;
     /* Road access used to be worked out inside evalHouse and nowhere else, so
@@ -138,9 +138,12 @@ export function recompute(){
     else if(getBuildingDefinition(b.type)?.trade) shops.push(b);
     // Anywhere the registry says somebody can perform, so fame needs no list.
     if(getBuildingDefinition(b.type)?.performance) stages.push(b);
+    // And anything that shoots back, likewise named nowhere in siege.js.
+    const defence=getBuildingDefinition(b.type)?.defence;
+    if(defence) (defence.garrison?garrisons:towers).push(b);
     if(getBuildingDefinition(b.type)?.category==='wonder') wonders.push(b);
   }
-  S.ctx={parks,recreation,cafes,stations,houses,lamps,mills,markets,bakeries,schools,docks,farms,wonders,shops,stages};
+  S.ctx={parks,recreation,cafes,stations,houses,lamps,mills,markets,bakeries,schools,docks,farms,wonders,shops,stages,towers,garrisons};
   /* A street vendor's pitch reads its surroundings and settles on what it
      sells. It has to happen here, after the context lists exist and before
      anything asks a shop what it takes, and it happens again on every

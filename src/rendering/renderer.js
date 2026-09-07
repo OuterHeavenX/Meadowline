@@ -1,7 +1,7 @@
 import { getBuildingDefinition } from '../buildings/registry.js';
 import { clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
-import { drawBakery, drawBusker, drawBuskerPitch, drawCafe, drawDock, drawLamp, drawMarket, drawPark, drawSchool, drawShop, drawVendor, drawStation, drawWindmill } from './buildings.js';
+import { drawArrow, drawBakery, drawBusker, drawBuskerPitch, drawCafe, drawDock, drawGarrison, drawLamp, drawMarket, drawPark, drawSchool, drawShop, drawVendor, drawStation, drawWalker, drawWatchtower, drawWindmill } from './buildings.js';
 import { drawRecreationFacility } from './recreation.js';
 import { drawCityHall } from './city-hall.js';
 import { drawHousingHouse } from './housing.js';
@@ -114,6 +114,8 @@ export function render(){
   }
   // Whoever is on the pavement today, sorting with the tile they stand on.
   for(const bk of S.buskers||[]) items.push({d:viewDepth(bk.x,bk.y)+0.06,k:9,bk});
+  // And whatever is walking towards it tonight.
+  for(const z of S.horde||[]) items.push({d:viewDepth(z.fx,z.fy)+0.07,k:10,z});
   for(const p of S.puffs) items.push({d:viewDepth(p.x,p.y)+0.2,k:4,p});
   items.sort((a,b)=>a.d-b.d);
 
@@ -129,6 +131,8 @@ export function render(){
       else if(t==="generalStore"||t==="teaHouse"||t==="bookshop") drawShop(it.b,p,dark);
       else if(t==="vendor") drawVendor(it.b,p,dark);
       else if(t==="buskerPitch") drawBuskerPitch(it.b,p);
+      else if(t==="watchtower") drawWatchtower(it.b,p,dark);
+      else if(t==="garrison") drawGarrison(it.b,p,dark);
       else if(t==="station") drawStation(it.b,p,dark);
       else if(t==="lamp") drawLamp(it.b,p,dark);
       else if(t==="mill") drawWindmill(it.b,p,dark);
@@ -154,6 +158,11 @@ export function render(){
       if(p.x<-80||p.x>innerWidth+80||p.y<-120||p.y>innerHeight+80) continue;
       drawBusker(it.bk,p,dark);
     }
+    else if(it.k===10){
+      const p=proj(it.z.fx,it.z.fy);
+      if(p.x<-80||p.x>innerWidth+80||p.y<-120||p.y>innerHeight+80) continue;
+      drawWalker(it.z,p,dark);
+    }
     else if(it.k===7) drawVehicle(it.v);
     else if(it.k===5){
       const p=proj(it.b.x,it.b.y);
@@ -161,6 +170,11 @@ export function render(){
       drawSpan(it.b,p);
     } else drawPuff(it.p);
   }
+
+  /* Volleys go over the top of everything: an arrow is in the air, not on the
+     ground, and sorting it into the depth list would bury it behind the tower
+     that fired it. */
+  for(const a of S.siege?.arrows||[]) drawArrow(a,proj(a.x0,a.y0),proj(a.x1,a.y1));
 
   drawBirds(dark);
   if(S.wx.amt>0.02&&S.wx.k==="rain"){

@@ -26,8 +26,15 @@ import { recreationSnapshot } from './recreation.js';
    What the paper may not do is the whole design:
 
      - It never invents. Every story is a ledger entry or a number read from
-       state. If nobody was arrested there is no arrest; there is no death
-       mechanic so there are no deaths; if no family moved nobody moved.
+       state. If nobody was arrested there is no arrest; if no family moved
+       nobody moved.
+     - It reports deaths, and only real ones. This rule used to read "there is
+       no death mechanic so there are no deaths", and that was true until the
+       siege made it false. The rule it was protecting has not changed: a death
+       is printed when mortality.js recorded one and never otherwise, the name
+       is the person's own, and no number is inflated because a front page
+       wanted a bigger one. An obituary the simulation did not earn is exactly
+       the invention the whole design forbids.
      - It never leaks. Hidden ledger entries are never read. An organisation
        is "a group" until the world exposes it - a made case, which sets
        `exposed` on the record - and only then may the paper use the name
@@ -89,6 +96,37 @@ function stories(day,events){
   for(const e of unanswered) add('needs','crime',upper(e.kind==='crime'?'A REPORTED INCIDENT WENT UNANSWERED':e.kind==='fire'?'FIRE CALL WENT UNANSWERED':'MEDICAL CALL WENT UNANSWERED'),'A '+(e.kind==='crime'?'report':'call')+' yesterday drew no response. Residents nearby are asking whether a '+(e.kind==='crime'?'police station':e.kind==='fire'?'fire station':'clinic')+' within reach would have made the difference.');
 
   // The police, in public. Names only after the world exposed them.
+  /* ---------- the siege ----------
+     The lead on any night it happened: this is the largest thing that can
+     happen to the valley and it outranks everything except itself. The numbers
+     are the night's own — what the towers killed, what was lost, what was
+     damaged — and a night nobody was hurt in says so plainly rather than
+     reaching for drama. */
+  for(const e of by('siege_dawn')){
+    const lost=e.lost|0, killed=e.killed|0, damaged=e.damaged|0;
+    const head=lost?upper(plural(lost,'LIFE','LIVES')+' LOST AS THE VALLEY IS ATTACKED IN THE NIGHT')
+      :damaged?'MEADOWLINE ATTACKED IN THE NIGHT, NOBODY HURT'
+      :'THE VALLEY HOLDS THROUGH A DARK NIGHT';
+    let body='Something came out of the woods again after dark. ';
+    body+=killed?cap(plural(killed,'was brought down','were brought down'))+' before dawn. ':'Nothing was brought down before dawn. ';
+    if(lost) body+=cap(plural(lost,'person was','people were'))+' lost. ';
+    if(damaged) body+=cap(plural(damaged,'home was','homes were'))+' damaged. ';
+    if(!lost&&!damaged) body+='No home was reached and nobody was hurt. ';
+    add('city','siege',head,body.trim(),{archive:lost?'siege':null});
+  }
+  /* Each of the dead, by name, once. The paper does not editorialise about a
+     death and does not print a number where a name belongs. */
+  for(const e of by('death')){
+    if(!e.name) continue;
+    // Only a name the street had already made public, the same rule every
+    // other story here follows about aliases.
+    const known=(e.alias&&e.aliasPublic)?' \u2014 known to some as \u201c'+e.alias+'\u201d \u2014 ':' ';
+    add('safety','obituary',upper(e.name+' HAS DIED'),
+      e.name+known+'died on '+(e.district||'Meadowline')+'. '
+      +(e.survivors?cap(plural(e.survivors,'member of the household is','members of the household are'))+' left at the address.'
+        :'The household is empty; nobody is left at the address.'),
+      {archive:'obituary'});
+  }
   for(const e of by('case_made')) add('safety','crime',e.firstExposure?upper('POLICE NAME '+e.name.toUpperCase()+' AFTER '+e.district.toUpperCase()+' OPERATION'):upper('POLICE MOVE AGAIN ON THE '+e.name),(e.firstExposure?'Investigators for the first time put a name to the group they have been looking into around '+e.district+', calling it the '+e.name+'. ':'Police moved again yesterday on the '+e.name+' around '+e.district+'. ')+'Officers described the operation as a success and declined to say more.',{archive:'exposed'});
   for(const e of by('front_closed')) add('safety','crime',upper('POLICE CLOSE '+e.kind.toUpperCase()+' ON '+e.district.toUpperCase()),'Police closed a '+e.kind+' on '+e.district+' yesterday, saying it had been used by the group investigators call the '+e.name+'. The business itself was not charged with anything.',{archive:'front'});
   for(const e of by('questioned')){
@@ -212,7 +250,11 @@ const RUMOUR_LEAD={weak:'Some say',plausible:'People say',strong:'Several reside
 export function rumourLead(r){ return RUMOUR_LEAD[r]||'Some say'; }
 
 /* ---------- the issue ---------- */
-const SECTIONS=[['lead','Front page'],['crime','Crime & Safety'],['health','Health'],['arrivals','Arrivals'],['departures','Departures'],['moves','Neighbourhood moves'],['business','Business'],['civic','Civic'],['jobs','Jobs'],['housing','Housing'],['district','District watch'],['community','Community'],['festival','Festivals'],['good','Good news']];
+/* Obituaries come directly after the front page, before anything else the
+   valley did that day. A section a story can be filed under but that the paper
+   has no heading for is dropped on the floor at compose time, which is how the
+   first draft of the siege printed nothing at all. */
+const SECTIONS=[['lead','Front page'],['siege','The night'],['obituary','Obituaries'],['crime','Crime & Safety'],['health','Health'],['arrivals','Arrivals'],['departures','Departures'],['moves','Neighbourhood moves'],['business','Business'],['civic','Civic'],['jobs','Jobs'],['housing','Housing'],['district','District watch'],['community','Community'],['festival','Festivals'],['good','Good news']];
 export function composeIssue(day){
   const events=publicEvents(day);
   const list=stories(day,events).sort((a,b)=>a.priority-b.priority);
