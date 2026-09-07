@@ -213,9 +213,11 @@ Production:
 
 Living City / School → Housing 2.0 → City Growth 1.0 / 1.1 → City Hall 1.0 → Roads & Mobility 2.0.
 
-Current development:
+Current development at the time of writing:
 
-**UI / HUD 2.0.** Recreation and Living City 3.x are Production.
+**UI / HUD 2.0**, since shipped as PR #11. Recreation and Living City 3.x are
+Production, as are UI / HUD 2.0 and Social Fabric 1.0. Current development is
+The Meadowline Post 1.0; `ROADMAP.md` is the authoritative status record.
 
 Likely later:
 

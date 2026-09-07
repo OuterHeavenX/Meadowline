@@ -1,6 +1,6 @@
 # Meadowline UI / HUD 2.0
 
-Status: **Current development** on `feature/ui-hud-2-premium-interface`, based on production `main` at `daee74c246d9c4c3cecca942a367c18e002bced7`. Physical iPhone/iPad acceptance remains owner-only.
+Status: **Production**, merged through PR #11 (`da5698c`). This document was written while the work was current development on `feature/ui-hud-2-premium-interface`, based on production `main` at `daee74c246d9c4c3cecca942a367c18e002bced7`; that framing is left in the body as a record of the time. Physical iPhone/iPad acceptance remains owner-only.
 
 ## Visual reference role
 

@@ -1,13 +1,11 @@
 # Meadowline Roadmap
 
-## Status as of production `main` at `af1be4943b62d7cf208178870afd65cef391ab0b`
+## Status as of production `main` at `1c02801b924ec92cec1fa0626ded896442f10da5`
 
-**Current development — Social Fabric 1.0**, on `claude/game-upgrade-3o2630`.
-Slices 1–5 (emergent districts; families, notable citizens, traits; careers
-and standing; organisations; bosses, fronts, autonomous enforcement) are
-production at `af1be49`; slice 6 (fame and entertainment culture), the last of
-the milestone's first scope, is on the branch. Canonical document:
-`docs/SOCIAL_FABRIC.md`.
+**Social Fabric 1.0 is complete and production at `1c02801`** — all six
+slices. **The Meadowline Post 1.0 slice 1** is production at the same commit;
+its slice 2 (emergent nicknames) is not built. Canonical documents:
+`docs/SOCIAL_FABRIC.md`, `docs/MEADOWLINE_POST.md`.
 
 **UI / HUD 2.0 is production**, merged through PR #11 (`da5698c`). Earlier
 copies of this file and `README.md` listed it as current development long after
@@ -54,13 +52,15 @@ Everything below is on `main`. Each landed with its regression suite green.
 | `1d192f9` | **Social Fabric slice 1 — emergent districts.** |
 | `3954911` | **Social Fabric slices 2 and 3** — notable families and traits; careers at real workplaces, standing from conditions. |
 | `8342585` | **Social Fabric slice 4** — organisations that nobody built: three conditions or nothing, place-based names, staged growth, prosperity and police as decline. |
+| `c50e458` | **Social Fabric slice 6** — performing careers, renown from talent, crowd and occasion, Entertainment and Nightlife identities. |
 | `af1be49` | **Social Fabric slice 5** — bosses who are existing citizens, fronts that stay businesses, police who open and work cases on their own. |
-| branch | **GPU actor parity** — the low-poly scene now draws walking people, typed emergency vehicles with a working hose, burning roofs, burglars, patients and stretchers, boats and three-car trains, as the Canvas path always did. |
-| branch | **The Meadowline Post 1.0** — a daily newspaper written from a ledger of real events, with a strict boundary between what the simulation knows and what the public hears. |
+| `49cc362` | **GPU actor parity** — the low-poly scene now draws walking people, typed emergency vehicles with a working hose, burning roofs, burglars, patients and stretchers, boats and three-car trains, as the Canvas path always did. |
+| `1c02801` | **The Meadowline Post 1.0** — a daily newspaper written from a ledger of real events, with a strict boundary between what the simulation knows and what the public hears. |
 
 ## Milestone 7 — Social Fabric 1.0
 
-**Current development.** Canonical document: `docs/SOCIAL_FABRIC.md`.
+**Complete and production at `1c02801`.** Canonical document:
+`docs/SOCIAL_FABRIC.md`.
 
 Emergent citizen culture, district identity, careers, social classes, factions,
 organized crime, fame and family legacies. The permanent rule:
@@ -87,14 +87,15 @@ Slices, in order:
    and act on cases on their own. *Production, `af1be49`.*
 6. **Fame and entertainment culture** — performing careers at real venues,
    renown from talent, crowd and occasion, Entertainment and Nightlife
-   identities, a slight positive culture tilt. *On the branch.*
+   identities, a slight positive culture tilt. *Production, `1c02801`.*
 
 The milestone brief contradicts itself on naming (PART 7/8 worked examples vs
 PART 27); PART 27 wins and the resolution is structural. See the document.
 
 ## Milestone 8 — The Meadowline Post 1.0
 
-**Current development.** Canonical document: `docs/MEADOWLINE_POST.md`.
+**Current development. Slice 1 is production at `1c02801`; slice 2 is not
+built.** Canonical document: `docs/MEADOWLINE_POST.md`.
 
 A daily local newspaper that reports what actually happened. The permanent
 rule:
@@ -114,7 +115,7 @@ Slices:
 1. **The daily paper** — ledger, issue generation, story priority, civic
    snapshot, citizen voices, anchored rumour with reliability classes, the
    knowledge boundary, paper UI, City Hall archive, Save V3 field.
-   *On the branch.*
+   *Production, `1c02801`.*
 2. Emergent nicknames (brief PARTS 16–24) — aliases that emerge from citizen
    history and spread from associates to press. *Not built.*
 

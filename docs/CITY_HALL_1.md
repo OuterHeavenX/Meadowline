@@ -143,6 +143,6 @@ City Hall: **Production**.
 
 Roads & Mobility 2.0: **Production**.
 
-Current development at the time of writing: UI / HUD 2.0, since shipped as PR #11. Recreation is Production. Current development is Social Fabric 1.0; see `ROADMAP.md`.
+Current development at the time of writing: UI / HUD 2.0, since shipped as PR #11. Recreation is Production. Social Fabric 1.0 has since shipped too; current development is The Meadowline Post 1.0. See `ROADMAP.md`.
 
 Likely later: Safety / Police / Crime, then other municipal systems as playtesting supports them. City Hall should continue reading those systems without becoming their simulation owner.

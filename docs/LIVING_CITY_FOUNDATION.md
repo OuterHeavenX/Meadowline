@@ -130,6 +130,6 @@ Recreation 2.0 received owner release authorization and is merged; granular hist
 
 ## Current consumer / next handoff
 
-Current development consumer at the time of writing: `feature/ui-hud-2-premium-interface`, since shipped as PR #11. Current development is Social Fabric 1.0; see `ROADMAP.md`.
+Current development consumer at the time of writing: `feature/ui-hud-2-premium-interface`, since shipped as PR #11. Social Fabric 1.0 has since shipped; current development is The Meadowline Post 1.0. See `ROADMAP.md`.
 
 Likely next major system after Recreation acceptance is Safety / Police / Crime, but that remains roadmap-only and must not start automatically. Future Police/Fire/Healthcare facilities should reuse the multi-tile occupancy foundation and Roads route infrastructure without owning or duplicating those systems.

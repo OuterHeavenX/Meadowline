@@ -5,7 +5,7 @@ rumour, citizen voices, arrivals and departures, and civic reporting.
 
 ## Status
 
-**Slice 1 (the daily paper) is on `claude/game-upgrade-3o2630`.** Slice 2
+**Slice 1 (the daily paper) is production at `1c02801`.** Slice 2
 (emergent nicknames, PARTS 16–24 of the brief) is **not built**. See "What is
 deliberately not built yet" below — the paper is complete and useful without
 it, and nicknames are a Social Fabric change rather than a newspaper one.

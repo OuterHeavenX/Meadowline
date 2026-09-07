@@ -5,9 +5,10 @@ organized crime, fame and family legacies.
 
 ## Status
 
-**Slices 1–5 production at `af1be49`. Slice 6 (fame and entertainment) on
-`claude/game-upgrade-3o2630`,** awaiting merge. With it every slice of the
-milestone's first scope is built.
+**All six slices are production at `1c02801`.** Every slice of the milestone's
+first scope is built. Political influence and the PART 22 visual storytelling
+cues (reporters near celebrity venues, tourists at landmarks) remain future
+work and are out of this milestone's scope.
 
 This document is canonical for Social Fabric and is maintained as the milestone
 lands. It records what is built, what is deliberately deferred and what must
@@ -603,8 +604,8 @@ trusted.
 3. **Careers and standing.** *(production, `3954911`)*
 4. **Organisation formation, staged growth, decline.** *(production, `8342585`)*
 5. **Bosses, fronts, autonomous enforcement.** *(production, `af1be49`)*
-6. **Fame and entertainment culture**, lightweight as the brief asked. *(on
-   the branch)*
+6. **Fame and entertainment culture**, lightweight as the brief asked.
+   *(production, `1c02801`)*
 
 Political influence remains future work and is out of scope.
 
