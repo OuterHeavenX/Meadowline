@@ -24,6 +24,7 @@ import { familyAt, familyMembers, traitWords } from '../simulation/families.js';
 import { familyStanding, knownFor, memberCareer } from '../simulation/careers.js';
 import { frontAt, organisationOf } from '../simulation/organisations.js';
 import { investigating, underInvestigation } from '../simulation/enforcement.js';
+import { fameWord, venueFame } from '../simulation/fame.js';
 import { darkness } from '../world/time.js';
 import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
@@ -210,6 +211,8 @@ function businessCard(b){
   // one thing it adds is what a neighbour would notice: the police asking.
   const front=frontAt(b);
   if(front&&underInvestigation(front)) html+='<p>The police have been asking questions here.</p>';
+  // A place the valley knows for someone. Nobody made it popular.
+  for(const star of venueFame(b)) html+='<p>'+(star.renown>=3?'Known across the valley':'Known locally')+' for <b>'+star.name+'</b>’s '+star.what+'.</p>';
   return card(def?.name||'Business','Business',html);
 }
 
@@ -247,7 +250,7 @@ function familyBlock(h){
   return '<h4>The '+f.surname+' family</h4>'+
     '<p>Here since <b>day '+f.founded+'</b>'+(f.roots?', settled in <b>'+f.roots+'</b>':'')+'. Known for '+knownFor(f)+'. <b>'+cap(familyStanding(f))+'</b>.'+
     ((f.generation||1)>1?' Now in its <b>'+ordinal(f.generation)+' generation</b>.':'')+rumour(f)+'</p>'+
-    '<dl class="service">'+members.map(m=>'<dt>'+m.name+'</dt><dd>'+memberCareer(f,m.index)+' · '+traitWords(m.traits).join(', ')+'</dd>').join('')+'</dl>';
+    '<dl class="service">'+members.map(m=>'<dt>'+m.name+'</dt><dd>'+memberCareer(f,m.index)+' · '+traitWords(m.traits).join(', ')+(fameWord(f,m.index)?' · <b>'+fameWord(f,m.index)+'</b>':'')+'</dd>').join('')+'</dl>';
 }
 /* A family's ties to something the valley talks about are a rumour, not a
    record, and a small one stays unsaid: the card only hints once the thing

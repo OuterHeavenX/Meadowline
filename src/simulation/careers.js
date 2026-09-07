@@ -4,6 +4,7 @@ import { S } from '../core/state.js';
 import { getEducationLevel } from './civic-services.js';
 import { MAX_MEMBERS, SOCIAL_INTERVAL, families, familyKnownFor, familyMembers } from './families.js';
 import { housingTierIndex } from './housing.js';
+import { districtAt, invalidateDistricts } from './districts.js';
 import { isFacilityPart } from '../world/tiles.js';
 
 /* ============================================================
@@ -33,7 +34,10 @@ import { isFacilityPart } from '../world/tiles.js';
      - Standing reads conditions, never career: a farming family and a family
        of doctors with the same home, schooling and work are the same class.
      - No career, standing or trait carries any consequence for crime here.
-       That system, when it arrives, reads its own conditions.
+       That system (organisations.js) reads its own conditions.
+     - Culture tilts, slightly and only toward the positive: a district known
+       for entertainment draws performers a little more, a farm belt farmers.
+       No identity draws anyone toward anything else.
    ============================================================ */
 
 // How far a person will go to work, in tiles, as a Chebyshev distance.
@@ -61,8 +65,27 @@ export const CAREERS={
   railWorker:    {at:['station'],        label:'rail worker',      lean:['discipline',.3]},
   dockWorker:    {at:['dock'],           label:'dock worker',      lean:['riskTolerance',.3]},
   civilServant:  {at:['cityHall'],       label:'civil servant',    lean:['caution',.5]},
-  keeper:        {at:['lighthouse','clockTower','statue'],label:'keeper',lean:['caution',.4]}
+  keeper:        {at:['lighthouse','clockTower','statue'],label:'keeper',lean:['caution',.4]},
+  // Entertainment is work like any other: a seat at a real building. A café
+  // has room for someone who plays; a market for someone who performs; a
+  // landmark for someone who makes things worth looking at.
+  musician:      {at:['cafe'],           label:'musician',         lean:['creativity',.8]},
+  performer:     {at:['market'],         label:'street performer', lean:['charisma',.8]},
+  artist:        {at:['greatLibrary','statue','clockTower'],label:'artist',lean:['creativity',.7]}
 };
+export const PERFORMING=['musician','performer','artist'];
+/* The culture feedback loop, kept slight and kept positive. A district that has
+   become known for something tilts the people living in it a little toward
+   the work that made it so - an entertainment district draws musicians, a farm
+   belt draws farmers - as a probability, never a lock, and never toward
+   anything a district should not be known for. districts.js reads none of
+   this back, so the loop cannot close on itself. */
+const CULTURE={entertainment:PERFORMING,nightlife:PERFORMING,agricultural:['farmer','millWorker'],academic:['teacher'],waterfront:['dockWorker']};
+const CULTURE_TILT=1.25;
+function cultureTilt(home,id){
+  const held=districtAt(home.x,home.y)?.identities||[];
+  return held.some(h=>CULTURE[h.id]?.includes(id))?CULTURE_TILT:1;
+}
 export const LOOKING='looking for work';
 
 export const STANDINGS=['struggling','working class','middle class','affluent','elite'];
@@ -112,7 +135,7 @@ function choose(home,places,traits,education,key){
     // Owning the place wants a real leaning toward it, or it is just a job.
     if(spec.owner&&(traits.entrepreneurship??0)<62) continue;
     const score=(open.reduce((n,p)=>n+p.jobs-p.taken,0))*lean*(1.4-nearest/(REACH*1.6))
-      *(0.8+0.4*hash2(key,Object.keys(CAREERS).indexOf(id),S.seed>>>0));
+      *cultureTilt(home,id)*(0.8+0.4*hash2(key,Object.keys(CAREERS).indexOf(id),S.seed>>>0));
     if(score>bestScore){ bestScore=score; best={id,open}; }
   }
   if(!best) return null;
@@ -160,6 +183,9 @@ export function evaluateCareers(note=()=>{}){
       if(next===current) continue;
       f.careers[m.index]=next;
       if(S.diagnostics) S.diagnostics.careerChanges=(S.diagnostics.careerChanges||0)+1;
+      // Districts count who performs in them; a person taking up or leaving
+      // that work is a change there. Rare, and rebuilt on the next read.
+      if(PERFORMING.includes(next)||PERFORMING.includes(current)) invalidateDistricts();
       if(next!==LOOKING){
         const label=CAREERS[next].label;
         if(!social.firsts[next]){

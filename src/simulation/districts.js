@@ -92,6 +92,11 @@ export const IDENTITIES=[
   {id:'opportunity',label:'High Opportunity',need:2,when:d=>[d.jobs>=d.workers*1.2,d.jobs>=8,d.homes>=4]},
   {id:'struggling',label:'Struggling',need:3,when:d=>[d.homes>=6,d.jobs<d.workers*0.5,d.avgDesirability<38,d.recreationReach===0]},
   {id:'closeKnit',label:'Close-Knit',need:2,when:d=>[d.homes>=6,d.avgMood>=62,d.density>=0.5]},
+  /* Culture, read from what stands there and who works there. Three of four
+     for Entertainment, so a row of cafés on a long street is a commercial
+     strip until there is somewhere to perform or someone performing. */
+  {id:'entertainment',label:'Entertainment',need:3,when:d=>[d.cafes>=3,d.sector.recreation+d.sector.landmark>=1,d.performers>=1,d.stations>=1||d.roadTiles>=20]},
+  {id:'nightlife',label:'Nightlife',need:2,when:d=>[d.cafes>=3&&d.lamps>=4,d.celebrities>=1,d.performers>=2]},
   // Reported, never inferred. Both require an organisation to exist here.
   {id:'criminalInfluence',label:'Criminal Influence',need:2,when:d=>[d.organisations>=1,d.unresolvedCrime>=1]},
   {id:'stronghold',label:'Organized Crime Stronghold',need:2,when:d=>[d.organisations>=1,d.organisationStrength>=3]}
@@ -176,7 +181,7 @@ function measure(list){
   const d={buildings:list.length,homes:0,pop:0,jobs:0,tradeJobs:0,civicJobs:0,farms:0,docks:0,markets:0,
     schools:0,stations:0,roadTiles:0,tier1:0,tier3:0,recreationCapacity:0,recreationReach:0,
     sector:{agriculture:0,trade:0,civic:0,transport:0,recreation:0,landmark:0,homes:0},
-    organisations:0,organisationStrength:0,unresolvedCrime:0,
+    organisations:0,organisationStrength:0,unresolvedCrime:0,cafes:0,lamps:0,performers:0,celebrities:0,
     minX:W,maxX:0,minY:H,maxY:0};
   let desirability=0,education=0,mood=0,homesWithMood=0,recSat=0;
   for(const b of list){
@@ -192,6 +197,8 @@ function measure(list){
       recSat+=Number(b.state?.recreationSatisfaction)||0;
       mood+=Number(b.mood)||0; homesWithMood++;
     }
+    if(b.type==='cafe') d.cafes++;
+    if(b.type==='lamp') d.lamps++;
     if(b.type==='farm') d.farms++;
     if(b.type==='dock') d.docks++;
     if(b.type==='market') d.markets++;
@@ -225,9 +232,21 @@ function measure(list){
   // nobody has resolved, and must not feed the conditions it exists to press.
   for(const inc of S.incidents||[]) if(!inc.resolved&&inc.kind==='crime'&&!inc.tag&&inc.target&&
     inc.target.x>=d.minX&&inc.target.x<=d.maxX&&inc.target.y>=d.minY&&inc.target.y<=d.maxY) d.unresolvedCrime++;
+  /* Who performs here and who is known for it, read as plain data off the
+     family and fame records (careers.js and fame.js import this module, so it
+     cannot import them). The list of performing trades is theirs; the fame
+     regression asserts this copy matches it. */
+  const byHome=new Map(); for(const f of S.social?.families||[]) byHome.set(f.homeSeed>>>0,f);
+  for(const b of list){
+    if(b.type!=='house') continue;
+    const f=byHome.get(b.seed>>>0); if(!f) continue;
+    for(const c of Object.values(f.careers||{})) if(PERFORMING.has(c)) d.performers++;
+    for(const r of S.social?.fame||[]) if(r.familyId===f.id&&r.renown>=2) d.celebrities++;
+  }
   d.cx=Math.round((d.minX+d.maxX)/2); d.cy=Math.round((d.minY+d.maxY)/2);
   return d;
 }
+const PERFORMING=new Set(['musician','performer','artist']);
 
 /* Every reading a district qualifies for, before the two-label cap. The cap can
    hide a label rather than prevent it, which is a false comfort in a safeguard:

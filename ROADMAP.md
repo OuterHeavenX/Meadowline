@@ -1,11 +1,12 @@
 # Meadowline Roadmap
 
-## Status as of production `main` at `8342585a06fe40a115cfa8d2d11c3a536ea04772`
+## Status as of production `main` at `af1be4943b62d7cf208178870afd65cef391ab0b`
 
 **Current development — Social Fabric 1.0**, on `claude/game-upgrade-3o2630`.
-Slices 1–4 (emergent districts; families, notable citizens, traits; careers
-and standing; organisations) are production at `8342585`; slice 5 (bosses,
-fronts, autonomous enforcement) is on the branch. Canonical document:
+Slices 1–5 (emergent districts; families, notable citizens, traits; careers
+and standing; organisations; bosses, fronts, autonomous enforcement) are
+production at `af1be49`; slice 6 (fame and entertainment culture), the last of
+the milestone's first scope, is on the branch. Canonical document:
 `docs/SOCIAL_FABRIC.md`.
 
 **UI / HUD 2.0 is production**, merged through PR #11 (`da5698c`). Earlier
@@ -53,6 +54,7 @@ Everything below is on `main`. Each landed with its regression suite green.
 | `1d192f9` | **Social Fabric slice 1 — emergent districts.** |
 | `3954911` | **Social Fabric slices 2 and 3** — notable families and traits; careers at real workplaces, standing from conditions. |
 | `8342585` | **Social Fabric slice 4** — organisations that nobody built: three conditions or nothing, place-based names, staged growth, prosperity and police as decline. |
+| `af1be49` | **Social Fabric slice 5** — bosses who are existing citizens, fronts that stay businesses, police who open and work cases on their own. |
 
 ## Milestone 7 — Social Fabric 1.0
 
@@ -80,8 +82,10 @@ Slices, in order:
    `8342585`.*
 5. **Bosses, fronts, autonomous enforcement** — a boss is always an existing
    named citizen; a front is a business that stays one; the police open, work
-   and act on cases on their own. *On the branch.*
-6. Fame and entertainment culture.
+   and act on cases on their own. *Production, `af1be49`.*
+6. **Fame and entertainment culture** — performing careers at real venues,
+   renown from talent, crowd and occasion, Entertainment and Nightlife
+   identities, a slight positive culture tilt. *On the branch.*
 
 The milestone brief contradicts itself on naming (PART 7/8 worked examples vs
 PART 27); PART 27 wins and the resolution is structural. See the document.

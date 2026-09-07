@@ -40,6 +40,7 @@ import { advanceFamilies } from '../simulation/families.js';
 import { advanceCareers } from '../simulation/careers.js';
 import { advanceOrganisations } from '../simulation/organisations.js';
 import { advanceEnforcement } from '../simulation/enforcement.js';
+import { advanceFame } from '../simulation/fame.js';
 import { updateFeedback } from '../simulation/feedback.js';
 import { tickTutorial } from '../ui/tutorial.js';
 
@@ -142,6 +143,8 @@ function step(now){
       advanceOrganisations(step,note);
       // And what the police make of it. Their clock, their decision.
       advanceEnforcement(step,note);
+      // Who the valley has come to talk about for the right reasons.
+      advanceFame(step,note);
     }
     growth(sdt);
     updateCitizens(sdt);

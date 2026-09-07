@@ -5,8 +5,9 @@ organized crime, fame and family legacies.
 
 ## Status
 
-**Slices 1–4 production at `8342585`. Slice 5 (bosses, fronts, enforcement) on
-`claude/game-upgrade-3o2630`,** awaiting merge.
+**Slices 1–5 production at `af1be49`. Slice 6 (fame and entertainment) on
+`claude/game-upgrade-3o2630`,** awaiting merge. With it every slice of the
+milestone's first scope is built.
 
 This document is canonical for Social Fabric and is maintained as the milestone
 lands. It records what is built, what is deliberately deferred and what must
@@ -448,6 +449,78 @@ that exists and is involved, front seeds are cleaned to positive integers,
 pressure is bounded, and an unknown anything is dropped. Incidents are
 transient as before, so an in-flight raid simply does not survive a reload.
 
+## Fame and entertainment culture — slice 6
+
+`src/simulation/fame.js`, three careers in `careers.js`, two identities in
+`districts.js`. The same fabric that grows a crew nobody built grows a musician
+everybody has heard of, by the same rules: no button, no verdict, bounded,
+reversible, validated on load.
+
+### Entertainment is work
+
+Three performing careers, each a seat at a real building from the registry:
+**musician** at a café, **street performer** at a market, **artist** at a
+landmark (library, statue, clock tower). No education gate. A farm belt with no
+venue grows no performer; the regression runs it.
+
+### The culture feedback loop, kept slight and positive
+
+PART 17 asks that culture influence future probabilities slightly and never
+hard-lock. `careers.js` tilts a person's job choice by ×1.25 toward the work a
+district is already known for — Entertainment and Nightlife draw performers,
+Agricultural draws farmers and mill workers, Academic teachers, Working
+Waterfront dock workers. Nothing else. The tilt table names no criminal or
+struggling identity, and the regression reads the source line to keep it so;
+districts.js reads none of this back, so the loop cannot close on itself.
+
+### Renown
+
+A person who performs gains renown each fame pass (two social passes) from
+`gain(traits, crowd, festival)`: talent is creativity and charisma, crowd is
+the homes within six tiles of their venue (the nearest building of their
+trade's kind), and a festival day is worth three ordinary ones. Renown is
+0..3; the valley's words are *getting known*, *locally famous*, *known across
+the valley*. It fades at 0.03 a pass when they stop, and below the first rung
+the record is dropped. At most eight names are tracked.
+
+What it does not read: desirability, tier, standing, education, surname,
+anything about organisations — source-checked. **An affluent district does
+not manufacture celebrities**: the regression runs the richest, best-schooled
+street in the valley with nowhere to perform for 240 days and gets nobody. The
+same street with three cafés and a green gets musicians, then a name. Across
+six seeded towns every famous surname was different.
+
+### Two identities
+
+**Entertainment** needs three of four: three cafés, a place to gather
+(recreation or landmark), a performer living there, and a long street or a
+station — so a row of cafés on a long road is a commercial strip until
+somebody plays there or there is somewhere to gather. **Nightlife** needs two
+of: cafés under street lamps, a celebrity, two performers. Districts count
+performers and celebrities as plain data off the family and fame records, and
+the count is invalidated when a performing career is taken up or left or a
+name crosses the celebrity line. Neither identity is an input to organisations
+or to the police — both sources are checked for the words.
+
+### Chronicle and surfacing
+
+"Ada Ellery is getting known around Fern Hollow as a musician"; "Local
+musician Ada Ellery became locally famous"; "…became Meadowline's first
+widely known performer" (once, the first time anyone reaches the top rung);
+"…played to a full house at Harvest Home" on a festival day, with a note of
+music at the venue; "…faded from view". The House card shows the word beside
+the person; the venue's business card says who it is known for and stays a
+business card; City Hall grows a "Names the valley knows" card only when there
+is a name to know. The UI imports readings only, audited over every file in
+`src/ui`.
+
+### Save
+
+`social.fame` and `fameFirst` ride in the optional social field. On load a
+name must belong to a family that exists, a seat under the member cap and a
+performing career; renown is clamped to the ladder. An old save loads with
+none and grows its own.
+
 ## Performance rules
 
 Binding, and derived from what this codebase has already learned the hard way:
@@ -509,8 +582,11 @@ Coverage required by this milestone:
   and employs exactly as the same business does; nothing is investigated
   without a station in reach, and the police open, work and act on a case with
   no call from the player;
-- the UI imports nothing but readings from the organisations and enforcement
-  modules, audited over every file in `src/ui`;
+- the UI imports nothing but readings from the organisations, enforcement and
+  fame modules, audited over every file in `src/ui`;
+- an affluent street with nowhere to perform produces nobody famous; a café
+  street does; fame fades when the venues go; the culture tilt names no
+  criminal identity;
 - surname distribution among criminal organisations matches the shared pool;
 - social recomputation is invalidation-driven, asserted by counting work rather
   than timing it, so the assertion reads the same on any machine;
@@ -526,8 +602,9 @@ trusted.
 2. **Families, notable citizens and traits.** *(production, `3954911`)*
 3. **Careers and standing.** *(production, `3954911`)*
 4. **Organisation formation, staged growth, decline.** *(production, `8342585`)*
-5. **Bosses, fronts, autonomous enforcement.** *(on the branch)*
-6. Fame and entertainment culture, initially lightweight.
+5. **Bosses, fronts, autonomous enforcement.** *(production, `af1be49`)*
+6. **Fame and entertainment culture**, lightweight as the brief asked. *(on
+   the branch)*
 
 Political influence remains future work and is out of scope.
 

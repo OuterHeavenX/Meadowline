@@ -11,6 +11,7 @@ import { families, familyMembers } from '../simulation/families.js';
 import { familyStanding, knownFor } from '../simulation/careers.js';
 import { bossOf, organisations, stageWord } from '../simulation/organisations.js';
 import { underInvestigation } from '../simulation/enforcement.js';
+import { celebrities } from '../simulation/fame.js';
 import { landmarkKey } from '../rendering/landmark-assets.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
@@ -84,7 +85,7 @@ function districtRows(){
       stat('Jobs here',m.jobs||0,I.work)+'</div>'+
       '<small class="muted">Since day '+(d.born||1)+'</small>');
   }
-  return html+familyRows()+organisationRows();
+  return html+familyRows()+fameRows()+organisationRows();
 }
 /* Who the valley knows by name. Nobody appointed them; a household becomes one
    the city talks about the way it does anywhere - by being there, and by
@@ -103,6 +104,17 @@ function familyRows(){
    dissolve any of it; it reports what is talked about, as a place and a shape,
    and never names anyone. The card only exists when there is something to
    report, so a town with none never sees the word. */
+/* Who the valley talks about for the right reasons. Nobody was made famous;
+   someone played, somewhere people were, for long enough. */
+function fameRows(){
+  const list=celebrities();
+  if(!list.length) return '';
+  let rows='';
+  for(const c of list){
+    rows+='<div class="ch-buy"><div><b>'+c.name+'</b><small class="muted">'+c.label+(c.roots?' · '+c.roots:'')+' · '+c.word+' · since day '+c.since+'</small></div></div>';
+  }
+  return card('Names the valley knows',I.mood,'<p class="muted">Nobody was made famous. Someone played, somewhere people were, for long enough that the valley started saying the name.</p>'+rows);
+}
 function organisationRows(){
   const list=organisations();
   if(!list.length) return '';
