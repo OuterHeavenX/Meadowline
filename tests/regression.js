@@ -3,7 +3,7 @@ import { BUILDINGS, BUILDABLE } from '../src/buildings/registry.js';
 import { COST, H, TOOLS, W } from '../src/core/constants.js';
 import { WATER_COST, paintWater, playerWaterAt, removePlayerWater } from '../src/world/landscaping.js';
 import { conflictingToolKeys, isTextEntryTarget, RESERVED_SHORTCUT_KEYS } from '../src/core/input-policy.js';
-import { KEY, KEY_OLD, KEY_V2, applySave, load, save, store } from '../src/core/save.js';
+import { KEY, KEY_OLD, KEY_V2, applySave, lifecycleSaveIsBlocked, load, save, stageSaveForReload, store } from '../src/core/save.js';
 import { S } from '../src/core/state.js';
 import { AC, amb, armAmbient } from '../src/audio/audio.js';
 import { advanceEducation, educationAssignment, getEducationLevel, invalidateServices, previewEducationAt, recomputeServices, schoolStats, serviceBoundaryGeometry } from '../src/simulation/civic-services.js';
@@ -144,6 +144,16 @@ check('v3 school state persists',reloadedSchool?.state?.level===1);
 check('v3 optional metadata persists',reloadedSchool?.state?.futureTag==='keep-me'&&reloadedSchool?.state?.futureMeta?.funding===2);
 check('v3 housing tier persists',reloadedHome?.state?.housingTier===2);
 check('v3 housing upgrade progress persists',Math.abs((reloadedHome?.state?.upgradeProgress||0)-.42)<.001);
+
+// A cloud/import/recovery replacement is written while the old city is still
+// running. The reload fires pagehide, which must not save that old in-memory
+// city back over the replacement.
+const replacement=store.get(KEY);
+S.coins=1;
+stageSaveForReload(replacement);
+window.dispatchEvent(new Event('pagehide'));
+check('staged replacement blocks lifecycle overwrite',lifecycleSaveIsBlocked()&&store.get(KEY)===replacement);
+check('staged replacement loads after reload boundary',load()&&S.coins===Math.floor(savedCoins));
 
 store.set(KEY,''); store.set(KEY_V2,JSON.stringify({v:2,seed:97531,coins:233,day:4,dayT:.3,b:[['house',6,6,3],['school',7,7,0]],woods:''})); store.set(KEY_OLD,'');
 check('v2 migration',load()&&S.coins===233&&S.grid[idx(6,6)]?.pop===3&&getEducationLevel(S.grid[idx(6,6)])===0&&S.grid[idx(6,6)]?.state?.housingTier===1&&S.grid[idx(7,7)]?.state?.level===1);

@@ -1,4 +1,4 @@
-import { KEY, save, store } from '../core/save.js';
+import { KEY, save, stageSaveForReload, store } from '../core/save.js';
 import { S } from '../core/state.js';
 import { cityStage } from '../progression/city-growth.js';
 import { downloadCloudSave, getCloudSaveSummary, uploadLocalSave } from '../cloud/cloud-save.js';
@@ -108,8 +108,7 @@ async function importFile(file){
   if(!globalThis.confirm('Import this city? Your current city will be kept as a local backup.'))return;
   const current=store.get(KEY); if(parseSave(current))writeBackup(current,'before-import');
   try{
-    localStorage.setItem(KEY,raw);
-    if(localStorage.getItem(KEY)!==raw)throw new Error('Verification failed');
+    stageSaveForReload(raw);
     setMeta({savedAt:Date.now(),bytes:raw.length,lastError:null,importedAt:Date.now()});
     location.reload();
   }catch(e){setStatus('Import failed. Your current city was not intentionally deleted.','bad');}
@@ -119,8 +118,7 @@ function restoreBackup(index){
   if(!globalThis.confirm(`Restore this backup from ${fmtTime(item.meta.savedAt)}? The current city will be backed up first.`))return;
   const current=store.get(KEY); if(parseSave(current))writeBackup(current,'before-restore');
   try{
-    localStorage.setItem(KEY,item.raw);
-    if(localStorage.getItem(KEY)!==item.raw)throw new Error('Verification failed');
+    stageSaveForReload(item.raw);
     setMeta({savedAt:Date.now(),bytes:item.raw.length,lastError:null,restoredAt:Date.now()});
     location.reload();
   }catch(e){setStatus('Restore failed.','bad');}
