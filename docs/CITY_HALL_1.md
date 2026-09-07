@@ -11,7 +11,7 @@
 - Production merge commit: `fcf7f8c02291c7cd1bc2a164522353b7476e81ef`
 - Merge authorization: explicit owner approval at the Roads & Mobility 2.0 kickoff
 
-Roads & Mobility 2.0 and Recreation 2.0 subsequently reached production through merged PRs #6 and #7. UI / HUD 2.0 is current development; the remainder of this file records the City Hall-era architecture.
+Roads & Mobility 2.0 and Recreation 2.0 subsequently reached production through merged PRs #6 and #7. UI / HUD 2.0 was current development when this was written and shipped as PR #11; the remainder of this file records the City Hall-era architecture.
 
 The owner approval/merge history does **not** retroactively check previously unchecked City Hall or Roads device items in `docs/IPHONE_ACCEPTANCE.md`; those remain an honest historical physical-testing record.
 

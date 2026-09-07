@@ -4,7 +4,7 @@
 
 **Production on `main`.** Historical implementation branch: `feature/living-city-foundation`. Architectural source: `agent/architecture-refactor`.
 
-Production consumers now include Housing 2.0, City Growth 1.0 / 1.1, City Hall 1.0, Roads & Mobility 2.0, Recreation 2.0 and Living City 3.x. UI / HUD 2.0 is the current presentation consumer.
+Production consumers now include Housing 2.0, City Growth 1.0 / 1.1, City Hall 1.0, Roads & Mobility 2.0, Recreation 2.0 and Living City 3.x. UI / HUD 2.0 (production, PR #11) is the presentation consumer.
 
 Verified Recreation starting production SHA: `6ed2225ba008a91610715c63aca44e4cd02486bb`.
 
