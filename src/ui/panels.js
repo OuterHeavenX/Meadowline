@@ -30,6 +30,7 @@ import { darkness } from '../world/time.js';
 import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
 import { askConfirm } from './confirm.js';
+import { varietyOf, varietyReason } from '../simulation/trade.js';
 
 /* ---------- the Look card ---------- */
 export const elLook=document.getElementById("look"), elLookBody=document.getElementById("look-body");
@@ -212,6 +213,12 @@ function businessCard(b){
   // one thing it adds is what a neighbour would notice: the police asking.
   const front=frontAt(b);
   if(front&&underInvestigation(front)) html+='<p>The police have been asking questions here.</p>';
+  /* A pitch is whatever the street made of it, and the card says so plainly —
+     the player did not choose this and would otherwise have no way to find out
+     why the barrow outside the green sells flowers. */
+  const variety=varietyOf(b);
+  if(variety) return card(variety.name,def?.name||'Business',
+    '<p>Sells '+variety.sells+'. '+varietyReason(b)+'</p>'+html);
   // A place the valley knows for someone. Nobody made it popular.
   for(const star of venueFame(b)) html+='<p>'+(star.renown>=3?'Known across the valley':'Known locally')+' for <b>'+star.name+'</b>’s '+star.what+'.</p>';
   return card(def?.name||'Business','Business',html);

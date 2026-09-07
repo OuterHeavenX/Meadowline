@@ -20,6 +20,7 @@ import { activeFestival } from '../world/festivals.js';
 import { idx, inBounds, isFacilityPart, isType } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 import { roadNearFacility } from '../transport/roads.js';
+import { settleVarieties } from './trade.js';
 
 /* ---------- simulation ---------- */
 export let simT=0;
@@ -130,6 +131,11 @@ export function recompute(){
     if(getBuildingDefinition(b.type)?.category==='wonder') wonders.push(b);
   }
   S.ctx={parks,recreation,cafes,stations,houses,lamps,mills,markets,bakeries,schools,docks,farms,wonders,shops};
+  /* A street vendor's pitch reads its surroundings and settles on what it
+     sells. It has to happen here, after the context lists exist and before
+     anything asks a shop what it takes, and it happens again on every
+     recompute so a pitch follows the street rather than the day it was laid. */
+  settleVarieties();
   // The house list the recreation signature describes has just been rebuilt.
   markRecreationPopulation();
 

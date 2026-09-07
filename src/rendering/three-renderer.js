@@ -54,7 +54,7 @@ function addBuilding(b){const def=getBuildingDefinition(b.type),fp=def?.placemen
    a revision counter instead would need every writer of S.grid, S.terr,
    S.natTree and the upgrade levels to bump it, and a missed one shows up as a
    world that stops redrawing; walking is correct by construction. */
-function signature(){let s=`${S.seed}:${Math.floor(S.day/7)%4}:${roadIsWet()?'wet':'dry'}:${(S.cityProgress?.unlockedParcels||[]).join(',')}:`;for(let i=0;i<S.grid.length;i++){const b=S.grid[i];if(b&&!isFacilityPart(b))s+=`${b.type[0]}${b.x},${b.y},${b.state?.level||b.state?.housingTier||0};`;if(S.terr[i]===1)s+=`w${i};`;if(S.natTree[i])s+=`t${i};`;}return s;}
+function signature(){let s=`${S.seed}:${Math.floor(S.day/7)%4}:${roadIsWet()?'wet':'dry'}:${(S.cityProgress?.unlockedParcels||[]).join(',')}:`;for(let i=0;i<S.grid.length;i++){const b=S.grid[i];if(b&&!isFacilityPart(b))s+=`${b.type[0]}${b.x},${b.y},${b.state?.level||b.state?.housingTier||0},${b.state?.variety||''};`;if(S.terr[i]===1)s+=`w${i};`;if(S.natTree[i])s+=`t${i};`;}return s;}
 
 function tileInstances(cells,material,height,y,colors){if(!cells.length)return;const geometry=geo(`tiles:${height}`,()=>new THREE.BoxGeometry(.99,height,.99)),inst=new THREE.InstancedMesh(geometry,material,cells.length),matrix=new THREE.Matrix4();for(let i=0;i<cells.length;i++){const c=cells[i];matrix.makeTranslation(c.x,y+height/2,c.z);inst.setMatrixAt(i,matrix);if(colors)inst.setColorAt(i,color(colors[i]));}inst.receiveShadow=true;inst.castShadow=false;world.add(inst);}
 function rebuild(){lastSignature=signature();disposeGroup(world);world=new THREE.Group();scene.add(world);buildCohesiveWorld(world);if(S.diagnostics)S.diagnostics.worldRebuilds=(S.diagnostics.worldRebuilds||0)+1;}

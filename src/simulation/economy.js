@@ -13,6 +13,7 @@ import { PAL } from '../world/seasons.js';
 import { activeFestival } from '../world/festivals.js';
 import { emitFeedback } from './feedback.js';
 import { getBuildingDefinition } from '../buildings/registry.js';
+import { tradeYield } from './trade.js';
 
 /* ---------- economy & clock ---------- */
 export function payday(){
@@ -35,7 +36,7 @@ export function payday(){
      standing rather than naming each kind. A shop with no road at its door
      still trades - it is the street it sits on that matters, not a delivery. */
   let shopTake=0;
-  for(const sh of S.ctx.shops||[]) shopTake+=getBuildingDefinition(sh.type)?.trade?.yield||0;
+  for(const sh of S.ctx.shops||[]) shopTake+=tradeYield(sh);
   const trade=Math.round((cafeTake+bakeTake+shopTake)*lift);
   // The chain runs farm to windmill to bakery. A windmill grinds steadily, and
   // best of all at harvest, but on bought-in grain at half yield unless a farm

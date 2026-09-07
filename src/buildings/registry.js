@@ -1,3 +1,4 @@
+import { VENDOR_VARIETIES } from './vendors.js';
 /* ---------- authoritative building definitions ---------- */
 // Buildable metadata, unlock stage and civic upgrades live here so placement,
 // tools, saves, services and future milestones share one source of truth.
@@ -90,6 +91,14 @@ export const BUILDINGS={
     description:"Trades modestly and teaches quietly \u2014 a small education reach of its own, which is how a street without a school starts learning.",
     renderKey:"bookshop",jobs:3,trade:{yield:6},placement:{footprint:[1,1]},
     service:{type:"education",radius:4,capacity:12,visual:{boundary:"green"}},destination:{work:true,visit:true},saveDefaults:{}},
+  /* A pitch on the pavement rather than a premises. It costs almost nothing,
+     employs one person, and what sets up on it is not the player's choice —
+     see simulation/trade.js. The varieties carry their own yield and presence,
+     which tradeYield() and tradePresence() prefer over the base numbers. */
+  vendor:{id:"vendor",name:"Street Vendor",category:"trade",cost:28,key:"",upkeep:1,unlockStage:1,
+    description:"A pitch on the pavement. What sets up on it is the street's decision: a flower stall beside a green, a newsstand where people read, a food cart everywhere else.",
+    renderKey:"vendor",jobs:1,trade:{yield:3,presence:1},varieties:VENDOR_VARIETIES,
+    placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{variety:"foodCart"}},
   mill:{id:"mill",name:"Windmill",category:"trade",cost:95,key:"9",upkeep:4,unlockStage:3,description:"Grinds coin every day — most of all at harvest. Wants open ground.",renderKey:"mill",jobs:5,placement:{footprint:[1,1]},destination:{work:true},saveDefaults:{}},
 
   // The production `park` ID stays 1×1 forever so old V3 cities remain intact.

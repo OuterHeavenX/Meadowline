@@ -265,6 +265,31 @@ function storefront(g,type,seed){const colors={cafe:'#c98666',market:'#9db7a5',b
   }
   path(g,0,.42,.4,.14);
 }
+/* A street vendor is deliberately not a storefront: no lot, no walls, no
+   glazing. A barrow, two poles and a canopy, low enough that a row of them
+   reads as a busy pavement rather than as a terrace of tiny shops. The variety
+   the street settled on colours the canopy and puts one thing on the counter. */
+function vendorPitch(g,b){
+  const id=b.state?.variety||'foodCart',
+    canopy=id==='flowerStall'?'#7a9b60':id==='newsstand'?'#4b6f8d':'#c85c46',
+    body=id==='flowerStall'?'#6b8955':id==='newsstand'?'#436681':'#93472f';
+  path(g,0,.3,.46,.3);
+  box(g,0,.05,-.02,.5,.26,.3,mat(body));
+  box(g,0,.31,-.02,.54,.05,.34,mat('#d8cfbb'),false);
+  for(const x of[-.24,.24])cyl(g,x,.05,-.02,.02,.5,mat('#6f5d4a'),6);
+  box(g,0,.55,-.02,.62,.045,.44,mat(canopy),false);
+  for(const q of[-.18,.18])box(g,q,.575,-.02,.1,.03,.44,mat('#f0ece0'),false);
+  for(const x of[-.17,.17])cyl(g,x,.0,.14,.075,.03,mat('#4a4038'),8);   // barrow wheels
+  if(id==='foodCart'){
+    cyl(g,-.1,.34,-.02,.07,.1,mat('#c9a35e'),10);
+    cyl(g,.12,.34,-.02,.05,.14,mat('#8a7a63'),8);
+  }else if(id==='flowerStall'){
+    for(const[x,c]of[[-.18,'#d4738f'],[-.06,'#e0b45a'],[.06,'#c9647a'],[.18,'#e8dcc0']])
+      sphere(g,x,.4,-.02,.05,mat(c));
+  }else{
+    for(const x of[-.14,0,.14])box(g,x,.38,-.02,.1,.13,.02,mat('#efe9da'),false);
+  }
+}
 function civic(g,type,b,fp){const w=fp[0]*.82,d=fp[1]*.82,level=b.state?.level||1;lotBase(g,fp[0]*.94,fp[1]*.94);const wall=type==='policeStation'?'#a9c5cf':type==='fireStation'?'#d79a86':type==='school'?'#d9c39a':'#e1dfd5',accent=type==='policeStation'?C.blue:type==='fireStation'?C.red:type==='hospital'||type==='clinic'?'#b74348':'#92784f';
   if(type==='hospital'){box(g,-.35,.06,0,w*.6,1.25,d*.78,mat(wall));box(g,.55,.06,.1,w*.28,.78,d*.62,mat(wall));box(g,-.35,1.31,0,w*.62,.12,d*.8,mat('#d3d5d1'));box(g,.55,.84,.1,w*.3,.1,d*.64,mat('#d3d5d1'));box(g,.55,.2,d*.34,w*.18,.45,.04,mat(accent));box(g,.55,.38,d*.365,.4,.12,.045,mat(accent),false);path(g,.55,d*.43,.55,.42);for(const y of[.28,.62,.96]){for(let x=-w*.5;x<w*.1;x+=.32)window(g,x,y,d*.315,'z',(b.seed+x*10+y*10)%3!==0);for(let z=-d*.24;z<d*.25;z+=.34)window(g,-.35-w*.305,y,z,'x',(b.seed+z*10+y*10)%3!==0);}for(const x of[-.55,-.25])box(g,x,1.43,-.15,.18,.12,.18,mat('#768084',.45,.35));cyl(g,.55,.96,-.15,.07,.22,mat(accent),12);return;}
   const h=type==='cityHall'?.7+level*.12:type==='school'?.78:type==='fireStation'?.82:.72;box(g,0,.06,0,w*.8,h,d*.72,mat(wall));if(type==='fireStation'){for(const x of[-w*.22,w*.22])box(g,x,.1,d*.37,w*.32,.5,.045,mat('#9d443d'),false);box(g,-w*.32,.06,-d*.2,w*.18,1.15,d*.25,mat(wall));box(g,-w*.32,1.21,-d*.2,w*.21,.1,d*.28,mat(accent));path(g,0,d*.43,w*.72,.42);}
@@ -364,7 +389,7 @@ function building(parent,b){const def=getBuildingDefinition(b.type),fp=def?.plac
       const blade=box(g,Math.cos(a)*.22,.62+Math.sin(a)*.22,.36,.09,.05,.4,mat('#e2d4b8'),false);
       blade.rotation.z=a;}}
     return;
-  }if(def?.service?.type==='recreation'||b.type==='park'){recreation(g,b.type,fp,b.seed||0);return;}if(b.type==='tree'){tree(g,0,0,b.seed||0,1);return;}if(b.type==='lamp'){lamp(g,0,0);return;}if(b.type==='dock'){box(g,0,.02,0,.8,.12,.8,mat('#80664e'));return;}if(b.type==='house'){house(g,b);return;}if(['cafe','market','bakery','station','generalStore','teaHouse','bookshop'].includes(b.type)){storefront(g,b.type,b.seed||0);return;}if(b.type==='farm'){farm(g,fp,b.seed||0);return;}if(b.type==='statue'){statue(g,fp);return;}if(b.type==='clockTower'){clockTower(g,fp);return;}if(b.type==='lighthouse'){lighthouse(g,fp);return;}if(b.type==='greatLibrary'){greatLibrary(g,fp);return;}if(b.type==='mill'){lotBase(g,.94,.94);box(g,0,.05,0,.55,.72,.55,mat('#d3c6aa'));gable(g,0,.77,0,.62,.62,.22,mat('#75594b'));cyl(g,0,.5,.3,.035,.45,mat('#5d4a3e'),7);for(const a of[0,Math.PI/2,Math.PI,Math.PI*1.5]){const blade=box(g,Math.cos(a)*.24,.68,Math.sin(a)*.24,.08,.05,.42,mat('#e2d4b8'),false);blade.rotation.y=-a;}return;}civic(g,b.type,b,fp);}
+  }if(def?.service?.type==='recreation'||b.type==='park'){recreation(g,b.type,fp,b.seed||0);return;}if(b.type==='tree'){tree(g,0,0,b.seed||0,1);return;}if(b.type==='lamp'){lamp(g,0,0);return;}if(b.type==='dock'){box(g,0,.02,0,.8,.12,.8,mat('#80664e'));return;}if(b.type==='house'){house(g,b);return;}if(['cafe','market','bakery','station','generalStore','teaHouse','bookshop'].includes(b.type)){storefront(g,b.type,b.seed||0);return;}if(b.type==='vendor'){vendorPitch(g,b);return;}if(b.type==='farm'){farm(g,fp,b.seed||0);return;}if(b.type==='statue'){statue(g,fp);return;}if(b.type==='clockTower'){clockTower(g,fp);return;}if(b.type==='lighthouse'){lighthouse(g,fp);return;}if(b.type==='greatLibrary'){greatLibrary(g,fp);return;}if(b.type==='mill'){lotBase(g,.94,.94);box(g,0,.05,0,.55,.72,.55,mat('#d3c6aa'));gable(g,0,.77,0,.62,.62,.22,mat('#75594b'));cyl(g,0,.5,.3,.035,.45,mat('#5d4a3e'),7);for(const a of[0,Math.PI/2,Math.PI,Math.PI*1.5]){const blade=box(g,Math.cos(a)*.24,.68,Math.sin(a)*.24,.08,.05,.42,mat('#e2d4b8'),false);blade.rotation.y=-a;}return;}civic(g,b.type,b,fp);}
 
 function terrain(parent){box(parent,(W-1)/2,-.6,(H-1)/2,W+.8,.48,H+.8,mat('#455a45'),false);const batches=new Map(),matrix=new THREE.Matrix4();for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=idx(x,y),water=S.terr[i]===1,open=isTileUnlocked(x,y),/* Meadow tone. floor(x/n)+floor(y/n) was the obvious way to get patches and
          the wrong one: a sum of two ramps is constant along a diagonal, so the
@@ -414,5 +439,17 @@ export function buildCohesiveWorld(parent){
   S.diagnostics.rendererMaterials=materials.size;
   S.diagnostics.visibleTrees=visibleTrees;
 }
-export function visualDescriptor(b){if(!b)return null;if(b.type==='house')return{archetype:HOME_ARCHETYPE[clamp((b.state?.housingTier||1)-1,0,HOME_ARCHETYPE.length-1)],variant:Math.abs(b.seed||0)%4};return{archetype:b.type,variant:Math.abs(b.seed||0)%4};}
+export function visualDescriptor(b){if(!b)return null;
+  if(b.type==='house')return{archetype:HOME_ARCHETYPE[clamp((b.state?.housingTier||1)-1,0,HOME_ARCHETYPE.length-1)],variant:Math.abs(b.seed||0)%4};
+  /* A building the registry gives varieties to is a different thing to look
+     at for each of them, so the variety is the archetype rather than a variant
+     of one. The GPU renderer's own world signature carries the variety too, or
+     a food cart that became a flower stall would keep its barrow until
+     something else on the map changed. */
+  const varieties=getBuildingDefinition(b.type)?.varieties;
+  if(varieties?.length){
+    const id=varieties.some(v=>v.id===b.state?.variety)?b.state.variety:varieties[0].id;
+    return{archetype:b.type+':'+id,variant:Math.abs(b.seed||0)%4};
+  }
+  return{archetype:b.type,variant:Math.abs(b.seed||0)%4};}
 export function artMetrics(){const authored=landmarkMetrics();return{materials:materials.size+authored.materials,geometries:geometries.size,authoredModels:authored.models,authoredTriangles:authored.triangles};}

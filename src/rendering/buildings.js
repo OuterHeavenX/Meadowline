@@ -127,6 +127,51 @@ export function drawShop(b,p,dark){
   else { for(let i=0;i<3;i++){ g.fillStyle=["#9c5a4c","#4f6f8d","#b08b3f"][i]; g.fillRect(p.x+hw*0.42+i*1.7*z,p.y-3*z,1.4*z,4.2*z); } }
 }
 
+const VENDOR={
+  foodCart:    {body:"#c26a4a",dark:"#93472f",canopy:"#f0e2c8",stripe:"#c85c46"},
+  flowerStall: {body:"#8fae72",dark:"#6b8955",canopy:"#f5efe0",stripe:"#7a9b60"},
+  newsstand:   {body:"#5b7f9f",dark:"#436681",canopy:"#eae4d6",stripe:"#4b6f8d"}
+};
+/* A pitch is a barrow with a canopy over it, not a building: it is drawn low
+   and narrow so a street of them still reads as pavement rather than as a row
+   of little shops. The variety the street settled on picks the colours and the
+   one thing sitting on the counter. */
+export function drawVendor(b,p,dark){
+  const z=S.cam.z, id=b.state?.variety||'foodCart', c=VENDOR[id]||VENDOR.foodCart;
+  groundShadow(p.x,p.y,11*z,5*z);
+  const hw=TW/2*0.34*z;
+  // barrow: a shallow body with two wheels under the near side
+  g.fillStyle=c.dark; g.fillRect(p.x-hw,p.y-4.4*z,hw*2,4.4*z);
+  g.fillStyle=c.body; g.fillRect(p.x-hw,p.y-6.2*z,hw*2,2.2*z);
+  g.fillStyle="rgba(30,40,36,.55)";
+  g.beginPath(); g.arc(p.x-hw*0.55,p.y+0.6*z,1.5*z,0,TAU); g.fill();
+  g.beginPath(); g.arc(p.x+hw*0.55,p.y+0.6*z,1.5*z,0,TAU); g.fill();
+  // canopy on two poles, striped in the trade's colour
+  g.fillStyle=c.dark;
+  g.fillRect(p.x-hw*0.9,p.y-13*z,0.9*z,7*z); g.fillRect(p.x+hw*0.9-0.9*z,p.y-13*z,0.9*z,7*z);
+  for(let i=0;i<4;i++){
+    g.fillStyle=i%2?c.stripe:c.canopy;
+    g.fillRect(p.x-hw*1.15+i*(hw*2.3/4),p.y-15.4*z,hw*2.3/4,2.6*z);
+  }
+  // what is actually for sale, on the counter
+  if(id==='foodCart'){
+    g.fillStyle="#e8c98a"; g.fillRect(p.x-hw*0.5,p.y-8.4*z,hw*0.7,2.2*z);
+    g.fillStyle="rgba(240,236,224,.5)";
+    g.fillRect(p.x+hw*0.25,p.y-9.6*z,0.8*z,3.4*z);      // steam off the pot
+  } else if(id==='flowerStall'){
+    for(let i=0;i<4;i++){
+      g.fillStyle=["#d4738f","#e0b45a","#c9647a","#e8dcc0"][i];
+      g.beginPath(); g.arc(p.x-hw*0.6+i*(hw*0.42),p.y-7.6*z-(i%2)*1.2*z,1.3*z,0,TAU); g.fill();
+    }
+  } else {
+    for(let i=0;i<3;i++){
+      g.fillStyle=i%2?"#efe9da":"#d8cfbb";
+      g.fillRect(p.x-hw*0.55+i*(hw*0.5),p.y-8.6*z,hw*0.42,2.6*z);
+    }
+  }
+  if(dark>0.12) lights.push({x:p.x-hw*0.5,y:p.y-9*z,w:hw,h:3*z});
+}
+
 export function drawCafe(b,p,dark){
   const z=S.cam.z;
   groundShadow(p.x,p.y,18*z,8*z);

@@ -5,8 +5,8 @@ worth turning up to.
 
 ## Status
 
-**Shops are production.** Street vendors and buskers are next and are described
-at the end as intent, not as shipped behaviour.
+**Shops and street vendors are production.** Buskers are next and are
+described at the end as intent, not as shipped behaviour.
 
 ## The shape of it
 
@@ -86,11 +86,76 @@ registry; the desirability term uncapped; the bookshop's reach set to a
 school's; a shop that keeps taking money after it is pulled down; a duplicate
 keyboard shortcut.
 
-## Still to come
+## Street vendors
 
-**Street vendors** — one building with varieties (a food cart, a flower stall, a
-newsstand) rather than a building per snack. Cheap, small, one or two jobs, and
-worth putting where people already walk.
+One building — **Street Vendor**, 28 coins, 1 upkeep, one job, no keyboard
+shortcut — and three things it can turn out to be. There is no food-cart tool
+and no flower-stall tool. The player puts down a pitch; **the street decides
+what sets up on it**, which is the same rule the Social Fabric runs on applied
+to something small enough to put on a corner.
+
+| Variety | Takes | Street presence | When |
+| --- | ---: | ---: | --- |
+| Food cart | 4 | 1 | nothing else nearby |
+| Flower stall | 3 | 2 | a green or recreation within 3 |
+| Newsstand | 3 | 1 | somewhere people read within 4 |
+
+The rule is in priority order and the order is a decision, not an accident:
+where a pitch sits between a green and a school it sells flowers, because the
+people passing a green are already out for the walk. "Somewhere people read"
+names no building — it is anything declaring an education service, so a
+bookshop counts and so will anything added later.
+
+### A pitch is not frozen the day it is laid
+
+`settleVarieties()` runs at the end of every `recompute()`, so a food cart
+becomes a flower stall the day a green opens beside it, and goes back to
+selling food if the green is pulled down. That is the detail worth having: a
+pitch follows its street rather than the moment it was placed.
+
+Two consequences had to be handled rather than assumed:
+
+- **The variety reaches the till.** `tradeYield()` and `tradePresence()` prefer
+  the variety's numbers over the building's base ones, which is the whole of
+  the special handling vendors need anywhere in the simulation. Both are still
+  generic — a definition with no `varieties` block gets its own numbers, as
+  the shops do.
+- **The variety reaches the picture.** The GPU renderer rebuilds its world from
+  a signature over the grid, and that signature only carried type, position and
+  tier. A food cart that became a flower stall would have kept its barrow until
+  something unrelated changed on the map. The signature now carries the variety
+  too, and the regression reads that line to make sure it still does.
+
+### Why a pitch is worth less to a street than a shop
+
+Desirability counts trade by **presence**, not by headcount: a shop is worth 2
+and a food cart 1, against the same six-point cap. Without that split, a ring of
+28-coin barrows buys exactly the desirability of the buildings they stand
+outside, and there is no reason to build a shop. The flower stall is the
+exception at 2 — flowers do more for a street than a newspaper does.
+
+### What is deliberately not clamped
+
+`save.js` has no "is this a real variety?" check, and that is on purpose.
+`applySave` recomputes before it returns, so the street settles every pitch and
+a clamp there could never be observed to work. What does the work is
+`varietyOf()`, which every reader goes through and which falls back to the first
+variety — reachable, and tested directly with a save naming a funnel-cake truck.
+
+### Testing
+
+`tests/street-vendors-regression.html`, 44 checks. The one that carries the
+design is that three identical pitches in three different places settle three
+different ways, with nothing differing but where they stand: if the variety ever
+came off the building seed instead of the street, that fails.
+
+Sabotages confirmed to fail: the variety taken from the seed; the till reading
+the base yield instead of the variety's; a pitch counting for a street as much
+as a shop; the GPU signature dropping the variety; `varietyOf()` trusting
+whatever the state says; the save whitelist dropping the variety; the
+desirability cap removed.
+
+## Still to come
 
 **Buskers** — a Busker's Pitch you place, and entertainers who simply turn up on
 a lively street or outside a venue where somebody famous is playing. The second

@@ -7,6 +7,7 @@ import { educationAssignment, getEducationLevel, invalidateServices } from './ci
 import { recreationStatus } from './recreation.js';
 import { idx, inBounds, isType } from '../world/tiles.js';
 import { emitFeedback } from './feedback.js';
+import { tradePresence } from './trade.js';
 
 const HOUSE_DEF=BUILDINGS.house;
 export const RESIDENTIAL_TIERS=Object.freeze((HOUSE_DEF.housing&&HOUSE_DEF.housing.tiers)||[]);
@@ -93,9 +94,13 @@ export function desirabilityDetails(h){
   const cafes=countNear(c.cafes,h,5), cafe=Math.min(6,cafes*2);
   if(cafe){ total+=cafe; rows.push({label:"Cafés nearby",value:cafe}); }
 
-  // Shops do the same job as a café for a street, and are capped the same way
-  // so a parade of them cannot carry a home to a Mansion on its own.
-  const shops=countNear(c.shops,h,5), shop=Math.min(6,shops*2);
+  /* Shops do the same job as a café for a street, and are capped the same way
+     so a parade of them cannot carry a home to a Mansion on its own. A shop
+     counts double what a street vendor's pitch does, which is what stops a
+     ring of 28-coin stalls out-earning the buildings they sit outside. */
+  let presence=0;
+  for(const sh of c.shops||[]) if(Math.max(Math.abs(sh.x-h.x),Math.abs(sh.y-h.y))<=5) presence+=tradePresence(sh);
+  const shop=Math.min(6,presence);
   if(shop){ total+=shop; rows.push({label:"Shops nearby",value:shop}); }
 
   const stations=countNear(c.stations,h,6);
