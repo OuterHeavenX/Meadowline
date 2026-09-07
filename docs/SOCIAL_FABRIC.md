@@ -5,7 +5,7 @@ organized crime, fame and family legacies.
 
 ## Status
 
-**Slices 1–3 production at `3954911`. Slice 4 (organisations) on
+**Slices 1–4 production at `8342585`. Slice 5 (bosses, fronts, enforcement) on
 `claude/game-upgrade-3o2630`,** awaiting merge.
 
 This document is canonical for Social Fabric and is maintained as the milestone
@@ -327,13 +327,16 @@ several and the same one a market is.
 Stages: individual → small group → local crew → organised crew → faction →
 major organisation. Growth needs four conditions held and a 4% roll per pass
 (one pass per three social passes, roughly three a day), so a crew takes a
-season to become a faction. Decline is faster on purpose: when the district
-falls below two conditions, a police station comes within eight tiles, or jobs
-reach 110% of workers, a 24% roll per pass takes a stage away. At stage zero the
-organisation breaks up, the Chronicle says so, and the district remembers it for
-60 days as momentum. Legitimate prosperity and enforcement are first-class causes
-of decline and the regression proves both: a stage-six organisation with police
-and three rows of farms placed next to it is gone in 160 days.
+season to become a faction. Decline is quicker: when the district falls below
+two conditions, a police station comes within eight tiles, or jobs reach 110%
+of workers, an 8% roll per pass takes a stage away — a stage every few days,
+which is still slower than a police case (slice 5), so that when a station
+arrives what the player sees is a case opened and made, not a crew quietly
+evaporating first. At stage zero the organisation breaks up, the Chronicle says
+so, and the district remembers it for 60 days as momentum. Legitimate
+prosperity and enforcement are first-class causes of decline and the regression
+proves both: a stage-six organisation with police and three rows of farms
+placed next to it is gone in 160 days.
 
 ### Names and involvement
 
@@ -376,22 +379,74 @@ in the optional `social` field. On load a type this build does not have, a
 stage off the ladder, or a family that does not exist is refused rather than
 trusted. An old save loads with none and develops gradually.
 
-## Bosses, fronts and enforcement — slice 5, not built
+## Bosses, fronts and enforcement — slice 5
 
-A **boss** is always promoted from an existing simulated citizen. No abstract
-boss entity is ever spawned when a suitable citizen exists.
+`src/simulation/organisations.js` (bosses and fronts, as properties of the
+organisation) and `src/simulation/enforcement.js` (what the police do about
+it). The two talk through plain data, the way districts and organisations do:
+enforcement puts a point of `pressure` on a record, and the organisations pass
+reads it as a stage lost. Nothing calls a setter, and nothing in `src/ui` may
+import anything from either module but readings — the regression fetches every
+UI module off the directory listing and audits the import lists.
 
-**Fronts** are ordinary legitimate businesses that keep functioning as
-businesses. There is no player-buildable criminal building category, and a front
-never stops paying its normal trade income or filling its normal jobs.
+### A boss is a citizen
 
-**Enforcement is autonomous.** The player builds stations and improves the city;
-the Police simulation decides what it notices, what it investigates and when it
-acts. The player never commands a unit at a target.
+Once an organisation is a local crew (stage 3) someone is said to run it. That
+someone is **always one of the simulated citizens the game already has**: a
+member of a notable family drawn into the organisation, chosen by
+`bossWeight(traits)` — leadership most, then nerve, then ambition — and nothing
+else. The function's source is checked for name, class, trade and standing. An
+organisation with no family involved has no boss, and no abstract boss is ever
+invented; the regression's sabotage that invents one fails the suite on the
+surname check. Across six seeded towns every boss surname was different. The
+Chronicle says "Around Fern Hollow, people say Ada Ellery runs the Fern Hollow
+Network"; the family record carries "Word is Ada runs the …" as a remark
+(`familyNote`, a note on the record and never an outcome). A boss taken in is
+remembered on the organisation's `taken` list and is not chosen again.
 
-Violence stays abstract and reuses the existing Police, Fire, Healthcare
-dispatch, Chronicle and feedback systems. No tactical layer, no combat, no war
-map, no territory conquest.
+### A front is a business
+
+Once an organised crew (stage 4), an organisation may take up quietly behind
+one or two ordinary businesses inside its district — a café, a bakery, a market
+stall — chosen by seeded pick among what stands there. The building is not
+touched: **economy.js and employment.js do not know the word**, and the
+regression proves the same business pays the same coins and fills the same
+registry jobs with and without being a front, and that its Look card is a
+business card. The one thing the card ever adds is what a neighbour would
+notice: "The police have been asking questions here", and only while they are.
+The Chronicle names the kind of place and the street, never the business. A
+café in a town with no organisation is a café; nothing is a front by type. A
+bulldozed front is no front, read every pass rather than trusted at load, since
+buildings are restored after the social field.
+
+### Enforcement is autonomous
+
+The player builds stations. A station within 14 tiles of a district's centre
+**notices** an organisation there with a chance read from visibility and
+coverage only — stage, fronts, open crimes around it, stations in reach — and
+never from a name, a class or a district identity (source-checked). An
+**investigation** then runs on its own clock, a week or two with one station.
+When it is ready the police **act**: a cruiser goes out through the ordinary
+municipal dispatcher as a `crime` incident tagged `raid` (same lifecycle, same
+vehicle, its own toast, no burglar drawn, not counted as an unresolved crime),
+and the case is made by a seeded roll that favours the police when stations
+are many and the organisation is small. Made: a front is closed, the boss is
+taken in for questioning, and a point of pressure lands. Dropped: "found
+nothing they could use", and the next look comes slower for 20 days. With no
+station in reach nothing is ever looked into, however visible.
+
+The player never commands any of it. The station card says what it is looking
+into and that nobody at City Hall asked; City Hall's "Word around town" card
+reports the case without owning it. Violence stays abstract: nobody is hurt,
+no building is lost, no citizen is removed, and the café is a café tomorrow.
+
+### Save
+
+Boss, fronts, `taken`, `pressure`, the open investigation and the last case
+ride inside the organisation record. On load a boss must belong to a family
+that exists and is involved, front seeds are cleaned to positive integers,
+pressure is bounded, and an unknown anything is dropped. Incidents are
+transient as before, so an in-flight raid simply does not survive a reload.
 
 ## Performance rules
 
@@ -450,6 +505,12 @@ Coverage required by this milestone:
 - bounded district, citizen, family and organisation counts;
 - no single condition forms an organisation, however long it is held;
 - prosperity and police nearby weaken and end one;
+- a boss is a named member of an involved family or there is none; a front pays
+  and employs exactly as the same business does; nothing is investigated
+  without a station in reach, and the police open, work and act on a case with
+  no call from the player;
+- the UI imports nothing but readings from the organisations and enforcement
+  modules, audited over every file in `src/ui`;
 - surname distribution among criminal organisations matches the shared pool;
 - social recomputation is invalidation-driven, asserted by counting work rather
   than timing it, so the assertion reads the same on any machine;
@@ -464,8 +525,8 @@ trusted.
    Hall/Chronicle surfacing, diagnostics, tests. *(production, `1d192f9`)*
 2. **Families, notable citizens and traits.** *(production, `3954911`)*
 3. **Careers and standing.** *(production, `3954911`)*
-4. **Organisation formation, staged growth, decline.** *(on the branch)*
-5. Bosses, fronts, autonomous enforcement.
+4. **Organisation formation, staged growth, decline.** *(production, `8342585`)*
+5. **Bosses, fronts, autonomous enforcement.** *(on the branch)*
 6. Fame and entertainment culture, initially lightweight.
 
 Political influence remains future work and is out of scope.

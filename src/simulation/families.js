@@ -128,6 +128,10 @@ export function familyKnownFor(f){
   return parts.length?parts.join(' and '):'settling in';
 }
 
+/* Something the valley says about a family, from another system. A remark on
+   the record, never an outcome: nothing about the family changes but its
+   notes, which is why this and not a setter is what is exported. */
+export function familyNote(f,text){ if(f) addNote(f,String(text).slice(0,80)); }
 function addNote(f,text){
   f.notes=f.notes||[];
   f.notes.unshift({day:S.day,text});

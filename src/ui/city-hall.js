@@ -9,7 +9,8 @@ import { buildingThumbnail } from '../rendering/thumbnails.js';
 import { recomputeDistricts } from '../simulation/districts.js';
 import { families, familyMembers } from '../simulation/families.js';
 import { familyStanding, knownFor } from '../simulation/careers.js';
-import { organisations, stageWord } from '../simulation/organisations.js';
+import { bossOf, organisations, stageWord } from '../simulation/organisations.js';
+import { underInvestigation } from '../simulation/enforcement.js';
 import { landmarkKey } from '../rendering/landmark-assets.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
@@ -107,9 +108,11 @@ function organisationRows(){
   if(!list.length) return '';
   let rows='';
   for(const o of list){
-    rows+='<div class="ch-buy"><div><b>The '+o.name+'</b><small class="muted">'+o.roots+' · talked about since day '+o.founded+' · '+stageWord(o)+(o.families.length?' · '+o.families.length+(o.families.length===1?' household':' households')+' said to be involved':'')+'</small></div></div>';
+    const boss=bossOf(o),fronts=(o.fronts||[]).length;
+    rows+='<div class="ch-buy"><div><b>The '+o.name+'</b><small class="muted">'+o.roots+' · talked about since day '+o.founded+' · '+stageWord(o)+(o.families.length?' · '+o.families.length+(o.families.length===1?' household':' households')+' said to be involved':'')+
+      (boss?' · people say '+boss.name+' runs it':'')+(fronts?' · said to work out of '+fronts+(fronts===1?' business':' businesses'):'')+(underInvestigation(o)?' · <b>the police are looking into it</b>':'')+'</small></div></div>';
   }
-  return card('Word around town',I.warn||NAV_ICON.districts,'<p class="muted">Nobody built these, and City Hall does not run them. They came out of what stood in a place, and they go the same way: more work nearby, and police within reach.</p>'+rows);
+  return card('Word around town',I.warn||NAV_ICON.districts,'<p class="muted">Nobody built these, and City Hall does not run them. They came out of what stood in a place, and they go the same way: more work nearby, and police within reach. What the police look into is their call.</p>'+rows);
 }
 function stat(label,value,glyph,cls=''){
   return '<div class="ch-stat '+cls+'">'+icon(glyph)+'<span>'+label+'</span><b>'+value+'</b></div>';

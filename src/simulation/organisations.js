@@ -2,7 +2,7 @@ import { hash2 } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { isFacilityPart } from '../world/tiles.js';
 import { districtAt, invalidateDistricts, recomputeDistricts } from './districts.js';
-import { SOCIAL_INTERVAL, families, familyMembers } from './families.js';
+import { SOCIAL_INTERVAL, families, familyMembers, familyNote } from './families.js';
 import { LOOKING } from './careers.js';
 
 /* ============================================================
@@ -38,8 +38,20 @@ import { LOOKING } from './careers.js';
        fades.
 
    Violence stays abstract. Nothing here dispatches, arrests or fights; that is
-   the existing Police simulation's business and slice 5's. This file decides
-   only whether a thing exists, how big it is, and what the valley calls it.
+   the Police simulation's business, in enforcement.js. This file decides
+   whether a thing exists, how big it is, what the valley calls it, who is said
+   to run it and where it works out of - and it reads back what the police did
+   as plain data (`pressure`), the way districts read organisations.
+
+   A BOSS is always one of the citizens the game already has: a member of a
+   notable family drawn into the organisation, chosen for leanings alone. No
+   abstract boss is ever invented; an organisation with no family involved
+   has no boss, and says so by having none.
+
+   A FRONT is an ordinary business that goes on being one. It keeps its jobs,
+   its trade and its card; economy.js and employment.js do not know the word.
+   Nothing in the Build catalogue is a front, and no building type is one by
+   nature - a café in a town with no organisation is a café.
    ============================================================ */
 
 export const MAX_ORGANISATIONS=4;
@@ -52,6 +64,12 @@ const MEMORY_DAYS=60;
 export const NEED=3;
 
 export const STAGES=['','individual','small group','local crew','organised crew','faction','major organisation'];
+// A crew has someone people say runs it; an organised crew has somewhere it
+// works out of. Below those stages there is nobody and nowhere.
+export const BOSS_STAGE=3;
+export const FRONT_STAGE=4;
+export const MAX_FRONTS=2;
+export const FRONT_TYPES={cafe:'café',bakery:'bakery',market:'market stall'};
 export const TYPES={
   streetCrew:      {word:'Crew',     needs:d=>true},
   dockRing:        {word:'Ring',     needs:d=>d.docks>=1},
@@ -119,6 +137,84 @@ export function involvementWeight(people,careers){
   return w/people.length;
 }
 
+/* ---------- who is said to run it ----------
+   Leanings alone: leadership most, then nerve, then ambition. Name, class,
+   trade and standing are not in the function's reach, and the regression
+   reads its source to keep it that way. */
+export function bossWeight(traits){
+  return traits.leadership*0.5+traits.riskTolerance*0.3+traits.ambition*0.2;
+}
+function memberKey(familyId,index){ return familyId*8+index; }
+function chooseBoss(o){
+  let best=null,bestW=-1;
+  for(const fid of o.families){
+    const f=families().find(x=>x.id===fid); if(!f) continue;
+    for(const m of familyMembers(f)){
+      if((o.taken||[]).includes(memberKey(fid,m.index))) continue;
+      const w=bossWeight(m.traits);
+      if(w>bestW){ bestW=w; best={familyId:fid,index:m.index}; }
+    }
+  }
+  return best;
+}
+export function bossOf(o){
+  if(!o?.boss) return null;
+  const f=families().find(x=>x.id===o.boss.familyId); if(!f) return null;
+  const m=familyMembers(f).find(x=>x.index===o.boss.index); if(!m) return null;
+  return {...m,family:f};
+}
+export function isBoss(f,index){ return organisations().some(o=>o.boss&&o.boss.familyId===f?.id&&o.boss.index===index); }
+
+/* ---------- where it works out of ---------- */
+function businessesIn(d){
+  const out=[];
+  for(const list of [S.ctx?.cafes,S.ctx?.bakeries,S.ctx?.markets]) for(const b of list||[])
+    if(b.x>=d.bounds.minX&&b.x<=d.bounds.maxX&&b.y>=d.bounds.minY&&b.y<=d.bounds.maxY) out.push(b);
+  return out.sort((a,b)=>(a.seed>>>0)-(b.seed>>>0));
+}
+function buildingBySeed(seed){
+  for(const list of [S.ctx?.cafes,S.ctx?.bakeries,S.ctx?.markets]) for(const b of list||[]) if((b.seed>>>0)===(seed>>>0)) return b;
+  return null;
+}
+export function frontsOf(o){ return (o?.fronts||[]).map(buildingBySeed).filter(Boolean); }
+export function frontAt(b){
+  if(!b||!FRONT_TYPES[b.type]) return null;
+  return organisations().find(o=>(o.fronts||[]).some(seed=>(seed>>>0)===(b.seed>>>0)))||null;
+}
+
+/* Bosses and fronts follow the stage and follow the world: a family that left
+   leaves no boss, a café that was bulldozed is no front. Read every pass. */
+function tend(o,d,note,day,slot){
+  if(o.boss){
+    const f=families().find(x=>x.id===o.boss.familyId);
+    if(!f||!o.families.includes(f.id)||o.boss.index>=familyMembers(f).length) o.boss=null;
+  }
+  o.fronts=(o.fronts||[]).filter(seed=>buildingBySeed(seed));
+  if(!d) return;
+  if(o.stage>=BOSS_STAGE&&!o.boss){
+    const pick=chooseBoss(o);
+    if(pick){
+      o.boss=pick;
+      const who=bossOf(o);
+      if(who){
+        note('Around '+o.roots+', people say '+who.name+' runs the '+o.name);
+        familyNote(who.family,'Word is '+who.first+' runs the '+o.name);
+        if(S.diagnostics) S.diagnostics.bossesNamed=(S.diagnostics.bossesNamed||0)+1;
+      }
+    }
+  }
+  if(o.stage>=FRONT_STAGE&&o.fronts.length<MAX_FRONTS){
+    const used=new Set(organisations().flatMap(x=>x.fronts||[]).map(x=>x>>>0));
+    const free=businessesIn(d).filter(b=>!used.has(b.seed>>>0));
+    if(free.length&&hash2(day*8+slot,o.id*271,S.seed>>>0)<0.05){
+      const b=free[Math.floor(hash2(o.id,day*7+slot,S.seed>>>0)*free.length)%free.length];
+      o.fronts.push(b.seed>>>0);
+      note('The '+o.name+' took up quietly behind a '+FRONT_TYPES[b.type]+' on '+o.roots);
+      if(S.diagnostics) S.diagnostics.frontsOpened=(S.diagnostics.frontsOpened||0)+1;
+    }
+  }
+}
+
 function nameFor(d,type){
   return d.name+' '+TYPES[type].word;
 }
@@ -153,17 +249,34 @@ export function evaluateOrganisations(note=()=>{}){
     const o=list[i]; const d=byName.get(o.roots);
     const met=d?conditionsMet(d):0;
     const roll=hash2(day*8+slot,o.id*131,S.seed>>>0);
+    // What the police did, read back as data. Each point of pressure is a
+    // stage lost; at the bottom of the ladder, the end.
+    if((o.pressure|0)>0){
+      o.pressure--; o.stage--; changed=true;
+      if(o.stage<=0){
+        note('The '+o.name+' broke up after the police moved in');
+        social.orgMemory[o.roots]=day; list.splice(i,1);
+        if(S.diagnostics) S.diagnostics.organisationCollapses=(S.diagnostics.organisationCollapses||0)+1;
+        continue;
+      }
+      note('The '+o.name+' lost ground after the raid');
+      if(S.diagnostics) S.diagnostics.organisationDeclines=(S.diagnostics.organisationDeclines||0)+1;
+      tend(o,d,note,day,slot);
+      continue;
+    }
     // Legitimate prosperity and enforcement are first-class causes of decline.
     const pressed=!d||met<2||(d&&(nearestPolice(d)<=8||d.measured.jobs>=d.measured.workers*1.1));
     // Growth is slow on purpose: a stage every week or two when the conditions
-    // stay met, so a crew takes a season to become a faction. Decline is not
-    // slow; enforcement and work should be seen to bite.
+    // stay met, so a crew takes a season to become a faction. Decline under
+    // pressure is quicker - a stage every few days - but still slower than the
+    // police, so that when a station arrives what the player sees is a case
+    // being opened and made, not a crew quietly evaporating first.
     if(met>=NEED+1&&roll<0.04&&o.stage<STAGES.length-1){
       o.stage++; changed=true;
       note('The '+o.name+' grew into a '+STAGES[o.stage]);
       if(S.diagnostics) S.diagnostics.organisationGrowths=(S.diagnostics.organisationGrowths||0)+1;
       recruit(o,d,note);
-    } else if(pressed&&roll<0.24){
+    } else if(pressed&&roll<0.08){
       o.stage--; changed=true;
       if(o.stage<=0){
         note('The '+o.name+' broke up');
@@ -175,6 +288,7 @@ export function evaluateOrganisations(note=()=>{}){
       note('The '+o.name+' lost influence');
       if(S.diagnostics) S.diagnostics.organisationDeclines=(S.diagnostics.organisationDeclines||0)+1;
     }
+    tend(o,d,note,day,slot);
   }
   if(list.length>=MAX_ORGANISATIONS){ if(changed) invalidateDistricts(); return; }
 
@@ -191,7 +305,7 @@ export function evaluateOrganisations(note=()=>{}){
     if(roll>=0.012*(met-NEED+1)) continue;
     const id=++social.nextOrgId;
     const type=pickType(d,id);
-    const o={id,type,name:nameFor(d,type),roots:d.name,founded:day,stage:1,families:[]};
+    const o={id,type,name:nameFor(d,type),roots:d.name,founded:day,stage:1,families:[],boss:null,fronts:[],taken:[],pressure:0,investigation:null,lastInvestigated:0};
     list.push(o); changed=true;
     note('The '+o.name+' first appeared around '+d.name);
     if(S.diagnostics) S.diagnostics.organisationBirths=(S.diagnostics.organisationBirths||0)+1;
@@ -217,7 +331,9 @@ export function stageWord(o){ return STAGES[o?.stage]||''; }
 export function organisationSnapshot(){
   const list=organisations();
   return {organisations:list.length,strongest:list.reduce((n,o)=>Math.max(n,o.stage),0),
-    involvedFamilies:list.reduce((n,o)=>n+o.families.length,0)};
+    involvedFamilies:list.reduce((n,o)=>n+o.families.length,0),
+    bosses:list.filter(o=>o.boss).length,fronts:list.reduce((n,o)=>n+(o.fronts||[]).length,0),
+    investigations:list.filter(o=>o.investigation).length};
 }
 
 /* ---------- save ---------- */
@@ -229,7 +345,13 @@ export function packOrganisations(){
     organisations:s.organisations.slice(0,MAX_ORGANISATIONS).map(o=>({
       id:o.id|0,type:o.type,name:String(o.name).slice(0,60),roots:String(o.roots).slice(0,40),
       founded:Math.max(1,o.founded|0),stage:Math.max(1,Math.min(STAGES.length-1,o.stage|0)),
-      families:o.families.slice(0,MAX_ORG_FAMILIES).map(x=>x|0)
+      families:o.families.slice(0,MAX_ORG_FAMILIES).map(x=>x|0),
+      boss:o.boss?{familyId:o.boss.familyId|0,index:o.boss.index|0}:null,
+      fronts:(o.fronts||[]).slice(0,MAX_FRONTS).map(x=>x>>>0),
+      taken:(o.taken||[]).slice(0,40).map(x=>x|0),
+      pressure:Math.max(0,Math.min(6,o.pressure|0)),
+      investigation:o.investigation?{since:Math.max(1,o.investigation.since|0),progress:Math.max(0,Math.min(1,Number(o.investigation.progress)||0)),station:o.investigation.station>>>0}:null,
+      lastInvestigated:Math.max(0,o.lastInvestigated|0)
     }))
   };
 }
@@ -246,8 +368,20 @@ export function restoreOrganisations(raw){
     s.organisations.push({
       id:Math.max(0,Math.floor(Number(o.id)||0)),type:o.type,name:String(o.name||'').slice(0,60)||'Unknown '+TYPES[o.type].word,
       roots:String(o.roots||'').slice(0,40),founded:Math.max(1,Math.floor(Number(o.founded)||1)),stage,
-      families:(Array.isArray(o.families)?o.families:[]).map(x=>Math.floor(Number(x)||0)).filter(x=>known.has(x)).slice(0,MAX_ORG_FAMILIES)
+      families:(Array.isArray(o.families)?o.families:[]).map(x=>Math.floor(Number(x)||0)).filter(x=>known.has(x)).slice(0,MAX_ORG_FAMILIES),
+      // A boss must be a citizen this save has: a member of a family that exists
+      // and is involved. Anyone else is not a boss, whatever the file says.
+      boss:null,fronts:(Array.isArray(o.fronts)?o.fronts:[]).map(x=>Number(x)>>>0).filter(x=>x>0).slice(0,MAX_FRONTS),
+      taken:(Array.isArray(o.taken)?o.taken:[]).map(x=>Math.floor(Number(x)||0)).filter(x=>x>=0).slice(0,40),
+      pressure:Math.max(0,Math.min(6,Math.floor(Number(o.pressure)||0))),
+      investigation:o.investigation&&typeof o.investigation==='object'?{since:Math.max(1,Math.floor(Number(o.investigation.since)||1)),progress:Math.max(0,Math.min(1,Number(o.investigation.progress)||0)),station:Number(o.investigation.station)>>>0}:null,
+      lastInvestigated:Math.max(0,Math.floor(Number(o.lastInvestigated)||0))
     });
+    const rec=s.organisations[s.organisations.length-1];
+    if(o.boss&&typeof o.boss==='object'){
+      const fid=Math.floor(Number(o.boss.familyId)||0),index=Math.floor(Number(o.boss.index)||0);
+      if(rec.families.includes(fid)&&index>=0&&index<5) rec.boss={familyId:fid,index};
+    }
   }
   invalidateDistricts();
 }

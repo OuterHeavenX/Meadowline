@@ -138,7 +138,7 @@ const district=()=>recomputeDistricts()[0];
   check('and still offers no button about it',!/[Cc]reate (a )?(crew|gang|mafia|organisation)|[Dd]isband|[Mm]ake .*boss/.test(html));
   const inv=families().find(f=>o&&o.families.includes(f.id)); const h=inv&&S.ctx.houses.find(x=>(x.seed>>>0)===(inv.homeSeed>>>0));
   if(h){ const card=describe(h.x,h.y);
-    check('the House card of an involved family hints once the crew is real',o.stage>=3?card.includes('Said to have ties to <b>the '+o.name+'</b>'):!card.includes('Said to have ties'),String(o.stage));
+    check('the House card of an involved family hints once the crew is real',o.stage>=3?(card.includes('Said to have ties to <b>the '+o.name+'</b>')||card.includes('runs <b>the '+o.name+'</b>')):!/Said to have ties|runs <b>/.test(card),String(o.stage));
     check('and says nothing anyone did',!/arrest|murder|kill|stole|extort/i.test(card)); }
   const outsider=families().find(f=>!organisationOf(f)); const oh=outsider&&S.ctx.houses.find(x=>(x.seed>>>0)===(outsider.homeSeed>>>0));
   if(oh) check('a family not involved carries no rumour',!describe(oh.x,oh.y).includes('Said to have ties'));

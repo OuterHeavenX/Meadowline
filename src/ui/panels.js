@@ -22,7 +22,8 @@ import { roadNearFacility } from '../transport/roads.js';
 import { districtAt } from '../simulation/districts.js';
 import { familyAt, familyMembers, traitWords } from '../simulation/families.js';
 import { familyStanding, knownFor, memberCareer } from '../simulation/careers.js';
-import { organisationOf } from '../simulation/organisations.js';
+import { frontAt, organisationOf } from '../simulation/organisations.js';
+import { investigating, underInvestigation } from '../simulation/enforcement.js';
 import { darkness } from '../world/time.js';
 import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
@@ -181,7 +182,10 @@ function municipalCard(b){
   const label=type==='safety'?'Police service':type==='fire'?'Fire response':'Healthcare';
   const city=type==='safety'?S.municipal.safety:type==='fire'?S.municipal.fire:S.municipal.healthcare;
   const demand=type==='safety'?city.active:type==='fire'?city.active:city.demand;
-  return card(def.name,label+' · '+(def.placement?.footprint||[1,1]).join('×'),'<dl class="service"><dt>Capacity</dt><dd>'+cap+'</dd><dt>City demand</dt><dd>'+demand+'</dd><dt>Vehicles active</dt><dd>'+calls+'</dd><dt>Jobs</dt><dd>'+(def.jobs||0)+'</dd>'+roadRow(b)+'<dt>Status</dt><dd class="'+(calls>=cap?'dn':'up')+'">'+(calls>=cap?'Busy':'Ready')+'</dd></dl>');
+  const caseOpen=type==='safety'?investigating(b):null;
+  return card(def.name,label+' · '+(def.placement?.footprint||[1,1]).join('×'),'<dl class="service"><dt>Capacity</dt><dd>'+cap+'</dd><dt>City demand</dt><dd>'+demand+'</dd><dt>Vehicles active</dt><dd>'+calls+'</dd><dt>Jobs</dt><dd>'+(def.jobs||0)+'</dd>'+roadRow(b)+'<dt>Status</dt><dd class="'+(calls>=cap?'dn':'up')+'">'+(calls>=cap?'Busy':'Ready')+'</dd>'+
+    (caseOpen?'<dt>Looking into</dt><dd>The '+caseOpen.name+'</dd>':'')+'</dl>'+
+    (caseOpen?'<p>The officers here opened this case on their own. Nobody at City Hall asked them to, and nobody can call them off.</p>':''));
 }
 // Where a trade's raw material comes from, for the two links of the food chain
 // that have one. A supplier out of reach halves the yield, so it is the first
@@ -201,7 +205,12 @@ function businessCard(b){
   if(sup) html+='<dt>'+sup.label+'</dt><dd class="'+(sup.ok?'up':'dn')+'">'+(sup.ok?'Good':'Short')+'</dd>';
   html+='<dt>Jobs filled</dt><dd>'+share+' / '+jobs+'</dd>'+roadRow(b)+'<dt>City prosperity</dt><dd>'+work.prosperity+' / 100</dd>';
   if(upkeepOf(b)) html+='<dt>Upkeep</dt><dd class="dn">\u2212'+upkeepOf(b)+' a day</dd>';
-  return card(def?.name||'Business','Business',html+'</dl>');
+  html+='</dl>';
+  // A front is a business, and the card says what a business card says. The
+  // one thing it adds is what a neighbour would notice: the police asking.
+  const front=frontAt(b);
+  if(front&&underInvestigation(front)) html+='<p>The police have been asking questions here.</p>';
+  return card(def?.name||'Business','Business',html);
 }
 
 // A wonder is worth explaining in full: it is the most expensive thing in the
@@ -245,7 +254,9 @@ function familyBlock(h){
    has become a crew, and says which, never what anyone did. */
 function rumour(f){
   const o=organisationOf(f);
-  return o&&o.stage>=3?' Said to have ties to <b>the '+o.name+'</b>.':'';
+  if(!o||o.stage<3) return '';
+  const boss=o.boss&&o.boss.familyId===f.id?familyMembers(f).find(m=>m.index===o.boss.index):null;
+  return boss?' People say <b>'+boss.first+'</b> runs <b>the '+o.name+'</b>.':' Said to have ties to <b>the '+o.name+'</b>.';
 }
 function cap(s){ return s?s[0].toUpperCase()+s.slice(1):s; }
 function ordinal(n){ return n+(['th','st','nd','rd'][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]); }

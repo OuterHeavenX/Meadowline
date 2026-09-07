@@ -221,7 +221,9 @@ function measure(list){
   d.waterEdge=false;
   for(let y=d.minY-1;y<=d.maxY+1&&!d.waterEdge;y++) for(let x=d.minX-1;x<=d.maxX+1;x++)
     if(isWater(x,y)){ d.waterEdge=true; break; }
-  for(const inc of S.incidents||[]) if(!inc.resolved&&inc.kind==='crime'&&inc.target&&
+  // A tagged incident is one the police raised themselves; it is not a crime
+  // nobody has resolved, and must not feed the conditions it exists to press.
+  for(const inc of S.incidents||[]) if(!inc.resolved&&inc.kind==='crime'&&!inc.tag&&inc.target&&
     inc.target.x>=d.minX&&inc.target.x<=d.maxX&&inc.target.y>=d.minY&&inc.target.y<=d.maxY) d.unresolvedCrime++;
   d.cx=Math.round((d.minX+d.maxX)/2); d.cy=Math.round((d.minY+d.maxY)/2);
   return d;

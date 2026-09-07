@@ -1,11 +1,12 @@
 # Meadowline Roadmap
 
-## Status as of production `main` at `39549119a4a82319ba8512a119edf0246e04dbd0`
+## Status as of production `main` at `8342585a06fe40a115cfa8d2d11c3a536ea04772`
 
 **Current development — Social Fabric 1.0**, on `claude/game-upgrade-3o2630`.
-Slices 1–3 (emergent districts; families, notable citizens, traits; careers
-and standing) are production at `3954911`; slice 4 (organisations) is on the
-branch. Canonical document: `docs/SOCIAL_FABRIC.md`.
+Slices 1–4 (emergent districts; families, notable citizens, traits; careers
+and standing; organisations) are production at `8342585`; slice 5 (bosses,
+fronts, autonomous enforcement) is on the branch. Canonical document:
+`docs/SOCIAL_FABRIC.md`.
 
 **UI / HUD 2.0 is production**, merged through PR #11 (`da5698c`). Earlier
 copies of this file and `README.md` listed it as current development long after
@@ -51,6 +52,7 @@ Everything below is on `main`. Each landed with its regression suite green.
 | `f0cf125` | **Sim performance**: a recreation cache check that cost 19× the work it guarded, once per home, removed. 0.9 s tick at 1,120 pop: ~61 → ~5 ms. |
 | `1d192f9` | **Social Fabric slice 1 — emergent districts.** |
 | `3954911` | **Social Fabric slices 2 and 3** — notable families and traits; careers at real workplaces, standing from conditions. |
+| `8342585` | **Social Fabric slice 4** — organisations that nobody built: three conditions or nothing, place-based names, staged growth, prosperity and police as decline. |
 
 ## Milestone 7 — Social Fabric 1.0
 
@@ -74,8 +76,11 @@ Slices, in order:
 3. **Careers and standing** — real jobs at real workplaces; class read from
    conditions, never trade. *Production, `3954911`.*
 4. **Organisations** — three conditions at once or nothing, place-based names,
-   staged growth, prosperity and police as causes of decline. *On the branch.*
-5. Bosses, fronts, autonomous enforcement.
+   staged growth, prosperity and police as causes of decline. *Production,
+   `8342585`.*
+5. **Bosses, fronts, autonomous enforcement** — a boss is always an existing
+   named citizen; a front is a business that stays one; the police open, work
+   and act on cases on their own. *On the branch.*
 6. Fame and entertainment culture.
 
 The milestone brief contradicts itself on naming (PART 7/8 worked examples vs

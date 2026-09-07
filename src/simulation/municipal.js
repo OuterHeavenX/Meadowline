@@ -29,7 +29,7 @@ function dispatch(incident){
 function completeWork(v,inc){
   if(!inc){v.state='FAILED';v.done=true;return;}
   inc.resolved=true;inc.status='RESOLVED';inc.resolvedAge=0;const key=inc.kind==='crime'?'safety':inc.kind==='fire'?'fire':'healthcare';S.municipal[key].resolved=(S.municipal[key].resolved||0)+1;
-  emitFeedback(inc.target.x,inc.target.y,'service',inc.kind==='crime'?'✓ CAUGHT':inc.kind==='fire'?'✓ EXTINGUISHED':'✓ RECOVERING');services.toast(inc.kind==='crime'?'Suspect caught':inc.kind==='fire'?'Fire extinguished':'Patient receiving care','gold');
+  emitFeedback(inc.target.x,inc.target.y,'service',inc.tag==='raid'?'✓ SEARCHED':inc.kind==='crime'?'✓ CAUGHT':inc.kind==='fire'?'✓ EXTINGUISHED':'✓ RECOVERING');services.toast(inc.tag==='raid'?'Police search complete':inc.kind==='crime'?'Suspect caught':inc.kind==='fire'?'Fire extinguished':'Patient receiving care','gold');
   const route=path({x:v.x,y:v.y},v.homeRoad);if(setRoute(v,route)){v.state='RETURNING';inc.status='RETURNING';}else{v.state='FAILED';v.done=true;}
 }
 function reroute(v){const destination=v.state==='RETURNING'?v.homeRoad:v.targetRoad,route=path({x:v.x,y:v.y},destination);if(setRoute(v,route)){v.failed=0;return true;}v.failed++;if(v.failed>1){v.state='FAILED';v.done=true;const inc=S.incidents.find(i=>i.id===v.incidentId);if(inc&&!inc.resolved){inc.dispatched=false;inc.status='REPORTED';}return false;}return true;}
@@ -41,7 +41,10 @@ function updateVehicles(dt){
     if(v.state!=='EN_ROUTE'&&v.state!=='RETURNING')continue;if(!isType(v.x,v.y,'road')||!isType(v.nx,v.ny,'road')){reroute(v);continue;}if(crossingBlockedByTrain(v.nx,v.ny)){v.waitingForTrain=true;continue;}v.waitingForTrain=false;v.p+=dt*v.sp;if(v.p<1)continue;v.p-=1;v.x=v.nx;v.y=v.ny;const n=v.route[v.ri++];if(n){v.nx=n[0];v.ny=n[1];}else arrive(v);
   }
 }
-export function spawnMunicipalIncident(kind,target=targetBuilding()){if(!SERVICE[kind]||!target||S.incidents.length>=INCIDENT_LIMIT)return null;const inc={id:++S.incidentSerial,kind,target,age:0,resolvedAge:0,resolved:false,dispatched:false,status:'REPORTED'};S.incidents.push(inc);services.toast(kind==='crime'?'Robbery reported':kind==='fire'?'Fire reported':'Medical call reported');dispatch(inc);return inc;}
+// `opts.tag` marks an incident another simulation raised - a police raid from
+// enforcement.js rides the same dispatcher, the same cruiser and the same
+// lifecycle as a robbery, and is told apart only by its tag and its toast.
+export function spawnMunicipalIncident(kind,target=targetBuilding(),opts={}){if(!SERVICE[kind]||!target||S.incidents.length>=INCIDENT_LIMIT)return null;const inc={id:++S.incidentSerial,kind,target,age:0,resolvedAge:0,resolved:false,dispatched:false,status:'REPORTED',tag:opts.tag||null};S.incidents.push(inc);services.toast(opts.toast||(kind==='crime'?'Robbery reported':kind==='fire'?'Fire reported':'Medical call reported'));dispatch(inc);return inc;}
 export function municipalSnapshot(){return{incidents:S.incidents.length,serviceVehicles:S.serviceVehicles.length,states:Object.fromEntries(['DISPATCHED','EN_ROUTE','ARRIVED','WORKING','RETURNING','FAILED'].map(k=>[k,S.serviceVehicles.filter(v=>v.state===k).length]))};}
 export function updateMunicipal(dt){
   recomputeEmployment();const pop=S.pop||0,emp=S.municipal.employment,police=capacity(['policeStation']),fireCap=capacity(['fireStation']),health=capacity(['clinic','hospital']),active=k=>S.incidents.filter(i=>i.kind===k&&!i.resolved).length;
