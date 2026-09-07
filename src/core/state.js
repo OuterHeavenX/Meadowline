@@ -16,7 +16,7 @@ export const S={
   wx:{k:'clear',amt:0,target:0,next:70}, wishes:[],log:[],history:[],
   // Social Fabric: only the durable truth lives here. Boundaries and every
   // measured figure are derived from the city itself.
-  social:{districts:[],nextId:0},
+  social:{districts:[],nextId:0,families:[],nextFamilyId:0},
   cam:{x:0,y:0,z:1,rot:0,rotTo:0}
 };
 export const reduceMotion=(function(){try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();

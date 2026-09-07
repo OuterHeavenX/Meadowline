@@ -5,8 +5,8 @@ organized crime, fame and family legacies.
 
 ## Status
 
-**Slice 1 in development.** Branch: `claude/game-upgrade-3o2630`, based on
-production `main` at `f0cf125abe009576e9954eedb6d3952108221765`.
+**Slice 1 production at `1d192f9`. Slice 2 in development** on
+`claude/game-upgrade-3o2630`.
 
 This document is canonical for Social Fabric and is maintained as the milestone
 lands. It records what is built, what is deliberately deferred and what must
@@ -174,15 +174,50 @@ Waterfront → smuggling → stronghold → crackdown → redeveloping → harbo
 path the simulation can walk in either direction. History is kept; the current
 state is not permanent.
 
-## Citizens, careers, class and families
+## Families and notable citizens — slice 2
 
-Deferred to later slices, designed here so slice 1 does not foreclose them.
+`src/simulation/families.js`.
 
-**Notable citizens** are a bounded set (target: tens, not thousands) promoted
-from real households. Traits — ambition, charisma, discipline, risk tolerance,
-sociability, entrepreneurship, leadership and so on — shift probabilities and
-never determine outcomes. High criminal inclination with good local opportunity
+A **family** is a household the valley has come to notice. Which households and
+when is decided by seeded probability weighted by the real condition of the
+home — how full it is, its tier, its mood — with a floor so that a home that has
+simply been there a long time can be noticed however it is doing. The roll is a
+hash of game time, the house seed and the world seed, so the same city on the
+same day makes the same choice. Only households on a street are considered. The
+rate is deliberately slow: roughly one family a day in a two-hundred-home city,
+one a fortnight in a hamlet. Bounded at 12 families of at most 5 members.
+
+**The surname is drawn at founding from the one shared pool**, by a function
+whose only inputs are the world seed, the founding order and the set of names
+already in use. Nothing about the household reaches it. The regression asserts
+that: the same inputs give the same name however the city is changed, every
+pool name is drawn, none out of proportion, and a draw that peeks at the
+household fails the suite (tried: it collapsed to eleven identical names).
+Duplicate surnames are avoided by stepping to the next unused name, which is a
+collision fix and not an outcome.
+
+A family follows its house by the house's **seed**, which the Move tool keeps,
+not by coordinates, which it does not. When the house is removed the family
+leaves and the Chronicle says so. Every 45 days of residence brings a new
+generation and one more name dealt from the same house seed.
+
+**Members** are the residents the House card already names, given the surname;
+**traits** — ambition, charisma, discipline, risk tolerance, sociability,
+entrepreneurship, leadership, creativity, compassion, caution — are dealt on a
+0–100 scale from the family id and the member's place in it. Both are derived,
+never saved. The Look card shows two plain words per person ("steady",
+"bold", "kind"), never a number: a trait is a leaning, not a verdict, and the
+card keeps some mystery. Traits shift probabilities in later slices and never
+determine an outcome; high risk tolerance with good local opportunity
 overwhelmingly produces a legitimate career.
+
+**Known for** is derived from the home district's leading identity and the
+lead member's strongest leaning, until careers land in slice 3.
+
+Surfacing: the House card gains a family block; City Hall lists notable
+families under Neighbourhoods; the Chronicle records settling, generations and
+leaving. Diagnostics: families, people, social evaluations, foundings,
+departures, generations.
 
 **Careers** emerge from nearby workplaces, education, district identity,
 household prosperity, available jobs from the registry's `jobs` metadata, and
@@ -296,8 +331,8 @@ trusted.
 ## Slice order
 
 1. **Districts** — derivation, stable naming, identity, evolution, Look/City
-   Hall/Chronicle surfacing, diagnostics, tests. *(in development)*
-2. Notable citizens and traits; families and legacy.
+   Hall/Chronicle surfacing, diagnostics, tests. *(production, `1d192f9`)*
+2. **Families, notable citizens and traits.** *(in development)*
 3. Careers and class.
 4. Organisation formation, staged growth, decline.
 5. Bosses, fronts, autonomous enforcement.

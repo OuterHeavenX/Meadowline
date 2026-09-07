@@ -20,6 +20,7 @@ import { PAL } from '../world/seasons.js';
 import { facilityFootprint, facilityRootAt, idx, inBounds, isWater } from '../world/tiles.js';
 import { roadNearFacility } from '../transport/roads.js';
 import { districtAt } from '../simulation/districts.js';
+import { familyAt, familyKnownFor, familyMembers, traitWords } from '../simulation/families.js';
 import { darkness } from '../world/time.js';
 import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
@@ -225,6 +226,19 @@ function wonderCard(b){
    Extends the permanent rule rather than breaking it: the building still
    explains itself, City Hall still explains the city, and the district
    explains the neighbourhood. */
+/* A household the valley has come to know. Leanings are given as a word or
+   two, not a number: the card keeps some mystery, and a trait is a leaning,
+   never a verdict. */
+function familyBlock(h){
+  const f=familyAt(h);
+  if(!f) return '';
+  const members=familyMembers(f);
+  return '<h4>The '+f.surname+' family</h4>'+
+    '<p>Here since <b>day '+f.founded+'</b>'+(f.roots?', settled in <b>'+f.roots+'</b>':'')+'. Known for '+familyKnownFor(f)+'.'+
+    ((f.generation||1)>1?' Now in its <b>'+ordinal(f.generation)+' generation</b>.':'')+'</p>'+
+    '<dl class="service">'+members.map(m=>'<dt>'+m.name+'</dt><dd>'+traitWords(m.traits).join(', ')+'</dd>').join('')+'</dl>';
+}
+function ordinal(n){ return n+(['th','st','nd','rd'][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]); }
 function districtFooter(x,y){
   const d=districtAt(x,y);
   if(!d) return '';
@@ -255,7 +269,7 @@ function describeTile(x,y){
     const line=b.pop
       ? '<p><b>'+listOut(who)+'</b> live'+(who.length===1?"s":"")+' here.</p>'
       : (b.linked?'<p>Empty for now. Lift the mood past <b>62</b> and someone will move in.</p>':'<p>Empty, and no road reaches the door.</p>');
-    return card(HOUSE_NAMES[(hash2(b.seed,1,777)*HOUSE_NAMES.length)|0],"Home · "+b.pop+" of "+capFor(b)+" · "+housingTier(b).name,line+doing+dl+moodRow(mood)+educationBlock(b)+recreationBlock(b)+housingBlock(b));
+    return card(HOUSE_NAMES[(hash2(b.seed,1,777)*HOUSE_NAMES.length)|0],"Home · "+b.pop+" of "+capFor(b)+" · "+housingTier(b).name,line+doing+dl+moodRow(mood)+educationBlock(b)+recreationBlock(b)+housingBlock(b)+familyBlock(b));
   }
   if(b){
     if(getBuildingDefinition(b.type)?.service?.type==='recreation') return recreationCard(b);

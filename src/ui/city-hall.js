@@ -7,6 +7,7 @@ import { getCitySummary } from '../simulation/city-summary.js';
 import { idx } from '../world/tiles.js';
 import { buildingThumbnail } from '../rendering/thumbnails.js';
 import { recomputeDistricts } from '../simulation/districts.js';
+import { families, familyKnownFor, familyMembers } from '../simulation/families.js';
 import { landmarkKey } from '../rendering/landmark-assets.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
@@ -80,7 +81,20 @@ function districtRows(){
       stat('Jobs here',m.jobs||0,I.work)+'</div>'+
       '<small class="muted">Since day '+(d.born||1)+'</small>');
   }
-  return html;
+  return html+familyRows();
+}
+/* Who the valley knows by name. Nobody appointed them; a household becomes one
+   the city talks about the way it does anywhere - by being there, and by
+   being noticed. */
+function familyRows(){
+  const list=families();
+  if(!list.length) return card('Notable families',I.people,'<p class="muted">No household has become one Meadowline knows by name yet. It happens on its own, with time.</p>');
+  let rows='';
+  for(const f of list){
+    const m=familyMembers(f);
+    rows+='<div class="ch-buy"><div><b>The '+f.surname+' family</b><small class="muted">'+(f.roots?f.roots+' · ':'')+'since day '+f.founded+' · '+m.length+(m.length===1?' person':' people')+' · known for '+familyKnownFor(f)+'</small></div></div>';
+  }
+  return card('Notable families',I.people,rows);
 }
 function stat(label,value,glyph,cls=''){
   return '<div class="ch-stat '+cls+'">'+icon(glyph)+'<span>'+label+'</span><b>'+value+'</b></div>';
