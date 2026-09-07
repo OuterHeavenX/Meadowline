@@ -92,6 +92,16 @@ Slices, in order:
 The milestone brief contradicts itself on naming (PART 7/8 worked examples vs
 PART 27); PART 27 wins and the resolution is structural. See the document.
 
+Since completed beyond the original six slices, all on the branch:
+
+- **Influence and petitions** — who the valley listens to, and what a
+  neighbourhood asks the town for. A voice, never a control: no vote, no
+  policy, and nothing to grant or dismiss. Being listened to is rooted years,
+  public work, being known and being in work — explicitly not wealth.
+- **Emergent nicknames** — see `docs/MEADOWLINE_POST.md`.
+- **What draws a crowd** — onlookers with notepads where somebody famous
+  plays, sightseers with cameras at landmarks. See `docs/RENDERING_2.md`.
+
 ## Milestone 8 — The Meadowline Post 1.0
 
 **Current development. Slice 1 is production at `1c02801`; slice 2 is not
@@ -116,8 +126,9 @@ Slices:
    snapshot, citizen voices, anchored rumour with reliability classes, the
    knowledge boundary, paper UI, City Hall archive, Save V3 field.
    *Production, `1c02801`.*
-2. Emergent nicknames (brief PARTS 16–24) — aliases that emerge from citizen
-   history and spread from associates to press. *Not built.*
+2. **Emergent nicknames** (brief PARTS 16–24) — aliases that emerge from
+   citizen history and spread from associates to district to police to press.
+   *On the branch.*
 
 ## Production baseline
 

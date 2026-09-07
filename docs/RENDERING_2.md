@@ -259,6 +259,18 @@ state:
   bob and roll, and leave a fading wake. **Trains** are an engine and two cars
   drawn from the same history the Canvas path uses, with steam.
 
+**What draws a crowd.** Two things in the valley pull people who would
+otherwise be somewhere else: a place somebody famous plays, and a landmark.
+Both are consequences the player caused, and neither is a new kind of actor — a
+representative pedestrian simply chooses a different errand and carries
+something that says why they came. A basket from the market, a pale notepad if
+they have gone to see somebody play, the dark body of a camera if they have
+gone to look at a landmark. Three marks at seven pixels, but enough that a
+crowd outside a café reads as a crowd that came for a reason. Both renderers
+draw all three. The list of venues is rebuilt once a day rather than per trip,
+because resolving celebrities to their venues walks the fame records and their
+families and is far too much to do every time somebody decides where to go.
+
 `threeDynamicSnapshot()` reports what the moving layer holds by kind, so
 `tests/three-actors-regression.html` can say "with a fire burning there are
 flames and a hose" without reading pixels. Draw calls for a full day of it all

@@ -4,6 +4,7 @@ import { S } from '../core/state.js';
 import { educationProvider } from './civic-services.js';
 import { crossingBlockedByTrain } from './mobility.js';
 import { recreationDestinationForCitizen, recreationLocalPoint } from './recreation.js';
+import { celebrities, venueOf } from './fame.js';
 import { findPath, stepFrom } from '../transport/pathfinding.js';
 import { roadNear, roadNearFacility } from '../transport/roads.js';
 import { facilityRootAt, idx, isType } from '../world/tiles.js';
@@ -38,6 +39,35 @@ function schoolDestination(c){
   return p&&p.provider?p.provider:null;
 }
 
+/* ---------- what draws a crowd ----------
+   Two things in the valley pull people who would otherwise be somewhere else:
+   a place somebody famous plays, and a landmark. Both are consequences the
+   player caused - fame comes from performers at real venues, landmarks are
+   built - and neither is a new kind of actor. A representative pedestrian
+   simply chooses a different errand, carries a notepad or a camera, and the
+   renderers draw what they are carrying.
+
+   The list is rebuilt once a day rather than per trip: celebrities() walks the
+   fame records and their families, which is far too much to do every time
+   somebody decides where to go. */
+let draws={day:-1,venues:[],landmarks:[]};
+function attractions(){
+  const day=S.day||1;
+  if(draws.day===day) return draws;
+  const venues=[];
+  for(const c of celebrities()){ const v=venueOf(c.family,c.index); if(v&&!venues.includes(v)) venues.push(v); }
+  draws={day,venues,landmarks:[...(S.ctx?.wonders||[])]};
+  return draws;
+}
+/* Where somebody is heading because of who or what is there, if anywhere.
+   Rare enough to read as a detail rather than as the whole town migrating. */
+function attractionDestination(c){
+  const {venues,landmarks}=attractions();
+  if(venues.length&&Math.random()<0.16) return {b:venues[(Math.random()*venues.length)|0],doing:'press',carryKind:'notebook'};
+  if(landmarks.length&&Math.random()<0.2) return {b:landmarks[(Math.random()*landmarks.length)|0],doing:'sightseeing',carryKind:'camera'};
+  return null;
+}
+
 function clearRecreationState(c){
   c.recreationRoot=null;
   c.recreationEntry=null;
@@ -67,6 +97,13 @@ function chooseDest(c){
     }
   }
 
+  // Somebody famous playing nearby, or a landmark worth the walk.
+  if(!b&&kind==='leisure'){
+    const draw=attractionDestination(c);
+    const r=draw&&roadNearFacility(draw.b);
+    if(r){ c.doing=draw.doing; c.at=draw.b.type; c.carry=1; c.carryKind=draw.carryKind; return r; }
+  }
+
   const options=pool(kind);
   if(!b&&options.length) b=options[(Math.random()*options.length)|0];
   if(!b){
@@ -78,6 +115,7 @@ function chooseDest(c){
   const r=roadNearFacility(b);
   if(!r) return null;
   c.carry=(b.type==="market"||b.type==="bakery")?1:0;
+  c.carryKind=c.carry?'basket':null;
   c.at=b.type;
   return r;
 }
@@ -138,7 +176,7 @@ export function spawnCitizen(){
     home:{x:h.x,y:h.y}, homeRoad:{x:r.x,y:r.y},
     name:FIRSTS[(Math.random()*FIRSTS.length)|0],
     side:Math.random()<0.5?-1:1,
-    path:null, pi:0, linger:0, carry:0, doing:"home", at:null, waitingTrain:0,
+    path:null, pi:0, linger:0, carry:0, carryKind:null, doing:"home", at:null, waitingTrain:0,
     recreationRoot:null,recreationEntry:null,facilityLocal:null
   });
 }

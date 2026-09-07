@@ -112,11 +112,28 @@ export function drawCitizen(c){
   g.fillStyle=hair;
   g.beginPath(); g.arc(px+lean,hy-0.35*z,1.65*z,Math.PI*1.08,Math.PI*2.05); g.fill();
 
+  /* A basket from the market, a notepad if they have gone to see somebody
+     play, a camera if they have gone to look at a landmark. Three marks at
+     this size, but enough that a crowd outside a café reads as a crowd that
+     came for a reason. */
   if(c.carry&&!local){
-    g.fillStyle="#b98d5c";
-    g.fillRect(px+1.7*z,hip-1.6*z,2.4*z,2*z);
-    g.strokeStyle="#8d6a42"; g.lineWidth=0.6*z;
-    g.beginPath(); g.arc(px+2.9*z,hip-1.6*z,1.2*z,Math.PI,0); g.stroke();
+    if(c.carryKind==='notebook'){
+      g.fillStyle="#f4f0e2";
+      g.fillRect(px+1.8*z,hip-2.6*z,2.2*z,2.8*z);
+      g.strokeStyle="#8b8778"; g.lineWidth=0.5*z;
+      g.beginPath(); g.moveTo(px+1.8*z,hip-1.7*z); g.lineTo(px+4*z,hip-1.7*z);
+      g.moveTo(px+1.8*z,hip-0.8*z); g.lineTo(px+4*z,hip-0.8*z); g.stroke();
+    } else if(c.carryKind==='camera'){
+      g.fillStyle="#3b4147";
+      g.fillRect(px+1.7*z,hip-2.4*z,3*z,2.2*z);
+      g.fillStyle="#9fc6d8";
+      g.beginPath(); g.arc(px+3.2*z,hip-1.3*z,0.85*z,0,TAU); g.fill();
+    } else {
+      g.fillStyle="#b98d5c";
+      g.fillRect(px+1.7*z,hip-1.6*z,2.4*z,2*z);
+      g.strokeStyle="#8d6a42"; g.lineWidth=0.6*z;
+      g.beginPath(); g.arc(px+2.9*z,hip-1.6*z,1.2*z,Math.PI,0); g.stroke();
+    }
   }
 }
 

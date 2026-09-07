@@ -13,6 +13,7 @@ import { bossOf, organisations, stageWord } from '../simulation/organisations.js
 import { underInvestigation } from '../simulation/enforcement.js';
 import { celebrities } from '../simulation/fame.js';
 import { currentIssue, postArchive } from '../simulation/post.js';
+import { influenceOf, petitionWant, petitions, voices } from '../simulation/influence.js';
 import { landmarkKey } from '../rendering/landmark-assets.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
@@ -87,7 +88,7 @@ function districtRows(){
       stat('Jobs here',m.jobs||0,I.work)+'</div>'+
       '<small class="muted">Since day '+(d.born||1)+'</small>');
   }
-  return html+familyRows()+fameRows()+organisationRows();
+  return html+familyRows()+petitionRows()+fameRows()+organisationRows();
 }
 /* Who the valley knows by name. Nobody appointed them; a household becomes one
    the city talks about the way it does anywhere - by being there, and by
@@ -108,6 +109,21 @@ function familyRows(){
    report, so a town with none never sees the word. */
 /* Who the valley talks about for the right reasons. Nobody was made famous;
    someone played, somewhere people were, for long enough. */
+/* What the neighbourhoods are asking the town for. City Hall did not invite
+   these and cannot dismiss them; a petition ends when the thing is built, or
+   when the valley gives up repeating itself. There is no button. */
+function petitionRows(){
+  const list=petitions();
+  if(!list.length) return '';
+  let rows='';
+  for(const p of list){
+    rows+='<div class="ch-buy"><div><b>'+p.district+' is asking for '+petitionWant(p)+'</b><small class="muted">since day '+p.since+'</small></div></div>';
+  }
+  const heard=voices().slice(0,3).map(f=>'the '+f.surname+' family').join(', ');
+  return card('What the neighbourhoods are asking for',NAV_ICON.goals,
+    '<p class="muted">Nobody at City Hall started these. Households the valley has come to listen to — long settled, in work the town depends on, known by name — have begun asking. Build the thing or do not; nothing here obliges you.'+
+    (heard?' Currently listened to: '+heard+'.':'')+'</p>'+rows);
+}
 function fameRows(){
   const list=celebrities();
   if(!list.length) return '';

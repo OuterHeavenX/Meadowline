@@ -9,6 +9,7 @@ import { celebrities, venueOf } from './fame.js';
 import { CAREERS, LOOKING } from './careers.js';
 import { families, familyMembers } from './families.js';
 import { knownAlias } from './aliases.js';
+import { petitionWant, petitions } from './influence.js';
 import { recomputeEmployment } from './employment.js';
 import { recomputeServices } from './civic-services.js';
 import { recreationSnapshot } from './recreation.js';
@@ -128,6 +129,13 @@ function stories(day,events){
   const upgrades=by('home_upgraded'); if(upgrades.length) add('notable','housing',upgrades.length===1?'A HOME GROWS INTO A '+upper(upgrades[0].tier):upper(plural(upgrades.length,'HOME'))+' GROW',upgrades.length===1?'A home has grown into a '+upgrades[0].tier.toLowerCase()+'.':plural(upgrades.length,'household')+' saw their homes grow yesterday.');
 
   // Districts and culture.
+  /* A neighbourhood asking for something is the closest the valley has to
+     politics, and it is reported the same way as everything else: as a thing
+     the city did, with the household that is being listened to named. */
+  for(const e of by('petition_raised')) add('needs','district','RESIDENTS OF '+upper(e.district)+' ASK FOR '+upper(e.want.replace(/^an? /,'')),
+    'Households in '+e.district+' have begun asking the town for '+e.want+'. The '+e.surname+' family, long settled there, is among those pressing the case. City Hall has made no commitment.',{archive:'petition'});
+  for(const e of by('petition_met')) add('social','good',upper(e.district)+' GETS '+upper(e.want.replace(/^an? /,'')),
+    e.district+' has got '+e.want+', '+plural(e.days,'day')+' after residents there started asking for it.',{archive:'petition-met'});
   for(const e of by('district_identity')) add('district','district',upper(e.district)+' BECOMING KNOWN AS '+upper(e.labels.join(' AND ')),e.district+' is now spoken of as '+e.labels.map(l=>l.toLowerCase()).join(' and ')+' - a description of what stands there, not a decision anyone took.',{archive:'district'});
   for(const e of by('renown_rise')) add(e.stage>=3?'social':'notable','good',e.stage>=3?(e.first?'LOCAL '+upper(e.label)+' '+upper(e.name)+' BECOMES MEADOWLINE\'S FIRST WIDELY KNOWN PERFORMER':upper(e.name)+' KNOWN ACROSS THE VALLEY'):e.stage===2?'LOCAL '+upper(e.label)+' EARNS WIDER NOTICE':upper(e.name)+' GETTING KNOWN'+upper(near(e.district)),e.stage>=3?e.name+', the '+e.label+near(e.district)+', is now a name the whole valley knows.':e.stage===2?e.name+near(e.district)+' has become locally famous as a '+e.label+'.':e.name+' is getting a reputation'+near(e.district)+' as a '+e.label+'.',{archive:e.stage>=2?'fame':null});
   for(const e of by('full_house')) add('notable','festival',upper(e.name)+' PLAYS TO A FULL HOUSE',e.name+' played to a full house at '+e.festival+'.');
@@ -167,6 +175,9 @@ function brief(day){
    there, and attributed to a district that really has it. */
 function readers(day,b){
   const out=[]; const districts=recomputeDistricts();
+  /* A district that has actually raised a petition speaks first, and speaks
+     as a district rather than as one grumbling resident. */
+  for(const p of petitions().slice(0,2)) out.push({text:'We have been asking for '+petitionWant(p)+' for a while now.',who:'Resident, '+p.district,need:p.need});
   const where=test=>{ const d=districts.find(x=>test(x.measured)); return d?d.name:null; };
   if(b.schoolCapacity>0&&b.schoolDemand>b.schoolCapacity*0.95){ const d=where(m=>m.homes>=6&&m.schools===0)||where(m=>m.homes>=6); out.push({text:pick(day,1,['The school is packed. We really need more room.','Every classroom is full by nine. Another school would not go amiss.']),who:'Parent'+(d?', '+d:''),need:'school'}); }
   if(b.recreationUnderserved>0){ const d=where(m=>m.homes>=4&&m.recreationReach===0); if(d) out.push({text:pick(day,2,['There isn\'t a park anywhere near us.','The children have nowhere to play round here.']),who:'Resident, '+d,need:'recreation'}); }

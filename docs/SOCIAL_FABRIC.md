@@ -522,6 +522,66 @@ name must belong to a family that exists, a seat under the member cap and a
 performing career; renown is clamped to the ladder. An old save loads with
 none and grows its own.
 
+## Influence and petitions — who the valley listens to
+
+`src/simulation/influence.js`. This milestone deferred political influence, and
+the reason it was worth deferring is that "politics" in a city builder usually
+means a government the player operates: policy sliders, elections, approval
+bars. Meadowline has no government and is not getting one. What it can have is
+the thing underneath politics — some households come to have a say, and what
+they say is a real need of the place they live in.
+
+### Influence is a voice, never a control
+
+There is no vote, no policy and no petition the player can file, grant, refuse
+or dismiss. A district raises one when it genuinely lacks something and
+somebody there is listened to. The player may build the thing or may not, and
+nothing punishes them either way. City Hall lists petitions the way it lists
+everything else — as something the city did on its own — and the regression
+asserts the panel carries no Grant, Refuse or Dismiss control and says in
+plain words that the player is not obliged.
+
+### Being listened to is not wealth
+
+This is the whole design, and it is the anti-stereotype rule applied where it
+matters most. Housing tier, desirability, standing and coins appear nowhere in
+`influenceOf()`, and the regression reads its source to keep them out. It then
+takes one street, measures every household, makes every home tier 3 at 95
+desirability, and asserts not one hearing changed by so much as a rounding
+error — while confirming somebody in that street was genuinely listened to
+while it was poor.
+
+What does earn a hearing is what earns one anywhere:
+
+| term | weight | what it reads |
+|---|---|---|
+| rooted | 0.34 | generations the household has been in the valley |
+| public work | 0.30 | share of its people in work the town depends on — teacher, doctor, nurse, police officer, firefighter, civil servant, rail worker |
+| known | 0.24 | the best renown anybody in the household reached |
+| in work | 0.12 | share of its people working at all |
+
+A third-generation family of farmers outranks a rich household that arrived
+last week, and that is the point. Public work is not "good jobs": a café owner
+is not on the list, which is a statement about who the town relies on, not
+about who matters.
+
+### Petitions
+
+A district with a household above the line, and a genuine lack — no school, no
+recreation reach, jobs under half its workers, an unresolved crime with eight
+homes, or ten homes and no station — starts asking, after a seeded roll rather
+than the instant the need appears. Four at a time, one per district. A petition
+ends when the thing is actually there, and the Chronicle says so; it lapses
+after 90 days of the valley repeating itself.
+
+Getting the "it only asks for what it lacks" assertion to bite took three
+goes. A petition for something the district already has is marked met on the
+very next pass and disappears, so checking the standing list found nothing
+wrong; the check now reads what was actually said over the whole run.
+
+The Post reports petitions as public needs, names the household pressing the
+case, and states that City Hall has committed to nothing.
+
 ## Performance rules
 
 Binding, and derived from what this codebase has already learned the hard way:
@@ -607,7 +667,8 @@ trusted.
 6. **Fame and entertainment culture**, lightweight as the brief asked.
    *(production, `1c02801`)*
 
-Political influence remains future work and is out of scope.
+Political influence has since been built as influence and petitions, above —
+as a voice rather than as a government.
 
 ## Success condition
 

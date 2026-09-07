@@ -75,12 +75,13 @@ function pose(c){
   const bob=reduceMotion?0:Math.abs(Math.cos(phase))*(moving?.02:.006);
   const heading=moving||c.nx!==c.x||c.ny!==c.y?Math.atan2(c.nx-c.x,c.ny-c.y):((c.side||1)*Math.PI/2);
   const seed=personSeed(c);
-  return {x,z,heading,stride,bob,lean:moving?.16:0,col:c.col||c.color||'#d6a86e',skin:SKIN[seed%SKIN.length],hair:HAIR[(seed>>3)%HAIR.length],carry:!!(c.carry&&!local),lying:false};
+  return {x,z,heading,stride,bob,lean:moving?.16:0,col:c.col||c.color||'#d6a86e',skin:SKIN[seed%SKIN.length],hair:HAIR[(seed>>3)%HAIR.length],
+    carry:!!(c.carry&&!local),carryKind:c.carryKind||'basket',lying:false};
 }
 /* A figure that is not a citizen: the burglar in front of a robbed house, the
    patient an ambulance is coming for. Same pieces, its own pose. */
 function extra(x,z,heading,col,opts={}){
-  return {x,z,heading,stride:opts.stride||0,bob:0,lean:opts.lean||0,col,skin:opts.skin||SKIN[2],hair:opts.hair||HAIR[2],carry:false,lying:!!opts.lying};
+  return {x,z,heading,stride:opts.stride||0,bob:0,lean:opts.lean||0,col,skin:opts.skin||SKIN[2],hair:opts.hair||HAIR[2],carry:false,carryKind:'basket',lying:!!opts.lying};
 }
 function figureMatrix(p){
   // Where the person stands, which way they face, and lying down if they are.
@@ -117,7 +118,9 @@ function addPeople(parent,people){
     put(torsos,hang(part,base,0,SHOULDER+.02,0,-p.lean,PIECE.torso.h),p.col);
     put(heads,part.copy(base).multiply(T.makeTranslation(0,HEAD,p.lean*.06)),p.skin);
     put(hairs,part.copy(base).multiply(T.makeTranslation(0,HEAD+.012,p.lean*.06-.008)).multiply(SC.makeScale(1,.72,1)),p.hair);
-    if(p.carry) put(carries,part.copy(base).multiply(T.makeTranslation(.09,HIP+.03,.02)),'#b98d5c');
+    // A basket, a reporter's pale notepad, or the dark body of a camera.
+    if(p.carry) put(carries,part.copy(base).multiply(T.makeTranslation(.09,HIP+.03,.02)),
+      p.carryKind==='notebook'?'#f4f0e2':p.carryKind==='camera'?'#3b4147':'#b98d5c');
   }
   for(const inst of [legs,arms,torsos,heads,hairs,carries]){ inst.instanceMatrix.needsUpdate=true; if(inst.instanceColor) inst.instanceColor.needsUpdate=true; }
 }
