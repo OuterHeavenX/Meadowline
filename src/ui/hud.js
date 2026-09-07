@@ -17,6 +17,7 @@ import { toggleLedger } from './ledger.js';
 import { pickTool } from './toolbar.js';
 import { paintGrowthPanel } from './growth.js';
 import { paintPostChip } from './post.js';
+import { buildTag } from '../core/version.js';
 
 export const S_day=document.getElementById("s-day"), S_time=document.getElementById("s-time"),
       S_coins=document.getElementById("s-coins"), S_pop=document.getElementById("s-pop"),
@@ -101,6 +102,11 @@ document.getElementById('menu-save')?.addEventListener('click',()=>{save();toast
 // Both the gear in the corner and the Settings button in the menu open the
 // same panel, so they are bound by attribute rather than by id.
 document.querySelectorAll('[data-menu-settings]').forEach(b=>b.addEventListener('click',()=>document.querySelector('.settings-toggle')?.click()));
+/* Which build is on screen. Without this, "I don't see the change" has no
+   answer anybody can check - a stale stylesheet looks exactly like a change
+   that was never made. */
+const buildEl=document.getElementById('build-tag');
+if(buildEl) buildEl.textContent=buildTag();
 const credits=document.getElementById('credits-dialog');
 document.getElementById('menu-credits')?.addEventListener('click',()=>credits?.showModal());
 credits?.querySelector('button')?.addEventListener('click',()=>credits.close());

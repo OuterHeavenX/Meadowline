@@ -147,3 +147,5 @@ body.menu-open .graphics-settings{visibility:hidden}body.menu-open.menu-settings
    status bar, the same way City Hall does, so a quiet day's short paper is
    short rather than stretched. */
 @media(max-width:520px){.look.post-open{width:calc(100vw - 12px);top:auto;bottom:calc(var(--safe-bottom) + 84px);transform:translate(-50%,0);max-height:calc(100vh - var(--safe-top) - var(--safe-bottom) - 94px)}.post-paper{padding:14px 14px 18px}}
+
+#credits-dialog .build{margin:2px 0 10px;font-size:11px;color:var(--ui-muted)}#credits-dialog .build b{color:var(--ui-ink);font-variant-numeric:tabular-nums}

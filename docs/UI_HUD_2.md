@@ -54,6 +54,31 @@ screen actually has, so the fix cannot become a permanent tax on desktop.
 The paper is given a full edition before it is measured — an empty one is short
 enough that no height rule ever binds, so measuring it would prove nothing.
 
+## Shipping a change so it actually arrives
+
+Meadowline is static files with no build step, which means a browser is free
+to serve last month's stylesheet next to this morning's JavaScript, and
+nothing about that looks wrong. It is not hypothetical: the safe-area fix
+above was entirely CSS, the stylesheets carried no cache-busting query at all,
+and it reached the repository without reaching the phone that reported it. The
+player's reasonable question — *what version am I on?* — had no answer,
+because the game did not say.
+
+**One token, on every asset.** `index.html` carries the same `?v=` on all six
+stylesheets and on the module entry. Bumping it is the release step.
+
+**The game reads its own tag back.** `src/core/version.js` takes it off the
+script tag in the DOM rather than from a constant somebody has to remember to
+update, so what is displayed is always what the browser actually loaded. It
+shows in the credits dialog and at the top of the diagnostics overlay. A stale
+stylesheet and a change that was never made look identical from the outside;
+this is what tells them apart.
+
+`tests/build-tag-regression.html` asserts every asset carries a tag, that they
+all carry the *same* one so a release cannot half-ship, that each tagged file
+actually loads, and that the tag reported is the tag loaded. Removing the query
+from a single stylesheet — the original bug — fails it.
+
 ## Visual reference role
 
 Four owner-approved mockups define the presentation target for the normal HUD, Build catalog, City Hall and title screen. They are composition references, not simulation data. Costs, footprints, stages, resources, goals, service summaries and civic levels continue to come from Meadowline's registry and simulation. The mockup's fictional Level 5 is deliberately not implemented.
