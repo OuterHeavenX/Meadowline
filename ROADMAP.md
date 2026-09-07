@@ -70,7 +70,8 @@ Slices, in order:
 2. **Families, notable citizens, traits** — bounded households the valley
    comes to know, surnames drawn outcome-blind from one shared pool. *On the
    branch, `a598f9e`.*
-3. Careers and class.
+3. **Careers and standing** — real jobs at real workplaces; class read from
+   conditions, never trade. *On the branch.*
 4. Organisations: formation, staged growth, decline.
 5. Bosses, fronts, autonomous enforcement.
 6. Fame and entertainment culture.

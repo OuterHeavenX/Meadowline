@@ -222,7 +222,11 @@ export function packFamilies(){
     families:social.families.slice(0,MAX_FAMILIES).map(f=>({
       id:f.id|0,surname:String(f.surname).slice(0,32),homeSeed:f.homeSeed>>>0,founded:Math.max(1,f.founded|0),
       generation:Math.max(1,f.generation|0),roots:f.roots?String(f.roots).slice(0,40):null,
-      notes:(f.notes||[]).slice(0,MAX_NOTES).map(n=>({day:Math.max(1,n.day|0),text:String(n.text).slice(0,80)}))
+      notes:(f.notes||[]).slice(0,MAX_NOTES).map(n=>({day:Math.max(1,n.day|0),text:String(n.text).slice(0,80)})),
+      // Careers and standing are plain strings here; careers.js validates them
+      // after load, so this module need not know what a career is.
+      careers:Object.fromEntries(Object.entries(f.careers||{}).slice(0,MAX_MEMBERS).map(([i,c])=>[i,String(c).slice(0,32)])),
+      standing:f.standing?String(f.standing).slice(0,24):undefined
     }))
   };
 }
@@ -242,7 +246,9 @@ export function restoreFamilies(raw){
       founded:Math.max(1,Math.floor(Number(f.founded)||1)),generation:Math.max(1,Math.floor(Number(f.generation)||1)),
       roots:f.roots?String(f.roots).slice(0,40):null,
       notes:(Array.isArray(f.notes)?f.notes:[]).slice(0,MAX_NOTES).filter(n=>n&&typeof n.text==='string')
-        .map(n=>({day:Math.max(1,Math.floor(Number(n.day)||1)),text:n.text.slice(0,80)}))
+        .map(n=>({day:Math.max(1,Math.floor(Number(n.day)||1)),text:n.text.slice(0,80)})),
+      careers:f.careers&&typeof f.careers==='object'?{...f.careers}:{},
+      standing:typeof f.standing==='string'?f.standing:undefined
     });
   }
 }

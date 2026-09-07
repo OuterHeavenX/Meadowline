@@ -37,6 +37,7 @@ import { paintGrowthPanel } from '../ui/growth.js';
 import { updateMunicipal } from '../simulation/municipal.js';
 import { advanceDistricts } from '../simulation/districts.js';
 import { advanceFamilies } from '../simulation/families.js';
+import { advanceCareers } from '../simulation/careers.js';
 import { updateFeedback } from '../simulation/feedback.js';
 import { tickTutorial } from '../ui/tutorial.js';
 
@@ -133,6 +134,7 @@ function step(now){
       // Who the valley has come to know. Same slow clock, same idea: the
       // Chronicle gets the sentence, the simulation decides the fact.
       advanceFamilies(step,note);
+      advanceCareers(step,note);
     }
     growth(sdt);
     updateCitizens(sdt);

@@ -7,7 +7,8 @@ import { getCitySummary } from '../simulation/city-summary.js';
 import { idx } from '../world/tiles.js';
 import { buildingThumbnail } from '../rendering/thumbnails.js';
 import { recomputeDistricts } from '../simulation/districts.js';
-import { families, familyKnownFor, familyMembers } from '../simulation/families.js';
+import { families, familyMembers } from '../simulation/families.js';
+import { familyStanding, knownFor } from '../simulation/careers.js';
 import { landmarkKey } from '../rendering/landmark-assets.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
@@ -92,7 +93,7 @@ function familyRows(){
   let rows='';
   for(const f of list){
     const m=familyMembers(f);
-    rows+='<div class="ch-buy"><div><b>The '+f.surname+' family</b><small class="muted">'+(f.roots?f.roots+' · ':'')+'since day '+f.founded+' · '+m.length+(m.length===1?' person':' people')+' · known for '+familyKnownFor(f)+'</small></div></div>';
+    rows+='<div class="ch-buy"><div><b>The '+f.surname+' family</b><small class="muted">'+(f.roots?f.roots+' · ':'')+'since day '+f.founded+' · '+m.length+(m.length===1?' person':' people')+' · known for '+knownFor(f)+' · '+familyStanding(f)+'</small></div></div>';
   }
   return card('Notable families',I.people,rows);
 }

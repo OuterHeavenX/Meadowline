@@ -5,8 +5,8 @@ organized crime, fame and family legacies.
 
 ## Status
 
-**Slice 1 production at `1d192f9`. Slice 2 in development** on
-`claude/game-upgrade-3o2630`.
+**Slice 1 production at `1d192f9`. Slices 2 and 3 on `claude/game-upgrade-3o2630`,**
+awaiting merge.
 
 This document is canonical for Social Fabric and is maintained as the milestone
 lands. It records what is built, what is deliberately deferred and what must
@@ -233,6 +233,56 @@ family may rise, fall, relocate, change trade, go legitimate or decline. Crime
 families and farming families use the identical structure — there is no separate
 criminal family type.
 
+## Careers and standing — slice 3
+
+`src/simulation/careers.js`.
+
+A **career** is a real job at a real workplace the player built, within eleven
+tiles of the family's home. There is no career the city has no building for:
+nobody is a baker in a town without a bakery and nobody teaches until there is a
+school. The table maps building types to trades — farm → farmer, mill → mill
+worker, bakery → baker, market → market trader, café → café worker or owner,
+school and Great Library → teacher, clinic and hospital → nurse or doctor,
+police and fire stations, station, dock, City Hall, and the landmarks' keeper.
+Seats are the registry's `jobs` per building, shared across families in one
+pass, so a school never employs more teachers than it has posts.
+
+Which job a person takes is weighed from open seats nearby, distance, one
+trait's tilt (a tilt, never a requirement), and a seeded roll. **Education
+gates exactly the two jobs that genuinely need it** — teacher at 35, doctor at
+60 — and nothing else. A farmer can hold a doctorate; the regression places a
+highly educated household beside a farm belt and asserts they farm. Owning the
+café wants real entrepreneurship; otherwise it is a job like any other.
+
+Careers persist while the workplace stands and are reconsidered rarely (2% per
+social pass). When the farms are removed the farmers stop being farmers, and
+take up whatever replaces them. A person with no reachable seat is *looking for
+work*, which is a true reading and feeds standing. The town's first of each
+trade reaches the Chronicle by name, once.
+
+**Standing** — struggling, working class, middle class, affluent, elite, the
+brief's own labels — is derived every time it is read from the household's
+housing tier, education, home desirability, share of people in work and
+generations of residence. It stores only the last reading, so a rise or a fall
+can be noticed and recorded. **It reads conditions and never which trade**: the
+regression holds a household exactly still and relabels its people farmers,
+then doctors, then dock workers, and asserts the standing is identical each
+time — and that taking their work away does move it, because employment is a
+condition. Mobility runs both ways and the Chronicle records "rose to" and
+"slipped to" alike. Sabotaged to read trade, the suite fails ("affluent /
+elite / affluent"); with the education gate removed, it fails; with a setter
+exported, it fails.
+
+No career, standing or trait carries any consequence for crime. That system,
+when it arrives in slice 4, reads its own conditions and none of these.
+
+Surfacing: each member on the House card shows a trade and two leanings; the
+family line shows standing; "known for" becomes the family's trades once it has
+any. Save V3: careers and standing ride inside the family record as plain
+strings and are validated on load against the table — a trade this build has no
+workplace for, a seat past the member cap, or a standing not on the list is
+dropped rather than trusted. The town's firsts are saved.
+
 ## Organisations and organised crime
 
 Crime is one possible social outcome among many, never a guaranteed one and
@@ -332,8 +382,8 @@ trusted.
 
 1. **Districts** — derivation, stable naming, identity, evolution, Look/City
    Hall/Chronicle surfacing, diagnostics, tests. *(production, `1d192f9`)*
-2. **Families, notable citizens and traits.** *(in development)*
-3. Careers and class.
+2. **Families, notable citizens and traits.** *(on the branch, `a598f9e`)*
+3. **Careers and standing.** *(on the branch)*
 4. Organisation formation, staged growth, decline.
 5. Bosses, fronts, autonomous enforcement.
 6. Fame and entertainment culture, initially lightweight.

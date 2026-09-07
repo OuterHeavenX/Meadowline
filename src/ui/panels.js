@@ -20,7 +20,8 @@ import { PAL } from '../world/seasons.js';
 import { facilityFootprint, facilityRootAt, idx, inBounds, isWater } from '../world/tiles.js';
 import { roadNearFacility } from '../transport/roads.js';
 import { districtAt } from '../simulation/districts.js';
-import { familyAt, familyKnownFor, familyMembers, traitWords } from '../simulation/families.js';
+import { familyAt, familyMembers, traitWords } from '../simulation/families.js';
+import { familyStanding, knownFor, memberCareer } from '../simulation/careers.js';
 import { darkness } from '../world/time.js';
 import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
@@ -234,10 +235,11 @@ function familyBlock(h){
   if(!f) return '';
   const members=familyMembers(f);
   return '<h4>The '+f.surname+' family</h4>'+
-    '<p>Here since <b>day '+f.founded+'</b>'+(f.roots?', settled in <b>'+f.roots+'</b>':'')+'. Known for '+familyKnownFor(f)+'.'+
+    '<p>Here since <b>day '+f.founded+'</b>'+(f.roots?', settled in <b>'+f.roots+'</b>':'')+'. Known for '+knownFor(f)+'. <b>'+cap(familyStanding(f))+'</b>.'+
     ((f.generation||1)>1?' Now in its <b>'+ordinal(f.generation)+' generation</b>.':'')+'</p>'+
-    '<dl class="service">'+members.map(m=>'<dt>'+m.name+'</dt><dd>'+traitWords(m.traits).join(', ')+'</dd>').join('')+'</dl>';
+    '<dl class="service">'+members.map(m=>'<dt>'+m.name+'</dt><dd>'+memberCareer(f,m.index)+' · '+traitWords(m.traits).join(', ')+'</dd>').join('')+'</dl>';
 }
+function cap(s){ return s?s[0].toUpperCase()+s.slice(1):s; }
 function ordinal(n){ return n+(['th','st','nd','rd'][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]); }
 function districtFooter(x,y){
   const d=districtAt(x,y);
