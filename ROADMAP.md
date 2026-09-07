@@ -1,11 +1,11 @@
 # Meadowline Roadmap
 
-## Status as of production `main` at `1d192f92aaaa3c09f69ac5a983cdcd32baa64ced`
+## Status as of production `main` at `39549119a4a82319ba8512a119edf0246e04dbd0`
 
 **Current development — Social Fabric 1.0**, on `claude/game-upgrade-3o2630`.
-Slice 1 (emergent districts) is production at `1d192f9`; slice 2 (families,
-notable citizens, traits) is on the branch at `a598f9e`. Canonical document:
-`docs/SOCIAL_FABRIC.md`.
+Slices 1–3 (emergent districts; families, notable citizens, traits; careers
+and standing) are production at `3954911`; slice 4 (organisations) is on the
+branch. Canonical document: `docs/SOCIAL_FABRIC.md`.
 
 **UI / HUD 2.0 is production**, merged through PR #11 (`da5698c`). Earlier
 copies of this file and `README.md` listed it as current development long after
@@ -50,6 +50,7 @@ Everything below is on `main`. Each landed with its regression suite green.
 | `e4b8834` | Road access on every card; lot path moved to the door; hint bar clears the tool bar. |
 | `f0cf125` | **Sim performance**: a recreation cache check that cost 19× the work it guarded, once per home, removed. 0.9 s tick at 1,120 pop: ~61 → ~5 ms. |
 | `1d192f9` | **Social Fabric slice 1 — emergent districts.** |
+| `3954911` | **Social Fabric slices 2 and 3** — notable families and traits; careers at real workplaces, standing from conditions. |
 
 ## Milestone 7 — Social Fabric 1.0
 
@@ -68,11 +69,12 @@ Slices, in order:
 1. **Districts** — derived from where the player built and what divides it,
    named and described by what stands in them. *Production, `1d192f9`.*
 2. **Families, notable citizens, traits** — bounded households the valley
-   comes to know, surnames drawn outcome-blind from one shared pool. *On the
-   branch, `a598f9e`.*
+   comes to know, surnames drawn outcome-blind from one shared pool.
+   *Production, `3954911`.*
 3. **Careers and standing** — real jobs at real workplaces; class read from
-   conditions, never trade. *On the branch.*
-4. Organisations: formation, staged growth, decline.
+   conditions, never trade. *Production, `3954911`.*
+4. **Organisations** — three conditions at once or nothing, place-based names,
+   staged growth, prosperity and police as causes of decline. *On the branch.*
 5. Bosses, fronts, autonomous enforcement.
 6. Fame and entertainment culture.
 

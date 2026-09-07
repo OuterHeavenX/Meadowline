@@ -5,8 +5,8 @@ organized crime, fame and family legacies.
 
 ## Status
 
-**Slice 1 production at `1d192f9`. Slices 2 and 3 on `claude/game-upgrade-3o2630`,**
-awaiting merge.
+**Slices 1–3 production at `3954911`. Slice 4 (organisations) on
+`claude/game-upgrade-3o2630`,** awaiting merge.
 
 This document is canonical for Social Fabric and is maintained as the milestone
 lands. It records what is built, what is deliberately deferred and what must
@@ -273,8 +273,9 @@ condition. Mobility runs both ways and the Chronicle records "rose to" and
 elite / affluent"); with the education gate removed, it fails; with a setter
 exported, it fails.
 
-No career, standing or trait carries any consequence for crime. That system,
-when it arrives in slice 4, reads its own conditions and none of these.
+No career, standing or trait carries any consequence for crime. That system
+(slice 4, below) reads its own conditions and none of these; the one thing it
+shares with careers is whether a person has work.
 
 Surfacing: each member on the House card shows a trade and two leanings; the
 family line shows standing; "known for" becomes the family's trades once it has
@@ -283,22 +284,99 @@ strings and are validated on load against the table — a trade this build has n
 workplace for, a seat past the member cap, or a standing not on the list is
 dropped rather than trusted. The town's firsts are saved.
 
-## Organisations and organised crime
+## Organisations — slice 4
 
-Crime is one possible social outcome among many, never a guaranteed one and
-never a player action.
+`src/simulation/organisations.js`. Crime is one possible social outcome among
+many, never a guaranteed one and never a player action. Nothing in the Build
+catalogue produces an organisation, there is no district to paint and there is
+no button; the module exports no setter and the regression asserts it.
 
-Formation requires a **combination** drawn from unemployment, weak enforcement
-coverage, poor service access, profitable trade adjacency, nightlife, low
-legitimate opportunity, an influential citizen, repeated unresolved incidents
-and existing criminal social connections. No single factor suffices, and the
-weights are historical: momentum matters, so a place that has never had an
-organisation is markedly less likely to grow one than one that recently did.
+### Conditions, and the line
 
-Growth is staged and not guaranteed at any step: individual → small group →
-local crew → organised crew → faction → major organisation. Organisations
-stall, shrink, split, merge and collapse. Rising legitimate prosperity is a
-first-class cause of decline.
+Formation reads eight plain facts about a district, each a consequence of what
+the player built there:
+
+| condition | what it reads |
+|---|---|
+| low opportunity | six or more homes, and jobs standing in the district under 60% of its workers |
+| weak enforcement | no police station within 12 tiles of the district centre |
+| poor access | six or more homes and no recreation reach |
+| profitable edge | a dock, a market, or three or more trade buildings |
+| unresolved crime | an open crime incident inside the bounds |
+| influential citizen | a notable family member here with strong leadership **and** high risk tolerance |
+| momentum | an organisation here now, or one that collapsed here within 60 days |
+| dense | building density at or above 0.55 |
+
+**Three of these must hold at once (`NEED=3`), then a seeded roll**, weighted by
+how many more than three hold and never certain. A district with nothing but
+unemployment, nothing but no police, or nothing but the poorest housing
+imaginable produces nothing in 240 simulated days; the regression runs exactly
+those towns. The base fixture is built to meet exactly two conditions so every
+"one more" test starts below the line.
+
+What is **not** an input: desirability, housing tier, standing, education,
+surname, sector labels. The regression checks the source of `conditions()` for
+those words, case-insensitively — it was case-sensitive when first written and
+let `avgDesirability` through, which the sabotage check caught. "Low legitimate
+opportunity" is the count of jobs the player built against the people who live
+there, a fact about buildings, not about people. A dock is one condition of
+several and the same one a market is.
+
+### Staged, slow, reversible
+
+Stages: individual → small group → local crew → organised crew → faction →
+major organisation. Growth needs four conditions held and a 4% roll per pass
+(one pass per three social passes, roughly three a day), so a crew takes a
+season to become a faction. Decline is faster on purpose: when the district
+falls below two conditions, a police station comes within eight tiles, or jobs
+reach 110% of workers, a 24% roll per pass takes a stage away. At stage zero the
+organisation breaks up, the Chronicle says so, and the district remembers it for
+60 days as momentum. Legitimate prosperity and enforcement are first-class causes
+of decline and the regression proves both: a stage-six organisation with police
+and three rows of farms placed next to it is gone in 160 days.
+
+### Names and involvement
+
+Organisations are named for the **place and a shape** — the Fern Hollow Network,
+the Old Wharf Ring — never for a person, so a surname can never be read as a
+signal. Type follows what stands there (a Ring needs a dock, a Network a market,
+an Outfit trade, a Set trade and streets; a Crew needs nothing) and is a seeded
+pick among the eligible.
+
+Which notable families are drawn in is `involvementWeight(people, careers)`: a
+person's risk tolerance, ambition and caution, and whether they have work. It
+is a function so the regression can prove the input set — hand it a family's
+people and it answers without being told their name or their class. Bold
+leanings weigh more than careful; being out of work weighs more than being in
+it. Across six seeded towns the involved surnames are spread across the pool
+with no name appearing twice; sabotaged to recruit two surnames only, the suite
+fails. At most four families per organisation, four organisations per city.
+
+### Districts read it back
+
+Districts count the organisations rooted in them and take the strongest stage
+as strength, as plain data on `S.social.organisations` (no import cycle). Those
+are the two inputs the criminal identities need, so **Criminal Influence** and
+**Organized Crime Stronghold** become reachable readings only once an
+organisation actually exists — the regression asserts the candidate list, not
+the displayed labels. Any birth, growth, decline or collapse invalidates the
+district cache; the rebuild happens on the next read.
+
+### Surfacing and save
+
+City Hall's Neighbourhoods section grows a "Word around town" card only when
+there is something to report: place, shape, stage, how many households are
+said to be involved. The House card hints at a family's ties only once the
+organisation is a local crew or larger, and names the organisation, never a
+deed. The Chronicle carries "first appeared around", "grew into a", "lost
+influence" and "broke up". Nothing here dispatches, arrests or fights.
+
+Save V3: `social.organisations`, `nextOrgId` and the 60-day `orgMemory` ride
+in the optional `social` field. On load a type this build does not have, a
+stage off the ladder, or a family that does not exist is refused rather than
+trusted. An old save loads with none and develops gradually.
+
+## Bosses, fronts and enforcement — slice 5, not built
 
 A **boss** is always promoted from an existing simulated citizen. No abstract
 boss entity is ever spawned when a suitable citizen exists.
@@ -370,6 +448,8 @@ Coverage required by this milestone:
 - identity is reversible;
 - district names and identities persist across recompute and across save/load;
 - bounded district, citizen, family and organisation counts;
+- no single condition forms an organisation, however long it is held;
+- prosperity and police nearby weaken and end one;
 - surname distribution among criminal organisations matches the shared pool;
 - social recomputation is invalidation-driven, asserted by counting work rather
   than timing it, so the assertion reads the same on any machine;
@@ -382,9 +462,9 @@ trusted.
 
 1. **Districts** — derivation, stable naming, identity, evolution, Look/City
    Hall/Chronicle surfacing, diagnostics, tests. *(production, `1d192f9`)*
-2. **Families, notable citizens and traits.** *(on the branch, `a598f9e`)*
-3. **Careers and standing.** *(on the branch)*
-4. Organisation formation, staged growth, decline.
+2. **Families, notable citizens and traits.** *(production, `3954911`)*
+3. **Careers and standing.** *(production, `3954911`)*
+4. **Organisation formation, staged growth, decline.** *(on the branch)*
 5. Bosses, fronts, autonomous enforcement.
 6. Fame and entertainment culture, initially lightweight.
 

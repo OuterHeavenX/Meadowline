@@ -22,6 +22,7 @@ import { roadNearFacility } from '../transport/roads.js';
 import { districtAt } from '../simulation/districts.js';
 import { familyAt, familyMembers, traitWords } from '../simulation/families.js';
 import { familyStanding, knownFor, memberCareer } from '../simulation/careers.js';
+import { organisationOf } from '../simulation/organisations.js';
 import { darkness } from '../world/time.js';
 import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
@@ -236,8 +237,15 @@ function familyBlock(h){
   const members=familyMembers(f);
   return '<h4>The '+f.surname+' family</h4>'+
     '<p>Here since <b>day '+f.founded+'</b>'+(f.roots?', settled in <b>'+f.roots+'</b>':'')+'. Known for '+knownFor(f)+'. <b>'+cap(familyStanding(f))+'</b>.'+
-    ((f.generation||1)>1?' Now in its <b>'+ordinal(f.generation)+' generation</b>.':'')+'</p>'+
+    ((f.generation||1)>1?' Now in its <b>'+ordinal(f.generation)+' generation</b>.':'')+rumour(f)+'</p>'+
     '<dl class="service">'+members.map(m=>'<dt>'+m.name+'</dt><dd>'+memberCareer(f,m.index)+' · '+traitWords(m.traits).join(', ')+'</dd>').join('')+'</dl>';
+}
+/* A family's ties to something the valley talks about are a rumour, not a
+   record, and a small one stays unsaid: the card only hints once the thing
+   has become a crew, and says which, never what anyone did. */
+function rumour(f){
+  const o=organisationOf(f);
+  return o&&o.stage>=3?' Said to have ties to <b>the '+o.name+'</b>.':'';
 }
 function cap(s){ return s?s[0].toUpperCase()+s.slice(1):s; }
 function ordinal(n){ return n+(['th','st','nd','rd'][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]); }

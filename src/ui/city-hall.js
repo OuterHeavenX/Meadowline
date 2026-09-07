@@ -9,6 +9,7 @@ import { buildingThumbnail } from '../rendering/thumbnails.js';
 import { recomputeDistricts } from '../simulation/districts.js';
 import { families, familyMembers } from '../simulation/families.js';
 import { familyStanding, knownFor } from '../simulation/careers.js';
+import { organisations, stageWord } from '../simulation/organisations.js';
 import { landmarkKey } from '../rendering/landmark-assets.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
@@ -82,7 +83,7 @@ function districtRows(){
       stat('Jobs here',m.jobs||0,I.work)+'</div>'+
       '<small class="muted">Since day '+(d.born||1)+'</small>');
   }
-  return html+familyRows();
+  return html+familyRows()+organisationRows();
 }
 /* Who the valley knows by name. Nobody appointed them; a household becomes one
    the city talks about the way it does anywhere - by being there, and by
@@ -96,6 +97,19 @@ function familyRows(){
     rows+='<div class="ch-buy"><div><b>The '+f.surname+' family</b><small class="muted">'+(f.roots?f.roots+' · ':'')+'since day '+f.founded+' · '+m.length+(m.length===1?' person':' people')+' · known for '+knownFor(f)+' · '+familyStanding(f)+'</small></div></div>';
   }
   return card('Notable families',I.people,rows);
+}
+/* What the valley has heard. City Hall did not create any of it and cannot
+   dissolve any of it; it reports what is talked about, as a place and a shape,
+   and never names anyone. The card only exists when there is something to
+   report, so a town with none never sees the word. */
+function organisationRows(){
+  const list=organisations();
+  if(!list.length) return '';
+  let rows='';
+  for(const o of list){
+    rows+='<div class="ch-buy"><div><b>The '+o.name+'</b><small class="muted">'+o.roots+' · talked about since day '+o.founded+' · '+stageWord(o)+(o.families.length?' · '+o.families.length+(o.families.length===1?' household':' households')+' said to be involved':'')+'</small></div></div>';
+  }
+  return card('Word around town',I.warn||NAV_ICON.districts,'<p class="muted">Nobody built these, and City Hall does not run them. They came out of what stood in a place, and they go the same way: more work nearby, and police within reach.</p>'+rows);
 }
 function stat(label,value,glyph,cls=''){
   return '<div class="ch-stat '+cls+'">'+icon(glyph)+'<span>'+label+'</span><b>'+value+'</b></div>';

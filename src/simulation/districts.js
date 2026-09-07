@@ -71,9 +71,9 @@ const NAMES=['Willow Grove','Old Wharf','Mill Quarter','Lantern Row','Station Wa
    does not lead to one; a struggling place is far likelier to be read as
    close-knit, which is the reading it usually deserves. The two criminal
    identities require an organisation that actually exists in that district -
-   they report something, they never infer it from hardship. Until the
-   organisation slice lands, `d.organisations` is always 0 and both are
-   unreachable, which the regression asserts. */
+   they report something, they never infer it from hardship. In a town with
+   no organisation `d.organisations` is 0 and both are unreachable, which the
+   regression asserts; organisations.js says what it takes for one to exist. */
 export const IDENTITIES=[
   {id:'agricultural',label:'Agricultural',need:2,when:d=>[d.farms>=2,d.sector.agriculture>=2,d.density<0.35]},
   {id:'waterfront',label:'Working Waterfront',need:2,when:d=>[d.docks>=1,d.waterEdge,d.sector.transport>=1]},
@@ -270,6 +270,15 @@ export function recomputeDistricts(){
     if(match) claimed.add(match.id);
     const name=match?match.name:districtName(m.cx,m.cy,taken);
     taken.add(name);
+    /* Organisations are read here as plain data rather than through the
+       organisations module, which imports this one. A district counts the
+       organisations rooted in it and takes the strongest stage as its
+       strength; both are inputs to the criminal identities, which is what
+       keeps those readings unreachable in a town that has none. */
+    for(const o of social.organisations||[]){
+      if(!o||o.roots!==name) continue;
+      m.organisations++; m.organisationStrength=Math.max(m.organisationStrength,o.stage|0);
+    }
     next.push({
       id:match?match.id:(social.nextId=(social.nextId||0)+1),
       name,cx:m.cx,cy:m.cy,born:match?match.born:(S.day||1),
