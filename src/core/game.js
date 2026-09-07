@@ -20,6 +20,7 @@ import { updateTrains } from '../simulation/trains.js';
 import { updateBoats } from '../simulation/boats.js';
 import { checkMiles, checkWishes, rollWishes } from '../simulation/wishes.js';
 import { paintHud } from '../ui/hud.js';
+import { paintSiegeAlert } from '../ui/siege-alert.js';
 import { hint, tickHint, toast } from '../ui/notify.js';
 import { closeLook, refreshLook } from '../ui/panels.js';
 import { cityHallSelected, renderCityHall } from '../ui/city-hall.js';
@@ -48,7 +49,7 @@ import { record } from '../simulation/ledger.js';
 import { updateFeedback } from '../simulation/feedback.js';
 import { tickTutorial } from '../ui/tutorial.js';
 import { advanceBuskers } from '../simulation/buskers.js';
-import { advanceSiege } from '../simulation/siege.js';
+import { WARN_DAYS, advanceSiege, firstNightWarning } from '../simulation/siege.js';
 
 /* ---------- reaching a new stage ----------
    Advancing a city stage is the largest thing that happens in Meadowline and it
@@ -118,6 +119,14 @@ function step(now){
       if(publishIssue()) toast('The Meadowline Post · Day '+(S.day-1)+' edition is out');
       const fest=activeFestival();
       if(fest){ toast(fest.name+" · the valley is dressed for it","gold"); note(fest.name); record('festival',{name:fest.name}); }
+      /* The run-up to the first night the valley has ever had. Said plainly and
+         in advance, because it is the one thing here the player cannot find out
+         by looking at the map. */
+      const warn=firstNightWarning(S.day);
+      if(warn){
+        toast(warn===1?'Something is coming out of the woods tomorrow night':'Word from the woods · '+warn+' days',"gold");
+        if(warn===WARN_DAYS) note('The valley is uneasy about the woods');
+      }
     }
     simClock+=sdt;
     if(simClock>0.9){
@@ -190,7 +199,7 @@ function step(now){
   ambientTick(dt);
   if(S.diagnostics.enabled) recordSimulationMs(performance.now()-simStart);
 
-  uiClock+=dt; if(uiClock>0.2){ uiClock=0; paintHud(); paintTools(); paintWishes(); }
+  uiClock+=dt; if(uiClock>0.2){ uiClock=0; paintHud(); paintTools(); paintWishes(); paintSiegeAlert(); }
   tickTutorial();
   lookClock+=dt; if(lookClock>0.7){ lookClock=0; if(cityHallSelected()) renderCityHall(); else refreshLook(); }
   miniClock+=dt; if(miniClock>0.45){ miniClock=0; drawMini(); }

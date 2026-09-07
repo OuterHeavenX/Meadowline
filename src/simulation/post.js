@@ -103,16 +103,21 @@ function stories(day,events){
      damaged — and a night nobody was hurt in says so plainly rather than
      reaching for drama. */
   for(const e of by('siege_dawn')){
-    const lost=e.lost|0, killed=e.killed|0, damaged=e.damaged|0;
+    const lost=e.lost|0, killed=e.killed|0, damaged=e.damaged|0, surge=!!e.surge;
+    /* They come every night now, so a night the town held is not the front
+       page — it is a line in the paper, the way a quiet shift is. What earns
+       the lead is a night that cost something, or one of the bad ones. */
+    const notable=lost>0||damaged>0||surge;
     const head=lost?upper(plural(lost,'LIFE','LIVES')+' LOST AS THE VALLEY IS ATTACKED IN THE NIGHT')
       :damaged?'MEADOWLINE ATTACKED IN THE NIGHT, NOBODY HURT'
-      :'THE VALLEY HOLDS THROUGH A DARK NIGHT';
-    let body='Something came out of the woods again after dark. ';
+      :surge?'THE VALLEY HOLDS THROUGH A DARK NIGHT'
+      :'ANOTHER NIGHT, ANOTHER WATCH KEPT';
+    let body=(surge?'It was one of the bad ones. ':'Something came out of the woods again after dark. ');
     body+=killed?cap(plural(killed,'was brought down','were brought down'))+' before dawn. ':'Nothing was brought down before dawn. ';
     if(lost) body+=cap(plural(lost,'person was','people were'))+' lost. ';
     if(damaged) body+=cap(plural(damaged,'home was','homes were'))+' damaged. ';
     if(!lost&&!damaged) body+='No home was reached and nobody was hurt. ';
-    add('city','siege',head,body.trim(),{archive:lost?'siege':null});
+    add(notable?'city':'needs','siege',head,body.trim(),{archive:lost?'siege':null});
   }
   /* Each of the dead, by name, once. The paper does not editorialise about a
      death and does not print a number where a name belongs. */

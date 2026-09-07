@@ -20,7 +20,7 @@ more than anything else standing. Each Watchtower is 380 and 7 a day. And the
 horde is sized by how big the town has grown:
 
 ```
-attackers = clamp(3 + population/7, 3, 26)
+tonight = clamp(3 + population/7, 3, 26) × (dark night ? 1.35 : 0.55), min 6
 ```
 
 Double the city and you have doubled the problem. Defence is a running cost
@@ -28,12 +28,28 @@ against a growing bill, which is the shape a late-game economy needs.
 
 ## The calendar
 
-Nothing comes for a young town: the first dark night is **day 18**, and then
-roughly every 9 days with a seeded wobble so it is not a metronome. It is on
-the **calendar, not a dice roll**, and `nextNight()` is public — the Look card
-on any tower tells you how many days you have and how many are coming. That is
-deliberate: a player cannot decide to spend money on a threat they cannot see
-approaching.
+Nothing comes until **day 20**. After that they come **every single night**,
+and the scheduled dark nights are no longer the only ones — they are the bad
+ones.
+
+| | how many | how often |
+|---|---|---|
+| an ordinary night | 55% of the town's number, never fewer than **6** | every night |
+| a dark night | 135% of it, up to 40 | roughly every 9 days, wobbled |
+
+The floor of six is deliberate. A night with one or two of anything in it is
+not a night, it is a stray, and the whole point of the thing walking out of the
+woods is that there is a crowd of it.
+
+The first night is late, and it is announced: for five days beforehand the
+valley says so, and both the Garrison and the Watchtower unlock a stage earlier
+than they used to so it is actually possible to have bought one. An earlier
+draft started nightly raids on day 8, before a Garrison could be built at all —
+that is not difficulty, it is a game that has not started.
+
+`nextNight()` is public and the Look card on any tower shows what is coming
+tonight and when the next bad one falls: a player cannot decide to spend money
+on a threat they cannot see approaching.
 
 ## The night
 
@@ -100,6 +116,40 @@ A 38-home town, 26 attackers, on a real ~35-second night:
 A watch roughly halves what a night costs. It does not hold a town. That gap is
 what the towers are for, and it is why the bill keeps growing as the city does.
 
+## The warning
+
+A night is the one thing that happens *to* the player rather than because of
+them, and the valley is bigger than the screen — so being told which way to
+look is not decoration, it is the whole of the decision about what to do with
+the seconds you have.
+
+When a night starts, `bearings()` buckets where they actually came in from into
+the eight compass points, and `src/ui/siege-alert.js` puts a red pulse round
+the edge of the screen, a band saying how many and from where, and **an arrow
+at each edge they are coming from, pointing inward**.
+
+Three decisions worth writing down:
+
+- **It is DOM, not drawn into the scene.** It looks identical whichever
+  renderer is running, sits above both, and an arrow pointing off the edge of
+  the screen is a fact about the screen rather than about the valley.
+- **The pulse stops.** It runs loud for six seconds and then settles to a held
+  edge. A red border that never stops flashing stops being a warning inside a
+  minute and becomes the colour of the game.
+- **The alert decides nothing.** It reads `siegeWarning()` and has no way to
+  raise an alarm of its own; the regression greps its source to keep it that
+  way. A warning that can be louder than the night is a warning that lies.
+
+It is also `pointer-events:none` throughout. This arrives unannounced in the
+middle of whatever the player was doing, and a warning you can accidentally tap
+eats the tap you were already making.
+
+Two things the phone forced: the direction words are their own span and are
+dropped below 560px — the count is the part the arrows cannot say, and there
+are more compass points than there is room for words — and the toast that used
+to announce a night is gone, because the band says the same thing, holds it for
+the whole night, and on a phone the two of them sat on top of each other.
+
 ## What a death costs, in code
 
 This is the part that needed care. A person in Meadowline is `(homeSeed,
@@ -143,12 +193,17 @@ the regression now catches.
 
 ## Testing
 
-`tests/siege-regression.html`, 88 checks. Sabotages confirmed to fail: a walker
+`tests/siege-regression.html`, 104 checks. Sabotages confirmed to fail: a walker
 that strikes for ever; a death that renumbers the survivors; the dead keeping
 their trade; the paper printing a nickname the street never used; towers
 ignoring their range; a tower that needs no Garrison; the Garrison shooting as
-well as sending people; the militia leash removed; and guards who are never
-hurt.
+well as sending people; the militia leash removed; guards who are never hurt;
+falling back to one night in nine; a night of one or two; the warning pointing
+the wrong way; and the warning naming a direction nothing is coming from.
+
+That last one passed at first, because the check compared `bearings()` against
+itself — the test now works the compass out from the raw positions so it has an
+oracle the code under test cannot move.
 
 ## Still to come
 

@@ -149,3 +149,79 @@ body.menu-open .graphics-settings{visibility:hidden}body.menu-open.menu-settings
 @media(max-width:520px){.look.post-open{width:calc(100vw - 12px);top:auto;bottom:calc(var(--safe-bottom) + 84px);transform:translate(-50%,0);max-height:calc(100vh - var(--safe-top) - var(--safe-bottom) - 94px);max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - 94px)}.post-paper{padding:14px 14px 18px}}
 
 #credits-dialog .build{margin:2px 0 10px;font-size:11px;color:var(--ui-muted)}#credits-dialog .build b{color:var(--ui-ink);font-variant-numeric:tabular-nums}
+
+/* ---------- the siege warning ----------
+   A night is the one thing that happens TO the player, and the valley is
+   bigger than the screen, so the warning has to say which way to look. It sits
+   above both renderers because it is DOM: identical whichever one is running.
+
+   Everything here is pointer-events:none. A warning you can accidentally click
+   is a warning that eats the tap you were making when it appeared, and this
+   arrives unannounced in the middle of whatever the player was doing. */
+#siege-alert{position:fixed;inset:0;z-index:60;pointer-events:none}
+#siege-alert[hidden]{display:none!important}
+
+/* The pulse. It runs loud for a few seconds and then settles to a held edge:
+   a red border that never stops flashing stops being a warning inside a minute
+   and becomes the colour of the game. */
+.siege-flash{position:absolute;inset:0;opacity:.5;
+  box-shadow:inset 0 0 90px 22px rgba(150,26,26,.62), inset 0 0 22px 3px rgba(210,60,50,.5)}
+.siege-loud .siege-flash{animation:siege-pulse 1.15s ease-in-out infinite}
+.siege-surge .siege-flash{box-shadow:inset 0 0 130px 34px rgba(150,26,26,.8), inset 0 0 30px 5px rgba(230,70,55,.62)}
+@keyframes siege-pulse{0%,100%{opacity:.28}50%{opacity:.9}}
+
+/* What it is, in words, under the top-of-screen furniture. */
+.siege-band{position:absolute;left:50%;transform:translateX(-50%);
+  top:calc(var(--safe-top) + 124px);
+  padding:7px 15px;border-radius:999px;
+  background:rgba(58,12,12,.9);color:#ffe3dd;
+  font:600 13px/1.2 system-ui,-apple-system,sans-serif;letter-spacing:.03em;
+  text-transform:uppercase;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:0 6px 20px rgba(0,0,0,.34)}
+.siege-loud .siege-band{animation:siege-band-in .4s ease-out}
+@keyframes siege-band-in{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1}}
+
+/* One arrow per compass point they are actually coming from, pointing inward
+   from that edge. The rotation is the compass bearing; ▲ points up, which is
+   north, so every other point is that turned. */
+.siege-arrow{position:absolute;color:#ff6a55;font-size:30px;line-height:1;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));opacity:.95}
+.siege-arrow[hidden]{display:none!important}
+.siege-loud .siege-arrow{animation:siege-nudge 1.15s ease-in-out infinite}
+@keyframes siege-nudge{0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1.12)}}
+.siege-head{display:block;transform-origin:50% 50%}
+
+/* Placed against the edge they are coming from, and turned to point in at the
+   town. The head is rotated inside the box so the box itself can stay put. */
+.siege-N {top:calc(var(--safe-top) + 86px);left:50%;margin-left:-15px}
+.siege-N  .siege-head{transform:rotate(180deg)}
+.siege-S {bottom:calc(var(--safe-bottom) + 96px);left:50%;margin-left:-15px}
+.siege-S  .siege-head{transform:rotate(0deg)}
+.siege-W {left:calc(var(--safe-left) + 12px);top:50%;margin-top:-15px}
+.siege-W  .siege-head{transform:rotate(90deg)}
+.siege-E {right:calc(var(--safe-right) + 12px);top:50%;margin-top:-15px}
+.siege-E  .siege-head{transform:rotate(-90deg)}
+.siege-NW{top:calc(var(--safe-top) + 96px);left:calc(var(--safe-left) + 24px)}
+.siege-NW .siege-head{transform:rotate(135deg)}
+.siege-NE{top:calc(var(--safe-top) + 96px);right:calc(var(--safe-right) + 24px)}
+.siege-NE .siege-head{transform:rotate(-135deg)}
+.siege-SW{bottom:calc(var(--safe-bottom) + 104px);left:calc(var(--safe-left) + 24px)}
+.siege-SW .siege-head{transform:rotate(45deg)}
+.siege-SE{bottom:calc(var(--safe-bottom) + 104px);right:calc(var(--safe-right) + 24px)}
+.siege-SE .siege-head{transform:rotate(-45deg)}
+
+/* A phone has no room for eight compass points in a sentence. It keeps the
+   count, which is the part the arrows cannot say, and drops the words. */
+@media(max-width:560px){
+  .siege-where{display:none}
+  .siege-band{top:calc(var(--safe-top) + 96px);font-size:12px;padding:6px 12px}
+  .siege-N{top:calc(var(--safe-top) + 140px)}
+  .siege-NW,.siege-NE{top:calc(var(--safe-top) + 70px)}
+}
+
+/* Somebody who has asked not to be flashed at still gets told, in words and
+   arrows, without the pulsing. */
+@media(prefers-reduced-motion:reduce){
+  .siege-loud .siege-flash,.siege-loud .siege-arrow,.siege-loud .siege-band{animation:none}
+  .siege-flash{opacity:.42}
+}

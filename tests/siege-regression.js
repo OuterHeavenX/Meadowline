@@ -16,8 +16,9 @@
    ============================================================ */
 import * as siegeMod from '../src/simulation/siege.js';
 import { FIRST_NIGHT, GARRISON_RANGE, MILITIA_LEASH, MILITIA_MAX, MILITIA_MIN, TOWER_RANGE, advanceSiege,
-  approaches, guardsEmployed, hordeSize, horde, militia, militiaStrength, nextNight, nightsOf,
-  siegeSnapshot, siegeState } from '../src/simulation/siege.js';
+  approaches, bearingOf, bearings, firstNightWarning, guardsEmployed, hordeSize, horde, isSurge, militia,
+  militiaStrength, MIN_HORDE, nextNight, nightsComing, nightsOf, POINTS, siegeSnapshot, siegeState,
+  siegeWarning, spellDirections, tonightSize, townCentre, WARN_DAYS } from '../src/simulation/siege.js';
 import { takeLife, deathsSoFar, isLost } from '../src/simulation/mortality.js';
 import { BUILDINGS } from '../src/buildings/registry.js';
 import { canPlace, place, erase } from '../src/buildings/buildings.js';
@@ -100,16 +101,85 @@ function runNight(limit=20000){
 
 /* ---------- when it happens ---------- */
 {
+  town();
   check('nothing comes for a young town',
-    Array.from({length:FIRST_NIGHT-1},(_,i)=>i+1).every(d=>!nightsOf(d)),FIRST_NIGHT);
-  const nights=[]; for(let d=1;d<200;d++) if(nightsOf(d)) nights.push(d);
-  check('and then they keep coming',nights.length>=15,nights.length);
-  check('never two nights running',nights.every((d,i)=>i===0||d-nights[i-1]>=2),nights.slice(0,8).join(','));
+    Array.from({length:FIRST_NIGHT-1},(_,i)=>i+1).every(d=>!nightsComing(d)&&tonightSize(d)===0),FIRST_NIGHT);
+  /* A young town gets told it is coming, several days out, because it is the
+     one thing here a player cannot find out by looking at the map. */
+  check('and it is warned before the first one ever',
+    firstNightWarning(FIRST_NIGHT-1)===1&&firstNightWarning(FIRST_NIGHT-WARN_DAYS)===WARN_DAYS
+    &&!firstNightWarning(FIRST_NIGHT-WARN_DAYS-1)&&!firstNightWarning(FIRST_NIGHT),
+    [firstNightWarning(FIRST_NIGHT-1),firstNightWarning(FIRST_NIGHT)].join(','));
+  check('and a Garrison can be standing before that night, or the warning is cruelty',
+    BUILDINGS.garrison.unlockStage<=2&&BUILDINGS.watchtower.unlockStage<=2,
+    BUILDINGS.garrison.unlockStage+'/'+BUILDINGS.watchtower.unlockStage);
+  // Then every night, without exception.
+  const after=Array.from({length:120},(_,i)=>FIRST_NIGHT+i);
+  check('after that they come every single night',after.every(d=>nightsComing(d)),
+    after.filter(d=>!nightsComing(d)).slice(0,5).join(','));
+  check('and the smallest night is still a crowd, never one or two',
+    after.every(d=>tonightSize(d)>=MIN_HORDE),Math.min(...after.map(d=>tonightSize(d))));
+  // The scheduled nights are still special: they are the bad ones.
+  const surges=after.filter(d=>isSurge(d));
+  check('some of them are worse than others',surges.length>=8&&surges.length<after.length/3,
+    surges.length+' of '+after.length);
+  check('never two bad ones running',surges.every((d,i)=>i===0||d-surges[i-1]>=2),surges.slice(0,8).join(','));
+  check('a dark night brings more than an ordinary one',
+    surges.every(d=>tonightSize(d)>tonightSize(d+1===surges[surges.indexOf(d)+1]?d+2:d+1)),
+    surges.slice(0,3).map(d=>tonightSize(d)+' vs '+tonightSize(d+1)).join(' | '));
   check('and the calendar is knowable in advance, which is what makes it a sink',
-    nextNight(1)===nights[0]&&nightsOf(nextNight(1)),nextNight(1));
-  const a=[]; for(let d=1;d<120;d++) if(nightsOf(d)) a.push(d);
-  const b=[]; for(let d=1;d<120;d++) if(nightsOf(d)) b.push(d);
+    nextNight(1)!==null&&isSurge(nextNight(1)),nextNight(1));
+  const a=[]; for(let d=1;d<120;d++) if(isSurge(d)) a.push(d);
+  const b=[]; for(let d=1;d<120;d++) if(isSurge(d)) b.push(d);
   check('the same valley reads the same calendar twice',a.join()===b.join());
+}
+
+/* ---------- the warning ---------- */
+{
+  town();
+  check('there is nothing to warn about before a night starts',siegeWarning()===null);
+  S.day=nextNight(1); S.dayT=NIGHT;
+  advanceSiege(0.1,note);
+  const w=siegeWarning();
+  check('a night raises a warning',!!w&&w.size===horde().length,JSON.stringify(w&&{n:w.size,d:w.dirs}));
+  check('and it says which ways they are actually coming from',
+    w.dirs.length>0&&w.dirs.every(d=>POINTS.includes(d)),w.dirs.join(','));
+  /* Not a decoration: every direction named has somebody in it, and every
+     direction somebody is in is named. A warning pointing at an empty field is
+     worse than no warning.
+
+     Worked out here from the raw positions rather than by calling bearings()
+     — the first version compared that function against itself, so a sabotage
+     that named all eight points at once passed cleanly. */
+  const c=townCentre();
+  const octant=(x,y)=>{
+    const a=Math.atan2(x-c.x,-(y-c.y));
+    return POINTS[Math.round(((a<0?a+Math.PI*2:a)/(Math.PI*2))*8)%8];
+  };
+  const actual=new Set(horde().map(z=>octant(z.fx,z.fy)));
+  check('fixture: they are not all coming from one side',actual.size>=2,[...actual].join(','));
+  check('every way it points at has something coming from it',
+    w.dirs.every(d=>actual.has(d)),w.dirs.join(',')+' vs '+[...actual].join(','));
+  check('and it does not miss one',[...actual].every(d=>w.dirs.includes(d)),
+    [...actual].filter(d=>!w.dirs.includes(d)).join(','));
+  check('a bearing is read from the town, not from the map',(()=>{
+    const c=townCentre();
+    return c&&bearingOf(c.x,c.y-10,c)==='N'&&bearingOf(c.x+10,c.y,c)==='E'
+      &&bearingOf(c.x,c.y+10,c)==='S'&&bearingOf(c.x-10,c.y,c)==='W'; })(),
+    JSON.stringify(townCentre()));
+  check('it can be said out loud',/north|south|east|west|every side/.test(spellDirections(w.dirs)),
+    spellDirections(w.dirs));
+  check('and many directions at once become “every side” rather than a list',
+    spellDirections(['N','NE','E','SE','S'])==='every side');
+  /* The alert is a reading of the night and cannot raise one of its own — the
+     same rule the rest of the UI follows about the simulation. */
+  const src=await (await fetch('../src/ui/siege-alert.js')).text();
+  check('the alert decides nothing; it only reads',
+    !/S\.horde|S\.siege\s*=|beginNight|takeLife|\bsiegeState\(/.test(src)
+    &&/siegeWarning\(\)/.test(src),
+    (src.match(/S\.[a-z]+/g)||[]).join(','));
+  S.dayT=DAY_T; advanceSiege(0.1,note);
+  check('and it goes when the night does',siegeWarning()===null);
 }
 
 /* ---------- how many, and from where ---------- */
@@ -138,7 +208,7 @@ function runNight(limit=20000){
   town();
   const before=S.ctx.houses.reduce((n,h)=>n+h.pop,0);
   const r=runNight();
-  check('fixture: something came',r.came>0&&r.came===hordeSize(),r.came);
+  check('fixture: something came',r.came>0&&r.came===tonightSize(),r.came+' / '+tonightSize());
   check('nothing was brought down, because nothing was there to do it',r.killed===0,r.killed);
   check('and the town paid for it',r.lost+r.damaged>0,JSON.stringify({lost:r.lost,damaged:r.damaged}));
   check('the night ended rather than running for ever',r.active===false&&horde().length===0,r.ticks);

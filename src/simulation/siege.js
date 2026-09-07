@@ -27,10 +27,21 @@ import { idx, inBounds } from '../world/tiles.js';
    mortality.js's job, not this module's. This decides who is unlucky.
    ============================================================ */
 
-// Nothing comes for a young town: there has to be something worth coming for.
-export const FIRST_NIGHT=18;
-export const NIGHT_GAP=9;               // days between dark nights, plus a seeded wobble
+/* Nothing comes for a young town: there has to be something worth coming for.
+   After that they come EVERY night, and the scheduled dark nights are no longer
+   the only ones — they are the bad ones. An ordinary night is a mini horde
+   sized off the town; a dark night is the full weight of it and then some. */
+/* Late enough that a player can have banked the money and reached the stage
+   that unlocks a Garrison before the first one arrives. At day eight they were
+   being attacked nightly with no defence it was even possible to buy yet,
+   which is not difficulty, it is a game that has not started. */
+export const FIRST_NIGHT=20;
+export const NIGHT_GAP=9;               // days between the bad ones
 export const HORDE_CAP=26;
+export const SURGE_CAP=40;              // a dark night may go past the ordinary ceiling
+export const MIN_HORDE=6;               // never one or two: the smallest night is still a crowd
+export const ORDINARY_SHARE=0.55;       // what an ordinary night is, against a dark one
+export const SURGE=1.35;
 export const TOWER_RANGE=5;
 export const TOWER_RELOAD=1.9;          // seconds between volleys
 // How far the garrison's own people will go out. Named for the Look card.
@@ -89,6 +100,52 @@ export function nextNight(from=S.day||1){
   return null;
 }
 export function nightsAway(){ const n=nextNight(); return n===null?null:n-(S.day||1); }
+/* ---------- which way they came ----------
+   Bucketed to the eight points, from the town's middle, so the warning can
+   point at where they actually are rather than waving vaguely. */
+export const POINTS=['N','NE','E','SE','S','SW','W','NW'];
+export function townCentre(){
+  const homes=S.ctx?.houses||[];
+  if(!homes.length) return null;
+  let x=0,y=0; for(const h of homes){ x+=h.x; y+=h.y; }
+  return {x:x/homes.length,y:y/homes.length};
+}
+export function bearingOf(x,y,c=townCentre()){
+  if(!c) return null;
+  // Screen north is up the grid, so -y is N and +x is E.
+  const a=Math.atan2(x-c.x,-(y-c.y));            // 0 = N, clockwise
+  const k=Math.round(((a<0?a+Math.PI*2:a)/(Math.PI*2))*8)%8;
+  return POINTS[k];
+}
+export function bearings(list){
+  const c=townCentre(); if(!c) return [];
+  const seen=new Set();
+  for(const z of list||[]){ const b=bearingOf(z.fx??z.x,z.fy??z.y,c); if(b) seen.add(b); }
+  return POINTS.filter(p=>seen.has(p));
+}
+export function spellDirections(dirs){
+  const WORD={N:'north',NE:'north-east',E:'east',SE:'south-east',S:'south',SW:'south-west',W:'west',NW:'north-west'};
+  const list=(dirs||[]).map(d=>WORD[d]||d);
+  if(!list.length) return 'dark';
+  if(list.length===1) return list[0];
+  if(list.length>=5) return 'every side';
+  return list.slice(0,-1).join(', ')+' and '+list[list.length-1];
+}
+/* The whole phrase including its article, because "every side" does not take
+   one and "the north and east" does — the band read "from the every side"
+   until this existed. */
+export function fromPhrase(dirs){
+  const where=spellDirections(dirs);
+  return where==='every side'||where==='dark'?'from '+where:'from the '+where;
+}
+/* What the warning needs: which ways, and how long it has been up. Read every
+   frame by the alert, so it is cheap and holds no state of its own. */
+export function siegeWarning(){
+  const st=siegeState();
+  if(!st.active||!st.from?.length) return null;
+  return {dirs:st.from.slice(),size:horde().length,surge:!!st.surge,
+    age:Math.max(0,(S.t||0)-(st.warnedAt||0))};
+}
 
 /* ---------- how many ----------
    By the size of the town, so a city that has doubled has doubled its problem.
@@ -97,6 +154,29 @@ export function nightsAway(){ const n=nextNight(); return n===null?null:n-(S.day
 export function hordeSize(){
   const pop=S.pop||0;
   return Math.max(3,Math.min(HORDE_CAP,Math.round(3+pop/7)));
+}
+// Whether tonight is one of the bad ones.
+export function isSurge(day=S.day||1){ return nightsOf(day); }
+/* What is actually coming tonight. Every night after the first has something in
+   it, and the smallest of them is still a crowd — a night with two of anything
+   in it is not a night, it is a stray. */
+export function tonightSize(day=S.day||1){
+  const d=Math.max(1,Math.floor(day));
+  if(d<FIRST_NIGHT) return 0;
+  const full=hordeSize();
+  return isSurge(d)
+    ? Math.max(MIN_HORDE,Math.min(SURGE_CAP,Math.round(full*SURGE)))
+    : Math.max(MIN_HORDE,Math.round(full*ORDINARY_SHARE));
+}
+export function nightsComing(day=S.day||1){ return tonightSize(day)>0; }
+/* The days before the first one ever. The valley has never seen this and the
+   player has never had to spend money on it, so they are told plainly and in
+   advance rather than discovering it at dusk. */
+export const WARN_DAYS=5;
+export function firstNightWarning(day=S.day||1){
+  const d=Math.max(1,Math.floor(day));
+  const away=FIRST_NIGHT-d;
+  return away>0&&away<=WARN_DAYS?away:0;
 }
 
 /* Where they come from: the dark edge. A tile is a way in if it is open
@@ -169,8 +249,11 @@ export function beginNight(note=()=>{}){
   const ways=approaches();
   if(!ways.length) return list;
   muster();
-  const want=hordeSize();
+  const surge=isSurge(S.day||1);
+  const want=tonightSize(S.day||1);
+  if(!want) return list;
   st.active=true; st.night=(st.night|0)+1; st.killed=0; st.lost=0; st.damaged=0; st.strikes=0; st.hurt=0;
+  st.surge=surge;
   for(let i=0;i<want;i++){
     const w=ways[i%ways.length];
     const jitter=Math.floor(hash2(i,st.night,(S.seed>>>0)+13)*5)-2;
@@ -179,9 +262,18 @@ export function beginNight(note=()=>{}){
     list.push({x,y,fx:x,fy:y,tx:x,ty:y,p:0,atDoor:0,target:null,
       seed:((x*73856093)^(y*19349663)^(i*2654435761))>>>0});
   }
-  record('siege_night',{night:st.night,size:list.length,towers:towers().length,garrison:hasGarrison(),militia:militia().length});
-  services.toast(list.length+' came out of the woods tonight');
-  note('Something came out of the woods');
+  /* Which way they are coming in from, as compass points, for the warning the
+     player gets. Worked out here rather than in the UI because it is a fact
+     about the night and not a decoration. */
+  st.from=bearings(list);
+  st.warnedAt=(S.t||0);
+  record('siege_night',{night:st.night,size:list.length,surge,from:st.from.join(','),
+    towers:towers().length,garrison:hasGarrison(),militia:militia().length});
+  /* No toast. The band across the top says this, holds it for the whole night
+     and has the arrows with it; a toast saying the same words at the same
+     moment was two announcements of one event, and on a phone the two of them
+     sat on top of each other. */
+  note(surge?'A dark night: they are coming in force':'Something came out of the woods');
   return list;
 }
 
@@ -190,7 +282,7 @@ export function endNight(note=()=>{}){
   if(!st.active) return;
   const survived=list.length;
   list.length=0; st.arrows.length=0; militia().length=0; st.active=false;
-  record('siege_dawn',{night:st.night,killed:st.killed|0,lost:st.lost|0,damaged:st.damaged|0,hurt:st.hurt|0,survived});
+  record('siege_dawn',{night:st.night,surge:!!st.surge,killed:st.killed|0,lost:st.lost|0,damaged:st.damaged|0,hurt:st.hurt|0,survived});
   if(st.lost) note('Meadowline counted its losses at first light');
   else if(st.killed) note('The valley held through the night');
   services.toast(st.lost?'Dawn. '+st.lost+(st.lost===1?' life':' lives')+' lost':'Dawn. The town held');
@@ -373,7 +465,7 @@ export function advanceSiege(dt,note=()=>{}){
   const dark=darkness();
   if(!st.active){
     // A night begins when it is properly dark on a night the calendar named.
-    if(nightsOf(S.day||1)&&dark>SIEGE_DAWN&&(S.ctx?.houses||[]).some(h=>(h.pop|0)>0)) beginNight(note);
+    if(nightsComing(S.day||1)&&dark>SIEGE_DAWN&&(S.ctx?.houses||[]).some(h=>(h.pop|0)>0)) beginNight(note);
     return;
   }
   if(dark<=SIEGE_DAWN||!(S.ctx?.houses||[]).some(h=>(h.pop|0)>0)){ endNight(note); return; }
@@ -388,7 +480,8 @@ export function siegeSnapshot(){
   const st=siegeState();
   return {active:!!st.active,night:st.night|0,here:horde().length,
     towers:towers().length,garrison:hasGarrison(),
-    killed:st.killed|0,lost:st.lost|0,damaged:st.damaged|0,
+    killed:st.killed|0,lost:st.lost|0,damaged:st.damaged|0,surge:!!st.surge,from:(st.from||[]).slice(),
+    tonight:tonightSize(),
     militia:militia().length,outThere:militia().filter(m=>m.hurt<=0).length,hurt:st.hurt|0,
     nextIn:nightsAway(),size:hordeSize()};
 }

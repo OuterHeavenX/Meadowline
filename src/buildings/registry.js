@@ -118,11 +118,11 @@ export const BUILDINGS={
      has grown, so this is a running bill against a growing problem rather than
      a box to tick once. `defence` is what siege.js looks for — neither is
      named anywhere in that module. */
-  garrison:{id:"garrison",name:"Garrison",category:"civic",cost:4200,key:"",upkeep:45,unlockStage:3,unique:true,
+  garrison:{id:"garrison",name:"Garrison",category:"civic",cost:4200,key:"",upkeep:45,unlockStage:2,unique:true,
     description:"2\u00d72 \u00b7 A standing watch, and the only way to raise towers. Costly to keep, and the reason anything can be kept at all.",
     renderKey:"garrison",jobs:12,defence:{garrison:true,range:9},placement:{footprint:[2,2]},
     destination:{work:true},saveDefaults:{}},
-  watchtower:{id:"watchtower",name:"Watchtower",category:"civic",cost:380,key:"",upkeep:7,unlockStage:3,
+  watchtower:{id:"watchtower",name:"Watchtower",category:"civic",cost:380,key:"",upkeep:7,unlockStage:2,
     description:"Archers, and a lantern that burns all night. Needs a Garrison standing before anyone will man it.",
     renderKey:"watchtower",jobs:2,defence:{range:5},requiresBuilding:"garrison",
     placement:{footprint:[1,1]},destination:{work:true},saveDefaults:{}},

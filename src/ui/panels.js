@@ -333,9 +333,10 @@ function describeTile(x,y){
         body+='<dl class="service">'
           +'<dt>'+(isG?'Its people go out':'Archers reach')+'</dt><dd>'+(isG?GARRISON_RANGE:TOWER_RANGE)+' tiles</dd>'
           +'<dt>Towers standing</dt><dd class="'+(snap.towers?'up':'dn')+'">'+snap.towers+'</dd>'
+          +'<dt>Tonight</dt><dd class="'+(snap.tonight?'dn':'')+'">'
+            +(snap.tonight?snap.tonight+(snap.surge?' \u2014 a dark night':''):'Nothing expected')+'</dd>'
           +'<dt>Next dark night</dt><dd class="'+(snap.nextIn!==null&&snap.nextIn<=2?'dn':'')+'">'
             +(snap.nextIn===null?'None expected':snap.nextIn<=0?'Tonight':'in '+snap.nextIn+' days')+'</dd>'
-          +'<dt>What is coming</dt><dd>'+snap.size+'</dd>'
           +(isG?'<dt>Guards on the books</dt><dd class="'+(guardsEmployed()?'up':'dn')+'">'+guardsEmployed()+'</dd>'
                +'<dt>Goes out at night</dt><dd class="'+(militiaStrength()?'up':'dn')+'">'+militiaStrength()+'</dd>':'')
           +(upkeepOf(b)?'<dt>Upkeep</dt><dd class="dn">\u2212'+upkeepOf(b)+' a day</dd>':'')
