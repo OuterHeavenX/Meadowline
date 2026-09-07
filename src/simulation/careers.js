@@ -5,6 +5,7 @@ import { getEducationLevel } from './civic-services.js';
 import { MAX_MEMBERS, SOCIAL_INTERVAL, families, familyKnownFor, familyMembers } from './families.js';
 import { housingTierIndex } from './housing.js';
 import { districtAt, invalidateDistricts } from './districts.js';
+import { record } from './ledger.js';
 import { isFacilityPart } from '../world/tiles.js';
 
 /* ============================================================
@@ -191,6 +192,7 @@ export function evaluateCareers(note=()=>{}){
         if(!social.firsts[next]){
           social.firsts[next]={day:S.day||1,who:m.name};
           note(m.name+' became Meadowline’s first '+label);
+          record('career_first',{familyId:f.id,index:m.index,name:m.name,career:next,label,district:f.roots});
           if(S.diagnostics) S.diagnostics.careerFirsts=(S.diagnostics.careerFirsts||0)+1;
         }
       }
@@ -200,6 +202,7 @@ export function evaluateCareers(note=()=>{}){
     if(f.standing&&f.standing!==standing){
       const up=STANDINGS.indexOf(standing)>STANDINGS.indexOf(f.standing);
       note('The '+f.surname+' family '+(up?'rose to':'slipped to')+' '+standing);
+      record('standing_change',{familyId:f.id,surname:f.surname,district:f.roots,up,standing});
       if(S.diagnostics) S.diagnostics.standingChanges=(S.diagnostics.standingChanges||0)+1;
     }
     f.standing=standing;

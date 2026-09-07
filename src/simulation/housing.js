@@ -1,4 +1,5 @@
 import { BUILDINGS } from '../buildings/registry.js';
+import { record } from './ledger.js';
 import { clamp, hash2 } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
@@ -178,6 +179,7 @@ export function advanceHousing(dt){
     services.hearts(h.x,h.y);
     emitFeedback(h.x,h.y,'upgrade','★ '+housingTier(h).name);
     services.toast("A home grew into a "+housingTier(h).name,"gold");
+    record('home_upgraded',{x:h.x,y:h.y,tier:housingTier(h).name});
   }
 }
 

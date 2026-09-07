@@ -12,6 +12,7 @@ import { familyStanding, knownFor } from '../simulation/careers.js';
 import { bossOf, organisations, stageWord } from '../simulation/organisations.js';
 import { underInvestigation } from '../simulation/enforcement.js';
 import { celebrities } from '../simulation/fame.js';
+import { currentIssue, postArchive } from '../simulation/post.js';
 import { landmarkKey } from '../rendering/landmark-assets.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
@@ -30,6 +31,7 @@ let activeSection='overview';
    you can scan. */
 function icon(d){ return '<span class="mi"><svg viewBox="0 0 24 24">'+d+'</svg></span>'; }
 const NAV_ICON={
+  post:'<path d="M4 5.5h13v13a1.5 1.5 0 0 0 3 0V9h-3M7 9h4v4H7V9Zm6.5 0H15m-1.5 3H15M7 16h8"/>',
   overview:'<path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z"/>',
   goals:'<path d="M12 21s-7-4.4-7-9.6A4.4 4.4 0 0 1 12 8a4.4 4.4 0 0 1 7 3.4C19 16.6 12 21 12 21Z"/>',
   growth:'<path d="M4 19h16M6.5 19v-6M11 19V9m4.5 10v-4M20 19V5"/>',
@@ -115,6 +117,16 @@ function fameRows(){
   }
   return card('Names the valley knows',I.mood,'<p class="muted">Nobody was made famous. Someone played, somewhere people were, for long enough that the valley started saying the name.</p>'+rows);
 }
+/* The paper's own memory, kept where the town keeps its records. City Hall
+   holds the archive; it does not write the paper. */
+function postRows(){
+  const issue=currentIssue(), archive=postArchive().slice().reverse();
+  let html='<p class="muted">The valley\'s daily record. It reports what happened; it decides nothing. Tap the newspaper in the corner to read today\'s edition.</p>';
+  if(issue) html+=card('Latest edition · Day '+issue.day,NAV_ICON.post,'<div class="ch-buy"><div><b>'+issue.lead.headline+'</b><small class="muted">'+issue.lead.body+'</small></div></div>');
+  html+=card('Post archive',NAV_ICON.post,archive.length?archive.slice(0,MAX_ARCHIVE_ROWS).map(a=>'<div class="ch-buy"><div><b>'+a.headline+'</b><small class="muted">Day '+a.day+'</small></div></div>').join(''):'<p class="muted">No front page has been worth keeping yet.</p>');
+  return html;
+}
+const MAX_ARCHIVE_ROWS=20;
 function organisationRows(){
   const list=organisations();
   if(!list.length) return '';
@@ -244,7 +256,7 @@ export function renderCityHall(){
   const name=getUpgradeDefinition('cityHall',level)?.name||'Town Office';
   const o=summary.overview, ed=summary.services.education, rec=summary.services.recreation, mob=summary.mobility;
   const safe=summary.services.safety,fire=summary.services.fire,health=summary.services.healthcare,work=summary.employment;
-  const nav=[['overview','Overview'],['goals','Town Goals'],['growth','Growth'],['districts','Districts'],['land','Land'],['finances','Finances'],['services','Services'],['mobility','Mobility']];
+  const nav=[['overview','Overview'],['goals','Town Goals'],['growth','Growth'],['districts','Districts'],['post','The Post'],['land','Land'],['finances','Finances'],['services','Services'],['mobility','Mobility']];
   const crime=safe.pressure===0?'Low':safe.pressure<35?'Limited':'Elevated',fireRisk=fire.risk===0?'Low':fire.risk<30?'Limited':'Elevated';
   const crimeTone=safe.pressure===0?'good':safe.pressure<35?'warn':'bad',fireTone=fire.risk===0?'good':fire.risk<30?'warn':'bad';
   // The building you are standing in, drawn from the same authored mesh the
@@ -273,6 +285,7 @@ export function renderCityHall(){
     section('growth','City Growth',stageCard(o.stage)+growthRows(summary.growth.next)+'<div class="ch-grid">'+
       stat('Cottages',o.cottages,I.home)+stat('Town Homes',o.townHomes,I.home)+stat('Established',o.establishedHomes,I.home)+'</div>')+
     section('districts','Neighbourhoods',districtRows())+
+    section('post','The Meadowline Post',postRows())+
     section('land','Land management',landRows(summary))+
     section('finances','Finances',financeRows(summary.finances))+
     section('services','Infrastructure & services','<div class="ch-grid">'+

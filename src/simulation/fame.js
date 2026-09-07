@@ -5,6 +5,7 @@ import { emitFeedback } from './feedback.js';
 import { CAREERS, PERFORMING } from './careers.js';
 import { MAX_MEMBERS, SOCIAL_INTERVAL, families, familyMembers } from './families.js';
 import { invalidateDistricts } from './districts.js';
+import { record } from './ledger.js';
 
 /* ============================================================
    FAME — the names the valley knows for the right reasons
@@ -106,6 +107,7 @@ export function evaluateFame(note=()=>{}){
         if(S.diagnostics) S.diagnostics.renownRises=(S.diagnostics.renownRises||0)+1;
         if(after===2) invalidateDistricts(); // the district now has a celebrity
         const label=CAREERS[career].label;
+        record('renown_rise',{familyId:f.id,index,name:m.name,label,district:f.roots,stage:after,first:after===3&&!social.fameFirst});
         if(after===1) note(m.name+' is getting known around '+(f.roots||'Meadowline')+' as a '+label);
         else if(after===2) note('Local '+label+' '+m.name+' became locally famous');
         else if(!social.fameFirst){ social.fameFirst={day,who:m.name}; note('Local '+label+' '+m.name+' became Meadowline’s first widely known performer'); }
@@ -115,6 +117,7 @@ export function evaluateFame(note=()=>{}){
       if(fest&&r.renown>=2&&r.lastFestival!==day){
         r.lastFestival=day;
         note(m.name+' played to a full house at '+fest.name);
+        record('full_house',{familyId:f.id,index,name:m.name,label:CAREERS[career].label,festival:fest.name,district:f.roots});
         emitFeedback(venue.x,venue.y,'service','♪');
       }
     }
@@ -129,7 +132,7 @@ export function evaluateFame(note=()=>{}){
       if(S.diagnostics) S.diagnostics.renownFalls=(S.diagnostics.renownFalls||0)+1;
       if(after===1) invalidateDistricts(); // and now it does not
       const f=families().find(x=>x.id===r.familyId), m=f&&familyMembers(f).find(x=>x.index===r.index);
-      if(m&&after===0) note(m.name+' faded from view');
+      if(m&&after===0){ note(m.name+' faded from view'); record('renown_faded',{familyId:f.id,index:r.index,name:m.name,district:f.roots}); }
       else if(m&&after===2) note(m.name+' slipped out of the limelight');
     }
     if(r.renown<=0) list.splice(i,1);

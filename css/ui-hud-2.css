@@ -116,3 +116,18 @@ body.menu-open .graphics-settings{visibility:hidden}body.menu-open.menu-settings
 @media(prefers-reduced-motion:no-preference){.ml-confirm[open]{animation:ml-confirm-in .16s ease-out}}
 .ml-confirm.no-motion[open]{animation:none}
 @keyframes ml-confirm-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- The Meadowline Post ---------- */
+.corner .chip{position:relative}.corner .chip .dot{display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:#c9453f;box-shadow:0 0 0 2px rgba(247,243,233,.95)}.corner .chip.unread .dot{display:block}
+.look.post-open{left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(980px,calc(100vw - 24px));max-height:min(86vh,820px);padding:0;background:#f3ead6;color:#2a241c;border:1px solid rgba(90,70,40,.25);border-radius:10px;box-shadow:0 18px 50px rgba(20,18,12,.45)}
+.look.post-open .x{color:#5a4a34;background:rgba(255,255,255,.4)}
+.post-paper{padding:22px 26px 26px;background:repeating-linear-gradient(0deg,rgba(60,45,20,.025) 0 1px,transparent 1px 3px),#f3ead6;font-family:Georgia,"Times New Roman",serif}
+.post-masthead{text-align:center;border-bottom:3px double #2a241c;padding-bottom:8px;margin-bottom:14px}.post-masthead h3{margin:0;font:800 clamp(26px,5vw,44px)/1 Georgia,"Times New Roman",serif;letter-spacing:.04em;color:#1c1811}.post-masthead small{display:block;margin-top:4px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#5a4a34}.post-dateline{margin-top:8px;padding-top:6px;border-top:1px solid #2a241c;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#3a3128}
+.post-lead{margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid rgba(42,36,28,.35)}.post-lead h2{margin:0 0 8px;font:800 clamp(22px,3.6vw,34px)/1.08 Georgia,"Times New Roman",serif;color:#1c1811;letter-spacing:-.01em}.post-lead p{margin:0;font-size:15px;line-height:1.5;color:#2a241c}
+.post-columns{column-count:1;column-gap:26px;column-rule:1px solid rgba(42,36,28,.25)}@media(min-width:700px){.post-columns{column-count:2}}@media(min-width:1100px){.post-columns{column-count:3}}
+.post-section,.post-brief{break-inside:avoid;margin:0 0 14px}.post-section h4,.post-brief h4{margin:0 0 6px;padding-bottom:3px;border-bottom:1px solid #2a241c;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#1c1811}.post-section article+article{margin-top:9px;padding-top:8px;border-top:1px dotted rgba(42,36,28,.4)}.post-section h5{margin:0 0 3px;font:800 14px/1.2 Georgia,"Times New Roman",serif;color:#1c1811;text-transform:uppercase;letter-spacing:.01em}.post-section p,.post-body{margin:0;font-size:12.5px;line-height:1.5;color:#2a241c}
+.post-brief dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:12px}.post-brief dt{color:#3a3128}.post-brief dd{margin:0;font-weight:800;text-align:right;color:#1c1811;font-variant-numeric:tabular-nums}
+.post-readers blockquote{margin:0 0 8px;padding:0 0 0 10px;border-left:2px solid #8a6d32;font-size:12.5px;line-height:1.45;font-style:italic;color:#2a241c}.post-readers footer{margin-top:2px;font-style:normal;font-size:11px;color:#5a4a34}
+.post-whispers p{margin:0 0 6px;font-size:12.5px;line-height:1.45}.post-whispers em{font-style:normal;font-weight:800;color:#5a4a34}
+.post-archive ul{margin:0;padding:0;list-style:none}.post-archive li{display:flex;gap:8px;font-size:11.5px;line-height:1.4;padding:3px 0;border-bottom:1px dotted rgba(42,36,28,.3)}.post-archive em{font-style:normal;font-weight:800;color:#5a4a34;min-width:46px}
+@media(max-width:520px){.look.post-open{width:calc(100vw - 12px);max-height:84vh}.post-paper{padding:14px 14px 18px}}

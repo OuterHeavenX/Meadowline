@@ -5,6 +5,7 @@ import { recomputeDistricts } from './districts.js';
 import { ORG_INTERVAL, bossOf, frontsOf, organisations } from './organisations.js';
 import { spawnMunicipalIncident } from './municipal.js';
 import { familyNote } from './families.js';
+import { record } from './ledger.js';
 
 /* ============================================================
    ENFORCEMENT — the police decide
@@ -93,6 +94,7 @@ export function evaluateEnforcement(note=()=>{}){
       const station=stations.sort((a,b)=>Math.abs(a.x-d.cx)+Math.abs(a.y-d.cy)-Math.abs(b.x-d.cx)-Math.abs(b.y-d.cy))[0];
       o.investigation={since:day,progress:0,station:station.seed>>>0};
       note('The police began looking into the '+o.name);
+      record('investigation_opened',{orgId:o.id,district:o.roots,exposed:!!o.exposed,name:o.exposed?o.name:null});
       if(S.diagnostics) S.diagnostics.investigationsOpened=(S.diagnostics.investigationsOpened||0)+1;
       continue;
     }
@@ -109,17 +111,24 @@ function act(o,d,stations,note,day,slot){
   const made=hash2(day*8+slot,o.id*829,S.seed>>>0)<caseChance(o,stations);
   const at=target(o);
   if(at) spawnMunicipalIncident('crime',at,{tag:'raid',toast:'Police moving on the '+o.name});
+  record('raid',{orgId:o.id,district:o.roots,kind:at&&({cafe:'café',bakery:'bakery',market:'market stall',house:'home'})[at.type]||null,exposed:!!o.exposed,name:o.exposed?o.name:null});
   if(S.diagnostics) S.diagnostics.raids=(S.diagnostics.raids||0)+1;
   if(!made){
     note('The police looked into the '+o.name+' and found nothing they could use');
+    record('case_dropped',{orgId:o.id,district:o.roots,exposed:!!o.exposed,name:o.exposed?o.name:null});
     if(S.diagnostics) S.diagnostics.casesDropped=(S.diagnostics.casesDropped||0)+1;
     return;
   }
   if(S.diagnostics) S.diagnostics.casesMade=(S.diagnostics.casesMade||0)+1;
+  // A made case is the world exposing the organisation: from here the public,
+  // and the paper, may know it by the name investigators use.
+  const firstExposure=!o.exposed; o.exposed=true;
+  record('case_made',{orgId:o.id,district:o.roots,name:o.name,stage:o.stage,firstExposure});
   const front=frontsOf(o)[0];
   if(front){
     o.fronts=o.fronts.filter(seed=>(seed>>>0)!==(front.seed>>>0));
     note('The police closed the '+o.name+' out of a '+({cafe:'café',bakery:'bakery',market:'market stall'})[front.type]+' on '+o.roots);
+    record('front_closed',{orgId:o.id,district:o.roots,kind:({cafe:'café',bakery:'bakery',market:'market stall'})[front.type],name:o.name});
     if(S.diagnostics) S.diagnostics.frontsClosed=(S.diagnostics.frontsClosed||0)+1;
   }
   const boss=bossOf(o);
@@ -127,6 +136,7 @@ function act(o,d,stations,note,day,slot){
     o.taken=(o.taken||[]).concat(o.boss.familyId*8+o.boss.index).slice(-40);
     o.boss=null;
     note(boss.name+' was taken in for questioning');
+    record('questioned',{orgId:o.id,district:o.roots,familyId:boss.family.id,index:boss.index,name:boss.name,orgName:o.name});
     familyNote(boss.family,boss.first+' was taken in for questioning');
     if(S.diagnostics) S.diagnostics.bossesTaken=(S.diagnostics.bossesTaken||0)+1;
   }

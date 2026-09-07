@@ -56,6 +56,7 @@ Everything below is on `main`. Each landed with its regression suite green.
 | `8342585` | **Social Fabric slice 4** — organisations that nobody built: three conditions or nothing, place-based names, staged growth, prosperity and police as decline. |
 | `af1be49` | **Social Fabric slice 5** — bosses who are existing citizens, fronts that stay businesses, police who open and work cases on their own. |
 | branch | **GPU actor parity** — the low-poly scene now draws walking people, typed emergency vehicles with a working hose, burning roofs, burglars, patients and stretchers, boats and three-car trains, as the Canvas path always did. |
+| branch | **The Meadowline Post 1.0** — a daily newspaper written from a ledger of real events, with a strict boundary between what the simulation knows and what the public hears. |
 
 ## Milestone 7 — Social Fabric 1.0
 
@@ -90,6 +91,32 @@ Slices, in order:
 
 The milestone brief contradicts itself on naming (PART 7/8 worked examples vs
 PART 27); PART 27 wins and the resolution is structural. See the document.
+
+## Milestone 8 — The Meadowline Post 1.0
+
+**Current development.** Canonical document: `docs/MEADOWLINE_POST.md`.
+
+A daily local newspaper that reports what actually happened. The permanent
+rule:
+
+**The simulation decides what happened. The Post decides how the public hears
+about it.**
+
+The paper observes; it never manufactures. It reads a bounded daily ledger of
+structured events other systems write as they happen, ranks them, and prints
+one issue a day — shorter on a quiet day, because a quiet day is a real thing.
+Organised crime stays mysterious until the world itself exposes it: only a
+case actually made by the police sets `exposed`, and until then the paper
+reports where officers are asking and never who they think is behind it.
+
+Slices:
+
+1. **The daily paper** — ledger, issue generation, story priority, civic
+   snapshot, citizen voices, anchored rumour with reliability classes, the
+   knowledge boundary, paper UI, City Hall archive, Save V3 field.
+   *On the branch.*
+2. Emergent nicknames (brief PARTS 16–24) — aliases that emerge from citizen
+   history and spread from associates to press. *Not built.*
 
 ## Production baseline
 

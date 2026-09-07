@@ -16,6 +16,7 @@ import { postcard } from './postcard.js';
 import { toggleLedger } from './ledger.js';
 import { pickTool } from './toolbar.js';
 import { paintGrowthPanel } from './growth.js';
+import { paintPostChip } from './post.js';
 
 export const S_day=document.getElementById("s-day"), S_time=document.getElementById("s-time"),
       S_coins=document.getElementById("s-coins"), S_pop=document.getElementById("s-pop"),
@@ -31,7 +32,7 @@ function paintCompass(){
 }
 
 export function paintHud(){
-  paintCompass();
+  paintCompass(); paintPostChip();
   S_day.textContent="Day "+S.day;
   const tight=innerWidth<=430;
   S_time.textContent=tight?shortTime():timeName();

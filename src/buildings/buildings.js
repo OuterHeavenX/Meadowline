@@ -6,7 +6,8 @@ import { invalidateServices } from '../simulation/civic-services.js';
 import { invalidateCitySummary } from '../simulation/city-summary.js';
 import { invalidateMobility } from '../simulation/mobility.js';
 import { invalidateRecreation } from '../simulation/recreation.js';
-import { invalidateDistricts } from '../simulation/districts.js';
+import { districtAt, invalidateDistricts } from '../simulation/districts.js';
+import { record } from '../simulation/ledger.js';
 import { BUILDABLE, BUILDING_COST, defaultBuildingState, getBuildingDefinition } from './registry.js';
 import { SPANS } from '../transport/bridges.js';
 import { facilityRootAt, footprintCells, idx, inBounds, isFacilityPart, isType, isWater, isRoadRailCrossing } from '../world/tiles.js';
@@ -142,6 +143,39 @@ function clearFacility(root){
   }
 }
 
+
+/* ---------- telling the paper ----------
+   A business opening or closing, a service arriving, a household moving
+   across town: each is a fact the day's ledger should hold, with the district
+   it happened in. The paper reads the ledger; nothing here decides what it
+   prints. A road or a lamp is not news. */
+const NEWS_KIND={cafe:'business',bakery:'business',market:'business',mill:'business',farm:'business',dock:'business',
+  school:'service',clinic:'service',hospital:'service',policeStation:'service',fireStation:'service',station:'service',cityHall:'service',
+  townPark:'amenity',picnicGreen:'amenity',playground:'amenity',sportsCourt:'amenity',pocketPark:'amenity',
+  statue:'landmark',clockTower:'landmark',lighthouse:'landmark',greatLibrary:'landmark'};
+function ledgerBuilding(what,b){
+  const cls=NEWS_KIND[b.type]; if(!cls) return;
+  const def=getBuildingDefinition(b.type);
+  record('building_'+what,{cls,building:b.type,name:def?.name||b.type,jobs:def?.jobs||0,x:b.x,y:b.y,district:districtAt(b.x,b.y)?.name||null});
+}
+/* A home carried to another neighbourhood carries its family with it: the
+   family record keys on the house seed, which travels with the move, so the
+   only thing to update is where the family says it lives. That is the one
+   piece of Social Fabric bookkeeping the Move tool touches, and it is a
+   correction of fact, not an outcome. */
+function ledgerMove(root,fromDistrict){
+  const to=districtAt(root.x,root.y)?.name||null;
+  if(root.type==='house'){
+    const f=(S.social?.families||[]).find(x=>(x.homeSeed>>>0)===(root.seed>>>0));
+    if(f&&fromDistrict!==to){
+      record('family_move',{familyId:f.id,surname:f.surname,from:fromDistrict,to,tier:root.state?.housingTier||1,generation:f.generation||1});
+      f.roots=to;
+    }
+    return;
+  }
+  if(NEWS_KIND[root.type]&&fromDistrict!==to) record('building_moved',{cls:NEWS_KIND[root.type],building:root.type,name:getBuildingDefinition(root.type)?.name||root.type,from:fromDistrict,to});
+}
+
 export function place(kind,x,y){
   const r=canPlace(kind,x,y);
   if(!r.ok){ if(r.why) services.hint(r.why,true); return false; }
@@ -166,6 +200,7 @@ export function place(kind,x,y){
   invalidateServices(); invalidateCitySummary(); invalidateRecreation(); invalidateDistricts();
   if(kind==='road'||kind==='rail') invalidateMobility();
   if(NOTE_NAMES[kind]&&!NOTED[kind]){ NOTED[kind]=1; note(NOTE_NAMES[kind]); }
+  ledgerBuilding('opened',root);
   services.puff(x,y);
   services.blip(kind==="house"?520:(getBuildingDefinition(kind)?.service?.type==='recreation'?400:340));
   return true;
@@ -214,6 +249,7 @@ export function relocate(root,x,y){
   const check=canRelocate(root,x,y);
   if(!check.ok){ if(check.why) services.hint(check.why,true); return check; }
   const from={x:root.x,y:root.y};
+  const fromDistrict=districtAt(from.x,from.y)?.name||null;
   clearFacility(root);
   root.x=x; root.y=y;
   if(!restoreFacilityOccupancy(root)){
@@ -222,6 +258,7 @@ export function relocate(root,x,y){
     return {ok:false,why:'unsafe'};
   }
   invalidateServices(); invalidateCitySummary(); invalidateRecreation(); invalidateDistricts(); invalidateMobility();
+  ledgerMove(root,fromDistrict);
   services.puff(x,y); services.blip(470,0.06,'triangle');
   if(S.diagnostics) S.diagnostics.buildingsMoved=(S.diagnostics.buildingsMoved||0)+1;
   return {ok:true,from};
@@ -298,6 +335,7 @@ export function erase(x,y,{confirmed=false}={}){
     return true;
   }
   S.coins+=Math.floor(costOf(b.type,b.x,b.y)/2);
+  ledgerBuilding('closed',b);
   clearFacility(b);
   // Visitors hold only soft references and Recreation invalidation causes them
   // to choose a new normal destination safely on their next route decision.

@@ -32,7 +32,7 @@ import { askConfirm } from './confirm.js';
 
 /* ---------- the Look card ---------- */
 export const elLook=document.getElementById("look"), elLookBody=document.getElementById("look-body");
-export function closeLook(){ elLook.classList.remove("show","cityhall-open"); S.pick=null; }
+export function closeLook(){ elLook.classList.remove("show","cityhall-open","post-open"); S.pick=null; }
 document.getElementById("look-x").addEventListener("click",closeLook);
 
 export function listOut(a){

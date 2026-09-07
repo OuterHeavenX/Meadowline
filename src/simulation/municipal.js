@@ -8,6 +8,7 @@ import { emitFeedback } from './feedback.js';
 import { crossingBlockedByTrain } from './mobility.js';
 import { recomputeEmployment } from './employment.js';
 import { isFacilityPart, isType } from '../world/tiles.js';
+import { record } from './ledger.js';
 
 const SERVICE={crime:{facility:'policeStation',vehicle:'police',color:'#356da0',work:2.8,label:'Police'},fire:{facility:'fireStation',vehicle:'fireEngine',color:'#c74f43',work:5.2,label:'Fire crew'},medical:{facility:null,vehicle:'ambulance',color:'#e5e6df',work:4.1,label:'Ambulance'}};
 const INCIDENT_LIMIT=12,SERVICE_VEHICLE_LIMIT=6;
@@ -29,6 +30,7 @@ function dispatch(incident){
 function completeWork(v,inc){
   if(!inc){v.state='FAILED';v.done=true;return;}
   inc.resolved=true;inc.status='RESOLVED';inc.resolvedAge=0;const key=inc.kind==='crime'?'safety':inc.kind==='fire'?'fire':'healthcare';S.municipal[key].resolved=(S.municipal[key].resolved||0)+1;
+  record(inc.tag==='raid'?'search_complete':inc.kind==='crime'?'arrest':inc.kind==='fire'?'fire_out':'recovery',{incidentId:inc.id,x:inc.target.x,y:inc.target.y,kind:inc.target.type||null});
   emitFeedback(inc.target.x,inc.target.y,'service',inc.tag==='raid'?'✓ SEARCHED':inc.kind==='crime'?'✓ CAUGHT':inc.kind==='fire'?'✓ EXTINGUISHED':'✓ RECOVERING');services.toast(inc.tag==='raid'?'Police search complete':inc.kind==='crime'?'Suspect caught':inc.kind==='fire'?'Fire extinguished':'Patient receiving care','gold');
   const route=path({x:v.x,y:v.y},v.homeRoad);if(setRoute(v,route)){v.state='RETURNING';inc.status='RETURNING';}else{v.state='FAILED';v.done=true;}
 }
@@ -44,7 +46,7 @@ function updateVehicles(dt){
 // `opts.tag` marks an incident another simulation raised - a police raid from
 // enforcement.js rides the same dispatcher, the same cruiser and the same
 // lifecycle as a robbery, and is told apart only by its tag and its toast.
-export function spawnMunicipalIncident(kind,target=targetBuilding(),opts={}){if(!SERVICE[kind]||!target||S.incidents.length>=INCIDENT_LIMIT)return null;const inc={id:++S.incidentSerial,kind,target,age:0,resolvedAge:0,resolved:false,dispatched:false,status:'REPORTED',tag:opts.tag||null};S.incidents.push(inc);services.toast(opts.toast||(kind==='crime'?'Robbery reported':kind==='fire'?'Fire reported':'Medical call reported'));dispatch(inc);return inc;}
+export function spawnMunicipalIncident(kind,target=targetBuilding(),opts={}){if(!SERVICE[kind]||!target||S.incidents.length>=INCIDENT_LIMIT)return null;const inc={id:++S.incidentSerial,kind,target,age:0,resolvedAge:0,resolved:false,dispatched:false,status:'REPORTED',tag:opts.tag||null};S.incidents.push(inc);if(!inc.tag)record(kind==='crime'?'crime_incident':kind==='fire'?'fire_incident':'health_incident',{incidentId:inc.id,x:target.x,y:target.y,kind:target.type||null});services.toast(opts.toast||(kind==='crime'?'Robbery reported':kind==='fire'?'Fire reported':'Medical call reported'));dispatch(inc);return inc;}
 export function municipalSnapshot(){return{incidents:S.incidents.length,serviceVehicles:S.serviceVehicles.length,states:Object.fromEntries(['DISPATCHED','EN_ROUTE','ARRIVED','WORKING','RETURNING','FAILED'].map(k=>[k,S.serviceVehicles.filter(v=>v.state===k).length]))};}
 export function updateMunicipal(dt){
   recomputeEmployment();const pop=S.pop||0,emp=S.municipal.employment,police=capacity(['policeStation']),fireCap=capacity(['fireStation']),health=capacity(['clinic','hospital']),active=k=>S.incidents.filter(i=>i.kind===k&&!i.resolved).length;
@@ -54,7 +56,7 @@ export function updateMunicipal(dt){
   for(const inc of S.incidents){inc.age+=dt;if(inc.resolved)inc.resolvedAge+=dt;if(!inc.dispatched&&!inc.resolved)dispatch(inc);}updateVehicles(dt);S.incidents=S.incidents.filter(i=>{
     if(i.status==='CLEARED') return false;
     if(i.resolved) return i.resolvedAge<12;
-    if(!i.dispatched&&i.age>=INCIDENT_TIMEOUT){ if(S.diagnostics) S.diagnostics.incidentTimeouts=(S.diagnostics.incidentTimeouts||0)+1; return false; }
+    if(!i.dispatched&&i.age>=INCIDENT_TIMEOUT){ if(S.diagnostics) S.diagnostics.incidentTimeouts=(S.diagnostics.incidentTimeouts||0)+1; if(!i.tag) record('incident_unanswered',{incidentId:i.id,kind:i.kind,x:i.target.x,y:i.target.y}); return false; }
     return true;
   }).slice(-INCIDENT_LIMIT);
 }

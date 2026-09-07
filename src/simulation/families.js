@@ -3,6 +3,7 @@ import { clamp, hash2 } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { housingCapacity } from './housing.js';
 import { districtAt } from './districts.js';
+import { record } from './ledger.js';
 
 /* ============================================================
    FAMILIES — the households the valley comes to know by name
@@ -160,6 +161,8 @@ export function evaluateFamilies(note=()=>{}){
     const f=list[i];
     if(houseBySeed(f.homeSeed)) continue;
     note('The '+f.surname+' family left Meadowline');
+    // This loop is only reached when the home is gone, so that is the reason.
+    record('family_departure',{familyId:f.id,surname:f.surname,district:f.roots,days:(S.day||1)-(f.founded||1),reason:'home gone'});
     list.splice(i,1);
     if(S.diagnostics) S.diagnostics.familyDepartures=(S.diagnostics.familyDepartures||0)+1;
   }
@@ -169,6 +172,7 @@ export function evaluateFamilies(note=()=>{}){
     if(due>(f.generation||1)){
       f.generation=due;
       addNote(f,'A new generation of the family');
+      record('generation_change',{familyId:f.id,surname:f.surname,district:f.roots,generation:f.generation});
       note('A new generation of the '+f.surname+' family in '+(f.roots||'Meadowline'));
       if(S.diagnostics) S.diagnostics.generationChanges=(S.diagnostics.generationChanges||0)+1;
     }
@@ -204,6 +208,7 @@ function found(h,note){
   const d=districtAt(h.x,h.y);
   const f={id,surname,homeSeed:h.seed>>>0,founded:S.day||1,generation:1,roots:d?.name||null,notes:[]};
   addNote(f,'Settled in '+(f.roots||'Meadowline'));
+  record('family_arrival',{familyId:f.id,surname:f.surname,district:f.roots});
   social.families.push(f);
   note('The '+surname+' family settled in '+(f.roots||'Meadowline'));
   if(S.diagnostics) S.diagnostics.familyFoundings=(S.diagnostics.familyFoundings||0)+1;

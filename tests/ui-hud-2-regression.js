@@ -132,10 +132,15 @@ if(dlg?.open){
 }
 
 frame.src='../?uitest=cityhall';
-const hallReady=await waitFor(()=>frame.contentDocument?.querySelectorAll('[data-cityhall-nav]')?.length===8);
+/* The sections City Hall must offer, by name. A bare count told us the nav had
+   nine buttons when it had gained one and lost one, which is the failure worth
+   catching; the names say which. */
+const HALL_SECTIONS=['overview','goals','growth','districts','post','land','finances','services','mobility'];
+const navIds=()=>[...(frame.contentDocument?.querySelectorAll('[data-cityhall-nav]')||[])].map(b=>b.dataset.cityhallNav);
+const hallReady=await waitFor(()=>navIds().length===HALL_SECTIONS.length);
 check('the City Hall fixture finishes rendering',hallReady);
 const hall=frame.contentDocument;
-check('City Hall uses responsive section navigation',hall.querySelectorAll('[data-cityhall-nav]').length===8,hall.querySelectorAll('[data-cityhall-nav]').length);
+check('City Hall uses responsive section navigation',HALL_SECTIONS.every(id=>navIds().includes(id))&&navIds().length===HALL_SECTIONS.length,navIds().join(','));
 check('City Hall maximum is Level 4',hall.querySelector('.cityhall-hero')?.textContent.includes('Level 4'));
 check('City Hall never advertises Level 5',!hall.getElementById('look-body')?.textContent.includes('Level 5'));
 check('City Hall reads real municipal sections',hall.getElementById('look-body')?.textContent.includes('Services')&&hall.getElementById('look-body')?.textContent.includes('Mobility'));

@@ -14,6 +14,8 @@ export const S={
   municipal:{employment:{workers:0,jobs:0,employed:0,unemployed:0,prosperity:50},safety:{pressure:0,capacity:0,active:0,resolved:0},fire:{risk:0,capacity:0,active:0,resolved:0},healthcare:{demand:0,capacity:0,patients:0,recovered:0}},
   tutorial:{completed:false,skipped:false,step:0},quality:'auto',rendererMode:'auto',
   wx:{k:'clear',amt:0,target:0,next:70}, wishes:[],log:[],history:[],
+  // The day's facts, for the paper; and the paper's own durable memory.
+  ledger:[],post:{issue:null,archive:[],lastIssueDay:0,unread:false},
   // Social Fabric: only the durable truth lives here. Boundaries and every
   // measured figure are derived from the city itself.
   social:{districts:[],nextId:0,families:[],nextFamilyId:0,firsts:{},organisations:[],nextOrgId:0,orgMemory:{},fame:[]},

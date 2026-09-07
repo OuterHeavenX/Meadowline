@@ -4,6 +4,7 @@ import { isFacilityPart } from '../world/tiles.js';
 import { districtAt, invalidateDistricts, recomputeDistricts } from './districts.js';
 import { SOCIAL_INTERVAL, families, familyMembers, familyNote } from './families.js';
 import { LOOKING } from './careers.js';
+import { record } from './ledger.js';
 
 /* ============================================================
    ORGANISATIONS — the ones nobody built
@@ -198,6 +199,7 @@ function tend(o,d,note,day,slot){
       const who=bossOf(o);
       if(who){
         note('Around '+o.roots+', people say '+who.name+' runs the '+o.name);
+        record('boss_named',{orgId:o.id,name:who.name,district:o.roots,hidden:true});
         familyNote(who.family,'Word is '+who.first+' runs the '+o.name);
         if(S.diagnostics) S.diagnostics.bossesNamed=(S.diagnostics.bossesNamed||0)+1;
       }
@@ -210,6 +212,7 @@ function tend(o,d,note,day,slot){
       const b=free[Math.floor(hash2(o.id,day*7+slot,S.seed>>>0)*free.length)%free.length];
       o.fronts.push(b.seed>>>0);
       note('The '+o.name+' took up quietly behind a '+FRONT_TYPES[b.type]+' on '+o.roots);
+      record('front_opened',{orgId:o.id,kind:FRONT_TYPES[b.type],district:o.roots,hidden:true});
       if(S.diagnostics) S.diagnostics.frontsOpened=(S.diagnostics.frontsOpened||0)+1;
     }
   }
@@ -255,11 +258,13 @@ export function evaluateOrganisations(note=()=>{}){
       o.pressure--; o.stage--; changed=true;
       if(o.stage<=0){
         note('The '+o.name+' broke up after the police moved in');
+        record('org_collapsed',{orgId:o.id,name:o.name,district:o.roots,exposed:!!o.exposed,afterPolice:true,hidden:!o.exposed});
         social.orgMemory[o.roots]=day; list.splice(i,1);
         if(S.diagnostics) S.diagnostics.organisationCollapses=(S.diagnostics.organisationCollapses||0)+1;
         continue;
       }
       note('The '+o.name+' lost ground after the raid');
+      record('org_declined',{orgId:o.id,name:o.name,district:o.roots,hidden:true});
       if(S.diagnostics) S.diagnostics.organisationDeclines=(S.diagnostics.organisationDeclines||0)+1;
       tend(o,d,note,day,slot);
       continue;
@@ -274,12 +279,14 @@ export function evaluateOrganisations(note=()=>{}){
     if(met>=NEED+1&&roll<0.04&&o.stage<STAGES.length-1){
       o.stage++; changed=true;
       note('The '+o.name+' grew into a '+STAGES[o.stage]);
+      record('org_grew',{orgId:o.id,name:o.name,district:o.roots,stage:o.stage,hidden:true});
       if(S.diagnostics) S.diagnostics.organisationGrowths=(S.diagnostics.organisationGrowths||0)+1;
       recruit(o,d,note);
     } else if(pressed&&roll<0.08){
       o.stage--; changed=true;
       if(o.stage<=0){
         note('The '+o.name+' broke up');
+        record('org_collapsed',{orgId:o.id,name:o.name,district:o.roots,exposed:!!o.exposed,afterPolice:false,hidden:!o.exposed});
         social.orgMemory[o.roots]=day;
         list.splice(i,1);
         if(S.diagnostics) S.diagnostics.organisationCollapses=(S.diagnostics.organisationCollapses||0)+1;
@@ -305,9 +312,10 @@ export function evaluateOrganisations(note=()=>{}){
     if(roll>=0.012*(met-NEED+1)) continue;
     const id=++social.nextOrgId;
     const type=pickType(d,id);
-    const o={id,type,name:nameFor(d,type),roots:d.name,founded:day,stage:1,families:[],boss:null,fronts:[],taken:[],pressure:0,investigation:null,lastInvestigated:0};
+    const o={id,type,name:nameFor(d,type),roots:d.name,founded:day,stage:1,families:[],boss:null,fronts:[],taken:[],pressure:0,investigation:null,lastInvestigated:0,exposed:false};
     list.push(o); changed=true;
     note('The '+o.name+' first appeared around '+d.name);
+    record('org_formed',{orgId:o.id,name:o.name,district:o.roots,hidden:true});
     if(S.diagnostics) S.diagnostics.organisationBirths=(S.diagnostics.organisationBirths||0)+1;
     recruit(o,d,note);
   }
@@ -351,7 +359,8 @@ export function packOrganisations(){
       taken:(o.taken||[]).slice(0,40).map(x=>x|0),
       pressure:Math.max(0,Math.min(6,o.pressure|0)),
       investigation:o.investigation?{since:Math.max(1,o.investigation.since|0),progress:Math.max(0,Math.min(1,Number(o.investigation.progress)||0)),station:o.investigation.station>>>0}:null,
-      lastInvestigated:Math.max(0,o.lastInvestigated|0)
+      lastInvestigated:Math.max(0,o.lastInvestigated|0),
+      exposed:!!o.exposed
     }))
   };
 }
@@ -375,7 +384,9 @@ export function restoreOrganisations(raw){
       taken:(Array.isArray(o.taken)?o.taken:[]).map(x=>Math.floor(Number(x)||0)).filter(x=>x>=0).slice(0,40),
       pressure:Math.max(0,Math.min(6,Math.floor(Number(o.pressure)||0))),
       investigation:o.investigation&&typeof o.investigation==='object'?{since:Math.max(1,Math.floor(Number(o.investigation.since)||1)),progress:Math.max(0,Math.min(1,Number(o.investigation.progress)||0)),station:Number(o.investigation.station)>>>0}:null,
-      lastInvestigated:Math.max(0,Math.floor(Number(o.lastInvestigated)||0))
+      lastInvestigated:Math.max(0,Math.floor(Number(o.lastInvestigated)||0)),
+      // Whether the world itself has exposed it: only a made case sets this.
+      exposed:o.exposed===true
     });
     const rec=s.organisations[s.organisations.length-1];
     if(o.boss&&typeof o.boss==='object'){

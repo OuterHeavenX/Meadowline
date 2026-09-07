@@ -41,6 +41,8 @@ import { advanceCareers } from '../simulation/careers.js';
 import { advanceOrganisations } from '../simulation/organisations.js';
 import { advanceEnforcement } from '../simulation/enforcement.js';
 import { advanceFame } from '../simulation/fame.js';
+import { publishIssue } from '../simulation/post.js';
+import { record } from '../simulation/ledger.js';
 import { updateFeedback } from '../simulation/feedback.js';
 import { tickTutorial } from '../ui/tutorial.js';
 
@@ -107,8 +109,11 @@ function step(now){
     if(S.dayT>=1){
       S.dayT-=1; S.day++; payday();
       recordDay();
+      // Yesterday is over; the paper reads its ledger and goes to print. The
+      // player is told an edition is out, and chooses whether to read it.
+      if(publishIssue()) toast('The Meadowline Post · Day '+(S.day-1)+' edition is out');
       const fest=activeFestival();
-      if(fest){ toast(fest.name+" · the valley is dressed for it","gold"); note(fest.name); }
+      if(fest){ toast(fest.name+" · the valley is dressed for it","gold"); note(fest.name); record('festival',{name:fest.name}); }
     }
     simClock+=sdt;
     if(simClock>0.9){
@@ -122,6 +127,7 @@ function step(now){
       if(growthResult.stageChanged){
         toast(cityStage().name+' established','gold');
         note(cityStage().name+' established');
+        record('stage_change',{stage:cityStage().name});
         celebrateStage(cityStage().name);
         paintTools();
         paintGrowthPanel();
@@ -133,6 +139,7 @@ function step(now){
       advanceDistricts(step,(district,held)=>{
         if(!held.length) return;
         note(district.name+' became known as '+held.map(h=>h.label.toLowerCase()).join(' and '));
+        record('district_identity',{district:district.name,labels:held.map(h=>h.label)});
       });
       // Who the valley has come to know. Same slow clock, same idea: the
       // Chronicle gets the sentence, the simulation decides the fact.
