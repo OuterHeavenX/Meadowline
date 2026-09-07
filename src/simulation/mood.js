@@ -14,7 +14,7 @@ import { getBuildingDefinition } from '../buildings/registry.js';
 import { clamp } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
-import { recreationStatus, recomputeRecreation } from './recreation.js';
+import { markRecreationPopulation, recreationStatus, recomputeRecreation } from './recreation.js';
 import { PAL, seasonName } from '../world/seasons.js';
 import { activeFestival } from '../world/festivals.js';
 import { idx, inBounds, isFacilityPart, isType } from '../world/tiles.js';
@@ -128,6 +128,8 @@ export function recompute(){
     if(getBuildingDefinition(b.type)?.category==='wonder') wonders.push(b);
   }
   S.ctx={parks,recreation,cafes,stations,houses,lamps,mills,markets,bakeries,schools,docks,farms,wonders};
+  // The house list the recreation signature describes has just been rebuilt.
+  markRecreationPopulation();
 
   // Population/demand is authoritative at households. Establish the real
   // household totals first, then compute Recreation assignment, then Mood.

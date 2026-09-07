@@ -34,6 +34,7 @@ function isRecreation(b){ return !!b&&!isFacilityPart(b)&&getBuildingDefinition(
 
 export function invalidateRecreation(){
   dirty=true;
+  generation++;
   connectivityCache.clear();
   if(S.diagnostics) S.diagnostics.recreationInvalidations=(S.diagnostics.recreationInvalidations||0)+1;
 }
@@ -89,8 +90,37 @@ function routeAccess(h,root,entrances){
   return null;
 }
 
-function populationSignature(homes){
-  return homes.map(h=>h.x+','+h.y+':'+(h.pop|0)+':'+(h.linked?1:0)).join('|');
+/* ---------- the cache check that cost more than the work ----------
+   recreationStatus() is asked once per home, and every ask rebuilt this
+   signature over every home to decide whether the assignment was stale. At 280
+   homes that measured 0.05ms a call against 0.72ms to rebuild the assignment
+   outright: checking the cache cost nineteen times what filling it did, and it
+   was the whole of the quadratic in the housing pass.
+
+   The signature still decides staleness. It is derived once per generation now
+   instead of once per home, and the generation is bumped wherever the
+   population it describes is written: mood's recompute(), which rebuilds the
+   house list, and growth(), which is where a household gains or loses someone.
+   invalidateRecreation() bumps it too. recompute() runs every sim tick, so a
+   bump missed anywhere else costs at most one tick of staleness rather than a
+   reading stuck forever - the failure mode is bounded by the granularity the
+   rest of the simulation already runs at. */
+let generation=0, memoAt=-1, memoHomes=null, memoSignature='';
+export function markRecreationPopulation(){ generation++; }
+function livingHomes(){
+  if(memoAt===generation&&memoHomes) return memoHomes;
+  memoHomes=(S.ctx?.houses||[]).filter(h=>(h.pop|0)>0);
+  memoSignature=memoHomes.map(h=>h.x+','+h.y+':'+(h.pop|0)+':'+(h.linked?1:0)).join('|');
+  memoAt=generation;
+  // How many times the signature was actually built. It is the count, not a
+  // stopwatch, that says whether this is per-pass or back to per-home.
+  if(S.diagnostics) S.diagnostics.recreationSignatures=(S.diagnostics.recreationSignatures||0)+1;
+  return memoHomes;
+}
+// The signature the memo was taken from, for a test to check against a fresh one.
+export function populationSignatureNow(){
+  return (S.ctx?.houses||[]).filter(h=>(h.pop|0)>0)
+    .map(h=>h.x+','+h.y+':'+(h.pop|0)+':'+(h.linked?1:0)).join('|');
 }
 
 function ensureState(){
@@ -115,14 +145,15 @@ function refreshVisitorCounts(svc){
 
 export function recomputeRecreation(force=false){
   const svc=ensureState();
-  const homes=(S.ctx?.houses||[]).filter(h=>(h.pop|0)>0);
-  const popSig=populationSignature(homes);
+  const homes=livingHomes();
+  const popSig=memoSignature;
   if(!force&&!dirty&&popSig===lastPopulationSignature){
     // Visitor count is transient even while service assignment is cached.
     refreshVisitorCounts(svc);
     return svc;
   }
   dirty=false; lastPopulationSignature=popSig;
+  if(S.diagnostics) S.diagnostics.recreationRebuilds=(S.diagnostics.recreationRebuilds||0)+1;
 
   const facilities=recreationFacilities();
   const providers={};

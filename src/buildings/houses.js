@@ -2,6 +2,7 @@ import { hash2 } from '../core/constants.js';
 import { services } from '../core/services.js';
 import { S } from '../core/state.js';
 import { invalidateServices } from '../simulation/civic-services.js';
+import { markRecreationPopulation } from '../simulation/recreation.js';
 import { housingCapacity } from '../simulation/housing.js';
 
 // Housing 2.0 makes the residential tier authoritative. Existing households
@@ -14,15 +15,15 @@ export function growth(dt){
     const cap=capFor(h);
     if(!h.linked){
       h.grow=0;
-      if(h.pop>0&&Math.random()<dt*0.05){ h.pop--; invalidateServices(); }
+      if(h.pop>0&&Math.random()<dt*0.05){ h.pop--; invalidateServices(); markRecreationPopulation(); }
       continue;
     }
     if(h.pop<cap&&h.mood>=62){
       h.grow+=dt*(h.mood-55)/60;
-      if(h.grow>=6){ h.grow=0; h.pop++; invalidateServices(); services.hearts(h.x,h.y); }
+      if(h.grow>=6){ h.grow=0; h.pop++; invalidateServices(); markRecreationPopulation(); services.hearts(h.x,h.y); }
     } else if(h.mood<32&&h.pop>0){
       h.grow-=dt*0.4;
-      if(h.grow<-8){ h.grow=0; h.pop--; invalidateServices(); }
+      if(h.grow<-8){ h.grow=0; h.pop--; invalidateServices(); markRecreationPopulation(); }
     } else h.grow*=(1-dt*0.1);
   }
 }

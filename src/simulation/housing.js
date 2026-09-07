@@ -133,12 +133,16 @@ export function nextHousingTier(h){
   return RESIDENTIAL_TIERS[current]||null;
 }
 
-export function evaluateHousingReadiness(h){
+/* `known` is a desirability already computed for this home in this pass.
+   housingMetrics() worked it out and then called this, which worked it out
+   again: the most expensive number in the simulation, computed twice per home
+   per tick for nothing. */
+export function evaluateHousingReadiness(h,known){
   const current=housingTierIndex(h);
   const next=nextHousingTier(h);
   if(!next) return {complete:true,current:housingTier(h),next:null,requirements:[],ready:false};
   const req=next.requirements||{};
-  const desirability=getDesirability(h);
+  const desirability=Number.isFinite(known)?known:getDesirability(h);
   const education=getEducationLevel(h);
   const requirements=[
     {id:"road",label:"Road access",met:req.road===false||!!h.linked},
@@ -184,8 +188,9 @@ export function housingMetrics(){
   for(const h of homes){
     const i=housingTierIndex(h)-1;
     if(tiers[i]!==undefined) tiers[i]++;
-    desirability+=getDesirability(h);
-    if(evaluateHousingReadiness(h).ready) ready++;
+    const d=getDesirability(h);
+    desirability+=d;
+    if(evaluateHousingReadiness(h,d).ready) ready++;
   }
   return {tiers,averageDesirability:homes.length?Math.round(desirability/homes.length):0,ready,total:homes.length};
 }

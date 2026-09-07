@@ -5,8 +5,8 @@ import { applySave, KEY, KEY_OLD, KEY_V2, load, save, store, legacyShift } from 
 import { S } from '../src/core/state.js';
 import { resetProgression } from '../src/progression/city-growth.js';
 import { evalHouse, recompute } from '../src/simulation/mood.js';
-import { RESIDENTIAL_TIERS, desirabilityDetails } from '../src/simulation/housing.js';
-import { RECREATION_QUALITY_FLOOR, invalidateRecreation, recreationAssignment, recreationFacilityStats, recreationQualityFactor, recreationSnapshot, recreationStatus, recomputeRecreation } from '../src/simulation/recreation.js';
+import { RESIDENTIAL_TIERS, desirabilityDetails, housingMetrics } from '../src/simulation/housing.js';
+import { RECREATION_QUALITY_FLOOR, invalidateRecreation, populationSignatureNow, markRecreationPopulation, recreationAssignment, recreationFacilityStats, recreationQualityFactor, recreationSnapshot, recreationStatus, recomputeRecreation } from '../src/simulation/recreation.js';
 import { GOAL_TYPES } from '../src/simulation/wishes.js';
 import { genWorld } from '../src/world/map.js';
 import { facilityRootAt, footprintCells, idx, isFacilityPart } from '../src/world/tiles.js';
@@ -161,6 +161,47 @@ check('Housing tier thresholds are unchanged',
   RESIDENTIAL_TIERS[2].requirements.mood===78&&RESIDENTIAL_TIERS[2].requirements.desirability===62);
 check('Housing capacities and tax multipliers are unchanged',
   RESIDENTIAL_TIERS.map(t=>t.capacity).join(',')==='4,6,8'&&RESIDENTIAL_TIERS.map(t=>t.taxMultiplier).join(',')==='1,1.25,1.55');
+
+/* ---------- the cost of asking ----------
+   recreationStatus() is asked once per home, and each ask used to rebuild a
+   signature string over every home to decide whether its answer was stale:
+   0.05ms an ask against 0.72ms to rebuild the answer outright. Nineteen times
+   the cost of the work, once per home, which is what made the housing pass
+   quadratic. These count the work rather than timing it, so they mean the same
+   on any machine. */
+{
+  genWorld(4242); resetProgression('legacy-open'); S.cityProgress.stage=4; S.coins=9e6;
+  S.citizens=[];
+  const x0=44,y0=44,side=14;
+  for(let y=y0;y<y0+side+6;y++) for(let x=x0;x<x0+side+6;x++){const i=idx(x,y);S.terr[i]=0;S.natTree[i]=0;S.grid[i]=null;}
+  for(let y=y0;y<y0+side+4;y+=3) for(let x=x0;x<x0+side+4;x++) place('road',x,y);
+  for(let y=y0+1;y<y0+side+4;y+=3) for(let x=x0;x<x0+side+2;x++){ if(place('house',x,y)){const h=S.grid[idx(x,y)];h.pop=4;h.mood=70;} }
+  place('pocketPark',x0+4,y0+4);
+  recompute();
+  const homes=S.ctx.houses.length;
+  check('the fixture has enough homes for a per-home cost to show',homes>=40,homes);
+
+  S.diagnostics.recreationSignatures=0; S.diagnostics.recreationRebuilds=0; S.diagnostics.desirabilityRecomputes=0;
+  housingMetrics();
+  check('one housing pass derives the recreation signature once, not once per home',
+    S.diagnostics.recreationSignatures<=1,S.diagnostics.recreationSignatures+' for '+homes+' homes');
+  check('one housing pass rebuilds recreation at most once',
+    S.diagnostics.recreationRebuilds<=1,S.diagnostics.recreationRebuilds);
+  check('one housing pass values each home once, not twice',
+    S.diagnostics.desirabilityRecomputes===homes,S.diagnostics.desirabilityRecomputes+' for '+homes+' homes');
+
+  // The memo must never answer for a population it was not taken from.
+  const before=S.ctx.houses.map(h=>Math.round(recreationStatus(h).satisfaction)).join(',');
+  recomputeRecreation(true);
+  const forced=S.ctx.houses.map(h=>Math.round(recreationStatus(h).satisfaction)).join(',');
+  check('memoised readings match a forced full rebuild exactly',before===forced);
+  const h0=S.ctx.houses[0],was=recreationStatus(h0).assignment.demand;
+  h0.pop+=3; markRecreationPopulation();
+  check('a household gaining someone is seen at once',recreationStatus(h0).assignment.demand===was+3,
+    was+' -> '+recreationStatus(h0).assignment.demand);
+  check('the derived signature still describes the live population',
+    populationSignatureNow().includes(h0.x+','+h0.y+':'+h0.pop));
+}
 
 const failed=checks.filter(c=>!c.pass);
 document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);
