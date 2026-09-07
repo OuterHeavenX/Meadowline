@@ -46,7 +46,7 @@ const SECTOR={
   cafe:'trade',market:'trade',bakery:'trade',generalStore:'trade',teaHouse:'trade',bookshop:'trade',vendor:'trade',
   school:'civic',cityHall:'civic',policeStation:'civic',fireStation:'civic',clinic:'civic',hospital:'civic',
   station:'transport',dock:'transport',
-  park:'recreation',pocketPark:'recreation',playground:'recreation',picnicGreen:'recreation',sportsCourt:'recreation',townPark:'recreation',
+  park:'recreation',pocketPark:'recreation',playground:'recreation',picnicGreen:'recreation',sportsCourt:'recreation',townPark:'recreation',buskerPitch:'recreation',
   statue:'landmark',clockTower:'landmark',lighthouse:'landmark',greatLibrary:'landmark',
   house:'homes'
 };

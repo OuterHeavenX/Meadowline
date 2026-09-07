@@ -253,8 +253,43 @@ export function addIncident(parent,inc,people){
 }
 
 /* Everything that moves, into the dynamic group, once per frame. */
+const ACT_COLOR={juggler:'#d4738f',clown:'#e0574f',fiddler:'#8d6fa0',puppeteer:'#4f8b8d',chalkArtist:'#c9a35e'};
+/* An entertainer is one of the little people standing still, so they are posed
+   through the same instanced figure everything else uses and cost nothing
+   extra. What is above their hands is their own — at most ten of them stand in
+   a town, so a handful of small meshes each is cheap. */
+function buskerFigure(bk){
+  return extra(bk.x,bk.y,Math.PI,ACT_COLOR[bk.act]||'#d4738f',
+    {skin:SKIN[bk.seed%SKIN.length],hair:HAIR[(bk.seed>>3)%HAIR.length]});
+}
+function addBuskerProp(parent,bk){
+  const t=reduceMotion?0:((S.t*0.9+bk.seed%97)%1);
+  if(bk.act==='juggler'){
+    for(let i=0;i<3;i++){
+      const a=(t+i/3)*Math.PI*2;
+      sphere(parent,bk.x+Math.cos(a)*.16,.62+Math.sin(a)*.14,bk.y,.045,
+        mat(['#e0b45a','#c9647a','#7fa9c9'][i],.7),'busker-prop');
+    }
+  }else if(bk.act==='clown'){
+    sphere(parent,bk.x,.5,bk.y+.09,.035,mat('#e0574f',.6),'busker-prop');
+    cone(parent,bk.x,.54,bk.y,.09,.16,mat('#f2e6c8',.8),'busker-prop',7);
+  }else if(bk.act==='fiddler'){
+    box(parent,bk.x+.11,.4,bk.y,.16,.05,.06,mat('#8a5a3c',.7),'busker-prop');
+    box(parent,bk.x+.1,.62+t*.1,bk.y,.03,.05,.01,mat('#f0ece0',.6),'busker-prop',false);
+  }else if(bk.act==='puppeteer'){
+    box(parent,bk.x,.34,bk.y,.34,.24,.08,mat('#4f8b8d',.8),'busker-prop');
+    box(parent,bk.x,.4,bk.y+.05,.22,.14,.02,mat('#f2e6c8',.8),'busker-prop',false);
+    sphere(parent,bk.x+(t<.5?-.06:.06),.46,bk.y+.07,.03,mat('#c9647a',.7),'busker-prop');
+  }else{
+    for(let i=0;i<4;i++)
+      box(parent,bk.x-.18+i*.12,.005,bk.y+.16,.09,.01,.09,
+        mat(['#c9647a','#e0b45a','#7fa9c9','#8fae72'][i],.9),'busker-prop',false);
+  }
+}
+
 export function addActors(parent){
   const people=S.citizens.map(pose);
+  for(const bk of S.buskers||[]){ people.push(buskerFigure(bk)); addBuskerProp(parent,bk); }
   for(const inc of S.incidents||[]) addIncident(parent,inc,people);
   addPeople(parent,people);
   for(const v of S.vehicles||[]) addVehicle(parent,v);

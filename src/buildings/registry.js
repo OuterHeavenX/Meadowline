@@ -101,6 +101,16 @@ export const BUILDINGS={
     placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{variety:"foodCart"}},
   mill:{id:"mill",name:"Windmill",category:"trade",cost:95,key:"9",upkeep:4,unlockStage:3,description:"Grinds coin every day — most of all at harvest. Wants open ground.",renderKey:"mill",jobs:5,placement:{footprint:[1,1]},destination:{work:true},saveDefaults:{}},
 
+  /* Somewhere to perform, and nothing else. It has no service, so an empty
+     pitch satisfies no recreation demand and does nothing for anybody — what
+     it buys is that entertainers turn up on it readily. The one job is a real
+     one: somebody makes their living on it, and careers.js only offers a trade
+     at a building with a post, so without it a street performer could never
+     hold the pitch and the fame system would never see it. */
+  buskerPitch:{id:"buskerPitch",name:"Busker\u2019s Pitch",category:"recreation",cost:45,key:"",upkeep:1,unlockStage:2,
+    description:"A cleared square of pavement with a chalk ring on it. Who stands in it is the street\u2019s business \u2014 an empty pitch on a dead street stays empty.",
+    renderKey:"buskerPitch",jobs:1,performance:{},placement:{footprint:[1,1]},destination:{work:true,visit:true},saveDefaults:{}},
+
   // The production `park` ID stays 1×1 forever so old V3 cities remain intact.
   // Recreation 2.0 treats it as a generous legacy small green rather than
   // expanding it into neighboring player property.

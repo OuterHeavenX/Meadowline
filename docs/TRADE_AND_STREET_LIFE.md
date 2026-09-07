@@ -5,8 +5,7 @@ worth turning up to.
 
 ## Status
 
-**Shops and street vendors are production.** Buskers are next and are
-described at the end as intent, not as shipped behaviour.
+**All of it is production**: shops, street vendors, and street entertainment.
 
 ## The shape of it
 
@@ -155,10 +154,71 @@ as a shop; the GPU signature dropping the variety; `varietyOf()` trusting
 whatever the state says; the save whitelist dropping the variety; the
 desirability cap removed.
 
+## Buskers
+
+Street entertainment is two halves, and the split is the point.
+
+**The player's half** is a **Busker's Pitch** — 45 coins, 1 upkeep, no keyboard
+shortcut. It is a cleared square of pavement with a chalk ring on it, and it
+has **no service**, so an empty pitch satisfies no recreation demand and is
+worth nothing to anybody. What it buys is that entertainers turn up on it
+readily rather than occasionally.
+
+It does carry one job, and that is not a contradiction: somebody makes their
+living on it. `careers.js` only offers a trade at a building with a post, so
+without it a street performer could never hold a pitch and the fame system
+would never see the thing at all.
+
+**The city's half** is who turns up. `src/simulation/buskers.js` decides that,
+and the player has no say in it. A spot is worth standing on in proportion to:
+
+| what | worth | reach |
+| --- | ---: | ---: |
+| homes with people in them | 1 each, max 6 | 4 |
+| trade to bring people past | 2 each, max 8 | 3 |
+| **somebody famous playing nearby** | 4, or 6 across the valley, max 12 | 4 |
+| standing on a pitch | 5 | — |
+
+Past a threshold of 6 a spot rolls, deterministically, on the day and the slot;
+a pitch fills readily and bare pavement is a maybe. Never more than ten in a
+town. Acts are a juggler, a clown, a fiddler, a puppeteer or a chalk artist.
+
+### The fame tie is the whole feature
+
+A musician the valley has come to know pulls jugglers and puppeteers onto the
+pavement outside their venue, and the player does nothing to make that happen —
+they built a café street, people became musicians on it, one of them got known,
+and now there is a small crowd outside. `liveliness()` reads the **fame list**
+for this, not the niceness of the street, and the busker records the name of
+whoever drew them so the pitch card can say so. It is the only place a player
+ever sees that connection stated.
+
+Getting the check for it to mean anything took a second go. The first version
+subtracted the star term from the total and asserted the total was bigger,
+which is true of any number and stayed true with the star term deleted. It now
+compares against what the street is worth on its own, and checks the same
+pavement with the fame list emptied comes to exactly that.
+
+### Transient by design
+
+The list is rebuilt from a seeded roll on its own clock, so the same day in the
+same town is the same street, and **none of it is saved**. Tomorrow is its own
+day. They go home when it gets dark. Pull the street down and there is nobody
+on it, because there was never anything stored to pull down.
+
+A household hears whoever is playing within three tiles: +3 each, **capped at
+6**. It is the only mood term that can change between one morning and the next
+without anything being built or pulled down, which is the point of it.
+
+### Testing
+
+`tests/buskers-regression.html`, 50 checks. Sabotages confirmed to fail:
+entertainers turning up regardless of the street; fame not being read; nobody
+going home at night; the mood term uncapped; the pitch given a recreation
+service so an empty one counts as a park; and the list being saved.
+
 ## Still to come
 
-**Buskers** — a Busker's Pitch you place, and entertainers who simply turn up on
-a lively street or outside a venue where somebody famous is playing. The second
-half is the interesting one: it ties street entertainment to the fame system, so
-who performs where is something the city decided rather than something the
-player placed.
+Nothing in this arc. The next building added anywhere gets a Build-menu entry
+and no keyboard shortcut, and `tests/regression.js` enforces only that no two
+tools answer to the same letter.

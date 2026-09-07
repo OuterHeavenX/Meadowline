@@ -47,6 +47,7 @@ import { publishIssue } from '../simulation/post.js';
 import { record } from '../simulation/ledger.js';
 import { updateFeedback } from '../simulation/feedback.js';
 import { tickTutorial } from '../ui/tutorial.js';
+import { advanceBuskers } from '../simulation/buskers.js';
 
 /* ---------- reaching a new stage ----------
    Advancing a city stage is the largest thing that happens in Meadowline and it
@@ -159,6 +160,11 @@ function step(now){
       // And what the households the valley listens to are asking for.
       advanceInfluence(step,note);
     }
+    /* Who is on the pavement today. Faster than the social clock because a
+       street fills and empties over an afternoon, not over a season, and it is
+       rebuilt from a seeded roll rather than accumulated, so it costs one pass
+       and is never saved. */
+    advanceBuskers(sdt);
     growth(sdt);
     updateCitizens(sdt);
     updateMobility(sdt);

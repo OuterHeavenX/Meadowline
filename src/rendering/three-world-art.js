@@ -269,6 +269,16 @@ function storefront(g,type,seed){const colors={cafe:'#c98666',market:'#9db7a5',b
    glazing. A barrow, two poles and a canopy, low enough that a row of them
    reads as a busy pavement rather than as a terrace of tiny shops. The variety
    the street settled on colours the canopy and puts one thing on the counter. */
+/* Almost nothing, on purpose: paving, a painted ring and two crates. An empty
+   pitch has to read as empty, or the player cannot tell whether anybody came. */
+function buskerPitch(g){
+  lotBase(g,.9,.9);
+  box(g,0,.01,0,.82,.02,.82,mat('#cfc7b4'),false);
+  cyl(g,0,.03,0,.3,.012,mat('#efe9da',.9),24);
+  cyl(g,0,.04,0,.25,.012,mat('#cfc7b4',.9),24);
+  box(g,-.3,.03,-.26,.16,.14,.16,mat('#a98c63'),false);
+  box(g,.28,.03,.24,.14,.11,.14,mat('#8d7a5f'),false);
+}
 function vendorPitch(g,b){
   const id=b.state?.variety||'foodCart',
     canopy=id==='flowerStall'?'#7a9b60':id==='newsstand'?'#4b6f8d':'#c85c46',
@@ -389,7 +399,7 @@ function building(parent,b){const def=getBuildingDefinition(b.type),fp=def?.plac
       const blade=box(g,Math.cos(a)*.22,.62+Math.sin(a)*.22,.36,.09,.05,.4,mat('#e2d4b8'),false);
       blade.rotation.z=a;}}
     return;
-  }if(def?.service?.type==='recreation'||b.type==='park'){recreation(g,b.type,fp,b.seed||0);return;}if(b.type==='tree'){tree(g,0,0,b.seed||0,1);return;}if(b.type==='lamp'){lamp(g,0,0);return;}if(b.type==='dock'){box(g,0,.02,0,.8,.12,.8,mat('#80664e'));return;}if(b.type==='house'){house(g,b);return;}if(['cafe','market','bakery','station','generalStore','teaHouse','bookshop'].includes(b.type)){storefront(g,b.type,b.seed||0);return;}if(b.type==='vendor'){vendorPitch(g,b);return;}if(b.type==='farm'){farm(g,fp,b.seed||0);return;}if(b.type==='statue'){statue(g,fp);return;}if(b.type==='clockTower'){clockTower(g,fp);return;}if(b.type==='lighthouse'){lighthouse(g,fp);return;}if(b.type==='greatLibrary'){greatLibrary(g,fp);return;}if(b.type==='mill'){lotBase(g,.94,.94);box(g,0,.05,0,.55,.72,.55,mat('#d3c6aa'));gable(g,0,.77,0,.62,.62,.22,mat('#75594b'));cyl(g,0,.5,.3,.035,.45,mat('#5d4a3e'),7);for(const a of[0,Math.PI/2,Math.PI,Math.PI*1.5]){const blade=box(g,Math.cos(a)*.24,.68,Math.sin(a)*.24,.08,.05,.42,mat('#e2d4b8'),false);blade.rotation.y=-a;}return;}civic(g,b.type,b,fp);}
+  }if(def?.service?.type==='recreation'||b.type==='park'){recreation(g,b.type,fp,b.seed||0);return;}if(b.type==='tree'){tree(g,0,0,b.seed||0,1);return;}if(b.type==='lamp'){lamp(g,0,0);return;}if(b.type==='dock'){box(g,0,.02,0,.8,.12,.8,mat('#80664e'));return;}if(b.type==='house'){house(g,b);return;}if(['cafe','market','bakery','station','generalStore','teaHouse','bookshop'].includes(b.type)){storefront(g,b.type,b.seed||0);return;}if(b.type==='buskerPitch'){buskerPitch(g);return;}if(b.type==='vendor'){vendorPitch(g,b);return;}if(b.type==='farm'){farm(g,fp,b.seed||0);return;}if(b.type==='statue'){statue(g,fp);return;}if(b.type==='clockTower'){clockTower(g,fp);return;}if(b.type==='lighthouse'){lighthouse(g,fp);return;}if(b.type==='greatLibrary'){greatLibrary(g,fp);return;}if(b.type==='mill'){lotBase(g,.94,.94);box(g,0,.05,0,.55,.72,.55,mat('#d3c6aa'));gable(g,0,.77,0,.62,.62,.22,mat('#75594b'));cyl(g,0,.5,.3,.035,.45,mat('#5d4a3e'),7);for(const a of[0,Math.PI/2,Math.PI,Math.PI*1.5]){const blade=box(g,Math.cos(a)*.24,.68,Math.sin(a)*.24,.08,.05,.42,mat('#e2d4b8'),false);blade.rotation.y=-a;}return;}civic(g,b.type,b,fp);}
 
 function terrain(parent){box(parent,(W-1)/2,-.6,(H-1)/2,W+.8,.48,H+.8,mat('#455a45'),false);const batches=new Map(),matrix=new THREE.Matrix4();for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=idx(x,y),water=S.terr[i]===1,open=isTileUnlocked(x,y),/* Meadow tone. floor(x/n)+floor(y/n) was the obvious way to get patches and
          the wrong one: a sum of two ramps is constant along a diagonal, so the

@@ -2,6 +2,7 @@ import { P, TAU, TH, TW, clamp, hash2, shade } from '../core/constants.js';
 import { S, reduceMotion } from '../core/state.js';
 import { box, diamond, drawTree, g, lights, snowCap } from './terrain.js';
 import { PAL } from '../world/seasons.js';
+import { HAIR, SKIN } from './people-palette.js';
 import { activeFestival, festivalGlow } from '../world/festivals.js';
 
 
@@ -170,6 +171,63 @@ export function drawVendor(b,p,dark){
     }
   }
   if(dark>0.12) lights.push({x:p.x-hw*0.5,y:p.y-9*z,w:hw,h:3*z});
+}
+
+/* The pitch itself is almost nothing to look at, and that is right: a chalk
+   ring on the pavement and a couple of upturned crates. What makes it worth
+   looking at is whoever is standing in it, and that is drawn separately —
+   an empty pitch should read as empty. */
+export function drawBuskerPitch(b,p){
+  const z=S.cam.z, hw=TW/2*0.62*z, hh=TH/2*0.62*z;
+  g.fillStyle="#cfc7b4"; diamond(p.x,p.y,0.62); g.fill();
+  g.strokeStyle="rgba(240,236,224,.85)"; g.lineWidth=Math.max(1,1.4*z);
+  g.beginPath(); g.ellipse(p.x,p.y-1*z,hw*0.62,hh*0.62,0,0,TAU); g.stroke();
+  g.fillStyle="#a98c63";
+  g.fillRect(p.x-hw*0.62,p.y-3.4*z,3.6*z,3*z);
+  g.fillStyle="#8d7a5f";
+  g.fillRect(p.x+hw*0.34,p.y-2.6*z,3*z,2.4*z);
+}
+
+const ACT_COLOR={juggler:"#d4738f",clown:"#e0574f",fiddler:"#8d6fa0",puppeteer:"#4f8b8d",chalkArtist:"#c9a35e"};
+/* An entertainer is a person and a prop. They are drawn the size of a citizen,
+   because that is what they are — the only difference is that they stand still
+   and something is going on above their hands. */
+export function drawBusker(bk,p,dark){
+  const z=S.cam.z, c=ACT_COLOR[bk.act]||"#d4738f";
+  const t=((S.dayT||0)*900+bk.seed%97)%1;
+  groundShadow(p.x,p.y,5*z,2.4*z,0.22);
+  g.fillStyle="#3f4a52"; g.fillRect(p.x-1.5*z,p.y-5*z,1.2*z,5*z); g.fillRect(p.x+0.3*z,p.y-5*z,1.2*z,5*z);
+  g.fillStyle=c;          g.fillRect(p.x-2*z,p.y-11*z,4*z,6.4*z);
+  g.fillStyle=SKIN[bk.seed%SKIN.length];
+  g.beginPath(); g.arc(p.x,p.y-13*z,2*z,0,TAU); g.fill();
+  g.fillStyle=HAIR[(bk.seed>>3)%HAIR.length];
+  g.fillRect(p.x-2*z,p.y-15*z,4*z,1.6*z);
+  if(bk.act==='juggler'){
+    for(let i=0;i<3;i++){
+      const a=(t+i/3)*TAU;
+      g.fillStyle=["#e0b45a","#c9647a","#7fa9c9"][i];
+      g.beginPath(); g.arc(p.x+Math.cos(a)*3.4*z,p.y-16*z-Math.sin(a)*3.2*z,1.2*z,0,TAU); g.fill();
+    }
+  } else if(bk.act==='clown'){
+    g.fillStyle="#e0574f"; g.beginPath(); g.arc(p.x,p.y-12.6*z,0.8*z,0,TAU); g.fill();   // the nose
+    g.fillStyle="#f2e6c8";
+    g.beginPath(); g.moveTo(p.x-3*z,p.y-14.4*z); g.lineTo(p.x+3*z,p.y-14.4*z); g.lineTo(p.x,p.y-18*z);
+    g.closePath(); g.fill();
+  } else if(bk.act==='fiddler'){
+    g.fillStyle="#8a5a3c"; g.fillRect(p.x+1.4*z,p.y-12.4*z,3.4*z,1.6*z);
+    g.fillStyle="rgba(240,236,224,.75)";
+    g.fillRect(p.x+3*z,p.y-16*z-Math.round(t*2)*z,1*z,2.4*z);                            // a note going up
+  } else if(bk.act==='puppeteer'){
+    g.fillStyle="#4f8b8d"; g.fillRect(p.x-3.4*z,p.y-16.6*z,6.8*z,4.4*z);
+    g.fillStyle="#f2e6c8"; g.fillRect(p.x-2.4*z,p.y-15.6*z,4.8*z,2.6*z);
+    g.fillStyle="#c9647a"; g.beginPath(); g.arc(p.x+(t<0.5?-1:1)*1.2*z,p.y-14.4*z,0.9*z,0,TAU); g.fill();
+  } else {
+    for(let i=0;i<4;i++){                                                                 // chalk on the ground
+      g.fillStyle=["#c9647a","#e0b45a","#7fa9c9","#8fae72"][i];
+      g.fillRect(p.x-4*z+i*2.2*z,p.y+1*z,1.8*z,1.2*z);
+    }
+  }
+  if(dark>0.12) lights.push({x:p.x-2*z,y:p.y-11*z,w:4*z,h:4*z});
 }
 
 export function drawCafe(b,p,dark){

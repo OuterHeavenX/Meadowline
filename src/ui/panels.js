@@ -31,6 +31,7 @@ import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
 import { askConfirm } from './confirm.js';
 import { varietyOf, varietyReason } from '../simulation/trade.js';
+import { actOf, buskersAt, liveliness } from '../simulation/buskers.js';
 
 /* ---------- the Look card ---------- */
 export const elLook=document.getElementById("look"), elLookBody=document.getElementById("look-body");
@@ -320,6 +321,23 @@ function describeTile(x,y){
       case "farm": {
         const feeds=(S.ctx.mills||[]).filter(w=>Math.abs(w.x-rx)<=FARM_MILL_R&&Math.abs(w.y-ry)<=FARM_MILL_R).length;
         return card("The Farm","Farm",'<p>Grows the grain the windmills grind. Brings in <b>'+Math.round(FARM_YIELD+(PAL.yield||0))+' coins</b> a day at this time of year.</p><dl><dt>Mills it supplies</dt><dd class="'+(feeds?'up':'dn')+'">'+feeds+'</dd><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,5)+'</dd></dl>');
+      }
+      case "buskerPitch": {
+        /* The pitch is the player's half and the acts are not, so the card is
+           mostly a report: who came, what they are doing, and — the thing the
+           player cannot see any other way — whose being famous nearby is
+           bringing them. An empty pitch says so rather than promising. */
+        const here=buskersAt(rx,ry), live=liveliness(rx,ry);
+        let body=here.length
+          ? '<p>'+here.map(b=>'A <b>'+actOf(b.act).name+'</b>, '+actOf(b.act).doing+'.').join(' ')+'</p>'
+          : '<p>Nobody has set up here today. A pitch fills when the street around it is worth standing on.</p>';
+        const drawn=here.find(b=>b.drawnBy);
+        if(drawn) body+='<p>Drawn by <b>'+drawn.drawnBy+'</b> playing nearby.</p>';
+        body+='<dl class="service"><dt>Homes in earshot</dt><dd class="'+(live.homes?'up':'dn')+'">'+live.homes+'</dd>'
+          +'<dt>Trade to draw a crowd</dt><dd class="'+(live.trade?'up':'dn')+'">'+live.trade+'</dd>'
+          +'<dt>Somebody famous nearby</dt><dd class="'+(live.stars.length?'up':'dn')+'">'+(live.stars.length?live.stars[0].name:'Nobody yet')+'</dd>'
+          +(upkeepOf(b)?'<dt>Upkeep</dt><dd class="dn">\u2212'+upkeepOf(b)+' a day</dd>':'')+'</dl>';
+        return card("The Pitch","Busker\u2019s Pitch",body);
       }
       case "cafe": return card("The Corner Café","Café",'<p>Trades for <b>9 coins</b> a day and lifts every home within <b>5 tiles</b>.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,5)+'</dd></dl>');
       case "station": return card("Meadowline Halt","Station",'<p>Worth <b>16</b> to every home within <b>6 tiles</b>, whether or not a train has come yet.</p><dl><dt>Homes in reach</dt><dd>'+countNear("houses",rx,ry,6)+'</dd>'+roadRow(b)+'<dt>Trains running</dt><dd>'+S.trains.length+'</dd></dl>');

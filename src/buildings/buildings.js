@@ -180,7 +180,7 @@ function clearFacility(root){
    prints. A road or a lamp is not news. */
 const NEWS_KIND={cafe:'business',bakery:'business',market:'business',mill:'business',farm:'business',dock:'business',generalStore:'business',teaHouse:'business',bookshop:'business',vendor:'business',
   school:'service',clinic:'service',hospital:'service',policeStation:'service',fireStation:'service',station:'service',cityHall:'service',
-  townPark:'amenity',picnicGreen:'amenity',playground:'amenity',sportsCourt:'amenity',pocketPark:'amenity',
+  townPark:'amenity',picnicGreen:'amenity',playground:'amenity',sportsCourt:'amenity',pocketPark:'amenity',buskerPitch:'amenity',
   statue:'landmark',clockTower:'landmark',lighthouse:'landmark',greatLibrary:'landmark'};
 function ledgerBuilding(what,b){
   const cls=NEWS_KIND[b.type]; if(!cls) return;

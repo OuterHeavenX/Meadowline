@@ -74,7 +74,7 @@ export const CAREERS={
   // has room for someone who plays; a market for someone who performs; a
   // landmark for someone who makes things worth looking at.
   musician:      {at:['cafe'],           label:'musician',         lean:['creativity',.8]},
-  performer:     {at:['market'],         label:'street performer', lean:['charisma',.8]},
+  performer:     {at:['market','buskerPitch'],label:'street performer',lean:['charisma',.8]},
   artist:        {at:['greatLibrary','statue','clockTower'],label:'artist',lean:['creativity',.7]}
 };
 export const PERFORMING=['musician','performer','artist'];

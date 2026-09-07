@@ -285,6 +285,11 @@ ladder falls back to private, and the same name twice is taken only once.
 ## What is deliberately not built yet
 
 Not built, and not required by any current system: obituaries (no death
-mechanic exists, and the brief forbids inventing one), a generative-AI prose
-layer (PART 26 explicitly makes it optional and presentation-only), and a
-newspaper stand building.
+mechanic exists, and the brief forbids inventing one) and a generative-AI prose
+layer (PART 26 explicitly makes it optional and presentation-only).
+
+A newspaper stand does now exist, as one of the three things a Street Vendor's
+pitch can turn out to be — see `TRADE_AND_STREET_LIFE.md`. It sells the Post as
+flavour and changes nothing about how the paper is written or read: there is no
+readership mechanic behind it, and inventing one to justify the building would
+be exactly the thing the permanent rule forbids.

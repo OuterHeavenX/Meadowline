@@ -56,7 +56,7 @@ export function venueOf(f,index){
   const career=f?.careers?.[index]; if(!isPerforming(career)) return null;
   const home=houseOf(f); if(!home) return null;
   let best=null,bestD=REACH+1;
-  const lists=[S.ctx?.cafes,S.ctx?.markets,S.ctx?.wonders];
+  const lists=[S.ctx?.cafes,S.ctx?.markets,S.ctx?.wonders,S.ctx?.stages];
   for(const list of lists) for(const b of list||[]){
     if(!CAREERS[career].at.includes(b.type)) continue;
     const d=Math.max(Math.abs(b.x-home.x),Math.abs(b.y-home.y));

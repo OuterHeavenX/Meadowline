@@ -1,7 +1,7 @@
 import { getBuildingDefinition } from '../buildings/registry.js';
 import { clamp, lerp, mix } from '../core/constants.js';
 import { S } from '../core/state.js';
-import { drawBakery, drawCafe, drawDock, drawLamp, drawMarket, drawPark, drawSchool, drawShop, drawVendor, drawStation, drawWindmill } from './buildings.js';
+import { drawBakery, drawBusker, drawBuskerPitch, drawCafe, drawDock, drawLamp, drawMarket, drawPark, drawSchool, drawShop, drawVendor, drawStation, drawWindmill } from './buildings.js';
 import { drawRecreationFacility } from './recreation.js';
 import { drawCityHall } from './city-hall.js';
 import { drawHousingHouse } from './housing.js';
@@ -112,6 +112,8 @@ export function render(){
     if(s.x<band.x0||s.x>=band.x1||s.y<band.y0||s.y>=band.y1) continue;
     items.push({d:viewDepth(s.x,s.y)+0.12,k:8,x:s.x,y:s.y});
   }
+  // Whoever is on the pavement today, sorting with the tile they stand on.
+  for(const bk of S.buskers||[]) items.push({d:viewDepth(bk.x,bk.y)+0.06,k:9,bk});
   for(const p of S.puffs) items.push({d:viewDepth(p.x,p.y)+0.2,k:4,p});
   items.sort((a,b)=>a.d-b.d);
 
@@ -126,6 +128,7 @@ export function render(){
       else if(t==="cafe") drawCafe(it.b,p,dark);
       else if(t==="generalStore"||t==="teaHouse"||t==="bookshop") drawShop(it.b,p,dark);
       else if(t==="vendor") drawVendor(it.b,p,dark);
+      else if(t==="buskerPitch") drawBuskerPitch(it.b,p);
       else if(t==="station") drawStation(it.b,p,dark);
       else if(t==="lamp") drawLamp(it.b,p,dark);
       else if(t==="mill") drawWindmill(it.b,p,dark);
@@ -146,6 +149,11 @@ export function render(){
     else if(it.k===3) drawTrain(it.t);
     else if(it.k===6) drawBoat(it.t);
     else if(it.k===8) drawSignal(it.x,it.y,dark);
+    else if(it.k===9){
+      const p=proj(it.bk.x,it.bk.y);
+      if(p.x<-80||p.x>innerWidth+80||p.y<-120||p.y>innerHeight+80) continue;
+      drawBusker(it.bk,p,dark);
+    }
     else if(it.k===7) drawVehicle(it.v);
     else if(it.k===5){
       const p=proj(it.b.x,it.b.y);

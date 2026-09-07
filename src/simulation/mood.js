@@ -21,6 +21,7 @@ import { idx, inBounds, isFacilityPart, isType } from '../world/tiles.js';
 import { darkness } from '../world/time.js';
 import { roadNearFacility } from '../transport/roads.js';
 import { settleVarieties } from './trade.js';
+import { buskerMood } from './buskers.js';
 
 /* ---------- simulation ---------- */
 export let simT=0;
@@ -95,6 +96,13 @@ export function evalHouse(h,out){
   for(let dy=-CROWD.r;dy<=CROWD.r;dy++)for(let dx=-CROWD.r;dx<=CROWD.r;dx++) if(isType(h.x+dx,h.y+dy,"house")) crowd++;
   if(crowd>CROWD.limit){ const pen=(crowd-CROWD.limit)*CROWD.per; m-=pen; if(out) out.push(["Rather crowded round here",-pen]); }
 
+  /* Whoever happens to be playing on the street today. This is the only mood
+     term that can change between one morning and the next without anything
+     being built or pulled down, which is the point of it. */
+  const busk=buskerMood(h);
+  if(busk.value){ m+=busk.value;
+    if(out) out.push([busk.n>1?busk.n+" entertainers on the street":"An entertainer on the street",busk.value]); }
+
   const fest=activeFestival();
   if(fest){ m+=fest.mood; if(out) out.push([fest.name,fest.mood]); }
 
@@ -105,7 +113,7 @@ export function evalHouse(h,out){
 }
 
 export function recompute(){
-  const parks=[],recreation=[],cafes=[],stations=[],houses=[],lamps=[],mills=[],markets=[],bakeries=[],schools=[],docks=[],farms=[],wonders=[],shops=[];
+  const parks=[],recreation=[],cafes=[],stations=[],houses=[],lamps=[],mills=[],markets=[],bakeries=[],schools=[],docks=[],farms=[],wonders=[],shops=[],stages=[];
   for(let i=0;i<S.grid.length;i++){
     const b=S.grid[i]; if(!b||isFacilityPart(b)) continue;
     /* Road access used to be worked out inside evalHouse and nowhere else, so
@@ -128,9 +136,11 @@ export function recompute(){
     else if(b.type==="farm") farms.push(b);
     // Every shop that declares a trade yield, so a new one needs no code here.
     else if(getBuildingDefinition(b.type)?.trade) shops.push(b);
+    // Anywhere the registry says somebody can perform, so fame needs no list.
+    if(getBuildingDefinition(b.type)?.performance) stages.push(b);
     if(getBuildingDefinition(b.type)?.category==='wonder') wonders.push(b);
   }
-  S.ctx={parks,recreation,cafes,stations,houses,lamps,mills,markets,bakeries,schools,docks,farms,wonders,shops};
+  S.ctx={parks,recreation,cafes,stations,houses,lamps,mills,markets,bakeries,schools,docks,farms,wonders,shops,stages};
   /* A street vendor's pitch reads its surroundings and settles on what it
      sells. It has to happen here, after the context lists exist and before
      anything asks a shop what it takes, and it happens again on every
