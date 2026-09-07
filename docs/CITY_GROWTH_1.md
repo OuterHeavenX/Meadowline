@@ -68,7 +68,7 @@ There is no fifth City Growth stage. Recreation 2.0 does not add one and does no
 
 ## Land model
 
-World remains 44×44. New progression cities begin with Meadowline Center, x12–31/y12–31 (20×20, 400 tiles).
+The world was 44×44 when this was written and is 128×128 since `d7c6b00` (see `ROADMAP.md`); the parcel geometry below is that of the original valley.
 
 | Parcel | Geometry | Stage | Cost | Prerequisite |
 | --- | --- | --- | ---: | --- |
