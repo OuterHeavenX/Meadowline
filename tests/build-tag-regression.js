@@ -59,6 +59,44 @@ const check=(name,value,detail)=>checks.push({name,pass:Boolean(value),...(detai
   // The credits dialog has somewhere to put it.
   check('the game has a place to show the build',!!doc.getElementById('build-tag'));
 
+  /* ---------- the caching trap ----------
+     Meadowline's 139 modules import one another by bare path, so their URLs
+     carry no release tag. A long or immutable cache on those would pin every
+     player to whatever JavaScript they loaded first, for ever, and the failure
+     would be silent: a fixed bug that never goes away for anyone who already
+     visited. Only URLs that actually change between releases may be held. */
+  const headersRes=await fetch('../_headers');
+  const headersText=headersRes.ok?await headersRes.text():'';
+  check('the deploy ships caching rules at all',headersText.length>0,headersText.length);
+  const rules=[];
+  {
+    let path=null;
+    for(const raw of headersText.split('\n')){
+      const line=raw.replace(/#.*$/,'').trimEnd();
+      if(!line.trim()) continue;
+      if(!/^\s/.test(line)){ path=line.trim(); continue; }
+      const m=line.trim().match(/^([\w-]+):\s*(.*)$/);
+      if(m&&path) rules.push({path,name:m[1].toLowerCase(),value:m[2]});
+    }
+  }
+  check('and they are parseable rules, not prose',rules.length>=3,JSON.stringify(rules.slice(0,4)));
+  const caching=rules.filter(r=>r.name==='cache-control');
+  check('every rule set says something about caching',caching.length>=1,caching.length);
+  // A long cache is only ever safe on a URL that changes when its content does.
+  const VERSIONED=/\?v=/;
+  const risky=caching.filter(r=>{
+    const held=/immutable/i.test(r.value)||/max-age=([1-9]\d{3,})/.test(r.value);
+    return held&&!VERSIONED.test(r.path);
+  });
+  check('nothing unversioned is cached long enough to strand a player',risky.length===0,
+    JSON.stringify(risky));
+  check('the page itself is always revalidated, or a new release is never noticed',
+    caching.some(r=>(r.path==='/'||r.path==='/index.html')&&/no-cache/i.test(r.value)),
+    JSON.stringify(caching.filter(r=>r.path==='/'||r.path==='/index.html')));
+  check('and the modules the game imports by bare path are revalidated too',
+    caching.some(r=>r.path==='/*'&&/no-cache/i.test(r.value)),
+    JSON.stringify(caching.find(r=>r.path==='/*')));
+
   const failed=checks.filter(c=>!c.pass);
   document.getElementById('results').textContent=JSON.stringify({pass:!failed.length,checks},null,2);
   document.documentElement.dataset.result=failed.length?'fail':'pass';

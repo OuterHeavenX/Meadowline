@@ -1,0 +1,31 @@
+# Cloudflare Pages reads this file and applies these headers to the deploy.
+#
+# Everything revalidates. That is deliberate, and it is not the usual advice.
+#
+# The usual advice for a static site is to fingerprint asset filenames and then
+# serve them `immutable` for a year. Meadowline cannot do that: it has no build
+# step, and its 139 source modules are imported by bare path from one another
+# (`import { S } from '../core/state.js'`). Only index.html's own seven URLs
+# carry the ?v= release tag. Marking /src/* immutable would therefore pin every
+# player to whatever JavaScript they happened to load first, permanently, and
+# the failure would be silent — a fixed bug that never goes away for anyone who
+# already visited. `tests/build-tag-regression.html` fails the build if anyone
+# adds a long cache to a path whose URLs are not version-stamped.
+#
+# `no-cache` does not mean "do not cache". It means "cache it, then ask before
+# reusing it". Every request becomes a conditional one and almost all of them
+# come back 304 Not Modified with no body, so this costs a round trip rather
+# than a download — the right trade for a game that is patched often and whose
+# largest file is a few hundred kilobytes.
+
+/*
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# The page itself must never be held, or a player never even learns that a new
+# release tag exists and the versioned URLs below are never requested.
+/
+  Cache-Control: no-cache, must-revalidate
+/index.html
+  Cache-Control: no-cache, must-revalidate

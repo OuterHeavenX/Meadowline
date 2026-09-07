@@ -79,6 +79,31 @@ all carry the *same* one so a release cannot half-ship, that each tagged file
 actually loads, and that the tag reported is the tag loaded. Removing the query
 from a single stylesheet — the original bug — fails it.
 
+### Why nothing is cached `immutable`
+
+The site is hosted on GitHub and deployed by Cloudflare Pages, which reads the
+`_headers` file at the repository root. Everything in it revalidates, and that
+is deliberate rather than an oversight.
+
+The usual advice for a static site is to fingerprint filenames and serve them
+`immutable` for a year. Meadowline cannot: there is no build step, and its 139
+source modules import one another by bare path — `import { S } from
+'../core/state.js'`. Only the seven URLs in `index.html` carry the release tag.
+Marking `/src/*` immutable would pin every returning player to whatever
+JavaScript they happened to load first, permanently, and the failure would be
+silent — a fixed bug that never goes away for anyone who has already visited.
+That is a far worse version of the CSS problem above.
+
+`no-cache` does not mean "do not cache"; it means "cache it, then ask before
+reusing it". Requests become conditional and almost all return 304 with no
+body, so the cost is a round trip rather than a download.
+
+The regression parses `_headers` and fails if any long or `immutable` cache is
+applied to a path whose URLs are not version-stamped, while still permitting
+one on a path that is. If module URLs ever become versioned — a build step, or
+a generated import map — that guard is what makes it safe to turn long caching
+back on.
+
 ## Visual reference role
 
 Four owner-approved mockups define the presentation target for the normal HUD, Build catalog, City Hall and title screen. They are composition references, not simulation data. Costs, footprints, stages, resources, goals, service summaries and civic levels continue to come from Meadowline's registry and simulation. The mockup's fictional Level 5 is deliberately not implemented.
