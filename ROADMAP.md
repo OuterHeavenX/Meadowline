@@ -55,6 +55,7 @@ Everything below is on `main`. Each landed with its regression suite green.
 | `3954911` | **Social Fabric slices 2 and 3** — notable families and traits; careers at real workplaces, standing from conditions. |
 | `8342585` | **Social Fabric slice 4** — organisations that nobody built: three conditions or nothing, place-based names, staged growth, prosperity and police as decline. |
 | `af1be49` | **Social Fabric slice 5** — bosses who are existing citizens, fronts that stay businesses, police who open and work cases on their own. |
+| branch | **GPU actor parity** — the low-poly scene now draws walking people, typed emergency vehicles with a working hose, burning roofs, burglars, patients and stretchers, boats and three-car trains, as the Canvas path always did. |
 
 ## Milestone 7 — Social Fabric 1.0
 

@@ -222,6 +222,48 @@ lighting the ground. Thunder follows at a delay, as filtered brown noise with a
 slow swell rather than a crack: this is a calm game, and a storm should
 register as weather rather than as an alarm.
 
+## Actors — the moving layer, at parity with the Canvas path
+
+`src/rendering/three-actors.js`. The Canvas renderer has always drawn people
+who walk, engines that put fires out, cruisers that catch burglars, ambulances
+that collect the sick, boats that leave a wake and flames that look like a
+fire. Until this pass the GPU scene had a cylinder for a person, one box for
+every vehicle, three still cones for a fire and no boats at all, so a player on
+the renderer Auto actually picks was shown a town where nothing anyone did
+could be seen happening. The two paths now tell the same story from the same
+state:
+
+- **People** are a seven-piece figure (two legs, torso, two arms, head, hair)
+  driven by the Canvas gait: one phase for legs, arms, lean and bob, at the
+  speed the citizen actually moves, settling when they stop, still under
+  reduced motion. Skin and hair come from `people-palette.js`, shared by both
+  renderers and dealt from the citizen's own saved bob. The whole crowd is six
+  `InstancedMesh`es, so a hundred and fifty people cost what twenty do; the
+  regression asserts it.
+- **Vehicles** are typed: a long red engine with a ladder, a white ambulance
+  with a cross on roof and flanks, a blue cruiser with white doors and a
+  red-and-blue bar. Responding vehicles flash. A working engine runs a
+  `TubeGeometry` hose along a curve to its fire, with spray at the far end;
+  that tube is the one piece of geometry made fresh each frame, and the
+  dynamic group is now disposed rather than merely removed so it does not leak.
+- **Incidents**: a fire is three flames at the roofline that lick and lean,
+  four smoke spheres rising, and an orange glow on the ground, all fading once
+  the crew is working. A crime is the burglar, running in front of the house
+  while the cruiser is on its way, standing once it arrives, gone when caught;
+  a raid the police raised themselves (`inc.tag`) shows no burglar. A medical
+  call is someone lying where the ambulance is coming, under a white marker,
+  with a stretcher out once it is working. The "!" and "+" badge over an
+  incident is drawn on the juice overlay (`drawIncidentBadge`), where the other
+  badges already are.
+- **Boats** have a hull, deck, mast and sail in the shared `HULLS` colours,
+  bob and roll, and leave a fading wake. **Trains** are an engine and two cars
+  drawn from the same history the Canvas path uses, with steam.
+
+`threeDynamicSnapshot()` reports what the moving layer holds by kind, so
+`tests/three-actors-regression.html` can say "with a fire burning there are
+flames and a hose" without reading pixels. Draw calls for a full day of it all
+stay under 600; the crowd is flat.
+
 ## Known limits and required proof
 
 - The Three path currently favors procedural geometry and shared materials over texture downloads. Further batching/LOD will be guided by physical iPhone/iPad profiling.

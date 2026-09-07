@@ -47,8 +47,7 @@ export function drawTrain(t){
    The seed is the citizen's own bob, which is already unique and already
    saved, so hair and skin vary from person to person without the citizen
    record growing a field. */
-const SKIN=["#f0d9bd","#e6c39c","#c99a6f","#9c6b45","#7a5133"];
-const HAIR=["#3a2c22","#6b4a2f","#2b2b30","#8a6a3e","#4a3550","#d8cfc0"];
+import { HAIR, SKIN, personSeed } from './people-palette.js';
 
 export function drawCitizen(c){
   const z=S.cam.z;
@@ -72,7 +71,7 @@ export function drawCitizen(c){
   const bob=reduceMotion?0:Math.abs(Math.cos(phase))*(moving?1.1:0.35)*z;
   const lean=moving?0.5*z:0;
 
-  const seed=Math.abs(Math.round((c.bob||0)*1000));
+  const seed=personSeed(c);
   const skin=SKIN[seed%SKIN.length];
   const hair=HAIR[(seed>>3)%HAIR.length];
   const trouser=shade(c.col,-46);

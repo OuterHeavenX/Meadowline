@@ -1,5 +1,5 @@
 import * as THREE from '../../assets/vendor/three.module.min.js';
-import { H,W,clamp,lerp } from '../core/constants.js';
+import { H,W,clamp } from '../core/constants.js';
 import { S } from '../core/state.js';
 import { getBuildingDefinition } from '../buildings/registry.js';
 import { graphicsProfile,effectiveQuality } from './capabilities.js';
@@ -11,8 +11,8 @@ import { buildCohesiveWorld, artMetrics, litMaterials, roadIsWet } from './three
 import { landmarkGlowMaterials } from './landmark-assets.js';
 import { hover } from './interaction-state.js';
 import { toolPreview } from '../buildings/preview.js';
-import { headingAngle, laneOffset, sidewalkOffset } from '../transport/lanes.js';
 import { signalJunctions, signalPhase } from '../transport/signals.js';
+import { actorMaterialCount, addActors } from './three-actors.js';
 
 let renderer=null,scene=null,camera=null,world=null,dynamic=null,lights=null,canvas=null,lastSignature='',failed=false,lost=false;
 const mats=new Map(),geos=new Map();
@@ -58,7 +58,6 @@ function signature(){let s=`${S.seed}:${Math.floor(S.day/7)%4}:${roadIsWet()?'we
 
 function tileInstances(cells,material,height,y,colors){if(!cells.length)return;const geometry=geo(`tiles:${height}`,()=>new THREE.BoxGeometry(.99,height,.99)),inst=new THREE.InstancedMesh(geometry,material,cells.length),matrix=new THREE.Matrix4();for(let i=0;i<cells.length;i++){const c=cells[i];matrix.makeTranslation(c.x,y+height/2,c.z);inst.setMatrixAt(i,matrix);if(colors)inst.setColorAt(i,color(colors[i]));}inst.receiveShadow=true;inst.castShadow=false;world.add(inst);}
 function rebuild(){lastSignature=signature();disposeGroup(world);world=new THREE.Group();scene.add(world);buildCohesiveWorld(world);if(S.diagnostics)S.diagnostics.worldRebuilds=(S.diagnostics.worldRebuilds||0)+1;}
-function addVehicle(v,service=false){const lane=laneOffset(v),x=lerp(v.x,v.nx,v.p)+lane.x,z=lerp(v.y,v.ny,v.p)+lane.y,kind=v.type||'',col=kind==='fireEngine'?'#d74738':kind==='ambulance'?'#e9ece9':kind==='police'?'#3e6f9c':v.color||'#d58b45',group=new THREE.Group();group.position.set(x,.1,z);group.rotation.y=headingAngle(v);dynamic.add(group);box(0,0,0,.42,.18,.24,mat(col),group,true);box(-.04,.18,0,.2,.11,.21,mat('#9fc1c9',.25,.1),group,true);for(const dx of[-.14,.14])for(const dz of[-.13,.13])cylinder(dx,-.01,dz,.045,.035,mat('#292c2d'),group,8).rotation.z=Math.PI/2;if(kind==='ambulance')box(.12,.19,.122,.1,.06,.015,mat('#d33f45'),group,false);if((v.state==='EN_ROUTE'||v.state==='DISPATCHED')&&service){const pulse=Math.sin(S.t*8)>0;box(-.08,.29,0,.08,.035,.05,mat(pulse?'#ed4d4d':'#4d80ed',.2),group,false);box(.08,.29,0,.08,.035,.05,mat(pulse?'#4d80ed':'#ed4d4d',.2),group,false);}}
 function addInteractionOverlay(){
   if(S.pick&&inBounds(S.pick.x,S.pick.y)){const pulse=.42+.16*Math.sin(S.t*3);box(S.pick.x,.12,S.pick.y,.94,.025,.94,overlayMat('#e5b75b',pulse),dynamic,false);}
   if(!hover.on||S.tool==='move'||S.tool==='look'||!inBounds(hover.x,hover.y))return;
@@ -97,7 +96,11 @@ function addClouds(){
   }
 }
 
-function rebuildDynamic(){if(dynamic)scene.remove(dynamic);dynamic=new THREE.Group();scene.add(dynamic);for(const c of S.citizens){const walk=sidewalkOffset(c),x=(c.facilityLocal?.x??lerp(c.x,c.nx,c.p))+walk.x,z=(c.facilityLocal?.y??lerp(c.y,c.ny,c.p))+walk.y,g=new THREE.Group();g.position.set(x,.08,z);dynamic.add(g);cylinder(0,0,0,.045,.22,mat(c.col||c.color||'#d6a86e'),g,7);mesh(geo('head',()=>new THREE.SphereGeometry(.055,7,5)),mat('#d7a678'),0,.28,0,g,false);}for(const v of S.vehicles||[])addVehicle(v);for(const v of S.serviceVehicles||[])addVehicle(v,true);for(const t of S.trains||[]){const x=t.fx||t.x,z=t.fy||t.y;box(x,.12,z,.72,.28,.34,mat('#b34f42'),dynamic,true);}
+/* The moving layer, rebuilt every frame and disposed with the frame: the
+   hose tube and the instanced crowd hold geometry of their own, so removing
+   the group is not enough. three-actors.js draws the people, vehicles, trains,
+   boats and incidents; signals, clouds and the placement overlay stay here. */
+function rebuildDynamic(){if(dynamic)disposeGroup(dynamic);dynamic=new THREE.Group();scene.add(dynamic);addActors(dynamic);
   // Signals belong to the dynamic group: their lamps change every second, and
   // the static world is only rebuilt when the map itself changes.
   for(const j of signalJunctions()){const ph=signalPhase(j.x,j.y),post=mat('#41474a',.6,.2);
@@ -106,7 +109,15 @@ function rebuildDynamic(){if(dynamic)scene.remove(dynamic);dynamic=new THREE.Gro
       hx=j.x+.42+(axis==='ew'?-.16:.16),hz=j.y+.42+(axis==='ew'?.16:-.16);
       box(hx,.5,hz,.09,.2,.09,mat('#2f3538',.7),dynamic,false);
       box(hx,.5+(green?(ph.amber?.07:.13):.01),hz,.11,.055,.11,glowMat(lit),dynamic,false);}}
-  for(const inc of S.incidents||[]){if(inc.resolved)continue;const x=inc.target.x,z=inc.target.y;if(inc.kind==='fire'){for(let i=0;i<3;i++)pyramid(x+(i-1)*.12,.25,z,.12,.38,mat(i%2?'#ffad3e':'#e34b2f',.25),dynamic,7);}else if(inc.kind==='crime'){cylinder(x,.08,z,.06,.3,mat('#34383b'),dynamic,7);}else{mesh(geo('med',()=>new THREE.OctahedronGeometry(.13)),mat('#e9eeee'),x,.55,z,dynamic,false);}}addClouds();addInteractionOverlay();}
+  addClouds();addInteractionOverlay();}
+/* What the moving layer holds this frame, by kind, so a test can say "with a
+   fire burning there are flames" without reading pixels. Instanced meshes
+   report how many instances they carry, not one. */
+export function threeDynamicSnapshot(){
+  const kinds={};
+  if(dynamic) dynamic.traverse(o=>{ const k=o.userData?.kind; if(!k) return; kinds[k]=(kinds[k]||0)+(o.isInstancedMesh?o.count:1); });
+  return {kinds,actorMaterials:actorMaterialCount(),drawCalls:S.diagnostics.rendererDrawCalls||0};
+}
 /* Context-loss handlers hold the element they were attached to, not the
    module-level `canvas`. resetThreeRenderer() nulls that variable and then
    calls forceContextLoss(), and the browser dispatches the loss event

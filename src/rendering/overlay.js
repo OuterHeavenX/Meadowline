@@ -15,6 +15,7 @@ import { S } from '../core/state.js';
 import { cv } from './terrain.js';
 import { drawBirds, drawFireflies, drawLanterns, drawLightning, drawMotes, drawPuff, drawSplashes, drawWeather } from './effects.js';
 import { drawFeedback } from './feedback.js';
+import { drawIncidentBadge } from './municipal.js';
 import { darkness } from '../world/time.js';
 
 let canvas=null,ctx=null,painted=false;
@@ -75,6 +76,10 @@ export function drawJuiceOverlay(){
   // picks was told it was raining and shown a dry valley.
   drawSplashes(ctx);
   drawWeather(ctx);
+  // The bubble over a fire, a crime or a medical call. The GPU scene carries
+  // the flames, the burglar and the stretcher as geometry; the glyph that says
+  // what kind of call it is belongs up here with the other badges.
+  for(const inc of S.incidents||[]) drawIncidentBadge(inc,ctx);
   drawFeedback(ctx);
   drawLightning(ctx);
   painted=true;
