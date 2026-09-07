@@ -190,7 +190,9 @@ export function evaluateCareers(note=()=>{}){
       if(next!==LOOKING){
         const label=CAREERS[next].label;
         if(!social.firsts[next]){
-          social.firsts[next]={day:S.day||1,who:m.name};
+          // Keyed by who they are, not by how their name prints: matching on
+          // the string pulled the surname into every reader of this record.
+          social.firsts[next]={day:S.day||1,who:m.name,familyId:f.id,index:m.index};
           note(m.name+' became Meadowline’s first '+label);
           record('career_first',{familyId:f.id,index:m.index,name:m.name,career:next,label,district:f.roots});
           if(S.diagnostics) S.diagnostics.careerFirsts=(S.diagnostics.careerFirsts||0)+1;
@@ -255,13 +257,13 @@ export function careerSnapshot(){
 export function packCareers(){
   const s=ensureSocial();
   const firsts={};
-  for(const [k,v] of Object.entries(s.firsts)) if(CAREERS[k]) firsts[k]={day:Math.max(1,v.day|0),who:String(v.who||'').slice(0,60)};
+  for(const [k,v] of Object.entries(s.firsts)) if(CAREERS[k]) firsts[k]={day:Math.max(1,v.day|0),who:String(v.who||'').slice(0,60),familyId:v.familyId|0,index:v.index|0};
   return {firsts};
 }
 export function restoreCareers(raw){
   const s=ensureSocial(); s.firsts={}; clock=0;
   const f=raw&&typeof raw==='object'&&raw.firsts&&typeof raw.firsts==='object'?raw.firsts:{};
-  for(const [k,v] of Object.entries(f)) if(CAREERS[k]&&v&&typeof v==='object') s.firsts[k]={day:Math.max(1,Math.floor(Number(v.day)||1)),who:String(v.who||'').slice(0,60)};
+  for(const [k,v] of Object.entries(f)) if(CAREERS[k]&&v&&typeof v==='object') s.firsts[k]={day:Math.max(1,Math.floor(Number(v.day)||1)),who:String(v.who||'').slice(0,60),familyId:Math.max(0,Math.floor(Number(v.familyId)||0)),index:Math.max(0,Math.floor(Number(v.index)||0))};
 }
 /* The per-family fields ride inside each family record, which families.js
    packs as plain data without knowing what a career is. This sweep, run after

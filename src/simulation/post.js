@@ -8,6 +8,7 @@ import { FRONT_TYPES, frontsOf, organisations } from './organisations.js';
 import { celebrities, venueOf } from './fame.js';
 import { CAREERS, LOOKING } from './careers.js';
 import { families, familyMembers } from './families.js';
+import { knownAlias } from './aliases.js';
 import { recomputeEmployment } from './employment.js';
 import { recomputeServices } from './civic-services.js';
 import { recreationSnapshot } from './recreation.js';
@@ -89,7 +90,11 @@ function stories(day,events){
   // The police, in public. Names only after the world exposed them.
   for(const e of by('case_made')) add('safety','crime',e.firstExposure?upper('POLICE NAME '+e.name.toUpperCase()+' AFTER '+e.district.toUpperCase()+' OPERATION'):upper('POLICE MOVE AGAIN ON THE '+e.name),(e.firstExposure?'Investigators for the first time put a name to the group they have been looking into around '+e.district+', calling it the '+e.name+'. ':'Police moved again yesterday on the '+e.name+' around '+e.district+'. ')+'Officers described the operation as a success and declined to say more.',{archive:'exposed'});
   for(const e of by('front_closed')) add('safety','crime',upper('POLICE CLOSE '+e.kind.toUpperCase()+' ON '+e.district.toUpperCase()),'Police closed a '+e.kind+' on '+e.district+' yesterday, saying it had been used by the group investigators call the '+e.name+'. The business itself was not charged with anything.',{archive:'front'});
-  for(const e of by('questioned')) add('safety','crime',upper(e.name)+' QUESTIONED BY POLICE',e.name+' of '+(e.district||'Meadowline')+' was taken in for questioning yesterday in connection with '+(exposedName(e.orgId)?'the '+exposedName(e.orgId):'an inquiry around '+e.district)+'. Police have not announced any charges.',{archive:'questioned'});
+  for(const e of by('questioned')){
+    const alias=aliasFor(e.familyId,e.index);
+    add('safety','crime',alias?upper('“'+alias+'” QUESTIONED BY POLICE'):upper(e.name)+' QUESTIONED BY POLICE',
+      byName(e.familyId,e.index,e.name)+' of '+(e.district||'Meadowline')+' was taken in for questioning yesterday in connection with '+(exposedName(e.orgId)?'the '+exposedName(e.orgId):'an inquiry around '+e.district)+'. Police have not announced any charges.',{archive:'questioned'});
+  }
   for(const e of by('raid')) if(!by('front_closed').length&&!by('questioned').length) add('safety','crime',upper('POLICE SEARCH '+(e.kind||'PREMISES').toUpperCase()+' ON '+e.district.toUpperCase()),'Officers searched a '+(e.kind||'property')+' on '+e.district+' yesterday. Police declined to say what they were looking for'+(e.exposed?', beyond confirming it concerned the '+e.name:'')+'.');
   for(const e of by('investigation_opened')) add('safety','crime','POLICE LOOKING INTO '+upper(e.district),'Police confirmed yesterday that officers have opened an inquiry into activity around '+e.district+'. They would not say what prompted it'+(e.exposed?', though it is understood to concern the '+e.name:', and have not confirmed the existence of any larger organisation')+'.');
   for(const e of by('case_dropped')) add('safety','crime','INQUIRY AROUND '+upper(e.district)+' ENDS WITHOUT CHARGES','Police have ended an inquiry around '+e.district+' without bringing charges. '+(e.exposed?'The group investigators call the '+e.name+' remains, they said, of interest.':'Officers said the matter was closed for now.'));
@@ -102,6 +107,13 @@ function stories(day,events){
   for(const e of by('family_move')) add('social','moves','THE '+upper(e.surname)+' FAMILY MOVES TO '+upper(e.to||'A NEW STREET'),'After '+(e.generation>1?plural(e.generation,'generation'):'a spell')+(e.from?' in '+e.from:'')+', the '+e.surname+' family has relocated to '+(e.to||'a new part of town')+(e.tier>=3?', into an established home':e.tier===2?', into a town home':'')+'.',{archive:'move'});
   for(const e of by('generation_change')) add('notable','community','A NEW GENERATION FOR THE '+upper(e.surname)+' FAMILY','The '+e.surname+' family'+near(e.district)+' is now in its '+ordinal(e.generation)+' generation in the valley.');
   for(const e of by('standing_change')) add('notable','community','THE '+upper(e.surname)+' HOUSEHOLD '+(e.up?'DOING WELL':'FEELING THE PINCH'),'Neighbours'+near(e.district)+' say the '+e.surname+' family is '+(e.up?'doing better':'finding things harder')+' than a season ago.');
+  /* A name surfacing publicly is news of a sort, and reads differently
+     depending on why the valley started using it. It is never the paper that
+     decides someone has a nickname - by the time this prints, the street has
+     been using it long enough that the police know it too. */
+  for(const e of by('nickname_public')) add('notable','community',upper('“'+e.alias+'”')+' IS WHAT THEY CALL '+upper(e.name.split(' ')[0])+' NOW',
+    e.name+(e.district?' of '+e.district:'')+' has been going by “'+e.alias+'” for a while now, and the name has stuck'+
+    ({career:' — it comes from the work',place:' — it comes from the street they are from',reputation:' — it comes from how they are',habit:' — it comes from where they are always found',event:' — it comes from something that happened'})[e.origin]+'.',{archive:'nickname'});
   for(const e of by('career_first')) add('notable','jobs','MEADOWLINE GETS ITS FIRST '+upper(e.label),e.name+near(e.district)+' has become the valley\'s first '+e.label+'.');
 
   // Business and services.
@@ -123,6 +135,17 @@ function stories(day,events){
   for(const e of by('festival')) add('social','festival',upper(e.name)+' ACROSS THE VALLEY','The valley was dressed for '+e.name+' yesterday, and every till took a little more.',{archive:'festival'});
   return out;
 }
+/* How the paper names somebody. The canonical name always, plus the alias
+   only once it is genuinely public - the newspaper is the last audience to
+   learn a nickname, never the first, and `knownAlias` returns nothing until
+   the alias has actually travelled that far. */
+function byName(familyId,index,fallback){
+  const f=families().find(x=>x.id===familyId); if(!f) return fallback;
+  const m=familyMembers(f).find(x=>x.index===index); if(!m) return fallback;
+  const alias=knownAlias(f,index);
+  return alias?m.name+' — known to some as “'+alias+'” —':m.name;
+}
+function aliasFor(familyId,index){ const f=families().find(x=>x.id===familyId); return f?knownAlias(f,index):null; }
 function exposedName(orgId){ const o=organisations().find(x=>x.id===orgId); return o&&o.exposed?o.name:null; }
 function ordinal(n){ return n+(['th','st','nd','rd'][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]); }
 

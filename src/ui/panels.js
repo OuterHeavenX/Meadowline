@@ -25,6 +25,7 @@ import { familyStanding, knownFor, memberCareer } from '../simulation/careers.js
 import { frontAt, organisationOf } from '../simulation/organisations.js';
 import { investigating, underInvestigation } from '../simulation/enforcement.js';
 import { fameWord, venueFame } from '../simulation/fame.js';
+import { aliasOf, displayName } from '../simulation/aliases.js';
 import { darkness } from '../world/time.js';
 import { toast } from './notify.js';
 import { paintGrowthPanel } from './growth.js';
@@ -250,7 +251,7 @@ function familyBlock(h){
   return '<h4>The '+f.surname+' family</h4>'+
     '<p>Here since <b>day '+f.founded+'</b>'+(f.roots?', settled in <b>'+f.roots+'</b>':'')+'. Known for '+knownFor(f)+'. <b>'+cap(familyStanding(f))+'</b>.'+
     ((f.generation||1)>1?' Now in its <b>'+ordinal(f.generation)+' generation</b>.':'')+rumour(f)+'</p>'+
-    '<dl class="service">'+members.map(m=>'<dt>'+m.name+'</dt><dd>'+memberCareer(f,m.index)+' · '+traitWords(m.traits).join(', ')+(fameWord(f,m.index)?' · <b>'+fameWord(f,m.index)+'</b>':'')+'</dd>').join('')+'</dl>';
+    '<dl class="service">'+members.map(m=>'<dt>'+displayName(f,m.index)+'</dt><dd>'+memberCareer(f,m.index)+' · '+traitWords(m.traits).join(', ')+(fameWord(f,m.index)?' · <b>'+fameWord(f,m.index)+'</b>':'')+aliasNote(f,m.index)+'</dd>').join('')+'</dl>';
 }
 /* A family's ties to something the valley talks about are a rumour, not a
    record, and a small one stays unsaid: the card only hints once the thing
@@ -260,6 +261,14 @@ function rumour(f){
   if(!o||o.stage<3) return '';
   const boss=o.boss&&o.boss.familyId===f.id?familyMembers(f).find(m=>m.index===o.boss.index):null;
   return boss?' People say <b>'+boss.first+'</b> runs <b>the '+o.name+'</b>.':' Said to have ties to <b>the '+o.name+'</b>.';
+}
+/* How widely the name has travelled. The card is the player's god's-eye view
+   and may say a name the newspaper is not yet entitled to print. */
+const ALIAS_REACH={private:'only at home',associates:'among associates',district:'around the neighbourhood',police:'known to the police',public:'known all over'};
+function aliasNote(f,index){
+  const a=aliasOf(f.id,index);
+  if(!a) return '';
+  return ' · <small>“'+a.alias+'” '+ALIAS_REACH[a.visibility]+(a.reason?', '+a.reason:'')+'</small>';
 }
 function cap(s){ return s?s[0].toUpperCase()+s.slice(1):s; }
 function ordinal(n){ return n+(['th','st','nd','rd'][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]); }

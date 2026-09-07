@@ -5,10 +5,8 @@ rumour, citizen voices, arrivals and departures, and civic reporting.
 
 ## Status
 
-**Slice 1 (the daily paper) is production at `1c02801`.** Slice 2
-(emergent nicknames, PARTS 16–24 of the brief) is **not built**. See "What is
-deliberately not built yet" below — the paper is complete and useful without
-it, and nicknames are a Social Fabric change rather than a newspaper one.
+**Slice 1 (the daily paper) is production at `1c02801`. Slice 2 (emergent
+nicknames, PARTS 16–24) is on `claude/game-upgrade-3o2630`.**
 
 This document is canonical for the Post. Where an older document disagrees
 with production code, the code wins and the disagreement is noted here.
@@ -207,17 +205,86 @@ matching condition; `exposedName` ignoring exposure; a brief that reports a
 number nobody measured; an unbounded archive; a ledger that is never drained;
 and an exported setter.
 
+## Emergent nicknames — slice 2
+
+`src/simulation/aliases.js`. Nobody is given a nickname. One sticks, the way
+one does anywhere: after somebody has been around long enough, and been enough
+of something, that the street needs a shorter way to refer to them. The module
+exports no setter and the player never picks one.
+
+### An alias never replaces anyone
+
+The canonical first name and surname are untouched, the family and the index
+that identify a person are untouched, and every system that knew them by name
+still does. An alias is one optional extra field. `displayName()` inserts it —
+`Juno “Ropes” Marsh` — and never substitutes it. Sabotaged to return the alias
+alone, the suite fails.
+
+### Where a name comes from, and where it cannot
+
+The origin is one of five, each read from something the simulation already
+holds: the **career** they hold, the **habit** of the premises they work in,
+the **place** they are from, the **reputation** of their strongest leaning, or
+an **event** they were part of. Word banks are ordinary — Sunflower, Railway,
+Ropes, Loaves, Quiet, Lucky, Clockwork, Encore.
+
+**The surname is not an input.** That is the mechanical form of the rule that a
+colourful street name must never be tied to ethnicity, nationality, race or
+religion: surnames are drawn at founding from one shared neutral pool, aliases
+are drawn from history, and the two never meet. The regression rotates every
+surname in the town and asserts not one nickname moves.
+
+Getting that assertion to mean anything took two goes. It first compared names
+grown over 120 days against names coined all at once, which differ for reasons
+that have nothing to do with surnames. Both maps are now coined from the same
+instant. And it caught a real leak while it was at it: "first of a trade" was
+matched by printed name, which carries a surname, so `careers.js` now keys that
+record by family and index instead.
+
+Criminality is not an input to the **word** either. The same banks serve a
+farmer, a musician and someone drawn into an organisation. What an organisation
+changes is only how fast a name travels. A town where nothing criminal can take
+hold — work for everyone, a station on the corner, a green within reach — still
+names its people, and the regression runs exactly that town.
+
+### How far it has travelled
+
+```
+private → associates → district → police → public
+```
+
+Forward only, and only for a real reason: drawn in among associates, becoming
+known locally, the first of a trade, the group becoming talked about, the
+police looking into it, the group exposed, widely known. **The reason is
+written down at the moment the name travels**, because fame fades and groups
+break up — a name that went public a season ago can outlive every trace of why,
+and inferring it afterwards would call it unjustified. The regression strips
+every reason away and asserts the name stays where it got to, still carrying
+the reason it went.
+
+### Who sees it
+
+The Meadowline Post may use an alias **only at `public`**. The player's Look
+card, which is a god's-eye view, shows one sooner, along with how far it has
+actually travelled and why. That difference is the design, and the regression
+asserts the paper never runs ahead of the street: it builds an issue full of
+person-naming stories and checks that not one non-public nickname appears,
+while the same people are printed under their real names.
+
+Once public, the paper uses it as the brief describes — `“ROPES” QUESTIONED BY
+POLICE`, with the body reading *Juno Marsh — known to some as “Ropes” — was
+taken in for questioning yesterday*. A name surfacing is a small story of its
+own that says which kind of history it came from.
+
+### Save
+
+`social.aliases` rides in the optional social field. On load a name must belong
+to a family that exists and a seat under the member cap, a visibility off the
+ladder falls back to private, and the same name twice is taken only once.
+
 ## What is deliberately not built yet
 
-**Emergent nicknames (PARTS 16–24).** Aliases that emerge from a citizen's
-history, spread from associates to district to police to press, and are used by
-the paper only once publicly known. This is a Social Fabric change — it needs
-alias state on the citizen record, an origin category derived from real
-history, and a visibility ladder — and it is a bigger piece of work than the
-paper itself. The Post is designed to accept it: adding aliases means adding a
-`nickname_public` ledger event and one lookup where the paper prints a name.
-
-Also not built, and not required by any current system: obituaries (no death
+Not built, and not required by any current system: obituaries (no death
 mechanic exists, and the brief forbids inventing one), a generative-AI prose
 layer (PART 26 explicitly makes it optional and presentation-only), and a
 newspaper stand building.

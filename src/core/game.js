@@ -41,6 +41,7 @@ import { advanceCareers } from '../simulation/careers.js';
 import { advanceOrganisations } from '../simulation/organisations.js';
 import { advanceEnforcement } from '../simulation/enforcement.js';
 import { advanceFame } from '../simulation/fame.js';
+import { advanceAliases } from '../simulation/aliases.js';
 import { publishIssue } from '../simulation/post.js';
 import { record } from '../simulation/ledger.js';
 import { updateFeedback } from '../simulation/feedback.js';
@@ -152,6 +153,8 @@ function step(now){
       advanceEnforcement(step,note);
       // Who the valley has come to talk about for the right reasons.
       advanceFame(step,note);
+      // And what the valley has ended up calling them.
+      advanceAliases(step,note);
     }
     growth(sdt);
     updateCitizens(sdt);
