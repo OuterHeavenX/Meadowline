@@ -204,6 +204,19 @@ export function approaches(){
   return out.sort((a,b)=>(b.wood-a.wood)||(b.dark-a.dark));
 }
 
+/* Ground a thing can actually stand on. Water is not, unless somebody has put
+   a way across it — a bridge is a bridge for whatever is using it, so they
+   funnel over one the same as anybody else. Nothing checked this at all until
+   a player watched one wade across the middle of the lake. */
+export function walkable(x,y){
+  const xi=Math.round(x), yi=Math.round(y);
+  if(!inBounds(xi,yi)) return false;
+  const i=idx(xi,yi);
+  if(S.terr[i]!==1) return true;
+  const b=S.grid[i];
+  return !!b&&(b.type==='road'||b.type==='rail');
+}
+
 /* The nearest home with somebody in it, preferring one nobody else is already
    at. Without the second half they all converge on whichever house happens to
    be closest to the treeline and one household absorbs the entire night. */
@@ -256,9 +269,14 @@ export function beginNight(note=()=>{}){
   st.surge=surge;
   for(let i=0;i<want;i++){
     const w=ways[i%ways.length];
+    /* approaches() only ever offers dry ground, but the jitter that spreads
+       them out along the treeline was applied afterwards and never re-checked
+       — which is how one of them started the night standing in the lake. */
     const jitter=Math.floor(hash2(i,st.night,(S.seed>>>0)+13)*5)-2;
-    const x=Math.max(0,Math.min(W-1,w.x+(w.y===undefined?0:jitter)));
-    const y=Math.max(0,Math.min(H-1,w.y+jitter));
+    let x=Math.max(0,Math.min(W-1,w.x+jitter));
+    let y=Math.max(0,Math.min(H-1,w.y+jitter));
+    if(!walkable(x,y)){ x=w.x; y=w.y; }
+    if(!walkable(x,y)) continue;
     list.push({x,y,fx:x,fy:y,tx:x,ty:y,p:0,atDoor:0,target:null,
       seed:((x*73856093)^(y*19349663)^(i*2654435761))>>>0});
   }
@@ -404,10 +422,20 @@ function march(dt){
     if(!home) continue;
     if(Math.abs(home.x-z.fx)<=1&&Math.abs(home.y-z.fy)<=1){ z.atDoor=0.001; continue; }
     const dx=Math.sign(home.x-z.fx), dy=Math.sign(home.y-z.fy);
-    // One axis at a time, whichever is further, so they read as walking rather
-    // than sliding diagonally through everything.
-    if(Math.abs(home.x-z.fx)>Math.abs(home.y-z.fy)) z.fx+=dx*WALK*dt;
-    else z.fy+=dy*WALK*dt;
+    /* One axis at a time, whichever is further, so they read as walking rather
+       than sliding diagonally through everything — and never onto water. Try
+       the way they want to go; if that is the lake, try the other axis, which
+       walks them along the shore until they find a way round or a bridge. If
+       both are water they wait where they are, which looks like something
+       standing at the water's edge deciding, and is at least not a miracle. */
+    const step=WALK*dt;
+    const wantX=Math.abs(home.x-z.fx)>Math.abs(home.y-z.fy);
+    const tryMove=(ax)=>{
+      const nx=ax?z.fx+dx*step:z.fx, ny=ax?z.fy:z.fy+dy*step;
+      if(!walkable(nx,ny)) return false;
+      z.fx=nx; z.fy=ny; return true;
+    };
+    if(!tryMove(wantX)) tryMove(!wantX);
     z.x=Math.round(z.fx); z.y=Math.round(z.fy);
   }
   /* One reaches a door, one thing happens, and that one is done. Without this

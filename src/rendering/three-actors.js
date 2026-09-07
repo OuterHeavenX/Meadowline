@@ -112,7 +112,11 @@ function addPeople(parent,people){
     const trouser=shade(p.col,-46), sleeve=shade(p.col,-18);
     for(const dir of [1,-1]){
       put(legs,hang(part,base,dir*.03,HIP,0,p.stride*dir*.55,PIECE.leg.h),trouser);
-      put(arms,hang(part,base,dir*.07,SHOULDER,0,-p.stride*dir*.6+p.lean*.5,PIECE.arm.h),sleeve);
+      /* Arms out in front rather than swinging at the side. It is the entire
+         silhouette of the thing: at map distance the only way to tell one of
+         these from a resident out late is the shape of the arms. */
+      put(arms,hang(part,base,dir*.07,SHOULDER,p.armsOut?.06:0,
+        p.armsOut?-Math.PI/2+p.stride*dir*.12:-p.stride*dir*.6+p.lean*.5,PIECE.arm.h),sleeve);
     }
     // Torso leans into the walk from the hip; head and hair ride on top of it.
     put(torsos,hang(part,base,0,SHOULDER+.02,0,-p.lean,PIECE.torso.h),p.col);
@@ -270,7 +274,7 @@ function walkerFigure(z){
   const sway=reduceMotion?0:Math.sin((S.t||0)*3.4+(z.seed%97))*.5;
   const heading=Math.atan2((z.target?z.target.x:z.fx)-z.fx,(z.target?z.target.y:z.fy)-z.fy);
   return {x:z.fx,z:z.fy,heading,stride:sway,bob:0,lean:.28,col:'#6d7f5e',
-    skin:'#9db07f',hair:'#41503f',carry:false,carryKind:'basket',lying:false};
+    skin:'#9db07f',hair:'#41503f',carry:false,carryKind:'basket',lying:false,armsOut:true};
 }
 // The volley, as a thin bright line from the tower to what it hit.
 function addVolley(parent,a){

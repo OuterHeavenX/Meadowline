@@ -71,6 +71,33 @@ towers stop that many, the rest get one hit each.*
 A hit is a home knocked back a housing tier, a resident gone and the street's
 mood with it. **About a third of the time it is a person instead.**
 
+## They walk on ground
+
+Reported from a real game: one of them wading across the middle of the lake.
+
+Two separate holes, both now closed by one `walkable()` that everything asks.
+`approaches()` had always offered dry ground, but the jitter that spreads them
+along the treeline was applied **afterwards and never re-checked**, so a spawn
+could land in the water. And `march()` never looked at the terrain at all.
+
+They step one axis at a time toward their target; if that step is water they
+try the other axis, which walks them along the shore until they find a way
+round. If both are water they wait at the edge — which at least looks like
+something standing at the water deciding, rather than a miracle.
+
+**A bridge is a bridge for anything using it.** Water carrying a road or a rail
+is walkable, so they funnel over a crossing the same as anybody else. That is
+worth knowing when you decide where to put one.
+
+## They walk with their arms out
+
+In the GPU renderer they were posed through the shared figure and swung their
+arms at their sides like any resident out late. At map distance the arms are the
+entire silhouette — it is the only thing that tells one of these from a
+neighbour — so the figure now carries an `armsOut` flag and the shoulder
+rotates forward instead of swinging. The Canvas path already drew them this way;
+this was the low-poly path catching up.
+
 ## Two things to buy, and they do different jobs
 
 **A Watchtower shoots.** One kill per volley within 5 tiles, from where it
@@ -193,13 +220,15 @@ the regression now catches.
 
 ## Testing
 
-`tests/siege-regression.html`, 104 checks. Sabotages confirmed to fail: a walker
+`tests/siege-regression.html`, 111 checks. Sabotages confirmed to fail: a walker
 that strikes for ever; a death that renumbers the survivors; the dead keeping
 their trade; the paper printing a nickname the street never used; towers
 ignoring their range; a tower that needs no Garrison; the Garrison shooting as
 well as sending people; the militia leash removed; guards who are never hurt;
 falling back to one night in nine; a night of one or two; the warning pointing
-the wrong way; and the warning naming a direction nothing is coming from.
+the wrong way; the warning naming a direction nothing is coming from; a march
+that ignores terrain; a spawn jitter that is not re-checked; and a bridge that
+cannot be crossed.
 
 That last one passed at first, because the check compared `bearings()` against
 itself — the test now works the compass out from the raw positions so it has an

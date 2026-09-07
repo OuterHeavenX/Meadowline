@@ -18,7 +18,7 @@ import * as siegeMod from '../src/simulation/siege.js';
 import { FIRST_NIGHT, GARRISON_RANGE, MILITIA_LEASH, MILITIA_MAX, MILITIA_MIN, TOWER_RANGE, advanceSiege,
   approaches, bearingOf, bearings, firstNightWarning, guardsEmployed, hordeSize, horde, isSurge, militia,
   militiaStrength, MIN_HORDE, nextNight, nightsComing, nightsOf, POINTS, siegeSnapshot, siegeState,
-  siegeWarning, spellDirections, tonightSize, townCentre, WARN_DAYS } from '../src/simulation/siege.js';
+  siegeWarning, spellDirections, tonightSize, townCentre, walkable, WARN_DAYS } from '../src/simulation/siege.js';
 import { takeLife, deathsSoFar, isLost } from '../src/simulation/mortality.js';
 import { BUILDINGS } from '../src/buildings/registry.js';
 import { canPlace, place, erase } from '../src/buildings/buildings.js';
@@ -132,6 +132,41 @@ function runNight(limit=20000){
   const a=[]; for(let d=1;d<120;d++) if(isSurge(d)) a.push(d);
   const b=[]; for(let d=1;d<120;d++) if(isSurge(d)) b.push(d);
   check('the same valley reads the same calendar twice',a.join()===b.join());
+}
+
+/* ---------- they do not walk on water ---------- */
+{
+  /* Reported from a real game: one of them wading across the middle of the
+     lake. approaches() had always offered dry ground, but the jitter that
+     spreads them along the treeline was applied afterwards and never
+     re-checked, and march() never looked at the terrain at all. */
+  town();
+  // A lake between the treeline and the town, wide enough that nothing could
+  // reach a home by accident without crossing it.
+  for(let y=36;y<41;y++) for(let x=40;x<64;x++) S.terr[idx(x,y)]=1;
+  recompute();
+  check('fixture: there is real water on the map',(()=>{
+    let n=0; for(let y=36;y<41;y++) for(let x=40;x<64;x++) if(S.terr[idx(x,y)]===1) n++;
+    return n>100; })());
+  check('open water is not walkable',!walkable(50,38)&&!walkable(44,39));
+  check('and dry ground is',walkable(50,45)&&walkable(43,45));
+  check('a way laid over water is, because a bridge is a bridge for anything',(()=>{
+    place('road',50,38);
+    return walkable(50,38); })());
+  erase(50,38,{confirmed:true}); recompute();
+
+  S.day=nextNight(1); S.dayT=NIGHT;
+  advanceSiege(0.1,note);
+  check('fixture: a night started with the lake in the way',horde().length>0,horde().length);
+  check('none of them starts the night standing in the water',
+    horde().every(z=>walkable(z.fx,z.fy)),
+    JSON.stringify(horde().filter(z=>!walkable(z.fx,z.fy)).map(z=>[z.x,z.y])));
+  let onWater=0,t=0;
+  while(horde().length&&t<4000){
+    advanceSiege(0.05,note); t++;
+    for(const z of horde()) if(!walkable(z.fx,z.fy)) onWater++;
+  }
+  check('and not one of them crosses it on foot',onWater===0,onWater+' tile-frames in the lake');
 }
 
 /* ---------- the warning ---------- */
