@@ -1,6 +1,6 @@
 import { S } from '../core/state.js';
 import { currentIssue, markPostRead, postArchive, rumourLead } from '../simulation/post.js';
-import { elLook, elLookBody } from './panels.js';
+import { elLook, elLookBody, fillLook} from './panels.js';
 
 /* ---------- reading the paper ----------
    The Post is a thing you pick up, not a thing that stops the game. A chip in
@@ -43,7 +43,7 @@ export function openPost(){
   const issue=currentIssue();
   open=true; S.pick=null;
   elLook.classList.remove('cityhall-open'); elLook.classList.add('show','post-open');
-  elLookBody.innerHTML=issueHtml(issue);
+  fillLook(issueHtml(issue));
   markPostRead(); paintPostChip();
   if(S.diagnostics) S.diagnostics.postOpens=(S.diagnostics.postOpens||0)+1;
 }

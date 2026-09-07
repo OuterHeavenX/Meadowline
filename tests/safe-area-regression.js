@@ -159,6 +159,45 @@ function reachable(r,view){
     }
   }
 
+  /* ---------- a panel opens at the top of what it is showing ----------
+     The panel that was reported clipped was, the second time, not clipped at
+     all: `.look` is the scroll container, and the position left behind by the
+     last card survives into the next one. Scroll a long house card, close it,
+     open City Hall, and its section nav is above the fold with nothing on
+     screen to say so — which looks identical to a panel whose top has been cut
+     off, and which no amount of CSS will fix. */
+  {
+    const look=el('look');
+    look.classList.remove('show','cityhall-open','post-open');
+    // A long card: a house with a household in it.
+    const panels=await win.eval("import('/src/ui/panels.js')");
+    const social=await win.eval("import('/src/simulation/families.js')");
+    const b=await win.eval("import('/src/buildings/buildings.js')");
+    const cx=hallAt.x;
+    b.place('house',cx+2,cx+2); b.place('road',cx+2,cx+3);
+    panels.inspect(cx+2,cx+2);
+    await wait(()=>look.classList.contains('show'));
+    look.scrollTop=400;
+    const scrolled=look.scrollTop;
+    check('fixture: a card long enough to scroll, and scrolled',scrolled>0,scrolled);
+    // Now open City Hall, the way tapping it does.
+    await openHall();
+    check('opening a different panel starts at the top of it',look.scrollTop===0,look.scrollTop);
+    const nav=[...doc.querySelectorAll('[data-cityhall-nav]')];
+    check('so its first section is on screen, not above the fold',
+      nav.length>0&&box(nav[0]).top>=box(look).top-0.5&&box(nav[0]).top<box(look).top+120,
+      nav.length?JSON.stringify({nav:+box(nav[0]).top.toFixed(0),panel:+box(look).top.toFixed(0)}):'no nav');
+    /* But a card being refreshed in place keeps its position. Yanking somebody
+       back to the top every time the simulation ticks would be worse than the
+       bug this fixes. */
+    panels.inspect(cx+2,cx+2);
+    await wait(()=>look.classList.contains('show'));
+    look.scrollTop=120;
+    panels.refreshLook();
+    check('a card refreshing in place does not yank the reader back',look.scrollTop===120,look.scrollTop);
+    look.classList.remove('show','cityhall-open');
+  }
+
   /* ---------- and with no insets at all, nothing moved ----------
      A desktop browser reports zero for both, and the panels should sit exactly
      where they always did rather than paying for a notch that is not there. */

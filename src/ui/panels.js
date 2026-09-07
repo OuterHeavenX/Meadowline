@@ -354,15 +354,31 @@ elLookBody.addEventListener('click',async e=>{
   refreshLook();
 });
 
+/* Filling the panel, and where that leaves the reader.
+
+   `.look` is the scroll container, so the position left behind by the last
+   card survives into the next one. Scroll a long house card, close it, open
+   City Hall, and its section nav is above the fold with nothing on screen to
+   suggest there is anything up there — which looks exactly like a panel whose
+   top has been clipped off, and is not something any amount of CSS can fix.
+
+   A card that is merely being refreshed in place keeps its position, because
+   yanking somebody back to the top every time the simulation ticks would be
+   worse than the bug. */
+export function fillLook(html,{keepScroll=false}={}){
+  elLookBody.innerHTML=html;
+  if(!keepScroll) elLook.scrollTop=0;
+}
+
 export function inspect(x,y){
   if(!inBounds(x,y)){ closeLook(); return; }
   elLook.classList.remove('cityhall-open');
   const root=facilityRootAt(x,y);
   S.pick={x:root?.x??x,y:root?.y??y};
-  elLookBody.innerHTML=describe(S.pick.x,S.pick.y);
+  fillLook(describe(S.pick.x,S.pick.y));
   elLook.classList.add("show");
   services.blip(600,0.04,"triangle");
 }
 export function refreshLook(){
-  if(S.pick&&elLook.classList.contains("show")) elLookBody.innerHTML=describe(S.pick.x,S.pick.y);
+  if(S.pick&&elLook.classList.contains("show")) fillLook(describe(S.pick.x,S.pick.y),{keepScroll:true});
 }

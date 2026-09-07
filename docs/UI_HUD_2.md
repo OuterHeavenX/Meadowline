@@ -17,6 +17,32 @@ status bar. Reported from a real device with a photograph; reproduced exactly
 in the regression, which measures the panel top at 8px and all nine nav
 buttons spanning 27–71px against a 59px status bar.
 
+### The second cause, and the one that was actually still biting
+
+The safe-area arithmetic was real and is fixed, but it was not the whole
+story. Reported again, on a build that verifiably carried the fix, and two
+further causes turned up — neither of which any amount of CSS would have
+addressed.
+
+**A panel opened wherever the last one was scrolled to.** `.look` is the
+scroll container and nothing ever reset it. Scroll a long house card, close it,
+open City Hall, and its section nav sits above the fold with nothing on screen
+to say there is anything up there. It is visually indistinguishable from a
+panel whose top has been clipped, and it is exactly what the second report
+was. `fillLook()` now resets the scroll when a panel is given new content, and
+deliberately does *not* when a card is merely refreshing in place — yanking a
+reader back to the top on every simulation tick would be worse than the bug.
+The regression scrolls a card, opens City Hall and asserts both halves; with
+the reset removed the nav measures 119px above the panel's own top.
+
+**`100vh` is not the height of the screen you can see.** On iOS Safari it is
+the toolbar-*retracted* height, so a bottom-anchored panel sized against it is
+taller than the visible area whenever the toolbars are showing, and its top is
+pushed off — the same symptom as the safe-area bug, from an unrelated cause.
+Every viewport-sized panel now carries a `dvh` companion declaration after its
+`vh` one, so browsers that understand dynamic viewport units use the viewport
+that actually exists and everything else keeps the old behaviour.
+
 **The four insets are named once** in `css/ui-hud-2.css`:
 
 ```css

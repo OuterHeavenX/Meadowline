@@ -15,6 +15,7 @@ import { celebrities } from '../simulation/fame.js';
 import { currentIssue, postArchive } from '../simulation/post.js';
 import { influenceOf, petitionWant, petitions, voices } from '../simulation/influence.js';
 import { landmarkKey } from '../rendering/landmark-assets.js';
+import { fillLook } from './panels.js';
 import { paintGrowthPanel } from './growth.js';
 import { toast } from './notify.js';
 import { askConfirm } from './confirm.js';
@@ -280,7 +281,7 @@ export function renderCityHall(){
   // civic dialog.
   const art=buildingThumbnail(landmarkKey(b));
   elLook.classList.add('cityhall-open');
-  elLookBody.innerHTML='<div class="cityhall-shell"><nav class="cityhall-nav" aria-label="City Hall sections">'+
+  fillLook('<div class="cityhall-shell"><nav class="cityhall-nav" aria-label="City Hall sections">'+
     nav.map(n=>'<button type="button" class="'+(activeSection===n[0]?'on':'')+'" data-cityhall-nav="'+n[0]+'">'+icon(NAV_ICON[n[0]])+'<span>'+n[1]+'</span></button>').join('')+
     '</nav><main class="cityhall-content"><header class="cityhall-hero">'+
     '<div class="ch-crest">'+(art?'<img src="'+art+'" alt="" draggable="false">':icon(NAV_ICON.overview))+'</div>'+
@@ -322,7 +323,7 @@ export function renderCityHall(){
       stat('Signalled junctions',mob.signals??0,I.signal)+
       stat('Vehicles active',mob.vehicles,I.car)+
       '</div><p class="muted">Vehicles represent town life and service movement, not a congestion score.</p>')+
-    '</main></div>';
+    '</main></div>');
   return true;
 }
 export function inspectCityHall(x,y){
